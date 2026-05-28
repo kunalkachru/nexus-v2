@@ -32,6 +32,7 @@ class IncidentRecord(BaseModel):
     title: str
     severity: Literal["P1", "P2", "P3"]
     status: Literal["investigating", "resolved", "blocked_by_guardian"]
+    tenant_id: str = "tenant-system"
     source: Literal["datadog", "prometheus"] | None = None
     service: str = ""
 

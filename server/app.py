@@ -4,17 +4,21 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 import logging
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from server.audit import write_audit_log
+from server.auth import AuthenticatedContext, require_auth
 from server.config import AppConfig
 from server.db import DatabaseSession, create_session_factory, get_db
 from server.incident_payloads import get_incident_definition, get_incident_details, list_supported_incident_ids
 from server.integrations.alerts import AlertNormalizer
 from server.integrations.deployments import DeploymentLookupService
 from server.integrations.models import IncomingIncidentWebhook
+from server.rate_limit import RateLimiter
 from server.services.incidents import IncidentService
+from server.services.tenancy import TenancyService
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +28,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     config = AppConfig()
     app.state.config = config
     app.state.db_session_factory = create_session_factory(config)
+    app.state.rate_limiter = RateLimiter()
+    app.state.tenancy_service = TenancyService()
     yield
 
 
@@ -120,18 +126,31 @@ async def health() -> dict[str, str]:
 
 @app.post("/webhooks/incident", status_code=202)
 async def receive_incident_webhook(
+    request: Request,
     payload: IncomingIncidentWebhook,
     service: IncidentService = Depends(get_incident_service),
 ) -> dict[str, object]:
-    return await service.create_incident_from_webhook(payload)
+    tenant_id = request.app.state.tenancy_service.resolve_webhook_tenant(request)
+    response = await service.create_incident_from_webhook(payload, tenant_id=tenant_id)
+    await write_audit_log("incident.webhook.accepted", tenant_id, response)
+    return response
 
 
 @app.get("/incidents/{nexus_incident_id}")
 async def get_incident_status(
     nexus_incident_id: str,
+    request: Request,
     service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
-    return await service.get_incident_status(nexus_incident_id)
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_status")
+    response = await service.get_incident_status(nexus_incident_id, tenant_id=auth.tenant_id)
+    await write_audit_log(
+        "incident.status.read",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id},
+    )
+    return response
 
 
 @app.get("/api/metrics")

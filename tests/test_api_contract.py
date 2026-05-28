@@ -70,6 +70,7 @@ def seeded_incident(client: TestClient) -> IncidentRecord:
                 external_id="inc_seeded",
                 title="Seeded incident",
                 severity="P2",
+                tenant_id="tenant-a",
             )
         finally:
             await session.close()
@@ -101,8 +102,12 @@ def test_webhook_creates_nexus_incident(client: TestClient) -> None:
 def test_incident_status_returns_persisted_lifecycle(
     client: TestClient,
     seeded_incident: IncidentRecord,
+    auth_headers,
 ) -> None:
-    response = client.get(f"/incidents/{seeded_incident.nexus_incident_id}")
+    response = client.get(
+        f"/incidents/{seeded_incident.nexus_incident_id}",
+        headers=auth_headers(),
+    )
 
     assert response.status_code == 200
     payload = response.json()
@@ -113,8 +118,8 @@ def test_incident_status_returns_persisted_lifecycle(
     assert payload["recent_deployments"] == []
 
 
-def test_incident_status_returns_404_for_unknown_incident(client: TestClient) -> None:
-    response = client.get("/incidents/nxs_missing")
+def test_incident_status_returns_404_for_unknown_incident(client: TestClient, auth_headers) -> None:
+    response = client.get("/incidents/nxs_missing", headers=auth_headers())
 
     assert response.status_code == 404
     assert response.json()["detail"] == "incident not found"

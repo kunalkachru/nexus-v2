@@ -1,3 +1,5 @@
+import inspect
+
 from fastapi import HTTPException
 
 from server.integrations.alerts import AlertNormalizer
@@ -21,15 +23,21 @@ class IncidentService:
     async def create_incident_from_webhook(
         self,
         payload: IncomingIncidentWebhook,
+        *,
+        tenant_id: str = "tenant-system",
     ) -> dict[str, object]:
         envelope = self._alert_normalizer.normalize(payload)
-        created = await self._session.incidents.create_incident(
-            external_id=envelope.external_id,
-            title=envelope.title,
-            severity=envelope.severity,
-            source=envelope.source,
-            service=envelope.service,
-        )
+        create_incident = self._session.incidents.create_incident
+        create_kwargs = {
+            "external_id": envelope.external_id,
+            "title": envelope.title,
+            "severity": envelope.severity,
+            "source": envelope.source,
+            "service": envelope.service,
+        }
+        if "tenant_id" in inspect.signature(create_incident).parameters:
+            create_kwargs["tenant_id"] = tenant_id
+        created = await create_incident(**create_kwargs)
         incident = IncidentRecord.model_validate(created)
         recent_deployments = await self._deployment_lookup.get_recent_deployments(
             envelope.service
@@ -45,8 +53,16 @@ class IncidentService:
         )
         return response.model_dump(mode="json")
 
-    async def get_incident_status(self, nexus_incident_id: str) -> dict[str, object]:
-        loaded = await self._session.incidents.get_incident(nexus_incident_id)
+    async def get_incident_status(
+        self,
+        nexus_incident_id: str,
+        *,
+        tenant_id: str | None = None,
+    ) -> dict[str, object]:
+        if tenant_id is None:
+            loaded = await self._session.incidents.get_incident(nexus_incident_id)
+        else:
+            loaded = await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
         if loaded is None:
             raise HTTPException(status_code=404, detail="incident not found")
 

@@ -20,6 +20,7 @@ class IncidentRepository:
         external_id: str,
         title: str,
         severity: str,
+        tenant_id: str = "tenant-system",
         source: str | None = None,
         service: str = "",
     ) -> IncidentRecord:
@@ -29,6 +30,7 @@ class IncidentRepository:
             title=title,
             severity=severity,
             status="investigating",
+            tenant_id=tenant_id,
             source=source,
             service=service,
         )
@@ -42,3 +44,13 @@ class IncidentRepository:
 
     async def get_incident(self, nexus_incident_id: str) -> IncidentRecord | None:
         return self._incident_store.get(nexus_incident_id)
+
+    async def get_incident_for_tenant(
+        self,
+        nexus_incident_id: str,
+        tenant_id: str,
+    ) -> IncidentRecord | None:
+        incident = self._incident_store.get(nexus_incident_id)
+        if incident is None or incident.tenant_id != tenant_id:
+            return None
+        return incident
