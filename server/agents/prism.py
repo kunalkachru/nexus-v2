@@ -1,9 +1,10 @@
+import asyncio
 import re
 from collections.abc import Iterable
 
-from incidents.catalogue import load_incident_types
 from server.agents.base import BaseAgent
 from server.models import AgentStubInfo, IncidentDefinition, PrismDiagnosis, SentinelClassification
+from server.services.observability import ObservabilityService
 
 
 class PrismAgent(BaseAgent):
@@ -11,20 +12,18 @@ class PrismAgent(BaseAgent):
 
     name = "prism"
 
-    def __init__(self) -> None:
-        self._incident_by_id = {
-            incident.id: incident for incident in load_incident_types()
-        }
+    def __init__(self, observability: ObservabilityService | None = None) -> None:
+        self._observability = observability or ObservabilityService()
 
     def describe(self) -> AgentStubInfo:
         """Report that PRISM is implemented while later agents remain stubs."""
 
         return AgentStubInfo(name=self.name, implemented=True)
 
-    def diagnose(
+    async def diagnose(
         self,
         sentinel_output: SentinelClassification,
-        signals: list[str] | None = None,
+        signals: list[str] | dict[str, list[str]] | None = None,
     ) -> PrismDiagnosis:
         """Return a root-cause diagnosis from a SENTINEL classification and optional signals."""
 
@@ -32,14 +31,12 @@ class PrismAgent(BaseAgent):
         if not incident_id:
             raise ValueError("sentinel_output.incident_id must not be empty")
 
-        try:
-            incident = self._incident_by_id[incident_id]
-        except KeyError as exc:
-            raise ValueError(f"unknown incident_id: {incident_id}") from exc
+        incident = await self._observability.resolve_incident_definition(incident_id)
 
-        signal_list = [signal.strip() for signal in (signals or []) if signal.strip()]
+        signal_map = await self._normalize_signals(incident_id, signals)
+        signal_list = self._flatten_signals(signal_map)
         evidence = self._select_evidence(signal_list, incident)
-        queried_sources = self._infer_sources(signal_list)
+        queried_sources = [source for source, values in signal_map.items() if values]
         confidence = self._confidence(signal_list, incident)
 
         return PrismDiagnosis(
@@ -53,6 +50,43 @@ class PrismAgent(BaseAgent):
                 f"with {confidence:.0%} confidence"
             ),
         )
+
+    async def _normalize_signals(
+        self,
+        incident_id: str,
+        signals: list[str] | dict[str, list[str]] | None,
+    ) -> dict[str, list[str]]:
+        if isinstance(signals, dict):
+            normalized: dict[str, list[str]] = {}
+            for source, values in signals.items():
+                if values is None or isinstance(values, str) or not isinstance(values, list):
+                    raise ValueError(f"signals[{source!r}] must be a list of strings")
+                normalized[source] = []
+                for value in values:
+                    if not isinstance(value, str):
+                        raise ValueError(f"signals[{source!r}] must contain only strings")
+                    if value.strip():
+                        normalized[source].append(value.strip())
+            return normalized
+        if signals:
+            signal_list = [signal.strip() for signal in signals if signal.strip()]
+            return {source: signal_list for source in self._infer_sources(signal_list)}
+
+        requested_sources = ["logs", "metrics", "traces"]
+        supporting_signals = await self._observability.fetch_supporting_signals(
+            incident_id=incident_id,
+            requested_sources=requested_sources,
+        )
+        return {
+            source: [value.strip() for value in values if value.strip()]
+            for source, values in supporting_signals.items()
+        }
+
+    def _flatten_signals(self, signals: dict[str, list[str]]) -> list[str]:
+        flattened: list[str] = []
+        for values in signals.values():
+            flattened.extend(values)
+        return flattened
 
     def _select_evidence(
         self,

@@ -1,10 +1,13 @@
 import json
 import os
 import time
+import asyncio
 
 from server.agents import ForgeAgent, GuardianAgent, PrismAgent, SentinelAgent
 from server.incident_payloads import get_incident_definition, get_incident_details
+from server.models import NormalizedAlertEnvelope
 from server.orchestrator import NexusCore
+from server.services.observability import ObservabilityService
 from training.reporting import CHECKPOINT_PATH, METRICS_PATH, ensure_metrics_payload, load_checkpoint
 from training.runner import TrainingForgeClient
 
@@ -55,6 +58,7 @@ def run_demo(*, incident_id: str = "INC001", print_output: bool = False) -> dict
     incident = get_incident_definition(incident_id)
     incident_details = get_incident_details(incident_id)
     core = NexusCore(
+        observability=ObservabilityService(),
         sentinel=SentinelAgent(),
         prism=PrismAgent(),
         forge=ForgeAgent(client=_forge_client()),
@@ -62,7 +66,19 @@ def run_demo(*, incident_id: str = "INC001", print_output: bool = False) -> dict
     )
 
     started_at = time.perf_counter()
-    episode = core.run_episode(incident)
+    episode = asyncio.run(
+        core.run_episode(
+            NormalizedAlertEnvelope(
+                source="datadog",
+                external_id=incident.id,
+                title=incident.name,
+                severity={"P0": "P1", "P1": "P2", "P2": "P3"}[incident.severity],
+                service=incident.system_context.service,
+                detected_at=str(incident_details["detected_at"]),
+                observed_values={"service": incident.system_context.service},
+            )
+        )
+    )
     execution_time_seconds = round(time.perf_counter() - started_at, 4)
 
     sentinel_details = incident_details["sentinel"]

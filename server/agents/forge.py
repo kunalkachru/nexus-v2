@@ -1,11 +1,10 @@
 import json
 import os
-import py_compile
-import subprocess
-import tempfile
 from typing import Protocol
 
 from server.agents.base import BaseAgent
+from server.memory_graph import IncidentMemoryGraph
+from server.sandbox import SandboxExecutor
 from server.models import AgentStubInfo, ForgeRunbookResult, PrismDiagnosis, RunbookScript, SystemContext
 
 
@@ -33,15 +32,22 @@ class ForgeAgent(BaseAgent):
         "syntactically valid operational scripts."
     )
 
-    def __init__(self, client: ForgeClient | None = None) -> None:
+    def __init__(
+        self,
+        client: ForgeClient | None = None,
+        memory_graph: IncidentMemoryGraph | None = None,
+        sandbox: SandboxExecutor | None = None,
+    ) -> None:
         self._client = client or _MissingForgeClient()
+        self._memory_graph = memory_graph or IncidentMemoryGraph()
+        self._sandbox = sandbox or SandboxExecutor()
 
     def describe(self) -> AgentStubInfo:
         """Report that FORGE is implemented while GUARDIAN remains a stub."""
 
         return AgentStubInfo(name=self.name, implemented=True)
 
-    def generate_runbook(
+    async def generate_runbook(
         self,
         prism_output: PrismDiagnosis,
         system_context: SystemContext,
@@ -57,15 +63,16 @@ class ForgeAgent(BaseAgent):
             raise ValueError("system_context.service must not be empty")
 
         model_name = os.environ.get("LLM_MODEL", "gpt-4o")
-        user_prompt = self._build_prompt(prism_output, system_context)
+        historical_runbooks = await self._memory_graph.find_similar(prism_output.root_cause)
+        user_prompt = self._build_prompt(prism_output, system_context, historical_runbooks)
         response_data = self._client.generate_json(
             model=model_name,
             system_prompt=self._SYSTEM_PROMPT,
             user_prompt=user_prompt,
         )
         runbook = RunbookScript.model_validate(response_data)
-        syntax_valid = self._validate_script(runbook.language, runbook.code)
-        if not syntax_valid:
+        sandbox_validation = await self._sandbox.validate(runbook)
+        if not sandbox_validation.syntax_valid:
             raise ValueError("generated runbook failed syntax validation")
 
         estimated_cost = float(response_data.get("estimated_cost_usd", 0.0))
@@ -85,6 +92,7 @@ class ForgeAgent(BaseAgent):
         self,
         prism_output: PrismDiagnosis,
         system_context: SystemContext,
+        historical_runbooks: list[object],
     ) -> str:
         payload = {
             "incident_id": prism_output.incident_id,
@@ -94,6 +102,14 @@ class ForgeAgent(BaseAgent):
             "language": system_context.language,
             "infra": system_context.infra,
             "dependencies": system_context.dependencies,
+            "historical_runbooks": [
+                {
+                    "summary": getattr(runbook, "runbook_summary", ""),
+                    "success_rate": getattr(runbook, "success_rate", 0.0),
+                    "similarity_score": getattr(runbook, "similarity_score", 0.0),
+                }
+                for runbook in historical_runbooks
+            ],
         }
         return (
             f"Incident ID: {prism_output.incident_id}\n"
@@ -101,36 +117,6 @@ class ForgeAgent(BaseAgent):
             f"System Context: {json.dumps(payload, sort_keys=True)}\n"
             "Generate one safe remediation runbook."
         )
-
-    def _validate_script(self, language: str, code: str) -> bool:
-        if language in {"bash", "kubectl"}:
-            return self._validate_shell(code)
-        if language == "python":
-            return self._validate_python(code)
-        raise ValueError(f"unsupported runbook language: {language}")
-
-    def _validate_shell(self, code: str) -> bool:
-        with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=True) as script_file:
-            script_file.write(code)
-            script_file.flush()
-            result = subprocess.run(
-                ["bash", "-n", script_file.name],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        return result.returncode == 0
-
-    def _validate_python(self, code: str) -> bool:
-        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=True) as script_file:
-            script_file.write(code)
-            script_file.flush()
-            try:
-                py_compile.compile(script_file.name, doraise=True)
-            except py_compile.PyCompileError:
-                return False
-        return True
-
 
 class _MissingForgeClient:
     """Fallback client that makes missing API wiring explicit."""

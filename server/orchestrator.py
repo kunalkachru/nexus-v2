@@ -1,9 +1,12 @@
+from collections.abc import Callable
+
 from server.agents.forge import ForgeAgent
 from server.agents.guardian import GuardianAgent
 from server.agents.prism import PrismAgent
 from server.agents.sentinel import SentinelAgent
 from server.grader import compute_episode_reward
-from server.models import Episode, IncidentDefinition
+from server.models import Episode, IncidentDefinition, NormalizedAlertEnvelope
+from server.services.observability import ObservabilityService
 
 
 class NexusCore:
@@ -12,32 +15,38 @@ class NexusCore:
     def __init__(
         self,
         *,
+        observability: ObservabilityService,
         sentinel: SentinelAgent,
         prism: PrismAgent,
         forge: ForgeAgent,
         guardian: GuardianAgent,
+        episode_sink: Callable[[Episode], None] | None = None,
     ) -> None:
+        self.observability = observability
         self.sentinel = sentinel
         self.prism = prism
         self.forge = forge
         self.guardian = guardian
+        self.episode_sink = episode_sink
 
-    def run_episode(self, incident: IncidentDefinition) -> Episode:
-        """Run the four-agent flow and compute a deterministic reward."""
+    async def run_episode(self, alert_envelope: NormalizedAlertEnvelope) -> Episode:
+        """Run the four-agent flow from an alert envelope and fetched evidence context."""
 
+        context = await self.observability.fetch_incident_context(alert_envelope)
+        incident = context.incident
         sentinel_output = self.sentinel.classify(
-            raw_symptoms=incident.symptoms,
-            system_context=incident.system_context,
+            raw_symptoms=context.raw_symptoms,
+            system_context=context.system_context,
         )
-        prism_output = self.prism.diagnose(
+        prism_output = await self.prism.diagnose(
             sentinel_output=sentinel_output,
-            signals=incident.symptoms,
+            signals=context.signals,
         )
-        forge_output = self.forge.generate_runbook(
+        forge_output = await self.forge.generate_runbook(
             prism_output=prism_output,
-            system_context=incident.system_context,
+            system_context=context.system_context,
         )
-        guardian_output = self.guardian.review(
+        guardian_output = await self.guardian.review(
             forge_output=forge_output,
             sentinel_output=sentinel_output,
             prism_output=prism_output,
@@ -63,6 +72,8 @@ class NexusCore:
             steps=["sentinel", "prism", "forge", "guardian", "verify"],
         )
         episode.reward = compute_episode_reward(episode)
+        if self.episode_sink is not None:
+            self.episode_sink(episode)
         return episode
 
 

@@ -4,6 +4,7 @@ from pathlib import Path
 
 from server.agents import ForgeAgent, GuardianAgent, PrismAgent, SentinelAgent
 from server.orchestrator import NexusCore
+from server.services.observability import ObservabilityService
 from training.curriculum import CurriculumAdapter
 from training.grpo_loop import GRPOTrainer, TrainingSummary
 from training.policy import ScalarPolicy
@@ -44,6 +45,7 @@ def run_training(
 
     policies = policies or load_agent_policies()
     core = NexusCore(
+        observability=ObservabilityService(),
         sentinel=SentinelAgent(),
         prism=PrismAgent(),
         forge=ForgeAgent(client=TrainingForgeClient()),

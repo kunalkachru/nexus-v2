@@ -1,8 +1,10 @@
 import random
+import asyncio
 from dataclasses import asdict, dataclass
 from statistics import mean
 
 from incidents.catalogue import load_incident_types
+from server.models import NormalizedAlertEnvelope
 from server.orchestrator import NexusCore
 from training.curriculum import CurriculumAdapter
 from training.policy import AdamScalarOptimizer, ScalarPolicy, TrainingStepRecord
@@ -90,7 +92,7 @@ class GRPOTrainer:
 
         for episode_index in range(num_episodes):
             incident = self._sample_incident()
-            episode = self.nexus_core.run_episode(incident)
+            episode = asyncio.run(self.nexus_core.run_episode(self._alert_envelope_for_incident(incident)))
             environment_reward = episode.reward.composite if episode.reward is not None else 0.0
             policy_quality = mean(policy.probability() for policy in self.policies.values())
             reward = round(environment_reward * policy_quality, 6)
@@ -136,6 +138,17 @@ class GRPOTrainer:
         }[self.curriculum.current_difficulty]
         pool = [incident for incident in self._incidents if incident.difficulty in allowed]
         return self.rng.choice(pool)
+
+    def _alert_envelope_for_incident(self, incident) -> NormalizedAlertEnvelope:
+        return NormalizedAlertEnvelope(
+            source="datadog",
+            external_id=incident.id,
+            title=incident.name,
+            severity={"P0": "P1", "P1": "P2", "P2": "P3"}[incident.severity],
+            service=incident.system_context.service,
+            detected_at="2026-05-28T09:14:00Z",
+            observed_values={"service": incident.system_context.service},
+        )
 
     def _build_step_records(self, episode, reward: float) -> list[TrainingStepRecord]:
         actions = [

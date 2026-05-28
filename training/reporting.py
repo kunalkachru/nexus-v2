@@ -1,3 +1,4 @@
+import asyncio
 import json
 from pathlib import Path
 
@@ -19,56 +20,59 @@ def _severity_map(severity: str) -> str:
 
 
 def compute_agent_accuracy() -> dict[str, float]:
-    incidents = load_incident_types()
-    sentinel = SentinelAgent()
-    prism = PrismAgent()
-    forge = ForgeAgent(client=TrainingForgeClient())
-    guardian = GuardianAgent()
+    async def scenario() -> dict[str, float]:
+        incidents = load_incident_types()
+        sentinel = SentinelAgent()
+        prism = PrismAgent()
+        forge = ForgeAgent(client=TrainingForgeClient())
+        guardian = GuardianAgent()
 
-    sentinel_correct = 0
-    prism_correct = 0
-    forge_valid = 0
-    guardian_safe = 0
+        sentinel_correct = 0
+        prism_correct = 0
+        forge_valid = 0
+        guardian_safe = 0
 
-    for incident in incidents:
-        sentinel_output = sentinel.classify(
-            raw_symptoms=incident.symptoms,
-            system_context=incident.system_context,
-        )
-        sentinel_correct += int(sentinel_output.incident_id == incident.id)
+        for incident in incidents:
+            sentinel_output = sentinel.classify(
+                raw_symptoms=incident.symptoms,
+                system_context=incident.system_context,
+            )
+            sentinel_correct += int(sentinel_output.incident_id == incident.id)
 
-        prism_output = prism.diagnose(
-            sentinel_output=sentinel_output,
-            signals=incident.symptoms,
-        )
-        prism_correct += int(prism_output.root_cause == incident.root_cause)
+            prism_output = await prism.diagnose(
+                sentinel_output=sentinel_output,
+                signals=incident.symptoms,
+            )
+            prism_correct += int(prism_output.root_cause == incident.root_cause)
 
-        forge_output = forge.generate_runbook(
-            prism_output=prism_output,
-            system_context=incident.system_context,
-        )
-        forge_valid += int(forge_output.syntax_valid)
+            forge_output = await forge.generate_runbook(
+                prism_output=prism_output,
+                system_context=incident.system_context,
+            )
+            forge_valid += int(forge_output.syntax_valid)
 
-        guardian_output = guardian.review(
-            forge_output=forge_output,
-            sentinel_output=SentinelClassification(
-                incident_id=incident.id,
-                incident_name=incident.name,
-                severity=_severity_map(incident.severity),
-                confidence=sentinel_output.confidence,
-                reasoning=sentinel_output.reasoning,
-            ),
-            prism_output=prism_output,
-        )
-        guardian_safe += int(guardian_output.decision == "approve")
+            guardian_output = await guardian.review(
+                forge_output=forge_output,
+                sentinel_output=SentinelClassification(
+                    incident_id=incident.id,
+                    incident_name=incident.name,
+                    severity=_severity_map(incident.severity),
+                    confidence=sentinel_output.confidence,
+                    reasoning=sentinel_output.reasoning,
+                ),
+                prism_output=prism_output,
+            )
+            guardian_safe += int(guardian_output.decision == "approve")
 
-    total = float(len(incidents))
-    return {
-        "sentinel": round(sentinel_correct / total, 4),
-        "prism": round(prism_correct / total, 4),
-        "forge": round(forge_valid / total, 4),
-        "guardian": round(guardian_safe / total, 4),
-    }
+        total = float(len(incidents))
+        return {
+            "sentinel": round(sentinel_correct / total, 4),
+            "prism": round(prism_correct / total, 4),
+            "forge": round(forge_valid / total, 4),
+            "guardian": round(guardian_safe / total, 4),
+        }
+
+    return asyncio.run(scenario())
 
 
 def build_metrics_payload(summary) -> dict[str, object]:
