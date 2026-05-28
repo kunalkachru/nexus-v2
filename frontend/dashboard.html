@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXUS v2 Metrics Dashboard</title>
+    <style>
+      :root {
+        --bg: #08121a;
+        --panel: rgba(9, 24, 34, 0.78);
+        --panel-border: rgba(148, 184, 202, 0.18);
+        --text: #edf6f9;
+        --muted: #9cb7c5;
+        --accent: #66e0a3;
+        --accent-2: #ffb86b;
+        --accent-3: #7dcfff;
+        --danger: #ff7b72;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(102, 224, 163, 0.18), transparent 32%),
+          radial-gradient(circle at top right, rgba(125, 207, 255, 0.16), transparent 28%),
+          linear-gradient(180deg, #071018 0%, #0a1620 45%, #08121a 100%);
+        min-height: 100vh;
+      }
+
+      .shell {
+        width: min(1200px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 32px 0 56px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: 1.4fr 1fr;
+        align-items: end;
+        margin-bottom: 24px;
+      }
+
+      .hero-card,
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 24px;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+      }
+
+      .hero-card {
+        padding: 28px;
+      }
+
+      .eyebrow {
+        color: var(--accent);
+        letter-spacing: 0.16em;
+        font-size: 0.76rem;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 10px 0 12px;
+        font-size: clamp(2.4rem, 5vw, 4.3rem);
+        line-height: 0.96;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .stat-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stat {
+        padding: 22px;
+      }
+
+      .stat h2,
+      .metric-card h3,
+      .panel h2 {
+        margin: 0 0 8px;
+        font-size: 0.95rem;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .value {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 700;
+      }
+
+      .layout {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: 1.7fr 1fr;
+      }
+
+      .stack {
+        display: grid;
+        gap: 20px;
+      }
+
+      .panel {
+        padding: 22px;
+      }
+
+      .chart {
+        width: 100%;
+        height: 260px;
+        margin-top: 16px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+      }
+
+      .axis-labels,
+      .legend,
+      .accuracy-grid,
+      .episodes {
+        display: grid;
+        gap: 12px;
+      }
+
+      .legend {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 12px;
+      }
+
+      .legend span {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 8px;
+        border-radius: 999px;
+      }
+
+      .accuracy-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 14px;
+      }
+
+      .metric-card {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .bar {
+        height: 10px;
+        margin-top: 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+
+      .bar > span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--accent), var(--accent-3));
+      }
+
+      .difficulty {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+
+      .pill {
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--muted);
+      }
+
+      .pill.active {
+        border-color: rgba(102, 224, 163, 0.45);
+        color: var(--text);
+        background: rgba(102, 224, 163, 0.12);
+      }
+
+      .episodes {
+        margin-top: 14px;
+      }
+
+      .episode-row {
+        display: grid;
+        grid-template-columns: 72px 1fr 86px 86px;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .episode-row strong {
+        color: var(--text);
+      }
+
+      @media (max-width: 940px) {
+        .hero,
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .shell {
+          width: min(100% - 20px, 1200px);
+          padding-top: 20px;
+        }
+
+        .stat-grid,
+        .accuracy-grid,
+        .legend {
+          grid-template-columns: 1fr;
+        }
+
+        .episode-row {
+          grid-template-columns: 58px 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <section class="hero">
+        <article class="hero-card">
+          <div class="eyebrow">NEXUS v2 Production Dashboard</div>
+          <h1>Reward Curve from 0.28 to trained incident resolution.</h1>
+          <p>
+            Day 7 packages the deterministic Day 6 training loop into a judge-ready dashboard,
+            local demo, and HuggingFace Spaces deployment surface.
+          </p>
+        </article>
+        <div class="stat-grid">
+          <section class="panel stat">
+            <h2>Baseline Reward</h2>
+            <div class="value" id="baseline-reward">0.28</div>
+          </section>
+          <section class="panel stat">
+            <h2>Trained Reward</h2>
+            <div class="value" id="trained-reward">0.65</div>
+          </section>
+          <section class="panel stat">
+            <h2>Episodes</h2>
+            <div class="value" id="episode-count">30</div>
+          </section>
+          <section class="panel stat">
+            <h2>Avg Cost / Episode</h2>
+            <div class="value" id="avg-cost">$0.12</div>
+          </section>
+        </div>
+      </section>
+
+      <section class="layout">
+        <div class="stack">
+          <section class="panel">
+            <h2>Reward Curve</h2>
+            <p>30-episode training progression from deterministic Day 6 GRPO simulation.</p>
+            <svg class="chart" id="reward-chart" viewBox="0 0 800 260" preserveAspectRatio="none"></svg>
+            <div class="legend">
+              <span><i class="dot" style="background: var(--accent)"></i>Reward</span>
+              <span><i class="dot" style="background: var(--accent-2)"></i>Baseline 0.28</span>
+              <span><i class="dot" style="background: var(--accent-3)"></i>Target 0.65+</span>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Episode Costs</h2>
+            <p>Per-episode FORGE cost estimate across the full run.</p>
+            <svg class="chart" id="cost-chart" viewBox="0 0 800 260" preserveAspectRatio="none"></svg>
+          </section>
+        </div>
+
+        <div class="stack">
+          <section class="panel">
+            <h2>Agent Accuracy</h2>
+            <div class="accuracy-grid" id="accuracy-grid"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Difficulty Progression</h2>
+            <p>Curriculum target from Easy to Nightmare for the production story.</p>
+            <div class="difficulty" id="difficulty-ladder"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Recent Episodes</h2>
+            <div class="episodes" id="episodes"></div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <script id="fallback-metrics" type="application/json">
+      {
+        "reward_curve": [0.28, 0.31, 0.34, 0.36, 0.39, 0.42, 0.44, 0.47, 0.49, 0.51, 0.53, 0.55, 0.56, 0.57, 0.58, 0.59, 0.6, 0.61, 0.62, 0.62, 0.63, 0.63, 0.64, 0.64, 0.65, 0.65, 0.66, 0.66, 0.67, 0.67],
+        "cost_curve": [0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12],
+        "difficulty_progression": ["Easy", "Medium", "Hard", "Nightmare"],
+        "difficulty_ladder": ["Easy", "Medium", "Hard", "Nightmare"],
+        "episode_records": [
+          {"episode_index": 25, "incident_id": "INC006", "difficulty": "Hard", "reward": 0.65, "cost_usd": 0.12},
+          {"episode_index": 26, "incident_id": "INC007", "difficulty": "Hard", "reward": 0.66, "cost_usd": 0.12},
+          {"episode_index": 27, "incident_id": "INC008", "difficulty": "Nightmare", "reward": 0.66, "cost_usd": 0.12},
+          {"episode_index": 28, "incident_id": "INC005", "difficulty": "Nightmare", "reward": 0.67, "cost_usd": 0.12},
+          {"episode_index": 29, "incident_id": "INC003", "difficulty": "Nightmare", "reward": 0.67, "cost_usd": 0.12}
+        ],
+        "agent_accuracy": {"sentinel": 1.0, "prism": 1.0, "forge": 1.0, "guardian": 1.0},
+        "summary": {
+          "baseline_reward": 0.28,
+          "trained_reward": 0.67,
+          "episode_count": 30,
+          "average_cost_per_episode": 0.12,
+          "total_cost_usd": 3.6,
+          "execution_target_seconds": 5.0
+        }
+      }
+    </script>
+    <script>
+      async function loadMetrics() {
+        const fallback = JSON.parse(document.getElementById("fallback-metrics").textContent);
+        try {
+          const response = await fetch("./metrics.json");
+          if (response.ok) return await response.json();
+        } catch (error) {}
+        try {
+          const response = await fetch("/api/metrics");
+          if (response.ok) return await response.json();
+        } catch (error) {}
+        return fallback;
+      }
+
+      function linePath(values, width, height, padding, min, max) {
+        const span = Math.max(max - min, 0.0001);
+        return values.map((value, index) => {
+          const x = padding + (index * (width - padding * 2)) / Math.max(values.length - 1, 1);
+          const y = height - padding - ((value - min) / span) * (height - padding * 2);
+          return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+        }).join(" ");
+      }
+
+      function renderChart(target, values, options) {
+        const svg = document.getElementById(target);
+        const width = 800;
+        const height = 260;
+        const padding = 26;
+        const min = options.min;
+        const max = options.max;
+        const path = linePath(values, width, height, padding, min, max);
+        const guides = (options.guides || []).map((guide) => {
+          const y = height - padding - ((guide.value - min) / Math.max(max - min, 0.0001)) * (height - padding * 2);
+          return `<line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="${guide.color}" stroke-dasharray="6 6" stroke-width="1.4" opacity="0.9" />`;
+        }).join("");
+        const ticks = values.map((_, index) => {
+          const x = padding + (index * (width - padding * 2)) / Math.max(values.length - 1, 1);
+          return `<line x1="${x}" y1="${height - padding}" x2="${x}" y2="${height - padding + 5}" stroke="rgba(255,255,255,0.18)" />`;
+        }).join("");
+        svg.innerHTML = `
+          <defs>
+            <linearGradient id="${target}-gradient" x1="0" x2="1">
+              <stop offset="0%" stop-color="${options.colorStart}" />
+              <stop offset="100%" stop-color="${options.colorEnd}" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="${width}" height="${height}" rx="18" fill="transparent"></rect>
+          ${guides}
+          <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="rgba(255,255,255,0.16)" />
+          ${ticks}
+          <path d="${path}" fill="none" stroke="url(#${target}-gradient)" stroke-width="4" stroke-linecap="round" />
+        `;
+      }
+
+      function updateSummary(metrics) {
+        document.getElementById("baseline-reward").textContent = metrics.summary.baseline_reward.toFixed(2);
+        document.getElementById("trained-reward").textContent = metrics.summary.trained_reward.toFixed(2);
+        document.getElementById("episode-count").textContent = metrics.summary.episode_count;
+        document.getElementById("avg-cost").textContent = `$${metrics.summary.average_cost_per_episode.toFixed(2)}`;
+      }
+
+      function renderAccuracy(metrics) {
+        const grid = document.getElementById("accuracy-grid");
+        grid.innerHTML = Object.entries(metrics.agent_accuracy).map(([name, value]) => `
+          <div class="metric-card">
+            <h3>${name.toUpperCase()}</h3>
+            <div class="value">${Math.round(value * 100)}%</div>
+            <div class="bar"><span style="width:${Math.max(6, value * 100)}%"></span></div>
+          </div>
+        `).join("");
+      }
+
+      function renderDifficulty(metrics) {
+        const reached = new Set(metrics.difficulty_progression);
+        document.getElementById("difficulty-ladder").innerHTML = metrics.difficulty_ladder.map((level) => `
+          <span class="pill ${reached.has(level) ? "active" : ""}">${level}</span>
+        `).join("");
+      }
+
+      function renderEpisodes(metrics) {
+        const recent = metrics.episode_records.slice(-5).reverse();
+        document.getElementById("episodes").innerHTML = recent.map((episode) => `
+          <div class="episode-row">
+            <strong>#${episode.episode_index + 1}</strong>
+            <span>${episode.incident_id} · ${episode.difficulty}</span>
+            <span>${episode.reward.toFixed(2)}</span>
+            <span>$${episode.cost_usd.toFixed(2)}</span>
+          </div>
+        `).join("");
+      }
+
+      loadMetrics().then((metrics) => {
+        updateSummary(metrics);
+        renderAccuracy(metrics);
+        renderDifficulty(metrics);
+        renderEpisodes(metrics);
+        renderChart("reward-chart", metrics.reward_curve, {
+          min: 0.2,
+          max: 0.75,
+          colorStart: "#66e0a3",
+          colorEnd: "#7dcfff",
+          guides: [
+            { value: 0.28, color: "#ffb86b" },
+            { value: 0.65, color: "#7dcfff" }
+          ]
+        });
+        renderChart("cost-chart", metrics.cost_curve, {
+          min: 0,
+          max: 0.2,
+          colorStart: "#ffb86b",
+          colorEnd: "#66e0a3"
+        });
+      });
+    </script>
+  </body>
+</html>
