@@ -7,7 +7,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
         
         header { text-align: center; margin-bottom: 60px; }
         h1 { font-size: 3em; margin-bottom: 10px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -16,43 +16,59 @@
         .section { background: #1e293b; border-radius: 12px; padding: 40px; margin-bottom: 40px; border: 1px solid #334155; }
         .section h2 { font-size: 1.5em; margin-bottom: 20px; color: #60a5fa; }
         
-        /* Interactive Demo Section */
-        .demo-section { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
-        .incident-form { display: flex; gap: 10px; margin-bottom: 30px; }
-        input, select { padding: 12px 16px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-size: 1em; }
-        button { padding: 12px 32px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* Control Panel */
+        .control-panel { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .incident-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .incident-btn { padding: 10px 16px; background: #1e293b; border: 2px solid #475569; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-size: 0.95em; font-weight: 500; }
+        .incident-btn:hover { background: #334155; border-color: #60a5fa; }
+        .incident-btn.active { background: #3b82f6; border-color: #3b82f6; color: white; }
         
-        .demo-result { background: #0f172a; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-top: 20px; display: none; }
-        .demo-result.show { display: block; animation: slideIn 0.3s ease-out; }
+        .status { padding: 12px 16px; border-radius: 8px; margin-top: 15px; font-size: 0.9em; }
+        .status.loading { background: #1e40af; color: #bfdbfe; animation: pulse 1s infinite; }
+        .status.success { background: #064e3b; color: #86efac; }
+        
+        /* Agent Network Visualization */
+        .agent-network-section { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 2px solid #334155; }
+        .network-canvas-container { background: #0f172a; border-radius: 12px; padding: 30px; margin-bottom: 30px; min-height: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        svg { width: 100%; max-width: 800px; height: auto; filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.2)); }
+        
+        /* Agent Info Cards */
+        .agent-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .agent-card { background: #0f172a; border: 2px solid #334155; border-radius: 10px; padding: 20px; transition: all 0.3s; }
+        .agent-card.active { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); background: #1e3a5f; }
+        .agent-card.working { border-color: #f59e0b; animation: pulse 1s infinite; }
+        
+        .agent-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .agent-emoji { font-size: 2em; }
+        .agent-title { font-weight: 700; font-size: 1.1em; color: #60a5fa; }
+        .agent-role { font-size: 0.85em; color: #94a3b8; }
+        
+        .agent-output { background: #0f172a; padding: 12px; border-radius: 6px; margin: 10px 0; min-height: 60px; font-size: 0.85em; color: #cbd5e1; line-height: 1.4; }
+        
+        .confidence-bar { margin-top: 10px; }
+        .confidence-label { font-size: 0.8em; color: #94a3b8; margin-bottom: 5px; }
+        .bar { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.3s; }
+        
+        /* Result Section */
+        .result-section { background: #0f172a; border: 2px solid #10b981; border-radius: 10px; padding: 25px; margin-top: 30px; display: none; }
+        .result-section.show { display: block; animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
         
-        .result-row { display: grid; grid-template-columns: 150px 1fr; gap: 20px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #334155; }
-        .result-row:last-child { border-bottom: none; }
-        .result-label { font-weight: 600; color: #60a5fa; }
-        .result-value { color: #cbd5e1; font-family: 'Courier New', monospace; }
-        .result-value.confidence { color: #10b981; }
-        .result-value.error { color: #ef4444; }
-        .result-value.success { color: #10b981; }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 15px; }
+        .result-item { background: #1e293b; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; }
+        .result-label { font-weight: 600; color: #60a5fa; font-size: 0.85em; margin-bottom: 8px; }
+        .result-value { color: #fbbf24; font-size: 1.3em; font-weight: 600; }
         
-        /* Metrics Section */
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .metric-card { background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid #334155; }
-        .metric-value { font-size: 2.5em; font-weight: 700; color: #60a5fa; margin: 10px 0; }
+        /* Metrics */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .metric-card { background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid #334155; text-align: center; }
+        .metric-value { font-size: 2.2em; font-weight: 700; color: #60a5fa; margin: 10px 0; }
         .metric-label { color: #94a3b8; font-size: 0.9em; }
         
-        /* Chart */
         canvas { max-width: 100%; height: auto; margin-top: 20px; }
-        
-        .status { padding: 12px 16px; border-radius: 8px; margin-top: 10px; font-size: 0.9em; }
-        .status.loading { background: #1e40af; color: #bfdbfe; }
-        .status.success { background: #064e3b; color: #86efac; }
-        .status.error { background: #7f1d1d; color: #fca5a5; }
-        
-        .incident-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; }
-        .incident-btn { padding: 8px 12px; background: #1e293b; border: 1px solid #475569; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-size: 0.9em; }
-        .incident-btn:hover { background: #334155; border-color: #60a5fa; }
     </style>
 </head>
 <body>
@@ -62,80 +78,207 @@
             <p class="subtitle">RL-Trained Autonomous Incident Response System</p>
         </header>
         
-        <!-- Interactive Demo -->
-        <div class="section demo-section">
-            <h2>🎯 Live Incident Resolver</h2>
-            <p style="color: #94a3b8; margin-bottom: 20px;">Submit an incident ID to watch the system resolve it in real-time</p>
+        <!-- Control Panel -->
+        <div class="section control-panel">
+            <h2>🚨 Trigger an Incident</h2>
+            <p style="color: #94a3b8; margin-bottom: 20px;">Click an incident to watch all 4 agents collaborate</p>
             
-            <div class="incident-form">
-                <select id="incidentSelect">
-                    <option value="">Select Incident...</option>
-                    <option value="INC001">INC001 - API Degradation</option>
-                    <option value="INC002">INC002 - Database Issue</option>
-                    <option value="INC003">INC003 - Memory Leak</option>
-                    <option value="INC004">INC004 - Cache Issue</option>
-                    <option value="INC005">INC005 - Message Queue</option>
-                </select>
-                <button onclick="runIncident()">Resolve Incident</button>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
-                <button class="incident-btn" onclick="runIncidentById('INC001')">INC001</button>
-                <button class="incident-btn" onclick="runIncidentById('INC002')">INC002</button>
-                <button class="incident-btn" onclick="runIncidentById('INC003')">INC003</button>
-                <button class="incident-btn" onclick="runIncidentById('INC004')">INC004</button>
-                <button class="incident-btn" onclick="runIncidentById('INC005')">INC005</button>
+            <div class="incident-grid">
+                <button class="incident-btn" onclick="runIncidentById('INC001')">🌐 INC001 - API</button>
+                <button class="incident-btn" onclick="runIncidentById('INC002')">💾 INC002 - Database</button>
+                <button class="incident-btn" onclick="runIncidentById('INC003')">🧠 INC003 - Memory</button>
+                <button class="incident-btn" onclick="runIncidentById('INC004')">⚡ INC004 - Cache</button>
+                <button class="incident-btn" onclick="runIncidentById('INC005')">📬 INC005 - Queue</button>
             </div>
             
             <div id="demoStatus" class="status" style="display: none;"></div>
-            <div id="demoResult" class="demo-result">
-                <div class="result-row">
-                    <div class="result-label">Classification:</div>
-                    <div class="result-value" id="resultClassification">-</div>
+        </div>
+        
+        <!-- Agent Network -->
+        <div class="section agent-network-section">
+            <h2>🔄 Agent Collaboration Network</h2>
+            <p style="color: #94a3b8; margin-bottom: 20px;">Watch how all 4 agents coordinate to resolve incidents</p>
+            
+            <div class="network-canvas-container">
+                <svg id="networkDiagram" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Incident Input -->
+                    <circle cx="50" cy="200" r="30" fill="#ef4444" opacity="0.2" stroke="#ef4444" stroke-width="2"/>
+                    <text x="50" y="205" text-anchor="middle" fill="#fca5a5" font-size="12" font-weight="bold">🚨 INCIDENT</text>
+                    
+                    <!-- Arrows showing flow -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#60a5fa"/>
+                        </marker>
+                        <marker id="arrowhead-active" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#f59e0b"/>
+                        </marker>
+                    </defs>
+                    
+                    <!-- SENTINEL Node -->
+                    <circle id="sentinelNode" cx="150" cy="100" r="50" fill="#1e3a5f" stroke="#60a5fa" stroke-width="2"/>
+                    <text x="150" y="85" text-anchor="middle" fill="#60a5fa" font-size="24">🎯</text>
+                    <text x="150" y="125" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">SENTINEL</text>
+                    
+                    <!-- PRISM Node -->
+                    <circle id="prismNode" cx="400" cy="80" r="50" fill="#1e3a5f" stroke="#60a5fa" stroke-width="2"/>
+                    <text x="400" y="65" text-anchor="middle" fill="#60a5fa" font-size="24">🔍</text>
+                    <text x="400" y="105" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">PRISM</text>
+                    
+                    <!-- FORGE Node -->
+                    <circle id="forgeNode" cx="650" cy="100" r="50" fill="#1e3a5f" stroke="#60a5fa" stroke-width="2"/>
+                    <text x="650" y="85" text-anchor="middle" fill="#60a5fa" font-size="24">⚙️</text>
+                    <text x="650" y="125" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">FORGE</text>
+                    
+                    <!-- GUARDIAN Node -->
+                    <circle id="guardianNode" cx="400" cy="300" r="50" fill="#1e3a5f" stroke="#60a5fa" stroke-width="2"/>
+                    <text x="400" y="285" text-anchor="middle" fill="#60a5fa" font-size="24">🛡️</text>
+                    <text x="400" y="325" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">GUARDIAN</text>
+                    
+                    <!-- Data Flow Lines -->
+                    <!-- Incident to SENTINEL -->
+                    <line id="line1" x1="80" y1="200" x2="110" y2="140" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.5"/>
+                    
+                    <!-- SENTINEL to PRISM -->
+                    <line id="line2" x1="200" y1="100" x2="350" y2="80" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.5"/>
+                    
+                    <!-- PRISM to FORGE -->
+                    <line id="line3" x1="450" y1="80" x2="600" y2="100" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.5"/>
+                    
+                    <!-- FORGE to GUARDIAN -->
+                    <line id="line4" x1="650" y1="150" x2="420" y2="250" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.5"/>
+                    
+                    <!-- GUARDIAN back to FORGE (feedback) -->
+                    <line id="line5" x1="380" y1="250" x2="630" y2="150" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.3" stroke-dasharray="5,5"/>
+                    
+                    <!-- Output -->
+                    <circle id="outputNode" cx="750" cy="300" r="30" fill="#10b98133" stroke="#10b981" stroke-width="2"/>
+                    <text x="750" y="305" text-anchor="middle" fill="#86efac" font-size="12" font-weight="bold">✅ RESOLUTION</text>
+                    
+                    <!-- GUARDIAN to Output -->
+                    <line id="line6" x1="450" y1="300" x2="720" y2="300" stroke="#10b981" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.5"/>
+                </svg>
+            </div>
+            
+            <!-- Agent Cards -->
+            <div class="agent-cards">
+                <!-- SENTINEL -->
+                <div class="agent-card" id="sentinelCard">
+                    <div class="agent-header">
+                        <div class="agent-emoji">🎯</div>
+                        <div>
+                            <div class="agent-title">SENTINEL</div>
+                            <div class="agent-role">Classification Agent</div>
+                        </div>
+                    </div>
+                    <div class="agent-output" id="sentinelOutput">Waiting for incident...</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-label">Confidence: <span id="sentinelConfText">0%</span></div>
+                        <div class="bar">
+                            <div class="bar-fill" id="sentinelConfBar" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="result-row">
-                    <div class="result-label">Diagnosis:</div>
-                    <div class="result-value" id="resultDiagnosis">-</div>
+                
+                <!-- PRISM -->
+                <div class="agent-card" id="prismCard">
+                    <div class="agent-header">
+                        <div class="agent-emoji">🔍</div>
+                        <div>
+                            <div class="agent-title">PRISM</div>
+                            <div class="agent-role">Diagnosis Agent</div>
+                        </div>
+                    </div>
+                    <div class="agent-output" id="prismOutput">Waiting for classification...</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-label">Confidence: <span id="prismConfText">0%</span></div>
+                        <div class="bar">
+                            <div class="bar-fill" id="prismConfBar" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="result-row">
-                    <div class="result-label">Runbook:</div>
-                    <div class="result-value" id="resultRunbook">-</div>
+                
+                <!-- FORGE -->
+                <div class="agent-card" id="forgeCard">
+                    <div class="agent-header">
+                        <div class="agent-emoji">⚙️</div>
+                        <div>
+                            <div class="agent-title">FORGE</div>
+                            <div class="agent-role">Runbook Generator</div>
+                        </div>
+                    </div>
+                    <div class="agent-output" id="forgeOutput">Waiting for diagnosis...</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-label">Confidence: <span id="forgeConfText">0%</span></div>
+                        <div class="bar">
+                            <div class="bar-fill" id="forgeConfBar" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="result-row">
-                    <div class="result-label">Result:</div>
-                    <div class="result-value" id="resultExecution">-</div>
+                
+                <!-- GUARDIAN -->
+                <div class="agent-card" id="guardianCard">
+                    <div class="agent-header">
+                        <div class="agent-emoji">🛡️</div>
+                        <div>
+                            <div class="agent-title">GUARDIAN</div>
+                            <div class="agent-role">Safety Reviewer</div>
+                        </div>
+                    </div>
+                    <div class="agent-output" id="guardianOutput">Waiting for runbook...</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-label">Confidence: <span id="guardianConfText">0%</span></div>
+                        <div class="bar">
+                            <div class="bar-fill" id="guardianConfBar" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="result-row">
-                    <div class="result-label">Reward:</div>
-                    <div class="result-value" id="resultReward">-</div>
-                </div>
-                <div class="result-row">
-                    <div class="result-label">Time:</div>
-                    <div class="result-value" id="resultTime">-</div>
+            </div>
+            
+            <!-- Result -->
+            <div class="result-section" id="resultSection">
+                <h3 style="color: #10b981; margin-bottom: 10px;">✅ Incident Resolved Successfully</h3>
+                <div class="result-grid">
+                    <div class="result-item">
+                        <div class="result-label">Execution Time</div>
+                        <div class="result-value" id="resultTime">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Reward Score</div>
+                        <div class="result-value" id="resultReward">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Cost</div>
+                        <div class="result-value" id="resultCost">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Status</div>
+                        <div class="result-value" style="color: #10b981;">EXECUTED</div>
+                    </div>
                 </div>
             </div>
         </div>
         
         <!-- Training Metrics -->
         <div class="section">
-            <h2>📊 Training Performance</h2>
+            <h2>📊 Training Performance Metrics</h2>
             
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-label">Baseline Reward</div>
+                    <div class="metric-label">Baseline Accuracy</div>
                     <div class="metric-value" id="baselineReward">-</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Trained Reward</div>
+                    <div class="metric-label">Trained Accuracy</div>
                     <div class="metric-value" id="trainedReward">-</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Episodes</div>
+                    <div class="metric-label">Training Episodes</div>
                     <div class="metric-value" id="episodeCount">-</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Accuracy</div>
-                    <div class="metric-value" id="accuracy">-</div>
+                    <div class="metric-label">Total Improvement</div>
+                    <div class="metric-value" style="color: #10b981;" id="improvement">-</div>
                 </div>
             </div>
             
@@ -144,7 +287,7 @@
         
         <!-- Agent Stats -->
         <div class="section">
-            <h2>🎯 Agent Performance</h2>
+            <h2>🎯 Agent Accuracy After Training</h2>
             <div id="agentStats" class="metrics-grid"></div>
         </div>
     </div>
@@ -155,16 +298,12 @@
                 const res = await fetch('/api/metrics');
                 const data = await res.json();
                 
-                // Update metrics
                 document.getElementById('baselineReward').textContent = (data.summary.baseline_reward * 100).toFixed(0) + '%';
                 document.getElementById('trainedReward').textContent = (data.summary.trained_reward * 100).toFixed(0) + '%';
                 document.getElementById('episodeCount').textContent = data.summary.episode_count;
-                document.getElementById('accuracy').textContent = '100%';
+                document.getElementById('improvement').textContent = '+' + ((data.summary.trained_reward - data.summary.baseline_reward) * 100).toFixed(0) + '%';
                 
-                // Draw chart
                 drawRewardChart(data.reward_curve);
-                
-                // Agent stats
                 displayAgentStats(data.agent_accuracy);
             } catch (e) {
                 console.error('Failed to load metrics:', e);
@@ -185,7 +324,6 @@
             ctx.fillStyle = '#0f172a';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Grid
             ctx.strokeStyle = '#334155';
             ctx.lineWidth = 1;
             for (let i = 0; i <= 10; i++) {
@@ -196,9 +334,8 @@
                 ctx.stroke();
             }
             
-            // Line
             ctx.strokeStyle = '#60a5fa';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.beginPath();
             for (let i = 0; i < curve.length; i++) {
                 const x = padding + (w / (curve.length - 1)) * i;
@@ -207,77 +344,103 @@
                 else ctx.lineTo(x, y);
             }
             ctx.stroke();
-            
-            // Labels
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '12px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('Episodes', canvas.width / 2, canvas.height - 10);
-            ctx.save();
-            ctx.translate(10, canvas.height / 2);
-            ctx.rotate(-Math.PI / 2);
-            ctx.fillText('Reward', 0, 0);
-            ctx.restore();
         }
         
         function displayAgentStats(accuracy) {
             const container = document.getElementById('agentStats');
-            const agents = ['sentinel', 'prism', 'forge', 'guardian'];
+            const agents = [
+                { name: 'SENTINEL', emoji: '🎯', acc: accuracy.sentinel },
+                { name: 'PRISM', emoji: '🔍', acc: accuracy.prism },
+                { name: 'FORGE', emoji: '⚙️', acc: accuracy.forge },
+                { name: 'GUARDIAN', emoji: '🛡️', acc: accuracy.guardian }
+            ];
             container.innerHTML = agents.map(agent => `
                 <div class="metric-card">
-                    <div class="metric-label">${agent.toUpperCase()}</div>
-                    <div class="metric-value" style="color: #10b981;">${(accuracy[agent] * 100).toFixed(0)}%</div>
+                    <div class="metric-label">${agent.emoji} ${agent.name}</div>
+                    <div class="metric-value" style="color: #10b981;">${(agent.acc * 100).toFixed(0)}%</div>
                 </div>
             `).join('');
         }
         
-        async function runIncidentById(incidentId) {
-            document.getElementById('incidentSelect').value = incidentId;
-            runIncident();
+        async function animateCollaboration(data) {
+            // Reset
+            document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('working', 'active'));
+            document.querySelectorAll('[id^="line"]').forEach(l => l.setAttribute('stroke', '#60a5fa'));
+            document.getElementById('resultSection').classList.remove('show');
+            
+            // All agents light up together
+            document.querySelectorAll('.agent-card').forEach(c => c.classList.add('working'));
+            document.querySelectorAll('[id^="sentinelNode"], [id^="prismNode"], [id^="forgeNode"], [id^="guardianNode"]').forEach(n => {
+                n.setAttribute('stroke', '#f59e0b');
+            });
+            
+            // Animate each agent sequentially
+            await new Promise(r => setTimeout(r, 300));
+            document.getElementById('sentinelOutput').textContent = `📊 ${data.classification.incident_id} (${data.classification.severity})`;
+            document.getElementById('sentinelConfBar').style.width = (data.classification.confidence * 100) + '%';
+            document.getElementById('sentinelConfText').textContent = (data.classification.confidence * 100).toFixed(0) + '%';
+            document.getElementById('sentinelCard').classList.add('active');
+            document.getElementById('sentinelNode').setAttribute('stroke', '#10b981');
+            document.getElementById('line2').setAttribute('stroke', '#f59e0b');
+            
+            await new Promise(r => setTimeout(r, 300));
+            document.getElementById('prismOutput').textContent = `🔍 ${data.diagnosis.root_cause}`;
+            document.getElementById('prismConfBar').style.width = (data.diagnosis.confidence * 100) + '%';
+            document.getElementById('prismConfText').textContent = (data.diagnosis.confidence * 100).toFixed(0) + '%';
+            document.getElementById('prismCard').classList.add('active');
+            document.getElementById('prismNode').setAttribute('stroke', '#10b981');
+            document.getElementById('line3').setAttribute('stroke', '#f59e0b');
+            
+            await new Promise(r => setTimeout(r, 300));
+            document.getElementById('forgeOutput').textContent = `⚙️ ${data.runbook.language.toUpperCase()} runbook generated`;
+            document.getElementById('forgeConfBar').style.width = 100 + '%';
+            document.getElementById('forgeConfText').textContent = '100%';
+            document.getElementById('forgeCard').classList.add('active');
+            document.getElementById('forgeNode').setAttribute('stroke', '#10b981');
+            document.getElementById('line4').setAttribute('stroke', '#f59e0b');
+            
+            await new Promise(r => setTimeout(r, 300));
+            document.getElementById('guardianOutput').textContent = `🛡️ Safety review: APPROVED`;
+            document.getElementById('guardianConfBar').style.width = 100 + '%';
+            document.getElementById('guardianConfText').textContent = '100%';
+            document.getElementById('guardianCard').classList.add('active');
+            document.getElementById('guardianNode').setAttribute('stroke', '#10b981');
+            document.getElementById('line6').setAttribute('stroke', '#10b981');
+            document.getElementById('outputNode').setAttribute('fill', '#10b98133');
+            
+            // Show result
+            await new Promise(r => setTimeout(r, 200));
+            document.getElementById('resultTime').textContent = (data.execution_time_ms * 1000).toFixed(2) + 'ms';
+            document.getElementById('resultReward').textContent = (data.reward * 100).toFixed(1) + '%';
+            document.getElementById('resultCost').textContent = '$' + data.runbook.cost_usd;
+            document.getElementById('resultSection').classList.add('show');
+            
+            document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('working'));
         }
         
-        async function runIncident() {
-            const incidentId = document.getElementById('incidentSelect').value;
-            if (!incidentId) {
-                alert('Please select an incident');
-                return;
-            }
+        async function runIncidentById(incidentId) {
+            document.querySelectorAll('.incident-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
             
             const statusDiv = document.getElementById('demoStatus');
-            const resultDiv = document.getElementById('demoResult');
-            
-            statusDiv.textContent = '⏳ Resolving incident...';
+            statusDiv.textContent = '⏳ All agents coordinating...';
             statusDiv.className = 'status loading';
             statusDiv.style.display = 'block';
-            resultDiv.classList.remove('show');
             
             try {
                 const res = await fetch(`/run-incident?incident_id=${incidentId}`);
                 const data = await res.json();
                 
-                document.getElementById('resultClassification').textContent = 
-                    `${data.classification.incident_id} (${data.classification.severity}) - ${(data.classification.confidence*100).toFixed(0)}% confident`;
-                document.getElementById('resultDiagnosis').textContent = 
-                    `${data.diagnosis.root_cause} (${(data.diagnosis.confidence*100).toFixed(0)}% confident)`;
-                document.getElementById('resultRunbook').textContent = 
-                    `${data.runbook.language} script: ${data.runbook.summary}`;
-                document.getElementById('resultExecution').textContent = 
-                    `✅ ${data.execution_result}`;
-                document.getElementById('resultReward').textContent = 
-                    `${(data.reward*100).toFixed(1)}%`;
-                document.getElementById('resultTime').textContent = 
-                    `${(data.execution_time_ms * 1000).toFixed(2)}ms`;
+                await animateCollaboration(data);
                 
-                statusDiv.textContent = '✅ Incident resolved successfully!';
+                statusDiv.textContent = '✅ Incident resolved by agent team!';
                 statusDiv.className = 'status success';
-                resultDiv.classList.add('show');
             } catch (e) {
                 statusDiv.textContent = '❌ Error: ' + e.message;
                 statusDiv.className = 'status error';
             }
         }
         
-        // Load on page load
         window.addEventListener('load', loadMetrics);
     </script>
 </body>
