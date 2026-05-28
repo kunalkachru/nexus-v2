@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexus-v3-config
+data:
+  APP_ENV: product
+  PORT: "7860"
+  NEXUS_DATABASE_PATH: /data/incidents.json

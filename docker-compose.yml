@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  nexus:
+    build:
+      context: .
+      args:
+        APP_ENV: product
+    environment:
+      APP_ENV: product
+      PORT: 7860
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./artifacts:/app/artifacts

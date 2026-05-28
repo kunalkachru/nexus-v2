@@ -4,13 +4,18 @@ from pathlib import Path
 def test_deployment_artifacts_exist() -> None:
     for path in [
         Path("Dockerfile"),
+        Path("docker-compose.yml"),
         Path("requirements.txt"),
         Path(".gitignore"),
         Path("README.md"),
+        Path("docs/OPERATIONS.md"),
         Path("frontend/dashboard.html"),
         Path("frontend/static/dashboard.js"),
         Path("frontend/static/dashboard.css"),
         Path("frontend/static/api.js"),
+        Path("ops/kubernetes/deployment.yaml"),
+        Path("ops/kubernetes/configmap.yaml"),
+        Path("ops/runbooks/README.md"),
     ]:
         assert path.exists(), f"missing {path}"
 
@@ -18,6 +23,8 @@ def test_deployment_artifacts_exist() -> None:
 def test_dockerfile_targets_huggingface_spaces() -> None:
     contents = Path("Dockerfile").read_text()
 
+    assert "ARG APP_ENV=demo" in contents
+    assert "ENV APP_ENV=${APP_ENV}" in contents
     assert "python:3.11" in contents
     assert "uvicorn" in contents
     assert "7860" in contents

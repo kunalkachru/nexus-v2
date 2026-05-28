@@ -26,6 +26,12 @@ Run the demo: `python demo.py`
 
 View metrics: Open `frontend/dashboard.html`
 
+## Product Deployment
+
+- Local product mode: `docker compose up --build`
+- Kubernetes manifests: `ops/kubernetes/deployment.yaml` and `ops/kubernetes/configmap.yaml`
+- Operations guide: `docs/OPERATIONS.md`
+
 ## Architecture
 
 - SENTINEL: Incident classification (90%+ accuracy)
