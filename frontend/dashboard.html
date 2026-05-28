@@ -3,445 +3,902 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS v2 - RL Incident Response</title>
+    <title>NEXUS v2 - Incident Command Dashboard</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
-        
-        header { text-align: center; margin-bottom: 60px; }
-        h1 { font-size: 3em; margin-bottom: 10px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .subtitle { font-size: 1.2em; color: #94a3b8; }
-        
-        .section { background: #1e293b; border-radius: 12px; padding: 40px; margin-bottom: 40px; border: 1px solid #334155; }
-        .section h2 { font-size: 1.5em; margin-bottom: 20px; color: #60a5fa; }
-        
-        /* Control Panel */
-        .control-panel { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
-        .incident-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        .incident-btn { padding: 10px 16px; background: #1e293b; border: 2px solid #475569; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-size: 0.95em; font-weight: 500; }
-        .incident-btn:hover { background: #334155; border-color: #60a5fa; }
-        .incident-btn.active { background: #3b82f6; border-color: #3b82f6; color: white; }
-        
-        .status { padding: 12px 16px; border-radius: 8px; margin-top: 15px; font-size: 0.9em; }
-        .status.loading { background: #1e40af; color: #bfdbfe; animation: pulse 1s infinite; }
-        .status.success { background: #064e3b; color: #86efac; }
-        
-        /* Agent Network Visualization */
-        .agent-network-section { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 2px solid #334155; }
-        .network-canvas-container { background: #0f172a; border-radius: 12px; padding: 30px; margin-bottom: 30px; min-height: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
-        svg { width: 100%; max-width: 800px; height: auto; filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.2)); }
-        
-        /* Agent Info Cards */
-        .agent-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-        .agent-card { background: #0f172a; border: 2px solid #334155; border-radius: 10px; padding: 20px; transition: all 0.3s; }
-        .agent-card.active { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); background: #1e3a5f; }
-        .agent-card.working { border-color: #f59e0b; animation: pulse 1s infinite; }
-        
-        .agent-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
-        .agent-emoji { font-size: 2em; }
-        .agent-title { font-weight: 700; font-size: 1.1em; color: #60a5fa; }
-        .agent-role { font-size: 0.85em; color: #94a3b8; }
-        
-        .agent-output { background: #0f172a; padding: 12px; border-radius: 6px; margin: 10px 0; min-height: 60px; font-size: 0.85em; color: #cbd5e1; line-height: 1.4; }
-        
-        .confidence-bar { margin-top: 10px; }
-        .confidence-label { font-size: 0.8em; color: #94a3b8; margin-bottom: 5px; }
-        .bar { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; }
-        .bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.3s; }
-        
-        /* Result Section */
-        .result-section { background: #0f172a; border: 2px solid #10b981; border-radius: 10px; padding: 25px; margin-top: 30px; display: none; }
-        .result-section.show { display: block; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
-        
-        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 15px; }
-        .result-item { background: #1e293b; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; }
-        .result-label { font-weight: 600; color: #60a5fa; font-size: 0.85em; margin-bottom: 8px; }
-        .result-value { color: #fbbf24; font-size: 1.3em; font-weight: 600; }
-        
-        /* Metrics */
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .metric-card { background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid #334155; text-align: center; }
-        .metric-value { font-size: 2.2em; font-weight: 700; color: #60a5fa; margin: 10px 0; }
-        .metric-label { color: #94a3b8; font-size: 0.9em; }
-        
-        canvas { max-width: 100%; height: auto; margin-top: 20px; }
+        :root {
+            --bg: #08111f;
+            --panel: rgba(10, 22, 40, 0.88);
+            --panel-strong: #0d1b30;
+            --border: rgba(102, 153, 204, 0.22);
+            --text: #e7eef7;
+            --muted: #9cb1c8;
+            --accent: #39c0ed;
+            --accent-2: #4ade80;
+            --warning: #f59e0b;
+            --danger: #fb7185;
+            --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(57, 192, 237, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(74, 222, 128, 0.12), transparent 24%),
+                linear-gradient(180deg, #07101c 0%, #08111f 42%, #050a12 100%);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1520px;
+            margin: 0 auto;
+            padding: 32px 18px 56px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.25fr 0.75fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .hero-panel,
+        .section {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        .hero-panel {
+            padding: 28px;
+        }
+
+        .eyebrow {
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 4vw, 4.3rem);
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+            margin-bottom: 14px;
+        }
+
+        .hero-copy {
+            color: var(--muted);
+            max-width: 54rem;
+            line-height: 1.6;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 22px;
+        }
+
+        .stat {
+            background: rgba(9, 18, 34, 0.74);
+            border: 1px solid rgba(96, 165, 250, 0.18);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.82rem;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.45rem;
+            font-weight: 700;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .incident-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .incident-btn {
+            background: rgba(8, 18, 31, 0.92);
+            border: 1px solid rgba(102, 153, 204, 0.2);
+            border-radius: 14px;
+            color: var(--text);
+            cursor: pointer;
+            padding: 14px;
+            text-align: left;
+            transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+        }
+
+        .incident-btn:hover,
+        .incident-btn.active {
+            border-color: var(--accent);
+            background: rgba(16, 34, 58, 0.96);
+            transform: translateY(-1px);
+        }
+
+        .incident-btn strong {
+            display: block;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        .incident-btn span {
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+
+        .status {
+            min-height: 46px;
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: rgba(15, 32, 55, 0.72);
+            color: var(--muted);
+            border: 1px solid rgba(96, 165, 250, 0.15);
+        }
+
+        .status.loading {
+            color: #dbeafe;
+            border-color: rgba(57, 192, 237, 0.42);
+        }
+
+        .status.success {
+            color: #d1fae5;
+            border-color: rgba(74, 222, 128, 0.42);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.25fr 0.9fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .section {
+            padding: 22px;
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .section-header h2 {
+            font-size: 1.2rem;
+        }
+
+        .section-note {
+            color: var(--muted);
+            font-size: 0.86rem;
+        }
+
+        .incident-summary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .summary-card {
+            background: rgba(9, 18, 34, 0.84);
+            border: 1px solid rgba(102, 153, 204, 0.16);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .summary-card .label {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+        }
+
+        .summary-card .value {
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .metric-card {
+            background: rgba(9, 18, 34, 0.84);
+            border: 1px solid rgba(102, 153, 204, 0.16);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .metric-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 14px;
+        }
+
+        .metric-name {
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .metric-current {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .sparkline {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            align-items: end;
+            height: 88px;
+        }
+
+        .sparkline div {
+            border-radius: 8px 8px 2px 2px;
+            background: linear-gradient(180deg, rgba(57, 192, 237, 0.95), rgba(57, 192, 237, 0.22));
+            min-height: 10px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 16px;
+        }
+
+        .panel-stack {
+            display: grid;
+            gap: 16px;
+        }
+
+        .detail-card {
+            background: rgba(9, 18, 34, 0.84);
+            border: 1px solid rgba(102, 153, 204, 0.16);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .detail-card h3 {
+            font-size: 0.96rem;
+            margin-bottom: 12px;
+        }
+
+        .logs {
+            list-style: none;
+            display: grid;
+            gap: 8px;
+            max-height: 520px;
+            overflow: auto;
+            font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+            font-size: 0.8rem;
+        }
+
+        .logs li,
+        .timeline li,
+        .simple-list li {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(5, 12, 22, 0.72);
+            color: #d3dfec;
+            border: 1px solid rgba(102, 153, 204, 0.12);
+        }
+
+        .timeline,
+        .simple-list {
+            list-style: none;
+            display: grid;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: rgba(57, 192, 237, 0.14);
+            color: #b7e9f7;
+            font-size: 0.76rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .service-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .pill {
+            background: rgba(74, 222, 128, 0.14);
+            color: #c7f9d4;
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-size: 0.78rem;
+            border: 1px solid rgba(74, 222, 128, 0.16);
+        }
+
+        .agent-grid {
+            display: grid;
+            gap: 14px;
+        }
+
+        .agent-card {
+            background: rgba(9, 18, 34, 0.84);
+            border: 1px solid rgba(102, 153, 204, 0.16);
+            border-radius: 18px;
+            padding: 18px;
+            transition: border-color 180ms ease, transform 180ms ease;
+        }
+
+        .agent-card.active {
+            border-color: rgba(57, 192, 237, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .agent-title-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .agent-title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .confidence {
+            color: var(--accent-2);
+            font-weight: 700;
+            font-size: 0.88rem;
+        }
+
+        .agent-copy {
+            color: var(--muted);
+            line-height: 1.55;
+            margin-bottom: 14px;
+            font-size: 0.9rem;
+        }
+
+        .progress {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        }
+
+        .breakdown {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .breakdown span {
+            background: rgba(57, 192, 237, 0.1);
+            color: #caeff9;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.76rem;
+            border: 1px solid rgba(57, 192, 237, 0.14);
+        }
+
+        .subsection-label {
+            color: var(--muted);
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .result-banner {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(57, 192, 237, 0.14));
+            border: 1px solid rgba(74, 222, 128, 0.18);
+        }
+
+        .training-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .reward-curve {
+            display: grid;
+            grid-template-columns: repeat(30, minmax(0, 1fr));
+            gap: 5px;
+            align-items: end;
+            height: 220px;
+            padding-top: 12px;
+        }
+
+        .reward-curve div {
+            background: linear-gradient(180deg, rgba(57, 192, 237, 0.9), rgba(74, 222, 128, 0.28));
+            border-radius: 10px 10px 3px 3px;
+        }
+
+        .agent-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .link-btn {
+            background: none;
+            color: var(--accent);
+            border: 0;
+            cursor: pointer;
+            padding: 0;
+            font: inherit;
+        }
+
+        @media (max-width: 1120px) {
+            .hero,
+            .layout,
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .incident-summary,
+            .training-grid,
+            .agent-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .hero-stats,
+            .incident-summary,
+            .metrics-grid,
+            .training-grid,
+            .agent-stats,
+            .incident-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px 14px 42px;
+            }
+
+            .hero-panel,
+            .section {
+                padding: 18px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🤖 NEXUS v2</h1>
-            <p class="subtitle">RL-Trained Autonomous Incident Response System</p>
-        </header>
-        
-        <!-- Control Panel -->
-        <div class="section control-panel">
-            <h2>🚨 Trigger an Incident</h2>
-            <p style="color: #94a3b8; margin-bottom: 20px;">Click an incident to watch all 4 agents collaborate</p>
-            
-            <div class="incident-grid">
-                <button class="incident-btn" onclick="runIncidentById('INC001')">🌐 INC001 - API</button>
-                <button class="incident-btn" onclick="runIncidentById('INC002')">💾 INC002 - Database</button>
-                <button class="incident-btn" onclick="runIncidentById('INC003')">🧠 INC003 - Memory</button>
-                <button class="incident-btn" onclick="runIncidentById('INC004')">⚡ INC004 - Cache</button>
-                <button class="incident-btn" onclick="runIncidentById('INC005')">📬 INC005 - Queue</button>
-            </div>
-            
-            <div id="demoStatus" class="status" style="display: none;"></div>
-        </div>
-        
-        <!-- Agent Network -->
-        <div class="section agent-network-section">
-            <h2>🔄 Agent Collaboration Network</h2>
-            <p style="color: #94a3b8; margin-bottom: 20px;">Watch how all 4 agents coordinate to resolve incidents</p>
-            
-            <div class="network-canvas-container">
-                <svg id="networkDiagram" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Incident Input -->
-                    <circle cx="50" cy="200" r="30" fill="#ef4444" opacity="0.2" stroke="#ef4444" stroke-width="2"/>
-                    <text x="50" y="205" text-anchor="middle" fill="#fca5a5" font-size="12" font-weight="bold">🚨 INCIDENT</text>
-                    
-                    <!-- Arrows showing flow -->
-                    <defs>
-                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                            <polygon points="0 0, 10 3, 0 6" fill="#60a5fa"/>
-                        </marker>
-                        <marker id="arrowhead-active" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                            <polygon points="0 0, 10 3, 0 6" fill="#f59e0b"/>
-                        </marker>
-                    </defs>
-                    
-                    <!-- SENTINEL Node -->
-                    <circle id="sentinelNode" cx="150" cy="100" r="50" fill="#1e3a5f" stroke="#60a5fa" stroke-width="2"/>
-                    <text x="150" y="85" text-anchor="middle" fill="#60a5fa" font-size="24">🎯</text>
-                    <text x="150" y="125" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">SENTINEL</text>
-                    
-                    <!-- PRISM Node -->
-                    <circle id="prismNode" cx="400" cy="80" r="50" fill="#1e3a5f" stroke="#60a5fa" stroke-width="2"/>
-                    <text x="400" y="65" text-anchor="middle" fill="#60a5fa" font-size="24">🔍</text>
-                    <text x="400" y="105" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">PRISM</text>
-                    
-                    <!-- FORGE Node -->
-                    <circle id="forgeNode" cx="650" cy="100" r="50" fill="#1e3a5f" stroke="#60a5fa" stroke-width="2"/>
-                    <text x="650" y="85" text-anchor="middle" fill="#60a5fa" font-size="24">⚙️</text>
-                    <text x="650" y="125" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">FORGE</text>
-                    
-                    <!-- GUARDIAN Node -->
-                    <circle id="guardianNode" cx="400" cy="300" r="50" fill="#1e3a5f" stroke="#60a5fa" stroke-width="2"/>
-                    <text x="400" y="285" text-anchor="middle" fill="#60a5fa" font-size="24">🛡️</text>
-                    <text x="400" y="325" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="bold">GUARDIAN</text>
-                    
-                    <!-- Data Flow Lines -->
-                    <!-- Incident to SENTINEL -->
-                    <line id="line1" x1="80" y1="200" x2="110" y2="140" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.5"/>
-                    
-                    <!-- SENTINEL to PRISM -->
-                    <line id="line2" x1="200" y1="100" x2="350" y2="80" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.5"/>
-                    
-                    <!-- PRISM to FORGE -->
-                    <line id="line3" x1="450" y1="80" x2="600" y2="100" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.5"/>
-                    
-                    <!-- FORGE to GUARDIAN -->
-                    <line id="line4" x1="650" y1="150" x2="420" y2="250" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.5"/>
-                    
-                    <!-- GUARDIAN back to FORGE (feedback) -->
-                    <line id="line5" x1="380" y1="250" x2="630" y2="150" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.3" stroke-dasharray="5,5"/>
-                    
-                    <!-- Output -->
-                    <circle id="outputNode" cx="750" cy="300" r="30" fill="#10b98133" stroke="#10b981" stroke-width="2"/>
-                    <text x="750" y="305" text-anchor="middle" fill="#86efac" font-size="12" font-weight="bold">✅ RESOLUTION</text>
-                    
-                    <!-- GUARDIAN to Output -->
-                    <line id="line6" x1="450" y1="300" x2="720" y2="300" stroke="#10b981" stroke-width="2" marker-end="url(#arrowhead)" opacity="0.5"/>
-                </svg>
-            </div>
-            
-            <!-- Agent Cards -->
-            <div class="agent-cards">
-                <!-- SENTINEL -->
-                <div class="agent-card" id="sentinelCard">
-                    <div class="agent-header">
-                        <div class="agent-emoji">🎯</div>
-                        <div>
-                            <div class="agent-title">SENTINEL</div>
-                            <div class="agent-role">Classification Agent</div>
-                        </div>
+        <div class="hero">
+            <div class="hero-panel">
+                <div class="eyebrow">NEXUS v2 Phase 2 Demo</div>
+                <h1>Incident response with live-style evidence, reasoning, and safety gates.</h1>
+                <p class="hero-copy">
+                    This dashboard simulates how SENTINEL, PRISM, FORGE, and GUARDIAN collaborate when fed production-shaped alerts,
+                    logs, metrics, deployment history, and runbook outcomes rather than hardcoded one-line incident summaries.
+                </p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-label">Execution Status</div>
+                        <div class="stat-value" id="heroStatus">Awaiting incident</div>
                     </div>
-                    <div class="agent-output" id="sentinelOutput">Waiting for incident...</div>
-                    <div class="confidence-bar">
-                        <div class="confidence-label">Confidence: <span id="sentinelConfText">0%</span></div>
-                        <div class="bar">
-                            <div class="bar-fill" id="sentinelConfBar" style="width: 0%"></div>
-                        </div>
+                    <div class="stat">
+                        <div class="stat-label">Top Severity</div>
+                        <div class="stat-value" id="heroSeverity">-</div>
                     </div>
-                </div>
-                
-                <!-- PRISM -->
-                <div class="agent-card" id="prismCard">
-                    <div class="agent-header">
-                        <div class="agent-emoji">🔍</div>
-                        <div>
-                            <div class="agent-title">PRISM</div>
-                            <div class="agent-role">Diagnosis Agent</div>
-                        </div>
-                    </div>
-                    <div class="agent-output" id="prismOutput">Waiting for classification...</div>
-                    <div class="confidence-bar">
-                        <div class="confidence-label">Confidence: <span id="prismConfText">0%</span></div>
-                        <div class="bar">
-                            <div class="bar-fill" id="prismConfBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- FORGE -->
-                <div class="agent-card" id="forgeCard">
-                    <div class="agent-header">
-                        <div class="agent-emoji">⚙️</div>
-                        <div>
-                            <div class="agent-title">FORGE</div>
-                            <div class="agent-role">Runbook Generator</div>
-                        </div>
-                    </div>
-                    <div class="agent-output" id="forgeOutput">Waiting for diagnosis...</div>
-                    <div class="confidence-bar">
-                        <div class="confidence-label">Confidence: <span id="forgeConfText">0%</span></div>
-                        <div class="bar">
-                            <div class="bar-fill" id="forgeConfBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- GUARDIAN -->
-                <div class="agent-card" id="guardianCard">
-                    <div class="agent-header">
-                        <div class="agent-emoji">🛡️</div>
-                        <div>
-                            <div class="agent-title">GUARDIAN</div>
-                            <div class="agent-role">Safety Reviewer</div>
-                        </div>
-                    </div>
-                    <div class="agent-output" id="guardianOutput">Waiting for runbook...</div>
-                    <div class="confidence-bar">
-                        <div class="confidence-label">Confidence: <span id="guardianConfText">0%</span></div>
-                        <div class="bar">
-                            <div class="bar-fill" id="guardianConfBar" style="width: 0%"></div>
-                        </div>
+                    <div class="stat">
+                        <div class="stat-label">Guardrail Decision</div>
+                        <div class="stat-value" id="heroGuardian">-</div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Result -->
-            <div class="result-section" id="resultSection">
-                <h3 style="color: #10b981; margin-bottom: 10px;">✅ Incident Resolved Successfully</h3>
-                <div class="result-grid">
-                    <div class="result-item">
-                        <div class="result-label">Execution Time</div>
-                        <div class="result-value" id="resultTime">-</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-label">Reward Score</div>
-                        <div class="result-value" id="resultReward">-</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-label">Cost</div>
-                        <div class="result-value" id="resultCost">-</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-label">Status</div>
-                        <div class="result-value" style="color: #10b981;">EXECUTED</div>
-                    </div>
+            <div class="hero-panel controls">
+                <div>
+                    <div class="eyebrow">Incident Control</div>
+                    <p class="hero-copy">Select one of the five realistic incidents to populate the observability and agent reasoning panels.</p>
                 </div>
+                <div class="incident-grid">
+                    <button class="incident-btn" data-incident="INC001">
+                        <strong>INC001 · API timeout</strong>
+                        <span>5000ms latency, CPU 95%, 5xx at 50/sec</span>
+                    </button>
+                    <button class="incident-btn" data-incident="INC002">
+                        <strong>INC002 · DB pool</strong>
+                        <span>500/500 connections, 10s queries, 200 active</span>
+                    </button>
+                    <button class="incident-btn" data-incident="INC003">
+                        <strong>INC003 · Memory leak</strong>
+                        <span>Heap 92%, GC 500ms, 5M+ objects</span>
+                    </button>
+                    <button class="incident-btn" data-incident="INC004">
+                        <strong>INC004 · Cache explosion</strong>
+                        <span>50GB cache, 100M keys, evictions 1000/sec</span>
+                    </button>
+                    <button class="incident-btn" data-incident="INC005">
+                        <strong>INC005 · Queue backlog</strong>
+                        <span>Lag 50K, throughput 100/s, depth still growing</span>
+                    </button>
+                </div>
+                <div class="status" id="demoStatus">Choose an incident to begin.</div>
             </div>
         </div>
-        
-        <!-- Training Metrics -->
-        <div class="section">
-            <h2>📊 Training Performance Metrics</h2>
-            
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-label">Baseline Accuracy</div>
-                    <div class="metric-value" id="baselineReward">-</div>
+
+        <div class="layout">
+            <div>
+                <div class="section">
+                    <div class="section-header">
+                        <h2>Incident Details</h2>
+                        <div class="section-note">Metrics dashboard, logs, alert timeline, history, and runbooks</div>
+                    </div>
+                    <div class="incident-summary" id="incidentSummary"></div>
+                    <div class="detail-card" id="incidentNarrative">
+                        <div class="badge">Awaiting selection</div>
+                        <p class="hero-copy">The incident details panel will render metrics, logs, related services, similar incidents, and deployment history once an incident is selected.</p>
+                    </div>
+                    <div class="service-pills" id="servicePills"></div>
+                    <div class="metrics-grid" id="metricsGrid"></div>
+                    <div class="detail-grid">
+                        <div class="panel-stack">
+                            <div class="detail-card">
+                                <h3>Recent Logs · last 20 relevant lines</h3>
+                                <ul class="logs" id="recentLogs"></ul>
+                            </div>
+                            <div class="detail-card">
+                                <h3>Alert Timeline</h3>
+                                <ul class="timeline" id="alertTimeline"></ul>
+                            </div>
+                        </div>
+                        <div class="panel-stack">
+                            <div class="detail-card">
+                                <h3>Similar Past Incidents</h3>
+                                <ul class="simple-list" id="similarIncidents"></ul>
+                            </div>
+                            <div class="detail-card">
+                                <h3>Recommended Runbooks</h3>
+                                <ul class="simple-list" id="recommendedRunbooks"></ul>
+                            </div>
+                            <div class="detail-card">
+                                <h3>Recent Deployments</h3>
+                                <ul class="simple-list" id="recentDeployments"></ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Trained Accuracy</div>
-                    <div class="metric-value" id="trainedReward">-</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Training Episodes</div>
-                    <div class="metric-value" id="episodeCount">-</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Total Improvement</div>
-                    <div class="metric-value" style="color: #10b981;" id="improvement">-</div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h2>Training Performance</h2>
+                        <div class="section-note">Reward Curve and trained agent accuracy</div>
+                    </div>
+                    <div class="training-grid" id="trainingSummary"></div>
+                    <div class="detail-card">
+                        <div class="subsection-label">Reward Curve</div>
+                        <div class="reward-curve" id="rewardCurve"></div>
+                    </div>
+                    <div class="agent-stats" id="agentStats" style="margin-top: 16px;"></div>
                 </div>
             </div>
-            
-            <canvas id="rewardChart"></canvas>
-        </div>
-        
-        <!-- Agent Stats -->
-        <div class="section">
-            <h2>🎯 Agent Accuracy After Training</h2>
-            <div id="agentStats" class="metrics-grid"></div>
+
+            <div>
+                <div class="section">
+                    <div class="section-header">
+                        <h2>Agent Reasoning</h2>
+                        <div class="section-note">Confidence breakdown, correlation analysis, runbook logic, and safety review</div>
+                    </div>
+                    <div class="agent-grid">
+                        <div class="agent-card" id="sentinelCard">
+                            <div class="agent-title-row">
+                                <div class="agent-title">SENTINEL</div>
+                                <div class="confidence" id="sentinelConfidence">0%</div>
+                            </div>
+                            <div class="progress"><div class="progress-fill" id="sentinelProgress" style="width: 0%"></div></div>
+                            <p class="agent-copy" id="sentinelReasoning">Waiting for incident context.</p>
+                            <div class="subsection-label">Confidence Breakdown + Evidence</div>
+                            <div class="breakdown" id="sentinelBreakdown"></div>
+                            <ul class="simple-list" id="sentinelEvidence"></ul>
+                        </div>
+
+                        <div class="agent-card" id="prismCard">
+                            <div class="agent-title-row">
+                                <div class="agent-title">PRISM</div>
+                                <div class="confidence" id="prismConfidence">0%</div>
+                            </div>
+                            <div class="progress"><div class="progress-fill" id="prismProgress" style="width: 0%"></div></div>
+                            <p class="agent-copy" id="prismReasoning">Waiting for classification.</p>
+                            <div class="subsection-label">Correlation Analysis + Log Snippets</div>
+                            <p class="agent-copy" id="prismCorrelation">No analysis yet.</p>
+                            <ul class="simple-list" id="prismLogs"></ul>
+                        </div>
+
+                        <div class="agent-card" id="forgeCard">
+                            <div class="agent-title-row">
+                                <div class="agent-title">FORGE</div>
+                                <div class="confidence" id="forgeConfidence">0%</div>
+                            </div>
+                            <div class="progress"><div class="progress-fill" id="forgeProgress" style="width: 0%"></div></div>
+                            <p class="agent-copy" id="forgeReasoning">Waiting for diagnosis.</p>
+                            <div class="subsection-label">Runbook Selection Logic + Success Rates</div>
+                            <p class="agent-copy" id="forgeLogic">No runbook selected.</p>
+                            <ul class="simple-list" id="forgeFixes"></ul>
+                        </div>
+
+                        <div class="agent-card" id="guardianCard">
+                            <div class="agent-title-row">
+                                <div class="agent-title">GUARDIAN</div>
+                                <div class="confidence" id="guardianConfidence">0%</div>
+                            </div>
+                            <div class="progress"><div class="progress-fill" id="guardianProgress" style="width: 0%"></div></div>
+                            <p class="agent-copy" id="guardianReasoning">Waiting for runbook.</p>
+                            <div class="subsection-label">Safety Checks + Policy Violations</div>
+                            <ul class="simple-list" id="guardianChecks"></ul>
+                            <ul class="simple-list" id="guardianViolations" style="margin-top: 10px;"></ul>
+                        </div>
+                    </div>
+                    <div class="result-banner" id="resultBanner">
+                        Choose an incident to see end-to-end reasoning and approval status.
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        function percent(value) {
+            return `${Math.round(value * 100)}%`;
+        }
+
+        function metricValue(metric) {
+            return `${metric.current}${metric.unit}`;
+        }
+
+        function normalizeBars(series) {
+            const max = Math.max(...series, 1);
+            return series.map((value) => Math.max(10, Math.round((value / max) * 100)));
+        }
+
+        function renderList(elementId, items, renderer) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = items.map(renderer).join("");
+        }
+
+        function activateCards() {
+            ["sentinelCard", "prismCard", "forgeCard", "guardianCard"].forEach((id) => {
+                document.getElementById(id).classList.add("active");
+            });
+        }
+
+        function renderIncident(data) {
+            const incident = data.incident;
+            const observability = data.observability;
+            const classification = data.classification;
+            const diagnosis = data.diagnosis;
+            const runbook = data.runbook;
+            const guardian = data.guardian;
+
+            document.getElementById("heroStatus").textContent = data.execution_result.toUpperCase();
+            document.getElementById("heroSeverity").textContent = incident.severity;
+            document.getElementById("heroGuardian").textContent = guardian.decision.toUpperCase();
+
+            document.getElementById("incidentSummary").innerHTML = [
+                ["Incident", `${incident.id} · ${incident.name}`],
+                ["Detected", incident.detected_at],
+                ["Duration", `${incident.duration_minutes} min`],
+                ["Runbook", runbook.recommended_runbook],
+            ].map(([label, value]) => `
+                <div class="summary-card">
+                    <div class="label">${label}</div>
+                    <div class="value">${value}</div>
+                </div>
+            `).join("");
+
+            document.getElementById("incidentNarrative").innerHTML = `
+                <div class="badge">${incident.summary}</div>
+                <p class="hero-copy">Affected services include ${incident.related_services.join(", ")}. The dashboard below shows the current evidence window NEXUS uses to classify, diagnose, generate a runbook, and enforce production safety checks.</p>
+            `;
+
+            document.getElementById("servicePills").innerHTML = incident.related_services
+                .map((service) => `<div class="pill">${service}</div>`)
+                .join("");
+
+            document.getElementById("metricsGrid").innerHTML = observability.metrics.map((metric) => `
+                <div class="metric-card">
+                    <div class="metric-top">
+                        <div class="metric-name">${metric.name}</div>
+                        <div class="metric-current">${metricValue(metric)}</div>
+                    </div>
+                    <div class="sparkline">
+                        ${normalizeBars(metric.series).map((height) => `<div style="height:${height}%"></div>`).join("")}
+                    </div>
+                </div>
+            `).join("");
+
+            renderList("recentLogs", observability.recent_logs, (line) => `<li>${line}</li>`);
+            renderList("alertTimeline", observability.alert_timeline, (item) => `<li><strong>${item.time}</strong> · ${item.event}</li>`);
+            renderList("similarIncidents", incident.similar_past_incidents, (item) => `
+                <li>
+                    <button class="link-btn" data-similar="${item.id}">${item.id}</button><br>
+                    ${item.summary}<br>
+                    <span class="section-note">Historical success rate ${Math.round(item.success_rate * 100)}%</span>
+                </li>
+            `);
+            renderList("recommendedRunbooks", observability.recommended_runbooks, (item) => `
+                <li>
+                    <strong>${item.name}</strong><br>
+                    <span class="section-note">Historical success rate ${Math.round(item.success_rate * 100)}%</span>
+                </li>
+            `);
+            renderList("recentDeployments", incident.recent_deployments, (item) => `
+                <li>
+                    <strong>${item.time} · ${item.service}</strong><br>
+                    ${item.version} · ${item.change}
+                </li>
+            `);
+
+            document.getElementById("sentinelConfidence").textContent = percent(classification.confidence);
+            document.getElementById("sentinelProgress").style.width = percent(classification.confidence);
+            document.getElementById("sentinelReasoning").textContent = classification.reasoning;
+            document.getElementById("sentinelBreakdown").innerHTML = Object.entries(classification.confidence_breakdown)
+                .map(([key, value]) => `<span>${key}: ${percent(value)}</span>`)
+                .join("");
+            renderList("sentinelEvidence", classification.evidence, (item) => `<li>${item}</li>`);
+
+            document.getElementById("prismConfidence").textContent = percent(diagnosis.confidence);
+            document.getElementById("prismProgress").style.width = percent(diagnosis.confidence);
+            document.getElementById("prismReasoning").textContent = diagnosis.reasoning;
+            document.getElementById("prismCorrelation").textContent = diagnosis.correlation_analysis;
+            renderList("prismLogs", diagnosis.supporting_logs, (item) => `<li>${item}</li>`);
+
+            const forgeConfidence = runbook.candidate_fixes.length ? Math.max(...runbook.candidate_fixes.map((item) => item.success_rate)) : 0;
+            document.getElementById("forgeConfidence").textContent = percent(forgeConfidence);
+            document.getElementById("forgeProgress").style.width = percent(forgeConfidence);
+            document.getElementById("forgeReasoning").textContent = runbook.reasoning;
+            document.getElementById("forgeLogic").textContent = runbook.selection_logic;
+            renderList("forgeFixes", runbook.candidate_fixes, (item) => `
+                <li>
+                    <strong>${item.action}</strong><br>
+                    <span class="section-note">Historical success rate ${Math.round(item.success_rate * 100)}%</span>
+                </li>
+            `);
+
+            document.getElementById("guardianConfidence").textContent = percent(guardian.confidence);
+            document.getElementById("guardianProgress").style.width = percent(guardian.confidence);
+            document.getElementById("guardianReasoning").textContent = guardian.reasoning;
+            renderList("guardianChecks", guardian.safety_checks, (item) => `<li>${item}</li>`);
+            renderList(
+                "guardianViolations",
+                guardian.policy_violations.length ? guardian.policy_violations : ["No policy violations detected."],
+                (item) => `<li>${item}</li>`
+            );
+
+            document.getElementById("resultBanner").innerHTML = `
+                <strong>${incident.id} resolved in simulation.</strong><br>
+                Reward ${Math.round(data.reward * 100)}%, execution time ${data.execution_time_ms}ms, estimated runbook cost $${runbook.cost_usd.toFixed(2)}.
+            `;
+
+            activateCards();
+        }
+
         async function loadMetrics() {
             try {
-                const res = await fetch('/api/metrics');
-                const data = await res.json();
-                
-                document.getElementById('baselineReward').textContent = (data.summary.baseline_reward * 100).toFixed(0) + '%';
-                document.getElementById('trainedReward').textContent = (data.summary.trained_reward * 100).toFixed(0) + '%';
-                document.getElementById('episodeCount').textContent = data.summary.episode_count;
-                document.getElementById('improvement').textContent = '+' + ((data.summary.trained_reward - data.summary.baseline_reward) * 100).toFixed(0) + '%';
-                
-                drawRewardChart(data.reward_curve);
-                displayAgentStats(data.agent_accuracy);
-            } catch (e) {
-                console.error('Failed to load metrics:', e);
+                const response = await fetch("/api/metrics");
+                const data = await response.json();
+
+                document.getElementById("trainingSummary").innerHTML = [
+                    ["Baseline Accuracy", `${Math.round(data.summary.baseline_reward * 100)}%`],
+                    ["Trained Accuracy", `${Math.round(data.summary.trained_reward * 100)}%`],
+                    ["Episodes", data.summary.episode_count],
+                    ["Improvement", `+${Math.round((data.summary.trained_reward - data.summary.baseline_reward) * 100)}%`],
+                ].map(([label, value]) => `
+                    <div class="summary-card">
+                        <div class="label">${label}</div>
+                        <div class="value">${value}</div>
+                    </div>
+                `).join("");
+
+                document.getElementById("rewardCurve").innerHTML = data.reward_curve
+                    .map((value) => `<div style="height:${Math.max(8, Math.round(value * 100))}%"></div>`)
+                    .join("");
+
+                document.getElementById("agentStats").innerHTML = [
+                    ["SENTINEL", data.agent_accuracy.sentinel],
+                    ["PRISM", data.agent_accuracy.prism],
+                    ["FORGE", data.agent_accuracy.forge],
+                    ["GUARDIAN", data.agent_accuracy.guardian],
+                ].map(([name, value]) => `
+                    <div class="summary-card">
+                        <div class="label">${name}</div>
+                        <div class="value">${Math.round(value * 100)}%</div>
+                    </div>
+                `).join("");
+            } catch (error) {
+                document.getElementById("trainingSummary").innerHTML = `
+                    <div class="summary-card">
+                        <div class="label">Metrics Error</div>
+                        <div class="value">${error.message}</div>
+                    </div>
+                `;
             }
         }
-        
-        function drawRewardChart(curve) {
-            const canvas = document.getElementById('rewardChart');
-            const ctx = canvas.getContext('2d');
-            
-            canvas.width = canvas.offsetWidth;
-            canvas.height = 300;
-            
-            const padding = 40;
-            const w = canvas.width - padding * 2;
-            const h = canvas.height - padding * 2;
-            
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= 10; i++) {
-                const y = padding + (h / 10) * i;
-                ctx.beginPath();
-                ctx.moveTo(padding, y);
-                ctx.lineTo(canvas.width - padding, y);
-                ctx.stroke();
-            }
-            
-            ctx.strokeStyle = '#60a5fa';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            for (let i = 0; i < curve.length; i++) {
-                const x = padding + (w / (curve.length - 1)) * i;
-                const y = padding + h - (curve[i] * h);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.stroke();
-        }
-        
-        function displayAgentStats(accuracy) {
-            const container = document.getElementById('agentStats');
-            const agents = [
-                { name: 'SENTINEL', emoji: '🎯', acc: accuracy.sentinel },
-                { name: 'PRISM', emoji: '🔍', acc: accuracy.prism },
-                { name: 'FORGE', emoji: '⚙️', acc: accuracy.forge },
-                { name: 'GUARDIAN', emoji: '🛡️', acc: accuracy.guardian }
-            ];
-            container.innerHTML = agents.map(agent => `
-                <div class="metric-card">
-                    <div class="metric-label">${agent.emoji} ${agent.name}</div>
-                    <div class="metric-value" style="color: #10b981;">${(agent.acc * 100).toFixed(0)}%</div>
-                </div>
-            `).join('');
-        }
-        
-        async function animateCollaboration(data) {
-            // Reset
-            document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('working', 'active'));
-            document.querySelectorAll('[id^="line"]').forEach(l => l.setAttribute('stroke', '#60a5fa'));
-            document.getElementById('resultSection').classList.remove('show');
-            
-            // All agents light up together
-            document.querySelectorAll('.agent-card').forEach(c => c.classList.add('working'));
-            document.querySelectorAll('[id^="sentinelNode"], [id^="prismNode"], [id^="forgeNode"], [id^="guardianNode"]').forEach(n => {
-                n.setAttribute('stroke', '#f59e0b');
-            });
-            
-            // Animate each agent sequentially
-            await new Promise(r => setTimeout(r, 300));
-            document.getElementById('sentinelOutput').textContent = `📊 ${data.classification.incident_id} (${data.classification.severity})`;
-            document.getElementById('sentinelConfBar').style.width = (data.classification.confidence * 100) + '%';
-            document.getElementById('sentinelConfText').textContent = (data.classification.confidence * 100).toFixed(0) + '%';
-            document.getElementById('sentinelCard').classList.add('active');
-            document.getElementById('sentinelNode').setAttribute('stroke', '#10b981');
-            document.getElementById('line2').setAttribute('stroke', '#f59e0b');
-            
-            await new Promise(r => setTimeout(r, 300));
-            document.getElementById('prismOutput').textContent = `🔍 ${data.diagnosis.root_cause}`;
-            document.getElementById('prismConfBar').style.width = (data.diagnosis.confidence * 100) + '%';
-            document.getElementById('prismConfText').textContent = (data.diagnosis.confidence * 100).toFixed(0) + '%';
-            document.getElementById('prismCard').classList.add('active');
-            document.getElementById('prismNode').setAttribute('stroke', '#10b981');
-            document.getElementById('line3').setAttribute('stroke', '#f59e0b');
-            
-            await new Promise(r => setTimeout(r, 300));
-            document.getElementById('forgeOutput').textContent = `⚙️ ${data.runbook.language.toUpperCase()} runbook generated`;
-            document.getElementById('forgeConfBar').style.width = 100 + '%';
-            document.getElementById('forgeConfText').textContent = '100%';
-            document.getElementById('forgeCard').classList.add('active');
-            document.getElementById('forgeNode').setAttribute('stroke', '#10b981');
-            document.getElementById('line4').setAttribute('stroke', '#f59e0b');
-            
-            await new Promise(r => setTimeout(r, 300));
-            document.getElementById('guardianOutput').textContent = `🛡️ Safety review: APPROVED`;
-            document.getElementById('guardianConfBar').style.width = 100 + '%';
-            document.getElementById('guardianConfText').textContent = '100%';
-            document.getElementById('guardianCard').classList.add('active');
-            document.getElementById('guardianNode').setAttribute('stroke', '#10b981');
-            document.getElementById('line6').setAttribute('stroke', '#10b981');
-            document.getElementById('outputNode').setAttribute('fill', '#10b98133');
-            
-            // Show result
-            await new Promise(r => setTimeout(r, 200));
-            document.getElementById('resultTime').textContent = (data.execution_time_ms * 1000).toFixed(2) + 'ms';
-            document.getElementById('resultReward').textContent = (data.reward * 100).toFixed(1) + '%';
-            document.getElementById('resultCost').textContent = '$' + data.runbook.cost_usd;
-            document.getElementById('resultSection').classList.add('show');
-            
-            document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('working'));
-        }
-        
-        async function runIncidentById(incidentId) {
-            document.querySelectorAll('.incident-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            const statusDiv = document.getElementById('demoStatus');
-            statusDiv.textContent = '⏳ All agents coordinating...';
-            statusDiv.className = 'status loading';
-            statusDiv.style.display = 'block';
-            
+
+        async function runIncident(incidentId, button) {
+            document.querySelectorAll(".incident-btn").forEach((node) => node.classList.remove("active"));
+            button.classList.add("active");
+
+            const status = document.getElementById("demoStatus");
+            status.textContent = `Loading ${incidentId} with production-style logs, metrics, deployments, and runbook history...`;
+            status.className = "status loading";
+
             try {
-                const res = await fetch(`/run-incident?incident_id=${incidentId}`);
-                const data = await res.json();
-                
-                await animateCollaboration(data);
-                
-                statusDiv.textContent = '✅ Incident resolved by agent team!';
-                statusDiv.className = 'status success';
-            } catch (e) {
-                statusDiv.textContent = '❌ Error: ' + e.message;
-                statusDiv.className = 'status error';
+                const response = await fetch(`/run-incident?incident_id=${incidentId}`);
+                const data = await response.json();
+                renderIncident(data);
+                status.textContent = `${incidentId} loaded. Agent reasoning and observability context are now visible.`;
+                status.className = "status success";
+            } catch (error) {
+                status.textContent = `Failed to load ${incidentId}: ${error.message}`;
+                status.className = "status";
             }
         }
-        
-        window.addEventListener('load', loadMetrics);
+
+        window.addEventListener("load", async () => {
+            await loadMetrics();
+
+            document.querySelectorAll(".incident-btn").forEach((button) => {
+                button.addEventListener("click", () => runIncident(button.dataset.incident, button));
+            });
+
+            document.getElementById("similarIncidents").addEventListener("click", (event) => {
+                if (event.target.matches("[data-similar]")) {
+                    document.getElementById("demoStatus").textContent = `Historical reference ${event.target.dataset.similar} selected for review context.`;
+                    document.getElementById("demoStatus").className = "status success";
+                }
+            });
+
+            const defaultButton = document.querySelector('[data-incident="INC001"]');
+            if (defaultButton) {
+                await runIncident("INC001", defaultButton);
+            }
+        });
     </script>
 </body>
 </html>

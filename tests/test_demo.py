@@ -17,8 +17,22 @@ def test_demo_output_contains_judge_facing_sections(capsys) -> None:
 
     captured = capsys.readouterr().out
 
+    assert "Incident:" in captured
     assert "Classification:" in captured
     assert "Diagnosis:" in captured
     assert "Runbook:" in captured
+    assert "Guardian:" in captured
     assert "Execution Result:" in captured
     assert "Final Reward:" in captured
+
+
+def test_demo_exposes_rich_observability_and_reasoning() -> None:
+    result = run_demo(incident_id="INC004")
+
+    assert result["incident"]["id"] == "INC004"
+    assert len(result["observability"]["recent_logs"]) == 20
+    assert len(result["observability"]["metrics"]) == 4
+    assert result["classification"]["confidence_breakdown"]
+    assert result["diagnosis"]["supporting_logs"]
+    assert result["runbook"]["candidate_fixes"]
+    assert result["guardian"]["safety_checks"]
