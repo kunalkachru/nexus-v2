@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(lifespan=lifespan)
 
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
 
 def get_incident_service(

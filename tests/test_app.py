@@ -24,6 +24,18 @@ def test_dashboard_routes_are_served() -> None:
     assert "Reward Curve" in dashboard.text
 
 
+def test_dashboard_serves_static_assets() -> None:
+    client = TestClient(app)
+
+    root = client.get("/dashboard")
+    js = client.get("/static/dashboard.js")
+    css = client.get("/static/dashboard.css")
+
+    assert root.status_code == 200
+    assert js.status_code == 200
+    assert css.status_code == 200
+
+
 def test_metrics_api_returns_dashboard_payload() -> None:
     client = TestClient(app)
 

@@ -8,6 +8,9 @@ def test_deployment_artifacts_exist() -> None:
         Path(".gitignore"),
         Path("README.md"),
         Path("frontend/dashboard.html"),
+        Path("frontend/static/dashboard.js"),
+        Path("frontend/static/dashboard.css"),
+        Path("frontend/static/api.js"),
     ]:
         assert path.exists(), f"missing {path}"
 
