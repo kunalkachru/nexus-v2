@@ -5,6 +5,7 @@ from pathlib import Path
 from incidents.catalogue import load_incident_types
 from server.agents import ForgeAgent, GuardianAgent, PrismAgent, SentinelAgent
 from server.models import SentinelClassification
+from training.evaluation import evaluate_training
 from training.runner import TrainingForgeClient, load_agent_policies, run_training
 
 
@@ -89,6 +90,7 @@ def build_metrics_payload(summary) -> dict[str, object]:
         "total_cost_usd": summary.total_cost_usd,
         "episode_records": [record.to_dict() for record in summary.episode_records],
         "agent_accuracy": compute_agent_accuracy(),
+        "training_evaluation": evaluate_training(summary),
         "summary": {
             "baseline_reward": 0.28,
             "trained_reward": trained_reward,

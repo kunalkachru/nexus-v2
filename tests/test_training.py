@@ -2,7 +2,7 @@ import json
 
 from training.curriculum import CurriculumAdapter
 from training.policy import AdamScalarOptimizer, ScalarPolicy
-from training.runner import run_training
+from training.runner import load_agent_policies, run_training
 
 
 def test_grpo_update_increases_policy_likelihood_of_good_actions() -> None:
@@ -60,6 +60,25 @@ def test_training_saves_reward_curve_and_tracks_episode_costs(tmp_path) -> None:
     assert saved["cost_curve"] == summary.cost_curve
 
 
+def test_training_records_agent_trajectories_with_observation_digests() -> None:
+    summary = run_training(num_episodes=3, seed=7)
+
+    first_step = summary.episode_records[0].steps[0]
+
+    assert first_step.agent_name == "sentinel"
+    assert first_step.log_prob < 0.0
+    assert first_step.observation_digest
+
+
+def test_training_updates_policy_parameters_after_positive_advantage() -> None:
+    policies = load_agent_policies()
+    baseline = policies["sentinel"].weight
+
+    run_training(num_episodes=5, seed=7, policies=policies)
+
+    assert policies["sentinel"].weight != baseline
+
+
 def test_training_metrics_include_dashboard_summary_fields(tmp_path) -> None:
     save_path = tmp_path / "metrics.json"
 
@@ -76,3 +95,5 @@ def test_training_metrics_include_dashboard_summary_fields(tmp_path) -> None:
     assert saved["agent_accuracy"]["prism"] >= 0.75
     assert "forge" in saved["agent_accuracy"]
     assert "guardian" in saved["agent_accuracy"]
+    assert saved["training_evaluation"]["reward_curve_final"] >= 0.65
+    assert "sentinel" in saved["training_evaluation"]["policy_drift"]

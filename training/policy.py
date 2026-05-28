@@ -52,3 +52,4 @@ class TrainingStepRecord:
     action: str
     log_prob: float
     reward_contribution: float
+    observation_digest: str
