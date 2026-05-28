@@ -20,6 +20,8 @@ class IncidentRepository:
         external_id: str,
         title: str,
         severity: str,
+        source: str | None = None,
+        service: str = "",
     ) -> IncidentRecord:
         incident = IncidentRecord(
             nexus_incident_id=f"nxs_{uuid4().hex[:12]}",
@@ -27,6 +29,8 @@ class IncidentRepository:
             title=title,
             severity=severity,
             status="investigating",
+            source=source,
+            service=service,
         )
         self._incident_store[incident.nexus_incident_id] = incident
         try:
