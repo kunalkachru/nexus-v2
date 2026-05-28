@@ -4,13 +4,17 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 import logging
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from server.config import AppConfig
-from server.db import create_session_factory
+from server.db import DatabaseSession, create_session_factory, get_db
 from server.incident_payloads import get_incident_definition, get_incident_details, list_supported_incident_ids
+from server.integrations.alerts import AlertNormalizer
+from server.integrations.deployments import DeploymentLookupService
+from server.integrations.models import IncomingIncidentWebhook
+from server.services.incidents import IncidentService
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +30,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+
+def get_incident_service(
+    session: DatabaseSession = Depends(get_db),
+) -> IncidentService:
+    return IncidentService(
+        session=session,
+        alert_normalizer=AlertNormalizer(),
+        deployment_lookup=DeploymentLookupService(),
+    )
 
 
 def _build_incident_response(incident_id: str) -> dict[str, object]:
@@ -102,6 +116,22 @@ async def dashboard() -> FileResponse:
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.post("/webhooks/incident", status_code=202)
+async def receive_incident_webhook(
+    payload: IncomingIncidentWebhook,
+    service: IncidentService = Depends(get_incident_service),
+) -> dict[str, object]:
+    return await service.create_incident_from_webhook(payload)
+
+
+@app.get("/incidents/{nexus_incident_id}")
+async def get_incident_status(
+    nexus_incident_id: str,
+    service: IncidentService = Depends(get_incident_service),
+) -> dict[str, object]:
+    return await service.get_incident_status(nexus_incident_id)
 
 
 @app.get("/api/metrics")

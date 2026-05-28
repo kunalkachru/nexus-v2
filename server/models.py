@@ -32,6 +32,28 @@ class IncidentRecord(BaseModel):
     title: str
     severity: Literal["P1", "P2", "P3"]
     status: Literal["investigating", "resolved", "blocked_by_guardian"]
+    source: Literal["datadog", "prometheus"] | None = None
+    service: str = ""
+
+
+class NormalizedAlertEnvelope(BaseModel):
+    source: Literal["datadog", "prometheus"]
+    external_id: str
+    title: str
+    severity: Literal["P1", "P2", "P3"]
+    service: str
+    detected_at: str
+    observed_values: dict[str, object] = Field(default_factory=dict)
+
+
+class IncidentLifecycleResponse(BaseModel):
+    nexus_incident_id: str
+    external_id: str
+    title: str
+    severity: Literal["P1", "P2", "P3"]
+    status: Literal["investigating", "resolved", "blocked_by_guardian"]
+    source: Literal["datadog", "prometheus"] | None = None
+    recent_deployments: list[dict[str, object]] = Field(default_factory=list)
 
 
 class SentinelClassification(BaseModel):
