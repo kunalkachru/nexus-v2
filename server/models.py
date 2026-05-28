@@ -26,6 +26,14 @@ class AgentStubInfo(BaseModel):
     implemented: bool = False
 
 
+class IncidentRecord(BaseModel):
+    nexus_incident_id: str
+    external_id: str
+    title: str
+    severity: Literal["P1", "P2", "P3"]
+    status: Literal["investigating", "resolved", "blocked_by_guardian"]
+
+
 class SentinelClassification(BaseModel):
     """Structured output returned by the SENTINEL classifier."""
 

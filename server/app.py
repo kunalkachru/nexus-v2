@@ -1,16 +1,29 @@
+import asyncio
 import json
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from server.incident_payloads import (
-    get_incident_definition,
-    get_incident_details,
-    list_supported_incident_ids,
-)
+from server.config import AppConfig
+from server.db import create_session_factory
+from server.incident_payloads import get_incident_definition, get_incident_details, list_supported_incident_ids
 
-app = FastAPI()
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    config = AppConfig()
+    app.state.config = config
+    app.state.db_session_factory = create_session_factory(config)
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
@@ -94,15 +107,25 @@ async def health() -> dict[str, str]:
 @app.get("/api/metrics")
 async def get_metrics():
     try:
-        with open("frontend/metrics.json") as file_handle:
-            return json.load(file_handle)
-    except Exception as exc:
-        return JSONResponse(status_code=500, content={"error": str(exc)})
+        return await asyncio.to_thread(_load_metrics_payload)
+    except FileNotFoundError:
+        return JSONResponse(status_code=404, content={"error": "metrics payload not found"})
+    except json.JSONDecodeError:
+        logger.exception("metrics payload is invalid json")
+        return JSONResponse(status_code=500, content={"error": "metrics payload is invalid"})
 
 
 @app.get("/run-incident")
 async def run_incident(incident_id: str = "INC001"):
     try:
         return _build_incident_response(incident_id)
-    except Exception as exc:
-        return JSONResponse(status_code=500, content={"error": str(exc)})
+    except ValueError as exc:
+        return JSONResponse(status_code=404, content={"error": str(exc)})
+    except KeyError:
+        logger.exception("incident payload is incomplete for %s", incident_id)
+        return JSONResponse(status_code=500, content={"error": "incident payload is incomplete"})
+
+
+def _load_metrics_payload() -> dict[str, object]:
+    with open("frontend/metrics.json") as file_handle:
+        return json.load(file_handle)
