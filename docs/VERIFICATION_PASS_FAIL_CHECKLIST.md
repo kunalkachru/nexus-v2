@@ -6,10 +6,12 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 
 - Raw input starts empty and `Load example logs` works.
 - Arbitrary priority labels such as `P6` and `critical` are accepted.
+- Evidence provenance now shows the fused observability adapter story, not only the static fixtures.
 - The incident console shows proposed fix, priority, normalized rank, and live reasoning state.
 - The Guardian gate exposes explicit approve and block controls.
-- The training lab shows the solution proposal, raw priority, and learning-contract count.
-- The settings page exposes the learning-contract count.
+- The training lab shows the solution proposal, raw priority, learning-contract count, audit-event count, and Guardian-review count.
+- The settings page exposes the learning-contract count, audit-event count, and Guardian-review count.
+- Mutating incident routes require an operator role.
 
 ## Before You Start
 
@@ -37,6 +39,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Normalized evidence is visible for live incidents.
 - [ ] The structured result cards expose proposed fix, priority, normalized rank, and live reasoning state.
 - [ ] Logs, metrics, traces, and deployments are visible.
+- [ ] Evidence provenance includes the fused adapter story for logs, metrics, traces, and deployments.
 - [ ] A newly created incident opens with backend-assembled live context.
 - [ ] A live reasoning toggle is visible and can switch the current incident view without manual URL edits.
 
@@ -75,6 +78,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Reward breakdown is visible.
 - [ ] Observation states are visible.
 - [ ] The RL episode contract shows the solution proposal, raw priority, priority rank, and live reasoning state.
+- [ ] The training page shows audit-event and Guardian-review counts.
 
 ## Settings
 
@@ -82,6 +86,12 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Integration posture is visible.
 - [ ] Replay readiness or configuration is visible.
 - [ ] The learning-contract count is visible.
+- [ ] The audit-event and Guardian-review counts are visible.
+
+## Hardening Check
+
+- [ ] A request with the `viewer` role is rejected from a mutating incident route with HTTP 403.
+- [ ] The normal operator browser flow still works for incident creation, Guardian review, and replay launch.
 
 ## End-To-End Flow
 

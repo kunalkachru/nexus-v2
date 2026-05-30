@@ -37,6 +37,11 @@ If you want the shortest path to the next meaningful product step, use this orde
 5. [Further backend service decomposition and operational cleanup](NEXUS_v2_PRIORITY_BACKLOG.md#5-further-backend-service-decomposition-and-operational-cleanup)
 6. [Docs and source-of-truth maintenance](NEXUS_v2_PRIORITY_BACKLOG.md#6-docs-and-source-of-truth-maintenance)
 
+Implementation note:
+
+- The MVP block that this priority list described is now implemented and browser-validated.
+- The walkthrough and browser checklists have been updated to explain exactly what each shipped item now shows.
+
 ## Section Matrix
 
 ### 1) `docs/superpowers/specs/2026-05-29-enterprise-ui-product-roadmap.md`

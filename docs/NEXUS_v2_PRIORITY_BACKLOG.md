@@ -10,6 +10,12 @@
 - Keep the UI updated as each task lands.
 - Stop after each logical task and validate the screen and the tests.
 
+## Current Implementation Note
+
+- The original MVP block of this backlog is now implemented and browser-validated in this pass.
+- The docs and validation items were refreshed to match the shipped flow.
+- The remaining product docs still track the longer-term production work that sits beyond the MVP block.
+
 ## Today's Target
 
 Deliver the smallest credible MVP that proves:

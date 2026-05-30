@@ -18,10 +18,23 @@ The latest implementation and browser pass confirmed:
 
 - raw-log intake starts empty and `Load example logs` fills a sample on demand
 - arbitrary priority labels such as `P6` and `critical` are accepted
+- the observability adapter layer can fuse log, metric, trace, and deployment evidence from a file-backed source when available
 - the incident console shows the proposed fix, priority, normalized rank, and live reasoning state
 - the `Guardian gate` is the explicit approval and block control surface
-- the training lab shows the solution proposal and learning-contract count
-- the settings page shows the learning-contract count
+- the training lab shows the solution proposal, learning-contract count, audit-event count, and Guardian-review count
+- the settings page shows the learning-contract count, audit-event count, and Guardian-review count
+- mutating incident routes are operator-gated, so the browser demo runs with the same control surface as the hardened backend
+
+## What Each Item Became
+
+If you want the shortest plain-English summary of what was built, use this list:
+
+1. Real observability and evidence fusion: the incident console now blends raw incident context with logs, metrics, traces, and deployment snapshots.
+2. GUARDIAN policy and governance: the approve/block control is explicit in the UI and the decision is stored as part of the incident record and artifact trail.
+3. Persistent RL and audit artifacts: the learning loop, audit history, and Guardian reviews are persisted and surfaced in Training and Settings.
+4. Auth, tenant, and deployment hardening: state-changing routes require an operator role, and the request path still enforces tenant and signature checks.
+5. Backend decomposition and cleanup: the incident service is now split across focused helpers for observability, governance, artifacts, and platform state.
+6. Docs and validation: the walkthrough and browser checklists now describe the exact flow the product ships with.
 
 ## What This Product Is
 
