@@ -90,3 +90,21 @@ def test_webhook_requires_valid_signature(client: TestClient) -> None:
         content=payload,
     )
     assert valid_signature.status_code == 202
+
+
+def test_mutating_routes_require_operator_role(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/manual-report",
+        headers=auth_headers(roles="viewer"),
+        json={
+            "affected_service": "billing-api",
+            "symptoms": ["checkout latency", "timeout spikes"],
+            "severity": "P1",
+            "reported_by": "operator",
+            "team": "platform",
+            "additional_context": "Role gate should block this request.",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "role not allowed"

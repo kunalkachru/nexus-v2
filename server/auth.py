@@ -13,6 +13,16 @@ class AuthenticatedContext(BaseModel):
     roles: list[str] = Field(default_factory=list)
 
 
+def require_role(auth: AuthenticatedContext, *allowed_roles: str) -> None:
+    if not allowed_roles:
+        return
+    if not auth.roles:
+        raise HTTPException(status_code=403, detail="role required")
+    allowed = {role.strip() for role in allowed_roles if role.strip()}
+    if not allowed.intersection(set(auth.roles)):
+        raise HTTPException(status_code=403, detail="role not allowed")
+
+
 async def require_auth(request: Request) -> AuthenticatedContext:
     user_id = request.headers.get("x-user-id", "").strip()
     tenant_id = request.headers.get("x-tenant-id", "").strip()

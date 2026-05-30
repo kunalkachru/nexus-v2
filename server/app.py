@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from server.audit import write_audit_log
-from server.auth import AuthenticatedContext, require_auth
+from server.auth import AuthenticatedContext, require_auth, require_role
 from server.auth import verify_webhook_signature
 from server.config import AppConfig
 from server.db import DatabaseSession, create_session_factory, get_db
@@ -134,6 +134,7 @@ async def receive_slack_command(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="slack_command")
+    require_role(auth, "operator", "incident_manager")
     response = await service.create_incident_from_slack_command(payload, tenant_id=auth.tenant_id)
     await write_audit_log("incident.slack_command.accepted", auth.tenant_id, response)
     return response
@@ -147,6 +148,7 @@ async def receive_stream_anomaly(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="stream_anomaly")
+    require_role(auth, "operator", "incident_manager")
     response = await service.create_incident_from_stream_anomaly(payload, tenant_id=auth.tenant_id)
     await write_audit_log("incident.stream_anomaly.accepted", auth.tenant_id, response)
     return response
@@ -192,6 +194,7 @@ async def launch_replay_scenario(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="replay_launch")
+    require_role(auth, "operator", "incident_manager")
     response = await service.launch_replay_scenario(scenario_id, tenant_id=auth.tenant_id)
     await write_audit_log(
         "replay.scenario.launched",
@@ -255,6 +258,7 @@ async def receive_manual_report(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="manual_report")
+    require_role(auth, "operator", "incident_manager")
     response = await service.create_incident_from_manual_report(payload, tenant_id=auth.tenant_id)
     await write_audit_log("incident.manual_report.accepted", auth.tenant_id, response)
     return response
@@ -268,6 +272,7 @@ async def receive_raw_text(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="raw_text")
+    require_role(auth, "operator", "incident_manager")
     response = await service.create_incident_from_raw_text(payload, tenant_id=auth.tenant_id)
     await write_audit_log("incident.raw_text.accepted", auth.tenant_id, response)
     return response
@@ -281,6 +286,7 @@ async def receive_batch_import(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="batch_import")
+    require_role(auth, "operator", "incident_manager")
     response = await service.create_incident_from_batch_import(payload, tenant_id=auth.tenant_id)
     await write_audit_log("incident.batch_import.accepted", auth.tenant_id, response)
     return response
@@ -350,6 +356,7 @@ async def execute_incident_v1(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="incident_execute")
+    require_role(auth, "operator", "guardian")
     response = await service.execute_incident(nexus_incident_id, tenant_id=auth.tenant_id)
     await write_audit_log(
         "incident.execute_v1.requested",
@@ -368,6 +375,7 @@ async def guardian_review_incident_v1(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="incident_execute")
+    require_role(auth, "operator", "guardian")
     response = await service.record_guardian_decision(nexus_incident_id, payload=payload, tenant_id=auth.tenant_id)
     await write_audit_log(
         "incident.guardian_review_v1.requested",
