@@ -1,6 +1,9 @@
 # NEXUS v2: Autonomous Incident Response Platform
 ## Comprehensive Product & Business Document
 
+> Historical product thesis and business case.
+> For current implementation status, use [README.md](../README.md), [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../docs/NEXUS_v2_DOC_STATUS_MATRIX.md), and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../docs/NEXUS_v2_PRIORITY_BACKLOG.md).
+
 **Version:** 1.0 | **Date:** May 2026 | **Confidential**
 
 ---
@@ -26,6 +29,8 @@
 # SECTION 1: EXECUTIVE SUMMARY
 
 **For:** C-level executives, board members, potential investors | **Read time:** 5 minutes
+
+> This section captures the original target vision and business case. It does not describe the current shipped state.
 
 ## The Pitch
 

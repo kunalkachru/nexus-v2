@@ -1,134 +1,104 @@
 # NEXUS v2 Priority Backlog
 
-> **Purpose:** This backlog ranks the remaining work after the UI-first roadmap and thin demo backend are complete. It is ordered so you can choose the next task based on product value, trust, and dependency.
+> **Purpose:** This backlog ranks the remaining work after the UI-first roadmap, thin backend seams, and demo-hardening work are complete.
+>
+> The earlier UI/demo backlog items are now complete. This list is the next-phase enterprise hardening backlog.
 
 ## How To Use This List
 
-- Pick item `1` if you want the biggest visible product credibility gain.
-- Pick item `2` if you want the strongest enterprise narrative and the best bridge to real backend integrations.
-- Pick item `3` if you want the safest technical foundation before doing more feature work.
-- Pick items `4-6` if you want to turn the demo-grade shell into a more production-shaped system.
-- Pick items `7-8` if you want to close out polish, realism, and documentation drift.
+- Pick item `1` if you want the biggest enterprise-credibility gain.
+- Pick item `2` if you want the clearest control story for approval and execution.
+- Pick item `3` if you want the strongest durability and recovery story.
+- Pick item `4` if you want the best readiness gain for multi-tenant / production mode.
+- Pick items `5-6` if you want to reduce operational risk and keep the docs honest.
 
 ## Ranked Tasks
 
-### 1. Visible Audit UI And Incident History
+### 1. Real Observability Ingestion And Evidence Fusion
 
-**Why this is high priority:** Users should be able to inspect what happened without leaving the product shell. This is the clearest trust and enterprise-feel upgrade.
-
-**What to do**
-- Add a visible audit trail section to the incident console.
-- Add a dedicated audit drawer or panel for incident history.
-- Surface who changed state, when, and why.
-- Make the audit trail readable without opening raw JSON or logs.
-
-**Done when**
-- The incident page shows an obvious audit trail.
-- The audit data is readable in the UI, not just available via API.
-- The manual demo flow can be validated visually from intake through audit review.
-
-### 2. Observability Adapters And Evidence Fusion
-
-**Why this is high priority:** This is the main bridge from a polished demo to a believable enterprise system. It is also the clearest way to justify the SENTINEL/PRISM/FORGE/GUARDIAN narrative.
+**Why this is highest priority:** It closes the biggest credibility gap between the polished product shell and the live enterprise system the docs describe.
 
 **What to do**
-- Add adapters for Prometheus and Datadog signals.
-- Add log correlation inputs from ELK/Loki style sources.
-- Add deployment and service metadata enrichment.
-- Make the incident evidence view show where each signal came from.
+- Replace fixture-only joins with real adapters for Prometheus, Datadog, and log sources such as ELK or Loki.
+- Carry source provenance all the way into the incident console.
+- Make the agent evidence panels show where signals came from and why they matter.
 
 **Done when**
-- The backend no longer relies only on fixture joins for evidence.
-- The agent cards visibly reference distinct input sources.
-- The incident timeline and signal sections show real source provenance.
+- The incident console can explain evidence provenance without relying on static fixture data.
+- The agent story is visibly grounded in live or adapter-backed source data.
 
-### 3. Split The Remaining Backend Monolith
+### 2. GUARDIAN Execution Policy And Runbook Governance
 
-**Why this is high priority:** The current backend is already functional, but the remaining logic in `server/app.py` is too dense for the next stage. Splitting it reduces risk before adding more integrations.
+**Why this is high priority:** A believable enterprise product needs a visible approval gate, not just a button that flips state.
 
 **What to do**
-- Move incident lifecycle helpers into dedicated service modules.
-- Move page route glue into route modules if it still lives in `server/app.py`.
-- Keep API contracts stable while changing internals.
+- Make approval, block, execute, and learn states explicit in the UI.
+- Add a clearer policy registry or decision record for why an action is allowed or denied.
+- Tie runbook selection to a more explicit matching and approval flow.
 
 **Done when**
-- `server/app.py` is mostly composition and wiring.
-- Incident logic lives in focused modules.
-- Tests continue to pass without changing the external UI flow.
+- Users can see why an execution request was accepted or blocked.
+- The approval gate feels like a genuine control point.
 
-### 4. Strengthen GUARDIAN Execution Policy
+### 3. Production Persistence And Durable Artifacts
 
-**Why this is high priority:** The product needs a clearer story for approval, rejection, and safe execution boundaries.
+**Why this is high priority:** Demo-grade file-backed storage is good enough for now, but the next phase needs a real durability story.
 
 **What to do**
-- Make execution outcomes explicit in the UI.
-- Show approval, blocked, executed, and learned states clearly.
-- Add more visible decision provenance for why an action is allowed or denied.
+- Move incident, audit, replay, and training state onto durable storage.
+- Keep the UI unchanged while swapping the backing store.
+- Preserve incident history across restarts and deployments.
 
 **Done when**
-- Users can see why GUARDIAN approved or blocked an action.
-- The execute flow feels like a real control point, not a button that only changes state.
+- The product can survive a restart without losing meaningful state.
+- Replay and training artifacts are durably queryable.
 
-### 5. Auth, Tenant, And Signature Hardening
+### 4. Auth, Tenant, And Deployment Hardening
 
-**Why this is high priority:** This is the minimum production-readiness layer once the product story is convincing.
+**Why this is high priority:** The current checks are improved, but true production readiness still needs stronger boundary enforcement.
 
 **What to do**
-- Tighten request verification for ingress paths.
-- Clarify tenant boundaries.
-- Add stronger auth posture for enterprise mode.
+- Harden ingress verification and tenant separation.
+- Tighten deployment-time secrets and operational posture.
+- Make the local/demo mode and production mode behavior explicit.
 
 **Done when**
-- Ingress and API actions are harder to spoof.
-- The product can explain its trust model clearly.
+- The trust model is clear and resilient to misuse.
+- Production-mode boundaries are easier to reason about.
 
-### 6. Persistent Production Storage
+### 5. Further Backend Service Decomposition And Operational Cleanup
 
-**Why this is high priority:** Demo-grade in-memory state is fine for a demo, but the next step is durable incident, replay, and training storage.
+**Why this is medium priority:** The backend is already more modular than before, but the last bits should be cleaned up before the next integration wave.
 
 **What to do**
-- Persist incident events durably.
-- Persist replay launches and training artifacts.
-- Keep the UI behavior the same while swapping the backing store.
+- Keep extracting route glue and helper logic out of `server/app.py` where it still lingers.
+- Make service responsibilities narrower and easier to test.
+- Keep the public API contracts stable while changing internals.
 
 **Done when**
-- Restarting the app does not lose the important product history.
-- Replay and training pages can be backed by durable state rather than only fixture overlays.
+- `server/app.py` is mostly orchestration.
+- The next feature can land without expanding a monolith again.
 
-### 7. Replay And Training Realism
+### 6. Docs And Source-Of-Truth Maintenance
 
-**Why this is medium priority:** The surfaces already exist and work, but they can be made more persuasive and more connected to the backend.
+**Why this is lower priority:** It is important, but it does not block the product itself.
 
 **What to do**
-- Make replay create clearer incident-state transitions.
-- Make training summaries derive from real incident history where possible.
-- Keep the current UI but deepen the data model behind it.
+- Keep the README as the canonical product entrypoint.
+- Keep the status matrix and backlog in sync with the code.
+- Leave historical sprint docs clearly labeled as historical.
 
 **Done when**
-- Replay feels like a real product feature, not just a scenario launcher.
-- Training shows a credible learning loop tied to incident history.
-
-### 8. Doc Cleanup And Source-Of-Truth Refresh
-
-**Why this is lower priority:** The stale docs are confusing, but they do not block product progress.
-
-**What to do**
-- Refresh hackathon-era docs that still describe the old sprint as authoritative.
-- Point readers at the current matrix and backlog.
-- Keep the repo documentation consistent with the code.
-
-**Done when**
-- New readers can find the current status quickly.
-- Old sprint docs are clearly labeled historical.
+- A new reader can tell what is current, what is historical, and what is next.
 
 ## Recommended Next Pick
 
-- If you want the best visible enterprise-feel gain: **Task 1**
-- If you want the best backend credibility gain: **Task 2**
+- If you want the best product credibility gain: **Task 1**
+- If you want the best visible control and safety gain: **Task 2**
 - If you want the best engineering-risk reduction: **Task 3**
 
 ## Short Version
 
 - `P0`: Tasks 1-3
-- `P1`: Tasks 4-6
-- `P2`: Tasks 7-8
+- `P1`: Tasks 4-5
+- `P2`: Task 6

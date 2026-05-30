@@ -1,6 +1,6 @@
 # NEXUS v2 Documentation Status Matrix
 
-Current as of 2026-05-29.
+Current as of 2026-05-30.
 
 Legend:
 - `Done` means implemented in the repo and verified with tests/browser checks.
@@ -27,14 +27,12 @@ Legend:
 
 If you want the shortest path to the next meaningful product step, use this order:
 
-1. [Visible audit UI](NEXUS_v2_PRIORITY_BACKLOG.md#1-visible-audit-ui-and-incident-history)
-2. [Observability adapters and evidence fusion](NEXUS_v2_PRIORITY_BACKLOG.md#2-observability-adapters-and-evidence-fusion)
-3. [Split the remaining backend monolith](NEXUS_v2_PRIORITY_BACKLOG.md#3-split-the-remaining-backend-monolith)
-4. [Strengthen GUARDIAN execution policy](NEXUS_v2_PRIORITY_BACKLOG.md#4-strengthen-guardian-execution-policy)
-5. [Auth, tenant, and signature hardening](NEXUS_v2_PRIORITY_BACKLOG.md#5-auth-tenant-and-signature-hardening)
-6. [Persistent production storage](NEXUS_v2_PRIORITY_BACKLOG.md#6-persistent-production-storage)
-7. [Replay and training realism](NEXUS_v2_PRIORITY_BACKLOG.md#7-replay-and-training-realism)
-8. [Doc cleanup and source-of-truth refresh](NEXUS_v2_PRIORITY_BACKLOG.md#8-doc-cleanup-and-source-of-truth-refresh)
+1. [Real observability ingestion and evidence fusion](NEXUS_v2_PRIORITY_BACKLOG.md#1-real-observability-ingestion-and-evidence-fusion)
+2. [GUARDIAN execution policy and runbook governance](NEXUS_v2_PRIORITY_BACKLOG.md#2-guardian-execution-policy-and-runbook-governance)
+3. [Production persistence and durable artifacts](NEXUS_v2_PRIORITY_BACKLOG.md#3-production-persistence-and-durable-artifacts)
+4. [Auth, tenant, and deployment hardening](NEXUS_v2_PRIORITY_BACKLOG.md#4-auth-tenant-and-deployment-hardening)
+5. [Further backend service decomposition and operational cleanup](NEXUS_v2_PRIORITY_BACKLOG.md#5-further-backend-service-decomposition-and-operational-cleanup)
+6. [Docs and source-of-truth maintenance](NEXUS_v2_PRIORITY_BACKLOG.md#6-docs-and-source-of-truth-maintenance)
 
 ## Section Matrix
 
@@ -188,13 +186,12 @@ If you want the shortest path to the next meaningful product step, use this orde
 
 These are the main gaps that are still worth adding to the plan if you want to keep going beyond the current demo-grade state:
 
-1. Split the remaining `server/app.py` helper logic into dedicated service modules so the backend stops depending on one large file.
-2. Add a visible audit UI, not just an audit API, so users can inspect incident history from the product shell.
-3. Add real observability adapters for Prometheus, Datadog, ELK/Loki, and deployment metadata instead of deterministic fixture joins.
-4. Add a stronger execution-policy layer for GUARDIAN, including explicit approval/rejection state and more visible gate outcomes.
-5. Harden auth and tenant boundaries for true production mode, including signature verification and clearer gateway posture.
-6. Add a real production persistence story for incident events and replay/training artifacts if this moves beyond demo mode.
-7. Refresh the stale hackathon-era docs so they stop implying the old 7-day sprint is still the source of truth.
+1. Add real observability adapters for Prometheus, Datadog, ELK/Loki, and deployment metadata instead of deterministic fixture joins.
+2. Add a stronger execution-policy layer for GUARDIAN, including explicit approval/rejection state and more visible gate outcomes.
+3. Add a real production persistence story for incident events, replay, and training artifacts if this moves beyond demo mode.
+4. Harden auth and tenant boundaries for true production mode, including signature verification and clearer gateway posture.
+5. Continue backend service decomposition where helper logic still belongs in focused modules.
+6. Keep the README and docs matrix as the canonical source of truth and leave historical sprint docs clearly labeled.
 
 ## Bottom Line
 
