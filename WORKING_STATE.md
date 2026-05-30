@@ -23,6 +23,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - A 5-slide presenter deck has been created as a `.pptx` for review/judging.
 - Live docs now explicitly describe the sequential 4-agent handoff: `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
 - A dedicated agent model matrix now records which agents are deterministic, optional-LLM, or still partially wired.
+- `server/config.py` now carries explicit runtime defaults, and `.env.example` documents the local token/model setup.
 
 ## Open Blockers
 - Observability and evidence are still mostly fixture-backed instead of coming from real adapters.
@@ -51,6 +52,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - `server/app.py`
 - `server/models.py`
 - `server/agents/forge.py`
+- `.env.example`
 - `tests/test_observability.py`
 - `tests/test_api_contract.py`
 - `tests/test_agents.py`

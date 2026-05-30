@@ -18,6 +18,8 @@ Optional demo path settings:
 - `NEXUS_USE_OPENAI=1`
 - `LLM_MODEL`
 
+For local development, copy [.env.example](../.env.example) to `.env` and keep your tokens there. The app reads `NEXUS_*` environment variables directly.
+
 ## Start Up
 
 - Local product smoke test: `docker compose up --build`

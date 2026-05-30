@@ -212,6 +212,8 @@ Optional demo/OpenAI settings:
 - `OPENAI_API_KEY`
 - `LLM_MODEL`
 
+For local development, copy [.env.example](.env.example) to `.env` and fill in your own values. The app reads standard `NEXUS_*` environment variables directly.
+
 ## Testing and automation
 
 Run the full automated suite:
