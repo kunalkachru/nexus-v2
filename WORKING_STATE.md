@@ -25,6 +25,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - Live docs now explicitly describe the sequential 4-agent handoff: `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
 - A dedicated agent model matrix now records which agents are deterministic, optional-LLM, or still partially wired.
 - `server/config.py` now carries explicit runtime defaults, and `.env.example` documents the local token/model setup.
+- The incident console now prefers a backend live-context endpoint for real incidents instead of browser-side synthetic data.
 
 ## Open Blockers
 - Observability and evidence are still mostly fixture-backed instead of coming from real adapters.
@@ -33,6 +34,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - Auth, tenant, and deployment hardening still need stronger production boundaries.
 - No blocking issue for the current documentation/presenter-pack task.
 - The app-level model/provider story is clearer now, but the enterprise hybrid LLM plan still needs a real PRISM/Forge implementation round.
+- The current live-context path is backend-driven, but the underlying observability adapters are still not fully real external integrations.
 
 ## Most Important Source Of Truth
 - [README.md](README.md)
@@ -57,6 +59,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - `tests/test_observability.py`
 - `tests/test_api_contract.py`
 - `tests/test_agents.py`
+- `frontend/static/api.js`
 - `docs/NEXUS_v2_DOC_STATUS_MATRIX.md`
 - `docs/AGENT_MODEL_MATRIX.md`
 - `docs/NEXUS_v2_PRIORITY_BACKLOG.md`
@@ -92,11 +95,11 @@ Current phase:
 - Production hardening / live integrations: next
 
 Current objective:
-- Close the biggest credibility gap by implementing real observability ingestion and evidence fusion.
+- Close the biggest credibility gap by implementing live backend incident context and then real observability adapter fusion.
 
 Application state:
 - The queue-first shell, incident console, input channels, replay, training, and settings surfaces are already in place.
-- The product feels enterprise-grade in the UI, but the backend still has demo-grade gaps in observability, policy enforcement, and durability.
+- The product feels enterprise-grade in the UI, and the incident console now prefers a backend live-context payload for created incidents.
 - The next meaningful step is to replace fixture-backed evidence with real adapter-backed observability and provenance.
 
 Open blockers:

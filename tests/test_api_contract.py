@@ -203,6 +203,45 @@ def test_manual_report_contract_creates_incident_and_status(client: TestClient, 
     assert "incident.manual_report.accepted" in audit_log_path.read_text()
 
 
+def test_live_incident_context_contract_returns_backend_evidence(client: TestClient, auth_headers) -> None:
+    create_response = client.post(
+        "/api/v1/incidents/manual-report",
+        headers=auth_headers(),
+        json={
+            "affected_service": "billing-api",
+            "symptoms": ["checkout latency", "timeout spikes"],
+            "severity": "P0",
+            "reported_by": "operator",
+            "team": "platform",
+            "additional_context": "Live checkout path is degraded.",
+            "affected_regions": ["us-east-1"],
+            "affected_hosts": ["billing-api-1"],
+        },
+    )
+
+    assert create_response.status_code == 202
+    incident_id = create_response.json()["nexus_incident_id"]
+
+    response = client.get(
+        f"/api/v1/incidents/{incident_id}/context",
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["incident"]["id"] == incident_id
+    assert payload["incident"]["source_channel"] == "manual_form"
+    assert payload["observability"]["evidence_sources"]
+    assert payload["observability"]["recent_logs"]
+    assert payload["observability"]["alert_timeline"]
+    assert payload["classification"]["reasoning"]
+    assert payload["diagnosis"]["correlation_analysis"]
+    assert payload["runbook"]["candidate_fixes"]
+    assert payload["guardian"]["safety_checks"]
+    assert len(payload["workflow"]) >= 1
+    assert payload["execution_result"] in {"executed", "blocked"}
+
+
 def test_batch_import_and_execute_contracts(client: TestClient, auth_headers) -> None:
     response = client.post(
         "/api/v1/incidents/batch-import",

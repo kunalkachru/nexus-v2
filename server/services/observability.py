@@ -62,6 +62,54 @@ class ObservabilityService:
         details = self._incident_details.get(incident_id, {})
         return self._evidence_sources(details)
 
+    def build_live_evidence_sources(
+        self,
+        *,
+        incident_id: str,
+        service: str,
+        source_channel: str,
+        audit_logs: list[dict[str, object]],
+        recent_deployments: list[dict[str, object]],
+        timeline: list[dict[str, object]],
+    ) -> list[dict[str, object]]:
+        latest_audit = audit_logs[-1] if audit_logs else {}
+        latest_timeline = timeline[-1] if timeline else {}
+        return [
+            {
+                "source": "incident record",
+                "signal": "intake",
+                "count": 1,
+                "summary": "Authenticated live incident record from the operator console.",
+                "detail": f"{incident_id} opened through {source_channel} for {service}.",
+            },
+            {
+                "source": "audit trail",
+                "signal": "governance",
+                "count": len(audit_logs),
+                "summary": "Live audit log entries captured from the backend.",
+                "detail": latest_audit.get("event_type", "No audit events available."),
+            },
+            {
+                "source": "workflow timeline",
+                "signal": "orchestration",
+                "count": len(timeline),
+                "summary": "Incident lifecycle states produced by the live status contract.",
+                "detail": latest_timeline.get("summary", "No workflow timeline available."),
+            },
+            {
+                "source": "deployment metadata",
+                "signal": "release",
+                "count": len(recent_deployments),
+                "summary": "Recent deployment lookups fused into the incident context.",
+                "detail": (
+                    f"{recent_deployments[0].get('service', service)} "
+                    f"{recent_deployments[0].get('version', 'n/a')}"
+                    if recent_deployments
+                    else "No deployment metadata available."
+                ),
+            },
+        ]
+
     async def resolve_incident_definition(self, external_id: str) -> IncidentDefinition:
         await asyncio.sleep(0)
         try:

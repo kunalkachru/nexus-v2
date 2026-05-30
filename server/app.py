@@ -24,6 +24,7 @@ from server.integrations.models import (
 )
 from server.rate_limit import RateLimiter
 from server.services.incidents import IncidentService
+from server.services.observability import ObservabilityService
 from server.services.surface_payloads import build_incident_response, build_platform_status, load_metrics_payload
 from server.services.tenancy import TenancyService
 
@@ -52,7 +53,9 @@ def get_incident_service(
         session=session,
         alert_normalizer=AlertNormalizer(),
         deployment_lookup=DeploymentLookupService(),
+        observability=ObservabilityService(),
     )
+
 @app.get("/")
 async def root() -> FileResponse:
     return FileResponse("frontend/queue.html", media_type="text/html")
@@ -225,6 +228,7 @@ async def get_platform_status(
         "/api/v1/incidents/slack-command",
         "/api/v1/incidents/stream-anomaly",
         "/api/v1/incidents/batch-import",
+        "/api/v1/incidents/{incident_id}/context",
         "/api/v1/incidents/{incident_id}/status",
         "/api/v1/audit-logs/{incident_id}",
         "/api/v1/incidents/{incident_id}/execute",
@@ -274,6 +278,23 @@ async def get_incident_status_v1(
     response = await service.get_incident_status_v1(nexus_incident_id, tenant_id=auth.tenant_id)
     await write_audit_log(
         "incident.status_v1.read",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id},
+    )
+    return response
+
+
+@app.get("/api/v1/incidents/{nexus_incident_id}/context")
+async def get_incident_context_v1(
+    nexus_incident_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_context_v1")
+    response = await service.get_incident_context_v1(nexus_incident_id, tenant_id=auth.tenant_id)
+    await write_audit_log(
+        "incident.context_v1.read",
         auth.tenant_id,
         {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id},
     )

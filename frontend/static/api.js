@@ -154,9 +154,13 @@ function synthesizeIncidentFromStatus(status) {
 
 export async function loadIncident(incidentId) {
   try {
-    return await fetchJson(`/run-incident?incident_id=${encodeURIComponent(incidentId)}`);
+    return await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/context`);
   } catch (error) {
-    const status = await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/status`);
-    return synthesizeIncidentFromStatus(status);
+    try {
+      return await fetchJson(`/run-incident?incident_id=${encodeURIComponent(incidentId)}`);
+    } catch {
+      const status = await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/status`);
+      return synthesizeIncidentFromStatus(status);
+    }
   }
 }

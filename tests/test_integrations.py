@@ -4,6 +4,7 @@ from server.integrations.alerts import AlertNormalizer
 from server.integrations.deployments import DeploymentLookupService
 from server.integrations.models import IncomingIncidentWebhook
 from server.services.incidents import IncidentService
+from server.services.observability import ObservabilityService
 
 
 def test_alert_normalizer_maps_provider_payload_to_phase2_envelope() -> None:
@@ -105,6 +106,7 @@ def test_incident_service_enriches_created_incident_with_recent_deployments() ->
             session=StubSession(),
             alert_normalizer=AlertNormalizer(),
             deployment_lookup=StubDeploymentLookupService(),
+            observability=ObservabilityService(),
         )
 
         created = await service.create_incident_from_webhook(payload)
@@ -148,6 +150,7 @@ def test_incident_service_enriches_status_response_with_recent_deployments() -> 
             session=StubSession(),
             alert_normalizer=AlertNormalizer(),
             deployment_lookup=StubDeploymentLookupService(),
+            observability=ObservabilityService(),
         )
 
         payload = await service.get_incident_status("nxs_123")
