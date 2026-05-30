@@ -163,9 +163,16 @@ Open:
 uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
+### Legacy demo script
+
+```bash
+python demo.py
+```
+
 ### Useful runtime settings
 
 The current demo-friendly defaults live in `server/config.py`:
+- `OPENAI_API_KEY`
 - `database_path`
 - `webhook_signing_secret`
 - `allowed_tenant_ids`
