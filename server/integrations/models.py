@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 class IncomingIncidentWebhook(BaseModel):
     incident_id: str
     title: str
-    severity: Literal["P1", "P2", "P3"]
+    severity: str
     detected_at: str
     monitoring_source: Literal["datadog", "prometheus"]
     metrics: dict[str, Any] = Field(default_factory=dict)
@@ -15,7 +15,7 @@ class IncomingIncidentWebhook(BaseModel):
 class ManualIncidentReport(BaseModel):
     affected_service: str
     symptoms: list[str] = Field(default_factory=list)
-    severity: Literal["P0", "P1", "P2", "P3"]
+    severity: str
     reported_by: str
     team: str
     root_cause_suspected: str | None = None
@@ -29,7 +29,20 @@ class BatchImportRequest(BaseModel):
     batch_name: str
     source_uri: str | None = None
     record_count: int
-    severity: Literal["P0", "P1", "P2", "P3"]
+    severity: str
+
+
+class RawIncidentTextRequest(BaseModel):
+    raw_text: str
+    source_hint: str | None = None
+    reported_by: str | None = None
+    team: str | None = None
+    severity_hint: str | None = None
+
+
+class GuardianDecisionRequest(BaseModel):
+    decision: Literal["approve", "reject"]
+    reasoning: str | None = None
 
 
 class SlackIncidentCommand(BaseModel):
@@ -38,7 +51,7 @@ class SlackIncidentCommand(BaseModel):
     channel: str
     user_id: str
     service: str
-    severity: Literal["P0", "P1", "P2", "P3"]
+    severity: str
     text: str
     detected_at: str
     symptoms: list[str] = Field(default_factory=list)
@@ -47,7 +60,7 @@ class SlackIncidentCommand(BaseModel):
 class StreamAnomalyReport(BaseModel):
     detector_id: str
     service: str
-    severity: Literal["P0", "P1", "P2", "P3"]
+    severity: str
     detected_at: str
     signal_name: str
     signal_value: str

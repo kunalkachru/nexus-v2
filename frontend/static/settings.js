@@ -23,6 +23,7 @@ async function renderSettingsSummary() {
   setText("platformReplayReadiness", platform.replay_readiness);
   setText("platformReplayLaunches", platform.replay_launches);
   setText("platformTrainingSnapshots", platform.training_snapshots);
+  setText("platformLearningContracts", platform.learning_contracts);
 
   const intakeContracts = document.getElementById("platformIntakeContracts");
   const readContracts = document.getElementById("platformReadContracts");

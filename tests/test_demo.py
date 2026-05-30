@@ -36,3 +36,6 @@ def test_demo_exposes_rich_observability_and_reasoning() -> None:
     assert result["diagnosis"]["supporting_logs"]
     assert result["runbook"]["candidate_fixes"]
     assert result["guardian"]["safety_checks"]
+    assert result["structured_result"]["proposed_fix"]
+    assert result["structured_result"]["raw_priority_label"]
+    assert result["structured_result"]["normalized_priority_rank"] >= 0

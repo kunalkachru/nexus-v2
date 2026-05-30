@@ -1,17 +1,29 @@
 import inspect
+import logging
+import os
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from fastapi import HTTPException
 
 from server.audit import get_audit_logs
 from server.artifacts import record_replay_launch, record_training_snapshot
+from server.artifacts import record_learning_contract
 from server.artifacts import get_artifact_summary
+from server.agents.forge import ForgeAgent
+from server.agents.guardian import GuardianAgent
+from server.agents.live_clients import OpenAIForgeClient, OpenAIPrismClient, OpenAISentinelClient
+from server.agents.prism import PrismAgent
+from server.agents.sentinel import SentinelAgent
+from server.config import AppConfig
 from server.integrations.alerts import AlertNormalizer
 from server.integrations.deployments import DeploymentLookupService
 from server.integrations.models import (
     BatchImportRequest,
+    GuardianDecisionRequest,
     IncomingIncidentWebhook,
     ManualIncidentReport,
+    RawIncidentTextRequest,
     SlackIncidentCommand,
     StreamAnomalyReport,
 )
@@ -23,8 +35,13 @@ from server.models import (
     IncidentWorkflowStage,
     QueueIncidentSummary,
     QueueResponse,
+    SystemContext,
 )
+from server.services.live_ingest import RawIncidentParser
+from server.services.priority import normalize_priority_label, priority_rank, priority_snapshot, shift_priority_label
 from server.services.observability import ObservabilityService
+
+logger = logging.getLogger(__name__)
 
 
 class IncidentService:
@@ -40,6 +57,51 @@ class IncidentService:
         self._alert_normalizer = alert_normalizer
         self._deployment_lookup = deployment_lookup
         self._observability = observability
+        self._raw_parser = RawIncidentParser()
+
+    def _display_severity(self, severity: str) -> str:
+        return normalize_priority_label(severity)
+
+    def _guardian_decision_for_incident(self, incident: IncidentRecord) -> str:
+        if incident.guardian_decision in {"approve", "reject"}:
+            return incident.guardian_decision
+        if incident.status == "blocked_by_guardian":
+            return "reject"
+        if incident.status == "resolved":
+            return "approve"
+        return "pending"
+
+    def _guardian_context(self, incident: IncidentRecord) -> dict[str, object]:
+        decision = self._guardian_decision_for_incident(incident)
+        if decision == "pending":
+            return {
+                "decision": decision,
+                "confidence": 0.0,
+                "safety_checks": [
+                    "Runbook proposal ready for review",
+                    "Execution stays blocked until approval is recorded",
+                    "Audit trail is waiting for the operator decision",
+                ],
+                "policy_violations": [],
+                "reasoning": "Guardian review is pending. Choose approve or block to make the gate explicit.",
+            }
+
+        return {
+            "decision": decision,
+            "confidence": 0.89,
+            "safety_checks": [
+                "Authenticated live incident read",
+                "Audit trail available from backend state",
+                "Rollback-safe execution path preserved",
+            ],
+            "policy_violations": [] if decision == "approve" else ["Execution blocked by Guardian"],
+            "reasoning": incident.guardian_reasoning
+            or (
+                "GUARDIAN approved the runbook and the incident can proceed."
+                if decision == "approve"
+                else "GUARDIAN blocked the runbook and kept the incident out of execution."
+            ),
+        }
 
     async def create_incident_from_webhook(
         self,
@@ -107,6 +169,9 @@ class IncidentService:
             recent_deployments=recent_deployments,
             queue_position=queue_position,
             eta_sec=eta_sec,
+            guardian_decision=incident.guardian_decision,
+            guardian_reasoning=incident.guardian_reasoning,
+            guardian_reviewed_at=incident.guardian_reviewed_at,
         )
         return response.model_dump(mode="json")
 
@@ -140,6 +205,9 @@ class IncidentService:
             recent_deployments=recent_deployments,
             queue_position=queue_position,
             eta_sec=eta_sec,
+            guardian_decision=incident.guardian_decision,
+            guardian_reasoning=incident.guardian_reasoning,
+            guardian_reviewed_at=incident.guardian_reviewed_at,
         )
         return response.model_dump(mode="json")
 
@@ -149,7 +217,7 @@ class IncidentService:
         *,
         tenant_id: str = "tenant-system",
     ) -> dict[str, object]:
-        severity = "P1" if payload.severity == "P0" else payload.severity
+        severity = shift_priority_label(payload.severity)
         created = await self._session.incidents.create_incident(
             external_id=f"manual_{payload.affected_service}",
             title=f"{payload.affected_service} manual report",
@@ -176,6 +244,57 @@ class IncidentService:
             recent_deployments=recent_deployments,
             queue_position=queue_position,
             eta_sec=eta_sec,
+            guardian_decision=incident.guardian_decision,
+            guardian_reasoning=incident.guardian_reasoning,
+            guardian_reviewed_at=incident.guardian_reviewed_at,
+        )
+        return response.model_dump(mode="json")
+
+    async def create_incident_from_raw_text(
+        self,
+        payload: RawIncidentTextRequest,
+        *,
+        tenant_id: str = "tenant-system",
+    ) -> dict[str, object]:
+        parsed = self._raw_parser.parse(payload.raw_text, severity_hint=payload.severity_hint)
+        created = await self._session.incidents.create_incident(
+            external_id=f"raw_{parsed.service}_{uuid4().hex[:8]}",
+            title=parsed.title,
+            severity=parsed.severity,
+            tenant_id=tenant_id,
+            source="raw_text",
+            service=parsed.service,
+            raw_input_text=payload.raw_text,
+            normalized_evidence={
+                "service": parsed.service,
+                "severity": parsed.severity,
+                "signature": parsed.signature,
+                "evidence": parsed.evidence,
+                "symptoms": parsed.symptoms,
+                "source_hint": payload.source_hint,
+                "reported_by": payload.reported_by,
+                "team": payload.team,
+            },
+        )
+        incident = IncidentRecord.model_validate(created)
+        recent_deployments = await self._deployment_lookup.get_recent_deployments(incident.service)
+        queue_position, eta_sec = await self._queue_position_and_eta(
+            incident.nexus_incident_id,
+            tenant_id=tenant_id,
+        )
+        response = IncidentLifecycleResponse(
+            nexus_incident_id=incident.nexus_incident_id,
+            external_id=incident.external_id,
+            title=incident.title,
+            severity=incident.severity,
+            status=incident.status,
+            source=incident.source,
+            recent_deployments=recent_deployments,
+            queue_position=queue_position,
+            eta_sec=eta_sec,
+            guardian_decision=incident.guardian_decision,
+            guardian_reasoning=incident.guardian_reasoning,
+            guardian_reviewed_at=incident.guardian_reviewed_at,
         )
         return response.model_dump(mode="json")
 
@@ -185,7 +304,7 @@ class IncidentService:
         *,
         tenant_id: str = "tenant-system",
     ) -> dict[str, object]:
-        severity = "P1" if payload.severity == "P0" else payload.severity
+        severity = shift_priority_label(payload.severity)
         created = await self._session.incidents.create_incident(
             external_id=f"batch_{payload.batch_name}",
             title=f"Batch import {payload.batch_name}",
@@ -244,6 +363,9 @@ class IncidentService:
             recent_deployments=recent_deployments,
             queue_position=queue_position,
             eta_sec=eta_sec,
+            guardian_decision=incident.guardian_decision,
+            guardian_reasoning=incident.guardian_reasoning,
+            guardian_reviewed_at=incident.guardian_reviewed_at,
         )
         return response.model_dump(mode="json")
 
@@ -267,6 +389,9 @@ class IncidentService:
             eta_sec=int(lifecycle.get("eta_sec") or 30),
             timeline=self._build_status_timeline(lifecycle),
             audit_logs=get_audit_logs(nexus_incident_id),
+            guardian_decision=str(lifecycle.get("guardian_decision") or "pending"),
+            guardian_reasoning=str(lifecycle.get("guardian_reasoning") or ""),
+            guardian_reviewed_at=str(lifecycle.get("guardian_reviewed_at") or ""),
         )
         return response.model_dump(mode="json")
 
@@ -275,11 +400,12 @@ class IncidentService:
         nexus_incident_id: str,
         *,
         tenant_id: str | None = None,
+        live_reasoning: bool | None = None,
     ) -> dict[str, object]:
         if nexus_incident_id in list_supported_incident_ids():
             from server.services.live_demo import build_demo_payload
 
-            return await build_demo_payload(nexus_incident_id)
+            return await build_demo_payload(nexus_incident_id, live_reasoning_override=live_reasoning)
 
         if tenant_id is None:
             loaded = await self._session.incidents.get_incident(nexus_incident_id)
@@ -293,6 +419,7 @@ class IncidentService:
         audit_logs = get_audit_logs(nexus_incident_id)
         recent_deployments = await self._deployment_lookup.get_recent_deployments(incident.service)
         workflow = lifecycle.get("timeline", [])
+        priority = priority_snapshot(incident.severity)
         observability = {
             "metrics": [
                 {
@@ -330,6 +457,35 @@ class IncidentService:
                 timeline=workflow,
             ),
         }
+        if incident.raw_input_text:
+            observability["evidence_sources"] = [
+                {
+                    "source": "raw input",
+                    "signal": "paste",
+                    "count": len(incident.raw_input_text.splitlines()),
+                    "summary": "Operator-pasted logs normalized into the incident evidence bundle.",
+                    "detail": incident.raw_input_text.splitlines()[0],
+                },
+                *observability["evidence_sources"],
+            ]
+            observability["recent_logs"] = [
+                f"Raw input normalized for {incident.service or 'service'}",
+                *observability["recent_logs"],
+            ]
+        normalized_evidence = incident.normalized_evidence or {}
+        live_payload = await self._build_raw_live_reasoning_payload(
+            incident,
+            lifecycle=lifecycle,
+            audit_logs=audit_logs,
+            recent_deployments=recent_deployments,
+            workflow=workflow,
+            raw_evidence=normalized_evidence,
+            live_reasoning_override=live_reasoning,
+        )
+        if live_payload is not None:
+            return live_payload
+        raw_signature = str(normalized_evidence.get("signature", "")).strip()
+        raw_service = str(normalized_evidence.get("service", incident.service or "service")).strip()
         classification = {
             "incident_id": incident.nexus_incident_id,
             "incident_name": incident.title,
@@ -351,6 +507,17 @@ class IncidentService:
                 "and deployment metadata."
             ),
         }
+        if incident.raw_input_text:
+            classification["confidence"] = 0.86
+            classification["evidence"] = [
+                f"Raw text normalized for {raw_service or 'service'}",
+                f"Signature: {raw_signature or 'General incident'}",
+                f"{len(normalized_evidence.get('evidence', []))} evidence line(s) extracted",
+            ]
+            classification["reasoning"] = (
+                "The pasted logs were normalized into service, severity, and signature before "
+                "routing through the agent flow."
+            )
         diagnosis = {
             "root_cause": (
                 f"Live incident for {incident.service or 'service'} awaiting deeper observability enrichment"
@@ -364,6 +531,21 @@ class IncidentService:
                 "This context comes from the live incident contract rather than the static demo fixture."
             ),
         }
+        if incident.raw_input_text:
+            diagnosis["root_cause"] = (
+                f"Likely {raw_signature.lower() if raw_signature else 'incident pattern'} affecting {raw_service or 'service'}"
+            )
+            diagnosis["confidence"] = 0.8
+            diagnosis["supporting_logs"] = [
+                raw_signature or "Raw input normalized from pasted logs",
+                *diagnosis["supporting_logs"],
+            ]
+            diagnosis["correlation_analysis"] = (
+                "The raw logs were normalized into service, severity, and signature before being matched to the incident narrative."
+            )
+            diagnosis["reasoning"] = (
+                "The console is showing the parsed raw incident text, the extracted evidence, and the inferred incident pattern."
+            )
         runbook = {
             "language": "bash",
             "summary": f"Live mitigation plan for {incident.service or 'service'}",
@@ -376,18 +558,26 @@ class IncidentService:
             "reasoning": "The live incident view keeps the same remediation contract while using backend state instead of client synthesis.",
             "cost_usd": 0.08,
         }
-        guardian = {
-            "decision": "approve" if incident.status != "blocked_by_guardian" else "reject",
-            "confidence": 0.89,
-            "safety_checks": [
-                "Authenticated live incident read",
-                "Audit trail available from backend state",
-                "Rollback-safe execution path preserved",
-            ],
-            "policy_violations": [],
-            "reasoning": "The live context path is read-only and keeps execution behind the existing control gate.",
-        }
-        execution_result = "blocked" if incident.status == "blocked_by_guardian" else "executed"
+        if incident.raw_input_text:
+            runbook["summary"] = f"Remediation plan for the pasted {raw_service or 'service'} incident"
+            runbook["recommended_runbook"] = (
+                f"Validate {raw_service or 'service'} ownership, confirm the pasted signature, and prepare rollback-safe mitigation."
+            )
+            runbook["reasoning"] = (
+                "The raw input has been normalized into a service and signature, so the remediation path can refer to the concrete incident evidence."
+            )
+        guardian = self._guardian_context(incident)
+        guardian_decision = guardian["decision"]
+        if incident.status == "resolved":
+            execution_result = "executed"
+        elif incident.status == "blocked_by_guardian":
+            execution_result = "blocked"
+        elif guardian_decision == "approve":
+            execution_result = "approved"
+        elif guardian_decision == "reject":
+            execution_result = "blocked"
+        else:
+            execution_result = "pending"
         return {
             "incident": {
                 "id": incident.nexus_incident_id,
@@ -400,17 +590,291 @@ class IncidentService:
                 "recent_deployments": recent_deployments,
                 "similar_past_incidents": [],
                 "source_channel": self._queue_source_channel(incident.source),
+                "raw_input_text": incident.raw_input_text,
+                "normalized_evidence": incident.normalized_evidence,
             },
             "observability": observability,
             "classification": classification,
             "diagnosis": diagnosis,
             "runbook": runbook,
             "guardian": guardian,
+            "structured_result": {
+                "incident_id": incident.nexus_incident_id,
+                "root_cause": diagnosis["root_cause"],
+                "proposed_fix": runbook["recommended_runbook"],
+                "safety_decision": guardian_decision,
+                "confidence": guardian.get("confidence", 0.0),
+                "execution_status": execution_result,
+                "live_reasoning": False,
+                "raw_priority_label": priority["raw_label"],
+                "normalized_priority_label": priority["normalized_label"],
+                "normalized_priority_rank": priority["rank"],
+                "reward": 0.72,
+            },
             "workflow": workflow,
             "execution_result": execution_result,
             "reward": 0.72,
             "execution_time_ms": 12.4,
             "supported_incidents": [incident.nexus_incident_id],
+        }
+
+    async def record_guardian_decision(
+        self,
+        nexus_incident_id: str,
+        *,
+        payload: GuardianDecisionRequest,
+        tenant_id: str | None = None,
+    ) -> dict[str, object]:
+        if tenant_id is None:
+            loaded = await self._session.incidents.get_incident(nexus_incident_id)
+        else:
+            loaded = await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
+        if loaded is None:
+            raise HTTPException(status_code=404, detail="incident not found")
+
+        incident = IncidentRecord.model_validate(loaded)
+        reviewed_at = datetime.now(timezone.utc).isoformat()
+        if incident.status == "resolved":
+            next_status = "resolved"
+        elif payload.decision == "reject":
+            next_status = "blocked_by_guardian"
+        else:
+            next_status = "investigating"
+        updated = await self._session.incidents.update_incident_status(
+            nexus_incident_id,
+            status=next_status,
+            guardian_decision=payload.decision,
+            guardian_reasoning=payload.reasoning or "",
+            guardian_reviewed_at=reviewed_at,
+        )
+        if updated is None:
+            raise HTTPException(status_code=404, detail="incident not found")
+
+        recent_deployments = await self._deployment_lookup.get_recent_deployments(updated.service)
+        queue_position, eta_sec = await self._queue_position_and_eta(
+            updated.nexus_incident_id,
+            tenant_id=updated.tenant_id,
+        )
+        response = IncidentLifecycleResponse(
+            nexus_incident_id=updated.nexus_incident_id,
+            external_id=updated.external_id,
+            title=updated.title,
+            severity=updated.severity,
+            status=updated.status,
+            source=updated.source,
+            recent_deployments=recent_deployments,
+            queue_position=queue_position,
+            eta_sec=eta_sec,
+            guardian_decision=updated.guardian_decision,
+            guardian_reasoning=updated.guardian_reasoning,
+            guardian_reviewed_at=updated.guardian_reviewed_at,
+        )
+        return response.model_dump(mode="json")
+
+    async def _build_raw_live_reasoning_payload(
+        self,
+        incident: IncidentRecord,
+        *,
+        lifecycle: dict[str, object],
+        audit_logs: list[dict[str, object]],
+        recent_deployments: list[dict[str, object]],
+        workflow: list[dict[str, object]],
+        raw_evidence: dict[str, object],
+        live_reasoning_override: bool | None = None,
+    ) -> dict[str, object] | None:
+        config = AppConfig()
+        use_live_llm = config.use_live_llm and bool(os.environ.get("OPENAI_API_KEY"))
+        if live_reasoning_override is not None:
+            use_live_llm = live_reasoning_override and bool(os.environ.get("OPENAI_API_KEY"))
+        if not use_live_llm:
+            return None
+
+        try:
+            raw_lines = [line.strip() for line in incident.raw_input_text.splitlines() if line.strip()]
+            raw_service = str(raw_evidence.get("service", incident.service or "service")).strip() or "service"
+            priority = priority_snapshot(incident.severity)
+            system_context = SystemContext(
+                service=raw_service,
+                language="unknown",
+                infra="production",
+                dependencies=[incident.service] if incident.service else [],
+            )
+            raw_symptoms = list(raw_evidence.get("symptoms", [])) or raw_lines[:5] or [incident.title]
+            signal_map = {
+                "logs": list(raw_evidence.get("evidence", [])) or raw_lines[:5],
+                "metrics": [
+                    f"severity={incident.severity}",
+                    f"service={raw_service}",
+                ],
+                "traces": [f"team={raw_evidence.get('team') or 'platform'}"],
+            }
+
+            config = AppConfig()
+            sentinel = SentinelAgent(client=OpenAISentinelClient(), model_name=config.forge_model_name)
+            prism = PrismAgent(observability=self._observability, client=OpenAIPrismClient(), model_name=config.forge_model_name)
+            forge = ForgeAgent(client=OpenAIForgeClient(), model_name=config.forge_model_name)
+            guardian = GuardianAgent()
+
+            sentinel_output = sentinel.classify(raw_symptoms=raw_symptoms, system_context=system_context)
+            prism_output = await prism.diagnose(sentinel_output=sentinel_output, signals=signal_map)
+            forge_output = await forge.generate_runbook(prism_output=prism_output, system_context=system_context)
+            guardian_output = await guardian.review(
+                forge_output=forge_output,
+                sentinel_output=sentinel_output,
+                prism_output=prism_output,
+            )
+        except Exception as exc:  # pragma: no cover - provider fallback path
+            logger.warning("Raw live reasoning fallback triggered: %s", exc)
+            return None
+
+        reward = round(
+            (sentinel_output.confidence + prism_output.confidence + guardian_output.safety_score) / 3,
+            2,
+        )
+        execution_result = "executed" if guardian_output.decision == "approve" else "blocked"
+        live_observability = {
+            "metrics": [
+                {
+                    "name": "Raw input lines",
+                    "current": len(raw_lines),
+                    "unit": "",
+                    "series": [max(1, len(raw_lines) - 2), max(1, len(raw_lines) - 1), len(raw_lines), len(raw_lines) + 1, len(raw_lines) + 2],
+                },
+                {
+                    "name": "Audit entries",
+                    "current": len(audit_logs),
+                    "unit": "",
+                    "series": [max(1, len(audit_logs) - 2), max(1, len(audit_logs) - 1), len(audit_logs), len(audit_logs) + 1, len(audit_logs) + 2],
+                },
+            ],
+            "recent_logs": [
+                f"Raw input normalized for {raw_service}",
+                *[f"{entry['timestamp']} · {entry['event_type']} · {entry['payload'].get('status', entry['payload'].get('current_stage', 'recorded'))}" for entry in audit_logs[-5:]],
+            ],
+            "alert_timeline": [
+                {"time": step["timestamp"], "event": step["label"]}
+                for step in workflow
+            ],
+            "recommended_runbooks": [
+                f"Validate {raw_service} ownership and confirm the pasted signature",
+                "Review audit trail and deployment metadata before execution",
+            ],
+            "evidence_sources": [
+                {
+                    "source": "raw input",
+                    "signal": "paste",
+                    "count": len(raw_lines),
+                    "summary": "Operator-pasted incident text normalized into structured evidence.",
+                    "detail": raw_lines[0] if raw_lines else "No raw text available.",
+                },
+                *self._observability.build_live_evidence_sources(
+                    incident_id=incident.nexus_incident_id,
+                    service=raw_service,
+                    source_channel="raw_text",
+                    audit_logs=audit_logs,
+                    recent_deployments=recent_deployments,
+                    timeline=workflow,
+                ),
+            ],
+        }
+
+        return {
+            "incident": {
+                "id": incident.nexus_incident_id,
+                "name": incident.title,
+                "severity": incident.severity,
+                "summary": f"Live incident opened through the raw_text intake path.",
+                "detected_at": incident.created_at or incident.updated_at or "now",
+                "duration_minutes": 0,
+                "related_services": [raw_service] if raw_service else [],
+                "recent_deployments": recent_deployments,
+                "similar_past_incidents": [],
+                "source_channel": "raw_text",
+                "raw_input_text": incident.raw_input_text,
+                "normalized_evidence": raw_evidence,
+            },
+            "observability": live_observability,
+            "classification": {
+                "incident_id": sentinel_output.incident_id,
+                "incident_name": sentinel_output.incident_name,
+                "severity": sentinel_output.severity,
+                "confidence": sentinel_output.confidence,
+                "confidence_breakdown": {
+                    "intake": 0.34,
+                    "audit": 0.18,
+                    "evidence": 0.26,
+                    "context": 0.22,
+                },
+                "evidence": sentinel_output.reasoning.split(". ") if sentinel_output.reasoning else raw_symptoms[:3],
+                "reasoning": sentinel_output.reasoning,
+            },
+            "diagnosis": {
+                "root_cause": prism_output.root_cause,
+                "confidence": prism_output.confidence,
+                "supporting_logs": prism_output.evidence or live_observability["recent_logs"],
+                "correlation_analysis": prism_output.reasoning,
+                "reasoning": prism_output.reasoning,
+            },
+            "runbook": {
+                "language": forge_output.runbook.language,
+                "summary": forge_output.runbook.summary,
+                "selection_logic": "LLM-generated remediation path grounded in raw incident text and safety review.",
+                "candidate_fixes": [
+                    {"action": forge_output.runbook.summary, "success_rate": max(0.0, min(0.99, guardian_output.safety_score))},
+                ],
+                "recommended_runbook": forge_output.runbook.summary,
+                "reasoning": forge_output.reasoning,
+                "cost_usd": round(forge_output.estimated_cost_usd, 2),
+            },
+            "guardian": {
+                "decision": guardian_output.decision,
+                "confidence": guardian_output.safety_score,
+                "safety_checks": [
+                    "Authenticated live incident read",
+                    "Raw input normalized before model reasoning",
+                    "Rollback-safe execution path preserved",
+                ],
+                "policy_violations": guardian_output.blocked_patterns,
+                "reasoning": guardian_output.reasoning,
+            },
+            "structured_result": {
+                "incident_id": incident.nexus_incident_id,
+                "root_cause": prism_output.root_cause,
+                "proposed_fix": forge_output.runbook.summary,
+                "safety_decision": guardian_output.decision,
+                "confidence": guardian_output.safety_score,
+                "execution_status": execution_result,
+                "live_reasoning": True,
+                "raw_priority_label": priority["raw_label"],
+                "normalized_priority_label": priority["normalized_label"],
+                "normalized_priority_rank": priority["rank"],
+                "reward": reward,
+            },
+            "workflow": workflow,
+            "execution_result": execution_result,
+            "reward": reward,
+            "execution_time_ms": 18.4,
+            "supported_incidents": [incident.nexus_incident_id],
+            "agent_models": {
+                "sentinel": config.forge_model_name,
+                "prism": config.forge_model_name,
+                "forge": forge_output.model_name,
+                "guardian": "deterministic",
+            },
+            "live_reasoning": True,
+            "learning_state": {
+                "observation": {
+                    "incident_id": incident.nexus_incident_id,
+                    "source": "raw_text",
+                    "service": raw_service,
+                    "evidence_count": len(raw_evidence.get("evidence", [])) if isinstance(raw_evidence.get("evidence"), list) else 0,
+                },
+                "reward_components": {
+                    "classification": round(sentinel_output.confidence, 2),
+                    "diagnosis": round(prism_output.confidence, 2),
+                    "safety": round(guardian_output.safety_score, 2),
+                },
+            },
         }
 
     async def execute_incident(
@@ -420,7 +884,12 @@ class IncidentService:
         tenant_id: str | None = None,
     ) -> dict[str, object]:
         lifecycle = await self.get_incident_status(nexus_incident_id, tenant_id=tenant_id)
+        guardian_decision = str(lifecycle.get("guardian_decision") or "pending")
         executed = lifecycle.get("status") != "blocked_by_guardian"
+        if guardian_decision == "approve":
+            executed = True
+        elif guardian_decision == "reject":
+            executed = False
         if executed:
             updated = await self._session.incidents.update_incident_status(
                 nexus_incident_id,
@@ -438,6 +907,7 @@ class IncidentService:
             "result": "deterministic_demo_run",
             "queue_position": lifecycle.get("queue_position", 1),
             "eta_sec": lifecycle.get("eta_sec", 30),
+            "guardian_decision": guardian_decision,
         }
         return payload
 
@@ -467,7 +937,7 @@ class IncidentService:
             nexus_incident_id=incident.id,
             external_id=incident.id,
             title=incident.name,
-            severity="P1" if incident.severity == "P1" else "P2" if incident.severity == "P2" else "P3",
+            severity=self._display_severity(incident.severity),
             status="investigating",
             source=self._demo_source_channel(nexus_incident_id),
             service=details["related_services"][0] if details.get("related_services") else "",
@@ -484,7 +954,10 @@ class IncidentService:
         return source_channels.get(nexus_incident_id, "webhook")
 
     def _normalize_severity(self, severity: str) -> str:
-        return "P1" if severity == "P0" else severity
+        normalized = normalize_priority_label(severity)
+        if normalized.startswith("P") and normalized[1:].isdigit():
+            return shift_priority_label(normalized)
+        return normalized
 
     async def _queue_position_and_eta(
         self,
@@ -528,6 +1001,7 @@ class IncidentService:
             {
                 "source": incident.source,
                 "status": incident.status,
+                "guardian_decision": incident.guardian_decision,
             }
         )
         return QueueIncidentSummary(
@@ -540,10 +1014,10 @@ class IncidentService:
             updated_at=incident.updated_at or incident.created_at or "now",
         )
 
-    def _queue_sort_key(self, item: QueueIncidentSummary) -> tuple[int, int, str]:
+    def _queue_sort_key(self, item: QueueIncidentSummary) -> tuple[int, int, int, str]:
         updated_at = self._parse_timestamp(item.updated_at)
         active_weight = 1 if item.status == "investigating" else 0
-        return active_weight, int(updated_at.timestamp()), item.nexus_incident_id
+        return active_weight, -priority_rank(item.severity), int(updated_at.timestamp()), item.nexus_incident_id
 
     def _parse_timestamp(self, value: str) -> datetime:
         try:
@@ -558,7 +1032,7 @@ class IncidentService:
         return max(30, 30 + (position - 1) * 20)
 
     def _queue_source_channel(self, source: str | None) -> str:
-        if source in {"manual_form", "slack_command", "stream_anomaly", "batch_import"}:
+        if source in {"raw_text", "manual_form", "slack_command", "stream_anomaly", "batch_import"}:
             return source
         return "webhook"
 
@@ -585,7 +1059,7 @@ class IncidentService:
                 QueueIncidentSummary(
                     nexus_incident_id=incident.id,
                     title=incident.name,
-                    severity="P1" if incident.severity == "P1" else "P2" if incident.severity == "P2" else "P3",
+                    severity=self._display_severity(incident.severity),
                     status=status_by_incident.get(incident_id, "investigating"),
                     source_channel=self._demo_source_channel(incident_id),
                     current_stage=stage_by_incident.get(incident_id, IncidentWorkflowStage.INCIDENT_RECEIVED),
@@ -595,9 +1069,12 @@ class IncidentService:
         return items
 
     def _derive_current_stage(self, lifecycle: dict[str, object]) -> IncidentWorkflowStage:
+        guardian_decision = str(lifecycle.get("guardian_decision") or "pending")
         if lifecycle.get("status") == "resolved":
             return IncidentWorkflowStage.EXECUTED_VERIFIED_LEARNED
         if lifecycle.get("status") == "blocked_by_guardian":
+            return IncidentWorkflowStage.GUARDIAN_REVIEWED_SAFETY
+        if guardian_decision in {"approve", "reject"}:
             return IncidentWorkflowStage.GUARDIAN_REVIEWED_SAFETY
         source = lifecycle.get("source")
         if source == "manual_form":
@@ -789,7 +1266,7 @@ class IncidentService:
         created = await self._session.incidents.create_incident(
             external_id=f"replay_{scenario_id}",
             title=scenario["title"],
-            severity="P1" if incident.severity == "P1" else "P2" if incident.severity == "P2" else "P3",
+            severity=self._display_severity(incident.severity),
             tenant_id=tenant_id,
             source=scenario["source_channel"],
             service=details["related_services"][0] if details.get("related_services") else incident.system_context.service,
@@ -851,6 +1328,14 @@ class IncidentService:
                 "live_incidents": len(summary.get("live_incidents", [])),
             }
         )
+        if summary.get("rl_episode_contract"):
+            await record_learning_contract(
+                {
+                    "tenant_id": tenant_id,
+                    "contract": summary.get("rl_episode_contract", {}),
+                    "reward_evaluation": summary.get("reward_evaluation", {}),
+                }
+            )
         summary["artifact_summary"] = get_artifact_summary()
         return summary
 
@@ -877,7 +1362,7 @@ class IncidentService:
                 {
                     "incident_id": incident.id,
                     "title": incident.name,
-                    "severity": "P1" if incident.severity == "P1" else "P2" if incident.severity == "P2" else "P3",
+                    "severity": self._display_severity(incident.severity),
                     "outcome": outcome_by_incident.get(incident_id, "resolved"),
                     "source_channel": self._demo_source_channel(incident_id),
                     "resolved_at": details["detected_at"],
@@ -912,7 +1397,7 @@ class IncidentService:
                     "payload": [
                         "Source payload",
                         f"Scenario: {scenario_id.replace('_', ' ')}",
-                        f"Severity: {incident.severity}",
+                        f"Severity: {self._display_severity(incident.severity)}",
                         f"Service: {incident.system_context.service}",
                     ],
                     "evidence": [
@@ -957,4 +1442,6 @@ class IncidentService:
             "workflow_observation_states": payload.get("workflow_observation_states", []),
             "agent_accuracy": payload.get("agent_accuracy", {}),
             "final_difficulty": payload.get("final_difficulty"),
+            "reward_evaluation": payload.get("reward_evaluation", {}),
+            "rl_episode_contract": payload.get("rl_episode_contract", {}),
         }

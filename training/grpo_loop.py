@@ -4,8 +4,9 @@ from dataclasses import asdict, dataclass
 from statistics import mean
 
 from incidents.catalogue import load_incident_types
-from server.models import NormalizedAlertEnvelope
+from server.models import EpisodeLearningContract, EpisodeObservationState, NormalizedAlertEnvelope
 from server.orchestrator import NexusCore
+from server.services.priority import priority_rank
 from training.curriculum import CurriculumAdapter
 from training.policy import AdamScalarOptimizer, ScalarPolicy, TrainingStepRecord
 from training.trajectory import compute_group_advantages, extract_trajectory
@@ -23,6 +24,10 @@ class TrainingEpisodeRecord:
     advantage: float
     cost_usd: float
     steps: list[TrainingStepRecord]
+    observation_state: dict[str, object]
+    reward_breakdown: dict[str, object]
+    guardian_decision: str
+    execution_result: str
 
     def to_dict(self) -> dict[str, object]:
         """Serialize the record for JSON metrics output."""
@@ -36,6 +41,10 @@ class TrainingEpisodeRecord:
             "advantage": self.advantage,
             "cost_usd": self.cost_usd,
             "steps": [asdict(step) for step in self.steps],
+            "observation_state": self.observation_state,
+            "reward_breakdown": self.reward_breakdown,
+            "guardian_decision": self.guardian_decision,
+            "execution_result": self.execution_result,
         }
 
 
@@ -50,6 +59,8 @@ class TrainingSummary:
     final_difficulty: str
     total_cost_usd: float
     policy_weights: dict[str, float]
+    reward_evaluation: dict[str, object]
+    rl_episode_contract: dict[str, object]
 
     def to_dict(self) -> dict[str, object]:
         """Serialize the summary for reward-curve persistence."""
@@ -61,6 +72,8 @@ class TrainingSummary:
             "final_difficulty": self.final_difficulty,
             "total_cost_usd": self.total_cost_usd,
             "policy_weights": self.policy_weights,
+            "reward_evaluation": self.reward_evaluation,
+            "rl_episode_contract": self.rl_episode_contract,
             "episode_records": [record.to_dict() for record in self.episode_records],
         }
 
@@ -88,6 +101,7 @@ class GRPOTrainer:
         self.reward_curve: list[float] = []
         self.cost_curve: list[float] = []
         self.episode_records: list[TrainingEpisodeRecord] = []
+        self.latest_learning_contract: dict[str, object] = {}
         self._incidents = load_incident_types()
 
     def train(self, num_episodes: int = 30) -> TrainingSummary:
@@ -95,7 +109,8 @@ class GRPOTrainer:
 
         for episode_index in range(num_episodes):
             incident = self._sample_incident()
-            episode = asyncio.run(self.nexus_core.run_episode(self._alert_envelope_for_incident(incident)))
+            alert_envelope = self._alert_envelope_for_incident(incident)
+            episode = asyncio.run(self.nexus_core.run_episode(alert_envelope))
             environment_reward = episode.reward.composite if episode.reward is not None else 0.0
             policy_quality = mean(policy.probability() for policy in self.policies.values())
             reward = round(environment_reward * policy_quality, 6)
@@ -106,9 +121,38 @@ class GRPOTrainer:
             self._update_policies(steps, advantage)
 
             cost_usd = round(episode.forge_output.estimated_cost_usd, 6)
+            observation_state = {
+                "incident_id": incident.id,
+                "service": incident.system_context.service,
+                "severity": incident.severity,
+                "difficulty": incident.difficulty,
+                "source_channel": "datadog",
+                "raw_priority_label": alert_envelope.severity,
+                "normalized_priority_rank": priority_rank(alert_envelope.severity),
+                "live_reasoning": False,
+                "symptom_count": len(incident.symptoms),
+                "evidence_count": len(episode.prism_output.evidence),
+                "workflow_state": episode.status,
+            }
+            reward_breakdown = episode.reward.model_dump(mode="json") if episode.reward is not None else {}
+            learning_contract = EpisodeLearningContract(
+                observation=EpisodeObservationState(**observation_state),
+                agent_trace=[asdict(step) for step in steps],
+                reward_breakdown=reward_breakdown,
+                solution_proposal=episode.forge_output.runbook.summary,
+                raw_priority_label=alert_envelope.severity,
+                normalized_priority_rank=priority_rank(alert_envelope.severity),
+                live_reasoning=False,
+                guardian_decision=episode.guardian_output.decision,
+                execution_result="executed" if episode.executed else "blocked",
+                reward=reward,
+                advantage=advantage,
+                cost_usd=cost_usd,
+            )
             self.reward_curve.append(reward)
             self.cost_curve.append(cost_usd)
             self.curriculum.observe_reward(reward)
+            self.latest_learning_contract = learning_contract.model_dump(mode="json")
             self.episode_records.append(
                 TrainingEpisodeRecord(
                     episode_index=episode_index,
@@ -119,6 +163,10 @@ class GRPOTrainer:
                     advantage=advantage,
                     cost_usd=cost_usd,
                     steps=steps,
+                    observation_state=observation_state,
+                    reward_breakdown=reward_breakdown,
+                    guardian_decision=episode.guardian_output.decision,
+                    execution_result="executed" if episode.executed else "blocked",
                 )
             )
 
@@ -130,6 +178,14 @@ class GRPOTrainer:
             final_difficulty=self.curriculum.current_difficulty,
             total_cost_usd=round(sum(self.cost_curve), 6),
             policy_weights={name: round(policy.weight, 6) for name, policy in self.policies.items()},
+            reward_evaluation={
+                "final_reward": round(self.reward_curve[-1], 2) if self.reward_curve else 0.0,
+                "peak_reward": round(max(self.reward_curve), 2) if self.reward_curve else 0.0,
+                "mean_reward": round(mean(self.reward_curve), 2) if self.reward_curve else 0.0,
+                "reward_delta": round((self.reward_curve[-1] - self.reward_curve[0]), 2) if len(self.reward_curve) > 1 else 0.0,
+                "policy_drift": {name: round(policy.weight, 6) for name, policy in self.policies.items()},
+            },
+            rl_episode_contract=self.latest_learning_contract,
         )
 
     def _sample_incident(self):

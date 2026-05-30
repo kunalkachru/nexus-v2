@@ -43,10 +43,42 @@ export function loadMetrics() {
   return fetchJson("/api/metrics");
 }
 
+const LIVE_REASONING_STORAGE_KEY = "nexus.live_reasoning";
+
+export function getLiveReasoningPreference() {
+  try {
+    const stored = window.localStorage.getItem(LIVE_REASONING_STORAGE_KEY);
+    if (stored === "1" || stored === "0") {
+      return stored === "1";
+    }
+  } catch {
+    // Ignore storage failures and fall back to the default toggle state.
+  }
+  return true;
+}
+
+export function setLiveReasoningPreference(enabled) {
+  try {
+    window.localStorage.setItem(LIVE_REASONING_STORAGE_KEY, enabled ? "1" : "0");
+  } catch {
+    // Ignore storage failures; the page toggle still updates immediately.
+  }
+}
+
 function synthesizeIncidentFromStatus(status) {
   const source = status.source || "webhook";
   const service = status.external_id || status.title || "service";
   const timeline = status.timeline || [];
+  const recordedGuardianDecision = ["approve", "reject"].includes(String(status.guardian_decision))
+    ? status.guardian_decision
+    : null;
+  const guardianDecision =
+    recordedGuardianDecision ||
+    (status.status === "blocked_by_guardian"
+      ? "reject"
+      : status.status === "resolved"
+        ? "approve"
+        : "pending");
   const evidenceSources = [
     {
       source: "loki",
@@ -124,6 +156,7 @@ function synthesizeIncidentFromStatus(status) {
     runbook: {
       language: "bash",
       summary: "Rollback-safe remediation placeholder for the live intake path.",
+      proposed_fix: "Rollback-safe remediation placeholder for the live intake path.",
       selection_logic: "Choose the safest action that preserves operator control while backend automation is still stubbed.",
       candidate_fixes: [
         { action: "Validate intake and confirm ownership", success_rate: 0.9 },
@@ -134,18 +167,51 @@ function synthesizeIncidentFromStatus(status) {
       cost_usd: 0.05,
     },
     guardian: {
-      decision: status.status === "blocked_by_guardian" ? "reject" : "approve",
-      confidence: 0.88,
+      decision: guardianDecision,
+      confidence: recordedGuardianDecision ? 0.88 : status.status === "investigating" ? 0.0 : 0.88,
       safety_checks: [
         "Authenticated status view",
         "Audit trail available",
         "Rollback-safe execution path preserved",
       ],
       policy_violations: [],
-      reasoning: "The versioned status view is visible and no unsafe operation is being auto-executed.",
+      reasoning:
+        status.guardian_reasoning ||
+        (recordedGuardianDecision
+          ? "Guardian review has already been recorded on the incident."
+          : status.status === "investigating"
+            ? "Guardian review is pending. Choose approve or block to make the gate explicit."
+            : "The versioned status view is visible and no unsafe operation is being auto-executed."),
+    },
+    structured_result: {
+      incident_id: status.nexus_incident_id,
+      root_cause: "Live incident path awaiting deeper backend enrichment.",
+      proposed_fix: "Validate intake and prepare rollback-safe mitigation.",
+      safety_decision: guardianDecision,
+      confidence: recordedGuardianDecision ? 0.88 : status.status === "investigating" ? 0.0 : 0.88,
+      execution_status:
+        status.status === "blocked_by_guardian"
+          ? "blocked"
+          : status.guardian_decision === "approve"
+            ? "approved"
+            : status.guardian_decision === "pending" || status.status === "investigating"
+              ? "pending"
+              : "executed",
+      live_reasoning: false,
+      raw_priority_label: status.severity,
+      normalized_priority_label: status.severity,
+      normalized_priority_rank: Number.parseInt(String(status.severity || "").replace(/^P/, ""), 10) || 0,
+      reward: 0.68,
     },
     workflow: timeline,
-    execution_result: status.status === "blocked_by_guardian" ? "blocked" : "executed",
+    execution_result:
+      status.status === "blocked_by_guardian"
+        ? "blocked"
+        : status.guardian_decision === "approve"
+          ? "approved"
+          : status.guardian_decision === "pending" || status.status === "investigating"
+          ? "pending"
+          : "executed",
     reward: 0.68,
     execution_time_ms: 11.2,
     supported_incidents: [status.nexus_incident_id],
@@ -153,11 +219,12 @@ function synthesizeIncidentFromStatus(status) {
 }
 
 export async function loadIncident(incidentId) {
+  const liveReasoning = getLiveReasoningPreference() ? "1" : "0";
   try {
-    return await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/context`);
+    return await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/context?live_reasoning=${liveReasoning}`);
   } catch (error) {
     try {
-      return await fetchJson(`/run-incident?incident_id=${encodeURIComponent(incidentId)}`);
+      return await fetchJson(`/run-incident?incident_id=${encodeURIComponent(incidentId)}&live_reasoning=${liveReasoning}`);
     } catch {
       const status = await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/status`);
       return synthesizeIncidentFromStatus(status);

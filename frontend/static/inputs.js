@@ -1,8 +1,27 @@
-import { demoAuthHeaders, fetchAuthedJson, postAuthedJson } from "./api.js";
+import { demoAuthHeaders, fetchAuthedJson, getLiveReasoningPreference, postAuthedJson, setLiveReasoningPreference } from "./api.js";
+
+const RAW_LOG_EXAMPLE = `2026-05-30T10:14:22Z checkout-api ERROR timeout waiting for payment service
+2026-05-30T10:14:23Z checkout-api WARN retry budget exhausted
+2026-05-30T10:14:25Z payments-worker ERROR queue depth exceeded threshold
+service=checkout-api severity=P1`;
 
 const WEBHOOK_SECRET = "nexus-demo-webhook-secret";
 
 const CHANNELS = {
+  raw_text: {
+    label: "Paste Raw Logs",
+    summary: "Paste raw incident text, stack traces, or error output.",
+    auth: "Operator paste or copied incident transcript.",
+    next: "Raw text is parsed into structured evidence, then routed into the same reasoning workflow as other channels.",
+    payload: "",
+    previewPayload: RAW_LOG_EXAMPLE,
+    incidentId: "INC001",
+    service: "checkout-api",
+    severity: "P1",
+    overview: "Paste logs, stack traces, or incident notes.",
+    symptoms: "timeout waiting for payment service, retry budget exhausted, queue depth exceeded",
+    launchLabel: "Open reasoning console",
+  },
   webhook: {
     label: "Webhook",
     summary: "Primary machine-to-machine alert ingestion.",
@@ -91,6 +110,44 @@ function updateInputField(id, value) {
   }
 }
 
+function parseRawLogText(rawText) {
+  const text = String(rawText || "").trim();
+  if (!text) {
+    return {
+      service: "-",
+      severity: "-",
+      signature: "Paste logs to preview",
+      action: "Load example logs or paste raw incident text",
+      summary: "Paste raw incident text to preview the parsed evidence.",
+    };
+  }
+  const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const joined = lines.join(" ").toLowerCase();
+  const serviceMatch = text.match(/(?:service|svc|app)\s*[:=]\s*([a-z0-9._-]+)/i) || text.match(/\b([a-z0-9._-]+-api|[a-z0-9._-]+-worker)\b/i);
+  const severityMatch = text.match(/\b(P\d+)\b/i) || text.match(/\b(critical|urgent|high|medium|normal|low|info)\b/i);
+
+  let signature = "General incident";
+  if (joined.includes("timeout")) {
+    signature = "Timeout / queue pressure";
+  } else if (joined.includes("sql") || joined.includes("database") || joined.includes("postgres")) {
+    signature = "Database / connection pool pressure";
+  } else if (joined.includes("memory") || joined.includes("rss")) {
+    signature = "Memory pressure / leak";
+  } else if (joined.includes("auth") || joined.includes("unauthorized")) {
+    signature = "Auth / permission failure";
+  } else if (joined.includes("panic") || joined.includes("exception") || joined.includes("traceback")) {
+    signature = "Unhandled exception";
+  }
+
+  return {
+    service: serviceMatch?.[1] || "checkout-api",
+    severity: severityMatch?.[1]?.toUpperCase() || "P2",
+    signature,
+    action: "Open reasoning console",
+    summary: lines[0] || "Paste raw incident text to preview the parsed evidence.",
+  };
+}
+
 async function signWebhookPayload(body) {
   const encodedKey = new TextEncoder().encode(WEBHOOK_SECRET);
   const key = await window.crypto.subtle.importKey(
@@ -122,23 +179,37 @@ function setActiveChannel(card, cards) {
   updateField("channelPreview", `${channel.label}: ${channel.summary}`);
   updateField("channelAuth", `Auth: ${channel.auth}`);
   updateField("channelNextStep", channel.next);
-  updateField("channelPayload", channel.payload);
+  updateField("channelPayload", channel.previewPayload || channel.payload);
 
   const launch = document.getElementById("channelLaunch");
   if (launch) {
     launch.href = `incident?nexus_incident_id=${encodeURIComponent(channel.incidentId)}`;
     launch.textContent = channel.launchLabel;
+    launch.dataset.incidentId = channel.incidentId;
   }
 
   updateInputField("serviceName", channel.service);
   updateInputField("severity", channel.severity);
   updateInputField("summary", channel.overview);
   updateInputField("symptoms", channel.symptoms);
+  const rawLogInput = document.getElementById("rawLogInput");
+  if (rawLogInput) {
+    if (card.dataset.channel !== "raw_text") {
+      rawLogInput.value = channel.payload;
+      rawLogInput.dataset.autofilled = "1";
+    } else if (rawLogInput.dataset.autofilled === "1") {
+      rawLogInput.value = "";
+      rawLogInput.dataset.autofilled = "0";
+    }
+    renderRawLogPreview(rawLogInput.value);
+  }
 
   const endpoint = document.getElementById("channelEndpoint");
   if (endpoint) {
     endpoint.textContent = card.dataset.channel === "manual_form"
       ? "POST /api/v1/incidents/manual-report"
+      : card.dataset.channel === "raw_text"
+        ? "POST /api/v1/incidents/raw-text"
       : card.dataset.channel === "batch_import"
         ? "POST /api/v1/incidents/batch-import"
         : card.dataset.channel === "webhook"
@@ -148,7 +219,9 @@ function setActiveChannel(card, cards) {
 
   const submit = document.getElementById("channelSubmit");
   if (submit) {
-    const label = card.dataset.channel === "manual_form"
+    const label = card.dataset.channel === "raw_text"
+      ? "Submit raw logs"
+      : card.dataset.channel === "manual_form"
       ? "Submit manual report"
       : card.dataset.channel === "batch_import"
         ? "Run batch import"
@@ -156,18 +229,46 @@ function setActiveChannel(card, cards) {
           ? "Send webhook intake"
           : "Preview intake only";
     submit.textContent = label;
-    submit.disabled = !["manual_form", "batch_import", "webhook"].includes(card.dataset.channel);
+    submit.disabled = !["raw_text", "manual_form", "batch_import", "webhook"].includes(card.dataset.channel);
   }
+
+  syncChannelLaunchLiveReasoning();
 
   const result = document.getElementById("channelResult");
   if (result) {
-    result.textContent = "No intake submitted yet.";
+    result.textContent = card.dataset.channel === "raw_text"
+      ? "Paste raw logs or load the example to preview parsed evidence."
+      : "No intake parsed yet.";
   }
+}
+
+function renderRawLogPreview(rawText) {
+  const parsed = parseRawLogText(rawText);
+  updateField("rawDetectedService", parsed.service);
+  updateField("rawDetectedSeverity", parsed.severity);
+  updateField("rawDetectedSignature", parsed.signature);
+  updateField("rawDetectedAction", parsed.action);
+
+  const result = document.getElementById("channelResult");
+  if (result) {
+    result.textContent = parsed.service === "-"
+      ? "Paste raw logs or click Load example logs to preview parsed evidence."
+      : `Parsed ${parsed.service} as ${parsed.severity} with ${parsed.signature.toLowerCase()}.`;
+  }
+}
+
+function syncChannelLaunchLiveReasoning() {
+  const launch = document.getElementById("channelLaunch");
+  if (!launch?.dataset.incidentId) {
+    return;
+  }
+  const liveReasoning = getLiveReasoningPreference() ? "&live_reasoning=1" : "&live_reasoning=0";
+  launch.href = `incident?nexus_incident_id=${encodeURIComponent(launch.dataset.incidentId)}${liveReasoning}`;
 }
 
 window.addEventListener("DOMContentLoaded", () => {
   const cards = Array.from(document.querySelectorAll(".input-channel-card"));
-  let selectedChannel = cards.find((card) => card.dataset.channel === "webhook") || cards[0];
+  let selectedChannel = cards.find((card) => card.dataset.channel === "raw_text") || cards[0];
   cards.forEach((card) => {
     card.addEventListener("click", () => {
       selectedChannel = card;
@@ -180,6 +281,41 @@ window.addEventListener("DOMContentLoaded", () => {
     setActiveChannel(defaultCard, cards);
   }
 
+  const rawLogInput = document.getElementById("rawLogInput");
+  rawLogInput?.addEventListener("input", () => {
+    rawLogInput.dataset.autofilled = "0";
+    renderRawLogPreview(rawLogInput.value);
+  });
+
+  const loadExampleButton = document.getElementById("loadRawExample");
+  loadExampleButton?.addEventListener("click", () => {
+    if (!rawLogInput) {
+      return;
+    }
+    rawLogInput.value = RAW_LOG_EXAMPLE;
+    rawLogInput.dataset.autofilled = "1";
+    renderRawLogPreview(rawLogInput.value);
+  });
+
+  const liveReasoningButton = document.getElementById("liveReasoningToggle");
+  const liveReasoningState = document.getElementById("liveReasoningState");
+  const syncLiveReasoning = () => {
+    const enabled = getLiveReasoningPreference();
+    if (liveReasoningState) {
+      liveReasoningState.textContent = `Live reasoning: ${enabled ? "ON" : "OFF"}`;
+    }
+    if (liveReasoningButton) {
+      liveReasoningButton.textContent = enabled ? "Turn live reasoning off" : "Turn live reasoning on";
+    }
+  };
+  syncLiveReasoning();
+  liveReasoningButton?.addEventListener("click", () => {
+    const enabled = !getLiveReasoningPreference();
+    setLiveReasoningPreference(enabled);
+    syncLiveReasoning();
+    syncChannelLaunchLiveReasoning();
+  });
+
   const submitButton = document.getElementById("channelSubmit");
   submitButton?.addEventListener("click", async () => {
     const channel = CHANNELS[selectedChannel?.dataset.channel];
@@ -189,7 +325,7 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    if (!["manual_form", "batch_import", "webhook"].includes(selectedChannel.dataset.channel)) {
+    if (!['raw_text', 'manual_form', 'batch_import', 'webhook'].includes(selectedChannel.dataset.channel)) {
       if (result) {
         result.textContent = "This channel is UI-only for now. The console preview still reflects the same incident path.";
       }
@@ -207,7 +343,17 @@ window.addEventListener("DOMContentLoaded", () => {
       const symptoms = document.getElementById("symptoms")?.value || channel.symptoms;
 
       let response;
-      if (selectedChannel.dataset.channel === "manual_form") {
+      if (selectedChannel.dataset.channel === "raw_text") {
+        const rawText = rawLogInput?.value || channel.payload;
+        const parsed = parseRawLogText(rawText);
+        response = await postAuthedJson("/api/v1/incidents/raw-text", {
+          raw_text: rawText,
+          source_hint: "paste",
+          reported_by: "demo-operator",
+          team: "platform",
+          severity_hint: parsed.severity,
+        });
+      } else if (selectedChannel.dataset.channel === "manual_form") {
         response = await postAuthedJson("/api/v1/incidents/manual-report", {
           affected_service: service,
           symptoms: symptoms.split(/\n|,/).map((item) => item.trim()).filter(Boolean),
@@ -254,10 +400,12 @@ window.addEventListener("DOMContentLoaded", () => {
       if (result) {
         result.textContent = `Created ${response.nexus_incident_id} with status ${response.status}.`;
       }
-      if (launch) {
-        launch.href = `incident?nexus_incident_id=${encodeURIComponent(response.nexus_incident_id)}`;
-        launch.textContent = `Open ${response.nexus_incident_id} incident console`;
-      }
+    if (launch) {
+      const liveReasoning = getLiveReasoningPreference() ? "&live_reasoning=1" : "&live_reasoning=0";
+      launch.href = `incident?nexus_incident_id=${encodeURIComponent(response.nexus_incident_id)}${liveReasoning}`;
+      launch.dataset.incidentId = response.nexus_incident_id;
+      launch.textContent = `Open ${response.nexus_incident_id} incident console`;
+    }
     } catch (error) {
       if (result) {
         result.textContent = `Submission failed: ${error.message}`;

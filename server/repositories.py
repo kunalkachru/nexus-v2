@@ -24,6 +24,8 @@ class IncidentRepository:
         tenant_id: str = "tenant-system",
         source: str | None = None,
         service: str = "",
+        raw_input_text: str = "",
+        normalized_evidence: dict[str, object] | None = None,
     ) -> IncidentRecord:
         timestamp = datetime.now(timezone.utc).isoformat()
         incident = IncidentRecord(
@@ -35,6 +37,11 @@ class IncidentRepository:
             tenant_id=tenant_id,
             source=source,
             service=service,
+            raw_input_text=raw_input_text,
+            normalized_evidence=normalized_evidence or {},
+            guardian_decision="pending",
+            guardian_reasoning="",
+            guardian_reviewed_at="",
             created_at=timestamp,
             updated_at=timestamp,
         )
@@ -70,16 +77,27 @@ class IncidentRepository:
         nexus_incident_id: str,
         *,
         status: str,
+        guardian_decision: str | None = None,
+        guardian_reasoning: str | None = None,
+        guardian_reviewed_at: str | None = None,
     ) -> IncidentRecord | None:
         incident = self._incident_store.get(nexus_incident_id)
         if incident is None:
             return None
 
+        updates: dict[str, object] = {
+            "status": status,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        if guardian_decision is not None:
+            updates["guardian_decision"] = guardian_decision
+        if guardian_reasoning is not None:
+            updates["guardian_reasoning"] = guardian_reasoning
+        if guardian_reviewed_at is not None:
+            updates["guardian_reviewed_at"] = guardian_reviewed_at
+
         updated = incident.model_copy(
-            update={
-                "status": status,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }
+            update=updates
         )
         self._incident_store[nexus_incident_id] = updated
         try:

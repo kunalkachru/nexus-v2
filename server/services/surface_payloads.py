@@ -7,22 +7,28 @@ from server.incident_payloads import get_incident_definition, get_incident_detai
 from server.models import IncidentWorkflowStage, QueueIncidentSummary, QueueResponse
 from server.artifacts import get_artifact_summary
 from server.services.observability import ObservabilityService
+from server.services.priority import normalize_priority_label, priority_snapshot
 
 
 METRICS_PATH = Path(__file__).resolve().parents[2] / "frontend" / "metrics.json"
 OBSERVABILITY_SERVICE = ObservabilityService()
 
 
+def _display_severity(severity: str) -> str:
+    return normalize_priority_label(severity)
+
+
 def build_incident_response(incident_id: str) -> dict[str, object]:
     incident = get_incident_definition(incident_id)
     details = get_incident_details(incident_id)
     source_channel = incident_source_channel(incident_id)
+    priority = priority_snapshot(incident.severity)
 
     return {
         "incident": {
             "id": incident.id,
             "name": incident.name,
-            "severity": "P1" if incident.severity == "P1" else "P2" if incident.severity == "P2" else "P3",
+            "severity": _display_severity(incident.severity),
             "summary": details["summary"],
             "detected_at": details["detected_at"],
             "duration_minutes": details["duration_minutes"],
@@ -41,7 +47,7 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
         "classification": {
             "incident_id": incident.id,
             "incident_name": incident.name,
-            "severity": "P1" if incident.severity == "P1" else "P2" if incident.severity == "P2" else "P3",
+            "severity": _display_severity(incident.severity),
             "confidence": details["sentinel"]["confidence"],
             "confidence_breakdown": details["sentinel"]["confidence_breakdown"],
             "evidence": details["sentinel"]["evidence"],
@@ -57,6 +63,7 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
         "runbook": {
             "language": "bash",
             "summary": details["forge"]["recommended_runbook"],
+            "proposed_fix": details["forge"]["recommended_runbook"],
             "selection_logic": details["forge"]["selection_logic"],
             "candidate_fixes": details["forge"]["candidate_fixes"],
             "recommended_runbook": details["forge"]["recommended_runbook"],
@@ -69,6 +76,23 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
             "safety_checks": details["guardian"]["safety_checks"],
             "policy_violations": details["guardian"]["policy_violations"],
             "reasoning": details["guardian"]["reasoning"],
+        },
+        "structured_result": {
+            "incident_id": incident.id,
+            "root_cause": incident.root_cause,
+            "proposed_fix": details["forge"]["recommended_runbook"],
+            "safety_decision": details["guardian"]["decision"],
+            "confidence": details["guardian"]["confidence"],
+            "evidence": {
+                "log_count": len(details["recent_logs"]),
+                "metric_count": len(details["metrics"]),
+                "deployment_count": len(details["recent_deployments"]),
+            },
+            "execution_status": "executed",
+            "live_reasoning": False,
+            "raw_priority_label": priority["raw_label"],
+            "normalized_priority_label": priority["normalized_label"],
+            "normalized_priority_rank": priority["rank"],
         },
         "workflow": build_workflow_timeline(incident_id, source_channel, incident, details),
         "execution_result": "executed",
@@ -83,15 +107,88 @@ def load_metrics_payload() -> dict[str, object]:
         payload = json.load(file_handle)
     payload["workflow_observation_states"] = workflow_observation_states()
     episode_records = payload.get("episode_records") or []
-    payload["latest_episode"] = episode_records[0] if episode_records else None
+    latest_episode = episode_records[-1] if episode_records else None
+    payload["latest_episode"] = latest_episode
+    payload["reward_evaluation"] = payload.get("reward_evaluation") or payload.get("training_evaluation") or {
+        "reward_curve_final": round(payload.get("summary", {}).get("trained_reward", 0.0), 2),
+        "reward_curve_peak": round(max(payload.get("reward_curve", [0.0])) if payload.get("reward_curve") else 0.0, 2),
+        "reward_curve_delta": round(
+            (payload.get("reward_curve", [0.0])[-1] - payload.get("reward_curve", [0.0])[0])
+            if len(payload.get("reward_curve", [])) > 1
+            else 0.0,
+            2,
+        ),
+        "reward_curve_mean": round(
+            sum(payload.get("reward_curve", [])) / len(payload.get("reward_curve", []))
+            if payload.get("reward_curve")
+            else 0.0,
+            2,
+        ),
+        "policy_drift": payload.get("policy_weights", {}),
+    }
+    payload["rl_episode_contract"] = payload.get("rl_episode_contract") or _synthesize_rl_episode_contract(latest_episode)
     payload["queue_snapshot"] = build_queue_snapshot(payload)
     payload["platform_status"] = build_platform_status(payload)
+    payload["artifact_summary"] = get_artifact_summary()
     return payload
+
+
+def _synthesize_rl_episode_contract(latest_episode: dict[str, object] | None) -> dict[str, object]:
+    if not isinstance(latest_episode, dict):
+        return {}
+    steps = latest_episode.get("steps") if isinstance(latest_episode.get("steps"), list) else []
+    agent_trace = [step for step in steps if isinstance(step, dict)]
+    observation = latest_episode.get("observation_state") if isinstance(latest_episode.get("observation_state"), dict) else {}
+    forge_step = next(
+        (
+            str(step.get("action", "")).strip()
+            for step in agent_trace
+            if str(step.get("agent_name", "")).strip().lower() == "forge" and str(step.get("action", "")).strip()
+        ),
+        "",
+    )
+    solution_proposal = str(latest_episode.get("solution_proposal") or forge_step or "Training runbook proposal").strip()
+    return {
+        "observation": {
+            "incident_id": latest_episode.get("incident_id", ""),
+            "service": latest_episode.get("incident_id", ""),
+            "severity": latest_episode.get("difficulty", ""),
+            "difficulty": latest_episode.get("difficulty", ""),
+            "source_channel": "datadog",
+            "raw_priority_label": observation.get("raw_priority_label", latest_episode.get("difficulty", "")),
+            "normalized_priority_label": observation.get("normalized_priority_label", latest_episode.get("difficulty", "")),
+            "normalized_priority_rank": int(observation.get("normalized_priority_rank", 0) or 0),
+            "live_reasoning": bool(observation.get("live_reasoning", False)),
+            "symptom_count": len(agent_trace),
+            "evidence_count": len(agent_trace),
+            "workflow_state": "resolved",
+        },
+        "agent_trace": agent_trace,
+        "reward_breakdown": {
+            "mttr": float(latest_episode.get("reward", 0.0)),
+            "diagnosis": float(latest_episode.get("environment_reward", 0.0)),
+            "customer": float(latest_episode.get("reward", 0.0)),
+            "coordination": float(latest_episode.get("reward", 0.0)),
+            "oversight": float(latest_episode.get("reward", 0.0)),
+            "severity_penalty": 0.0,
+            "composite": float(latest_episode.get("reward", 0.0)),
+        },
+        "solution_proposal": solution_proposal,
+        "raw_priority_label": latest_episode.get("raw_priority_label", latest_episode.get("difficulty", "")),
+        "normalized_priority_label": latest_episode.get("normalized_priority_label", latest_episode.get("difficulty", "")),
+        "normalized_priority_rank": int(latest_episode.get("normalized_priority_rank", 0) or 0),
+        "live_reasoning": bool(latest_episode.get("live_reasoning", False)),
+        "guardian_decision": latest_episode.get("guardian_decision", "approve"),
+        "execution_result": latest_episode.get("execution_result", "executed"),
+        "reward": float(latest_episode.get("reward", 0.0)),
+        "advantage": float(latest_episode.get("advantage", 0.0)),
+        "cost_usd": float(latest_episode.get("cost_usd", 0.0)),
+    }
 
 
 def build_queue_snapshot(payload: dict[str, object]) -> dict[str, object]:
     episode_records = payload.get("episode_records") or []
-    latest_episode = episode_records[0] if episode_records else {}
+    latest_episode = episode_records[-1] if episode_records else {}
     return {
         "open_incidents": len(list_supported_incident_ids()),
         "sla_at_risk": 2,
@@ -128,10 +225,10 @@ def build_queue_response() -> QueueResponse:
         incident = get_incident_definition(incident_id)
         details = get_incident_details(incident_id)
         items.append(
-            QueueIncidentSummary(
-                nexus_incident_id=incident.id,
-                title=incident.name,
-                severity="P1" if incident.severity == "P1" else "P2" if incident.severity == "P2" else "P3",
+                QueueIncidentSummary(
+                    nexus_incident_id=incident.id,
+                    title=incident.name,
+                    severity=_display_severity(incident.severity),
                 status=status_by_incident.get(incident_id, "investigating"),
                 source_channel=incident_source_channel(incident_id),
                 current_stage=stage_by_incident.get(incident_id, IncidentWorkflowStage.INCIDENT_RECEIVED),
@@ -161,10 +258,10 @@ def build_history_archive() -> list[dict[str, object]]:
         incident = get_incident_definition(incident_id)
         details = get_incident_details(incident_id)
         archive.append(
-            {
-                "incident_id": incident.id,
-                "title": incident.name,
-                "severity": "P1" if incident.severity == "P1" else "P2" if incident.severity == "P2" else "P3",
+                {
+                    "incident_id": incident.id,
+                    "title": incident.name,
+                    "severity": _display_severity(incident.severity),
                 "outcome": outcome_by_incident.get(incident_id, "resolved"),
                 "source_channel": incident_source_channel(incident_id),
                 "resolved_at": details["detected_at"],
@@ -198,12 +295,12 @@ def build_replay_scenarios() -> list[dict[str, object]]:
                 "summary": details["summary"],
                 "incident_id": incident_id,
                 "pills": pills,
-                "payload": [
-                    "Source payload",
-                    f"Scenario: {scenario_id.replace('_', ' ')}",
-                    f"Severity: {'P1' if incident.severity == 'P1' else 'P2' if incident.severity == 'P2' else 'P3'}",
-                    f"Summary: {details['summary']}",
-                ],
+                    "payload": [
+                        "Source payload",
+                        f"Scenario: {scenario_id.replace('_', ' ')}",
+                    f"Severity: {_display_severity(incident.severity)}",
+                        f"Summary: {details['summary']}",
+                    ],
                 "evidence": [
                     "Evidence pack",
                     details["sentinel"]["reasoning"],
@@ -256,6 +353,7 @@ def build_platform_status(payload: dict[str, object]) -> dict[str, object]:
         "validation_profile": "Deterministic",
         "replay_launches": artifact_summary["replay_launches"],
         "training_snapshots": artifact_summary["training_snapshots"],
+        "learning_contracts": artifact_summary["learning_contracts"],
     }
 
 

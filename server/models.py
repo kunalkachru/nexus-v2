@@ -31,19 +31,25 @@ class IncidentRecord(BaseModel):
     nexus_incident_id: str
     external_id: str
     title: str
-    severity: Literal["P1", "P2", "P3"]
+    severity: str
     status: Literal["investigating", "resolved", "blocked_by_guardian"]
     tenant_id: str = "tenant-system"
     source: Literal[
         "datadog",
         "prometheus",
         "webhook",
+        "raw_text",
         "manual_form",
         "slack_command",
         "stream_anomaly",
         "batch_import",
     ] | None = None
     service: str = ""
+    raw_input_text: str = ""
+    normalized_evidence: dict[str, object] = Field(default_factory=dict)
+    guardian_decision: Literal["pending", "approve", "reject"] = "pending"
+    guardian_reasoning: str = ""
+    guardian_reviewed_at: str = ""
     created_at: str = ""
     updated_at: str = ""
 
@@ -52,7 +58,7 @@ class NormalizedAlertEnvelope(BaseModel):
     source: Literal["datadog", "prometheus"]
     external_id: str
     title: str
-    severity: Literal["P1", "P2", "P3"]
+    severity: str
     service: str
     detected_at: str
     observed_values: dict[str, object] = Field(default_factory=dict)
@@ -62,12 +68,13 @@ class IncidentLifecycleResponse(BaseModel):
     nexus_incident_id: str
     external_id: str
     title: str
-    severity: Literal["P1", "P2", "P3"]
+    severity: str
     status: Literal["investigating", "resolved", "blocked_by_guardian"]
     source: Literal[
         "datadog",
         "prometheus",
         "webhook",
+        "raw_text",
         "manual_form",
         "slack_command",
         "stream_anomaly",
@@ -76,6 +83,9 @@ class IncidentLifecycleResponse(BaseModel):
     recent_deployments: list[dict[str, object]] = Field(default_factory=list)
     queue_position: int | None = None
     eta_sec: int | None = None
+    guardian_decision: Literal["pending", "approve", "reject"] = "pending"
+    guardian_reasoning: str = ""
+    guardian_reviewed_at: str = ""
 
 
 class IncidentWorkflowStage(str, Enum):
@@ -93,9 +103,9 @@ class IncidentWorkflowStage(str, Enum):
 class QueueIncidentSummary(BaseModel):
     nexus_incident_id: str
     title: str
-    severity: Literal["P1", "P2", "P3"]
+    severity: str
     status: Literal["investigating", "resolved", "blocked_by_guardian"]
-    source_channel: Literal["webhook", "manual_form", "slack_command", "stream_anomaly", "batch_import"]
+    source_channel: Literal["webhook", "raw_text", "manual_form", "slack_command", "stream_anomaly", "batch_import"]
     current_stage: IncidentWorkflowStage
     updated_at: str
 
@@ -108,12 +118,13 @@ class IncidentStatusResponse(BaseModel):
     nexus_incident_id: str
     external_id: str
     title: str
-    severity: Literal["P1", "P2", "P3"]
+    severity: str
     status: Literal["investigating", "resolved", "blocked_by_guardian"]
     source: Literal[
         "datadog",
         "prometheus",
         "webhook",
+        "raw_text",
         "manual_form",
         "slack_command",
         "stream_anomaly",
@@ -124,6 +135,9 @@ class IncidentStatusResponse(BaseModel):
     eta_sec: int
     timeline: list[dict[str, object]] = Field(default_factory=list)
     audit_logs: list[dict[str, object]] = Field(default_factory=list)
+    guardian_decision: Literal["pending", "approve", "reject"] = "pending"
+    guardian_reasoning: str = ""
+    guardian_reviewed_at: str = ""
 
 
 class SentinelClassification(BaseModel):
@@ -131,7 +145,7 @@ class SentinelClassification(BaseModel):
 
     incident_id: str
     incident_name: str
-    severity: Literal["P1", "P2", "P3"]
+    severity: str
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str
 
@@ -213,6 +227,39 @@ class EpisodeReward(BaseModel):
     composite: float = Field(ge=0.0, le=1.0)
 
 
+class EpisodeObservationState(BaseModel):
+    """Structured observation passed into the RL training loop."""
+
+    incident_id: str
+    service: str
+    severity: str
+    difficulty: str
+    source_channel: str
+    raw_priority_label: str = ""
+    normalized_priority_rank: int = Field(ge=0)
+    live_reasoning: bool = False
+    symptom_count: int = Field(ge=0)
+    evidence_count: int = Field(ge=0)
+    workflow_state: str
+
+
+class EpisodeLearningContract(BaseModel):
+    """RL-ready snapshot of a completed incident episode."""
+
+    observation: EpisodeObservationState
+    agent_trace: list[dict[str, object]] = Field(default_factory=list)
+    reward_breakdown: dict[str, float] = Field(default_factory=dict)
+    solution_proposal: str = ""
+    raw_priority_label: str = ""
+    normalized_priority_rank: int = Field(ge=0)
+    live_reasoning: bool = False
+    guardian_decision: str
+    execution_result: str
+    reward: float = Field(ge=0.0, le=1.0)
+    advantage: float
+    cost_usd: float = Field(ge=0.0)
+
+
 class Episode(BaseModel):
     """Synchronous Day 5 episode state used by the deterministic runner and grader."""
 
@@ -229,3 +276,4 @@ class Episode(BaseModel):
     customer_impact_minutes: float = Field(ge=0.0)
     steps: list[str] = Field(default_factory=list)
     reward: EpisodeReward | None = None
+    learning_contract: EpisodeLearningContract | None = None

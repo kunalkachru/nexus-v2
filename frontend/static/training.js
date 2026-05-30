@@ -38,6 +38,7 @@ function renderEpisodeTable(records) {
 }
 
 function renderLatestEpisode(episode) {
+  const observation = episode.observation_state || {};
   document.getElementById("latestEpisodeSummary").innerHTML = `
     <div class="badge">Episode #${episode.episode_index + 1}</div>
     <div class="summary-card">
@@ -55,6 +56,14 @@ function renderLatestEpisode(episode) {
     <div class="summary-card">
       <div class="label">Cost</div>
       <div class="value">${currency(episode.cost_usd)}</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Priority</div>
+      <div class="value">${observation.raw_priority_label || "-"}</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Live reasoning</div>
+      <div class="value">${observation.live_reasoning ? "ON" : "OFF"}</div>
     </div>
     <div class="summary-card">
       <div class="label">Open console</div>
@@ -97,6 +106,55 @@ function renderTrajectoryTable(episode) {
   `;
 }
 
+function renderEpisodeContract(contract, evaluation) {
+  const observation = contract.observation || {};
+  const agentTrace = contract.agent_trace || [];
+  const rewardBreakdown = contract.reward_breakdown || {};
+  document.getElementById("episodeContract").innerHTML = `
+    <div class="badge">RL-ready episode</div>
+    <div class="summary-card"><div class="label">Incident</div><div class="value">${observation.incident_id || "-"}</div></div>
+    <div class="summary-card"><div class="label">Service</div><div class="value">${observation.service || "-"}</div></div>
+    <div class="summary-card"><div class="label">Difficulty</div><div class="value">${observation.difficulty || "-"}</div></div>
+    <div class="summary-card"><div class="label">Source</div><div class="value">${observation.source_channel || "-"}</div></div>
+    <div class="summary-card"><div class="label">Raw priority</div><div class="value">${contract.raw_priority_label || observation.raw_priority_label || "-"}</div></div>
+    <div class="summary-card"><div class="label">Priority rank</div><div class="value">${contract.normalized_priority_rank ?? observation.normalized_priority_rank ?? "-"}</div></div>
+    <div class="summary-card"><div class="label">Live reasoning</div><div class="value">${contract.live_reasoning || observation.live_reasoning ? "ON" : "OFF"}</div></div>
+    <div class="summary-card"><div class="label">Solution proposal</div><div class="value">${contract.solution_proposal || "-"}</div></div>
+    <div class="summary-card"><div class="label">Evidence count</div><div class="value">${observation.evidence_count ?? "-"}</div></div>
+    <div class="summary-card"><div class="label">Workflow state</div><div class="value">${observation.workflow_state || "-"}</div></div>
+    <div class="section-note" style="margin-top: 10px;">Agent trace</div>
+    <div class="episode-step-list">
+      ${agentTrace.map((step) => `
+        <div class="episode-step">
+          <strong>${String(step.agent_name || "").toUpperCase()}</strong><br>
+          ${step.action || "-"}<br>
+          <span class="section-note">${step.observation_digest || ""}</span>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  document.getElementById("rewardEvaluation").innerHTML = `
+    <div class="badge">Reward evaluation</div>
+    <div class="summary-card"><div class="label">Final reward</div><div class="value">${percent(contract.reward || 0)}</div></div>
+    <div class="summary-card"><div class="label">Advantage</div><div class="value">${Number(contract.advantage || 0).toFixed(2)}</div></div>
+    <div class="summary-card"><div class="label">Cost</div><div class="value">${currency(contract.cost_usd || 0)}</div></div>
+    <div class="summary-card"><div class="label">Guardian decision</div><div class="value">${String(contract.guardian_decision || "-").toUpperCase()}</div></div>
+    <div class="summary-card"><div class="label">Execution status</div><div class="value">${String(contract.execution_result || "-").toUpperCase()}</div></div>
+    <div class="summary-card"><div class="label">Reward peak</div><div class="value">${percent(evaluation.reward_curve_peak || 0)}</div></div>
+    <div class="summary-card"><div class="label">Reward delta</div><div class="value">${percent(evaluation.reward_curve_delta || 0)}</div></div>
+    <div class="section-note" style="margin-top: 10px;">Reward components</div>
+    <div class="episode-step-list">
+      ${Object.entries(rewardBreakdown).map(([key, value]) => `
+        <div class="episode-step">
+          <strong>${key.toUpperCase()}</strong><br>
+          ${percent(Number(value) || 0)}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
 function renderStateMap(states) {
   document.getElementById("stateMap").innerHTML = states.map((state, index) => `
     <article class="state-map-item">
@@ -132,6 +190,7 @@ function renderSummary(data) {
   document.getElementById("liveIncidents").textContent = String(data.summary.live_incidents ?? data.live_incidents?.length ?? 0);
   document.getElementById("liveAuditEvents").textContent = String(data.summary.live_audit_events ?? 0);
   document.getElementById("artifactSnapshots").textContent = String(data.artifact_summary?.training_snapshots ?? 0);
+  document.getElementById("learningContracts").textContent = String(data.artifact_summary?.learning_contracts ?? 0);
 
   document.getElementById("agentStats").innerHTML = [
     ["SENTINEL", data.agent_accuracy.sentinel],
@@ -148,7 +207,7 @@ function renderSummary(data) {
 
 window.addEventListener("load", async () => {
   const data = await fetchAuthedJson("/api/v1/training/summary").catch(() => loadMetrics());
-  const latestEpisode = data.latest_episode || data.episode_records?.[0];
+  const latestEpisode = data.latest_episode || (data.episode_records && data.episode_records[data.episode_records.length - 1]);
 
   renderSummary(data);
   renderCurves(data);
@@ -157,5 +216,6 @@ window.addEventListener("load", async () => {
     renderLatestEpisode(latestEpisode);
     renderTrajectoryTable(latestEpisode);
   }
+  renderEpisodeContract(data.rl_episode_contract || latestEpisode || {}, data.reward_evaluation || {});
   renderStateMap(data.workflow_observation_states || []);
 });

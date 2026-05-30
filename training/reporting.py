@@ -5,6 +5,7 @@ from pathlib import Path
 from incidents.catalogue import load_incident_types
 from server.agents import ForgeAgent, GuardianAgent, PrismAgent, SentinelAgent
 from server.models import SentinelClassification
+from server.artifacts import get_artifact_summary
 from training.evaluation import evaluate_training
 from training.runner import TrainingForgeClient, load_agent_policies, run_training
 
@@ -80,6 +81,7 @@ def build_metrics_payload(summary) -> dict[str, object]:
     trained_reward = round(summary.reward_curve[-1], 2) if summary.reward_curve else 0.0
     total_cost = round(summary.total_cost_usd, 2)
     episode_count = len(summary.reward_curve)
+    reward_evaluation = evaluate_training(summary)
 
     return {
         "reward_curve": summary.reward_curve,
@@ -90,7 +92,10 @@ def build_metrics_payload(summary) -> dict[str, object]:
         "total_cost_usd": summary.total_cost_usd,
         "episode_records": [record.to_dict() for record in summary.episode_records],
         "agent_accuracy": compute_agent_accuracy(),
-        "training_evaluation": evaluate_training(summary),
+        "training_evaluation": reward_evaluation,
+        "reward_evaluation": reward_evaluation,
+        "rl_episode_contract": summary.rl_episode_contract,
+        "artifact_summary": get_artifact_summary(),
         "summary": {
             "baseline_reward": 0.28,
             "trained_reward": trained_reward,
@@ -98,6 +103,7 @@ def build_metrics_payload(summary) -> dict[str, object]:
             "average_cost_per_episode": round(total_cost / episode_count, 2) if episode_count else 0.0,
             "total_cost_usd": total_cost,
             "execution_target_seconds": 5.0,
+            "reward_delta": reward_evaluation["reward_curve_delta"],
         },
     }
 

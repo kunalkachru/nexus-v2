@@ -18,6 +18,7 @@ def _default_payload() -> dict[str, list[dict[str, object]]]:
     return {
         "replay_launches": [],
         "training_snapshots": [],
+        "learning_contracts": [],
     }
 
 
@@ -43,9 +44,11 @@ def _load_artifacts() -> dict[str, list[dict[str, object]]]:
 
     replay_launches = payload.get("replay_launches", [])
     training_snapshots = payload.get("training_snapshots", [])
+    learning_contracts = payload.get("learning_contracts", [])
     result = {
         "replay_launches": [item for item in replay_launches if isinstance(item, dict)],
         "training_snapshots": [item for item in training_snapshots if isinstance(item, dict)],
+        "learning_contracts": [item for item in learning_contracts if isinstance(item, dict)],
     }
     _ARTIFACT_CACHE = result
     return {key: list(value) for key, value in result.items()}
@@ -85,9 +88,22 @@ async def record_training_snapshot(record: dict[str, object]) -> None:
         _persist_artifacts(payload)
 
 
+async def record_learning_contract(record: dict[str, object]) -> None:
+    async with _ARTIFACT_LOCK:
+        payload = _load_artifacts()
+        payload["learning_contracts"].append(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                **record,
+            }
+        )
+        _persist_artifacts(payload)
+
+
 def get_artifact_summary() -> dict[str, int]:
     payload = _load_artifacts()
     return {
         "replay_launches": len(payload["replay_launches"]),
         "training_snapshots": len(payload["training_snapshots"]),
+        "learning_contracts": len(payload["learning_contracts"]),
     }

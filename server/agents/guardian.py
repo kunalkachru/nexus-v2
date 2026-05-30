@@ -8,6 +8,7 @@ from server.models import (
     PrismDiagnosis,
     SentinelClassification,
 )
+from server.services.priority import priority_rank
 from server.sandbox import SandboxExecutor
 
 
@@ -91,12 +92,5 @@ class GuardianAgent(BaseAgent):
         return max(0.0, 1.0 - penalty)
 
     def _threshold_for_severity(self, severity: str) -> float:
-        thresholds = {
-            "P1": 0.95,
-            "P2": 0.85,
-            "P3": 0.70,
-        }
-        try:
-            return thresholds[severity]
-        except KeyError as exc:
-            raise ValueError(f"unsupported severity: {severity}") from exc
+        rank = max(1, priority_rank(severity))
+        return max(0.55, 1.05 - (0.1 * rank))

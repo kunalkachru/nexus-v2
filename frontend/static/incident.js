@@ -1,4 +1,4 @@
-import { fetchAuthedJson, loadIncident, postAuthedJson } from "./api.js";
+import { fetchAuthedJson, getLiveReasoningPreference, loadIncident, postAuthedJson, setLiveReasoningPreference } from "./api.js";
 
 function percent(value) {
   return `${Math.round(value * 100)}%`;
@@ -21,14 +21,65 @@ function renderList(elementId, items, renderer) {
 function renderAgentFlow(data) {
   const confidence = (value) => `${Math.round(value * 100)}% confidence`;
   const service = data.incident?.related_services?.[0] || "incident";
+  const guardianDecision = String(data.guardian?.decision || "pending").toUpperCase();
+  const guardianMeta =
+    data.guardian?.decision === "pending"
+      ? "PENDING · approval required"
+      : `${guardianDecision} · ${Math.round(data.guardian.confidence * 100)}% safety confidence`;
   document.getElementById("sentinelFlowMeta").textContent = `${confidence(data.classification.confidence)} · ${data.classification.evidence.length} evidence items`;
   document.getElementById("prismFlowMeta").textContent = `${confidence(data.diagnosis.confidence)} · ${data.diagnosis.root_cause}`;
   document.getElementById("forgeFlowMeta").textContent = data.runbook.recommended_runbook;
-  document.getElementById("guardianFlowMeta").textContent = `${data.guardian.decision.toUpperCase()} · ${Math.round(data.guardian.confidence * 100)}% safety confidence`;
+  document.getElementById("guardianFlowMeta").textContent = guardianMeta;
   document.getElementById("sentinelFlowTransfer").textContent = `Raw input from ${service} → evidence bundle for PRISM`;
   document.getElementById("prismFlowTransfer").textContent = `Evidence bundle → diagnosis packet for FORGE`;
   document.getElementById("forgeFlowTransfer").textContent = `Diagnosis packet → runbook proposal for GUARDIAN`;
-  document.getElementById("guardianFlowTransfer").textContent = `Runbook proposal → ${data.guardian.decision.toUpperCase()} decision`;
+  document.getElementById("guardianFlowTransfer").textContent =
+    data.guardian.decision === "pending" ? "Runbook proposal → approval gate" : `Runbook proposal → ${guardianDecision} decision`;
+}
+
+function renderGuardianGate(data) {
+  const guardian = data.guardian || {};
+  const decision = String(guardian.decision || "pending");
+  const gateState = document.getElementById("guardianGateState");
+  if (gateState) {
+    gateState.textContent =
+      decision === "approve"
+        ? "Approval recorded. The runbook can be executed."
+        : decision === "reject"
+          ? "Block recorded. The runbook will not execute."
+          : "Decision pending. Approve to execute or block to stop the runbook.";
+  }
+
+  const approveButton = document.getElementById("guardianApproveBtn");
+  if (approveButton) {
+    approveButton.textContent = decision === "approve" ? "Approve again and execute" : "Approve and execute";
+  }
+
+  const blockButton = document.getElementById("guardianBlockBtn");
+  if (blockButton) {
+    blockButton.textContent = decision === "reject" ? "Block again" : "Block execution";
+  }
+}
+
+function setGuardianButtonsDisabled(disabled) {
+  ["guardianApproveBtn", "guardianBlockBtn"].forEach((id) => {
+    const button = document.getElementById(id);
+    if (button) {
+      button.disabled = disabled;
+    }
+  });
+}
+
+function syncLiveReasoningToggle() {
+  const enabled = getLiveReasoningPreference();
+  const status = document.getElementById("liveReasoningState");
+  const button = document.getElementById("liveReasoningToggle");
+  if (status) {
+    status.textContent = `Live reasoning: ${enabled ? "ON" : "OFF"}`;
+  }
+  if (button) {
+    button.textContent = enabled ? "Turn live reasoning off" : "Turn live reasoning on";
+  }
 }
 
 function animateAgentFlow() {
@@ -273,6 +324,19 @@ async function refreshLiveSections(incidentId) {
   return status;
 }
 
+async function loadAndRenderIncident(incidentId) {
+  const [data, status, auditLogs] = await Promise.all([
+    loadIncident(incidentId),
+    fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/status`),
+    fetchAuthedJson(`/api/v1/audit-logs/${encodeURIComponent(incidentId)}`),
+  ]);
+  renderIncident(data);
+  renderStatusPanel(status);
+  renderAuditSummary(auditLogs);
+  renderAuditTrail(auditLogs);
+  return { data, status, auditLogs };
+}
+
 function renderIncident(data) {
   const incident = data.incident;
   const observability = data.observability;
@@ -280,6 +344,7 @@ function renderIncident(data) {
   const diagnosis = data.diagnosis;
   const runbook = data.runbook;
   const guardian = data.guardian;
+  const structuredResult = data.structured_result || {};
   const workflow = data.workflow || [];
 
   document.title = `NEXUS v2 - ${incident.id}`;
@@ -290,12 +355,23 @@ function renderIncident(data) {
   document.getElementById("incidentHeroGuardian").textContent = guardian.decision.toUpperCase();
   document.getElementById("incidentHeroExecution").textContent = data.execution_result.toUpperCase();
   document.getElementById("incidentOverviewNote").textContent = `Detected ${incident.detected_at} via ${incident.source_channel || "webhook"} and active for ${incident.duration_minutes} minutes.`;
+  const liveReasoningDetail = document.getElementById("liveReasoningDetail");
+  if (liveReasoningDetail) {
+    liveReasoningDetail.textContent = data.live_reasoning
+      ? "Live LLM reasoning is active for this incident."
+      : "Deterministic fallback is active for this incident.";
+  }
 
   document.getElementById("incidentSummary").innerHTML = [
     ["Detected", incident.detected_at],
     ["Duration", `${incident.duration_minutes} min`],
     ["Source", incident.source_channel || "webhook"],
     ["Runbook", runbook.recommended_runbook],
+    ["Proposed fix", structuredResult.proposed_fix || runbook.recommended_runbook],
+    ["Priority", structuredResult.raw_priority_label || incident.severity],
+    ["Normalized rank", structuredResult.normalized_priority_rank ?? "-"],
+    ["Safety", structuredResult.safety_decision ? String(structuredResult.safety_decision).toUpperCase() : guardian.decision.toUpperCase()],
+    ["Live reasoning", structuredResult.live_reasoning ? "ON" : "OFF"],
     ["Reward", `${Math.round(data.reward * 100)}%`],
   ].map(([label, value]) => `
     <div class="summary-card">
@@ -387,13 +463,22 @@ function renderIncident(data) {
     guardian.policy_violations.length ? guardian.policy_violations : ["No policy violations detected."],
     (item) => `<li>${item}</li>`
   );
+  renderGuardianGate(data);
 
   renderWorkflowTimeline(workflow, incident);
   renderAgentFlow(data);
 
+  const executionSummary =
+    data.execution_result === "executed"
+      ? "Execution completed after Guardian approval."
+      : data.execution_result === "blocked"
+        ? "Execution was blocked by Guardian."
+        : data.execution_result === "approved"
+          ? "Guardian approved the runbook. Execution will follow once it is requested."
+        : "Execution is waiting on an explicit Guardian decision.";
   document.getElementById("resultBanner").innerHTML = `
-    <strong>${incident.id} resolved in simulation.</strong><br>
-    Guardian decision ${guardian.decision.toUpperCase()} with ${Math.round(guardian.confidence * 100)}% confidence. Execution time ${data.execution_time_ms}ms.
+    <strong>${incident.id} · ${guardian.decision.toUpperCase()}</strong><br>
+    ${executionSummary} Guardian decision ${guardian.decision.toUpperCase()} with ${Math.round(guardian.confidence * 100)}% confidence. Execution time ${data.execution_time_ms}ms.
   `;
 
   animateAgentFlow();
@@ -408,29 +493,75 @@ window.addEventListener("load", async () => {
   const incidentId = getIncidentId();
   document.querySelectorAll(".agent-card").forEach((card) => card.classList.add("working"));
   await sleep(120);
+  syncLiveReasoningToggle();
+  const guardianApproveButton = document.getElementById("guardianApproveBtn");
+  const guardianBlockButton = document.getElementById("guardianBlockBtn");
+
+  async function applyGuardianDecision(decision) {
+    const resultBanner = document.getElementById("executionResult");
+    setGuardianButtonsDisabled(true);
+    if (resultBanner) {
+      resultBanner.textContent =
+        decision === "approve"
+          ? "Guardian approval recorded. Executing the approved runbook..."
+          : "Guardian block recorded. The runbook will not execute.";
+    }
+
+    try {
+      await postAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/guardian-review`, {
+        decision,
+        reasoning:
+          decision === "approve"
+            ? "Operator approved the proposed runbook."
+            : "Operator blocked the proposed runbook.",
+      });
+      if (decision === "approve") {
+        const response = await postAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/execute`, {});
+        await loadAndRenderIncident(incidentId);
+        if (resultBanner) {
+          resultBanner.textContent = `Execution ${response.status} for ${response.incident_id}. Guardian approved the runbook.`;
+        }
+      } else {
+        await loadAndRenderIncident(incidentId);
+        if (resultBanner) {
+          resultBanner.textContent = "Guardian blocked the runbook. The incident remains under review.";
+        }
+      }
+    } catch (error) {
+      if (resultBanner) {
+        resultBanner.textContent = `Guardian decision failed: ${error.message}`;
+      }
+    } finally {
+      setGuardianButtonsDisabled(false);
+    }
+  }
+
+  document.getElementById("liveReasoningToggle")?.addEventListener("click", async () => {
+    const enabled = !getLiveReasoningPreference();
+    setLiveReasoningPreference(enabled);
+    syncLiveReasoningToggle();
+    const toggle = document.getElementById("liveReasoningToggle");
+    if (toggle) {
+      toggle.disabled = true;
+      toggle.textContent = enabled ? "Turning on live reasoning..." : "Turning off live reasoning...";
+    }
+    try {
+      await loadAndRenderIncident(incidentId);
+    } finally {
+      syncLiveReasoningToggle();
+      if (toggle) {
+        toggle.disabled = false;
+      }
+    }
+  });
 
   try {
-    const [data, status, auditLogs] = await Promise.all([
-      loadIncident(incidentId),
-      fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/status`),
-      fetchAuthedJson(`/api/v1/audit-logs/${encodeURIComponent(incidentId)}`),
-    ]);
-    renderIncident(data);
-    renderStatusPanel(status);
-    renderAuditSummary(auditLogs);
-    renderAuditTrail(auditLogs);
-
-    const executeButton = document.getElementById("executeIncidentBtn");
-    executeButton.addEventListener("click", async () => {
-      const resultBanner = document.getElementById("executionResult");
-      resultBanner.textContent = "Submitting execution request...";
-      try {
-        const response = await postAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/execute`, {});
-        const status = await refreshLiveSections(incidentId);
-        resultBanner.textContent = `Execution ${response.status} for ${response.incident_id}. Incident status is now ${status.status}.`;
-      } catch (error) {
-        resultBanner.textContent = `Execution request failed: ${error.message}`;
-      }
+    await loadAndRenderIncident(incidentId);
+    guardianApproveButton?.addEventListener("click", async () => {
+      await applyGuardianDecision("approve");
+    });
+    guardianBlockButton?.addEventListener("click", async () => {
+      await applyGuardianDecision("reject");
     });
   } catch (error) {
     document.getElementById("incidentTitle").textContent = "Incident unavailable";

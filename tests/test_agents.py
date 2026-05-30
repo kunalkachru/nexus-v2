@@ -121,7 +121,7 @@ def test_prism_accuracy_is_at_least_seventy_five_percent() -> None:
     asyncio.run(scenario())
 
 
-def test_prism_rejects_unknown_incident_id() -> None:
+def test_prism_falls_back_for_unknown_incident_id() -> None:
     async def scenario() -> None:
         prism = PrismAgent()
         sentinel_output = SentinelClassification(
@@ -132,8 +132,10 @@ def test_prism_rejects_unknown_incident_id() -> None:
             reasoning="Test fixture",
         )
 
-        with pytest.raises(ValueError, match="unknown incident_id: INC999"):
-            await prism.diagnose(sentinel_output=sentinel_output, signals=["irrelevant signal"])
+        result = await prism.diagnose(sentinel_output=sentinel_output, signals=["irrelevant signal"])
+        assert result.incident_id == "INC999"
+        assert result.root_cause
+        assert result.evidence
 
     asyncio.run(scenario())
 

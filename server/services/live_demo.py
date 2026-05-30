@@ -11,14 +11,25 @@ from server.models import NormalizedAlertEnvelope
 from server.orchestrator import NexusCore
 from server.services.observability import ObservabilityService
 from server.services.surface_payloads import build_incident_response
+from server.services.priority import priority_snapshot, shift_priority_label
 from training.runner import TrainingForgeClient
 
 
-async def build_demo_payload(incident_id: str = "INC001") -> dict[str, object]:
+def _shift_severity(severity: str) -> str:
+    return shift_priority_label(severity)
+
+
+async def build_demo_payload(
+    incident_id: str = "INC001",
+    *,
+    live_reasoning_override: bool | None = None,
+) -> dict[str, object]:
     """Build a demo incident payload, optionally with live LLM-backed agents."""
 
     config = AppConfig()
     use_live_llm = config.use_live_llm and bool(os.environ.get("OPENAI_API_KEY"))
+    if live_reasoning_override is not None:
+        use_live_llm = live_reasoning_override and bool(os.environ.get("OPENAI_API_KEY"))
     incident = get_incident_definition(incident_id)
     details = get_incident_details(incident_id)
     base = build_incident_response(incident_id)
@@ -36,17 +47,33 @@ async def build_demo_payload(incident_id: str = "INC001") -> dict[str, object]:
     )
 
     started_at = time.perf_counter()
-    episode = await core.run_episode(
-        NormalizedAlertEnvelope(
-            source="datadog",
-            external_id=incident.id,
-            title=incident.name,
-            severity={"P0": "P1", "P1": "P2", "P2": "P3"}[incident.severity],
-            service=incident.system_context.service,
-            detected_at=str(details["detected_at"]),
-            observed_values={"service": incident.system_context.service},
-        )
+    alert_envelope = NormalizedAlertEnvelope(
+        source="datadog",
+        external_id=incident.id,
+        title=incident.name,
+        severity=_shift_severity(incident.severity),
+        service=incident.system_context.service,
+        detected_at=str(details["detected_at"]),
+        observed_values={"service": incident.system_context.service},
     )
+    priority = priority_snapshot(alert_envelope.severity)
+    try:
+        episode = await core.run_episode(alert_envelope)
+    except Exception:
+        if not use_live_llm:
+            raise
+        use_live_llm = False
+        sentinel_client = None
+        prism_client = None
+        forge_client = TrainingForgeClient()
+        core = NexusCore(
+            observability=ObservabilityService(),
+            sentinel=SentinelAgent(client=sentinel_client, model_name=config.forge_model_name),
+            prism=PrismAgent(client=prism_client, model_name=config.forge_model_name),
+            forge=ForgeAgent(client=forge_client, model_name=config.forge_model_name),
+            guardian=GuardianAgent(),
+        )
+        episode = await core.run_episode(alert_envelope)
     execution_time_ms = round((time.perf_counter() - started_at) * 1000, 2)
 
     payload = dict(base)
@@ -77,6 +104,7 @@ async def build_demo_payload(incident_id: str = "INC001") -> dict[str, object]:
         **base["runbook"],
         "language": episode.forge_output.runbook.language,
         "summary": episode.forge_output.runbook.summary,
+        "proposed_fix": episode.forge_output.runbook.summary,
         "recommended_runbook": episode.forge_output.runbook.summary,
         "reasoning": episode.forge_output.reasoning,
         "cost_usd": round(episode.forge_output.estimated_cost_usd, 2),
@@ -98,6 +126,19 @@ async def build_demo_payload(incident_id: str = "INC001") -> dict[str, object]:
         "prism": config.forge_model_name if use_live_llm else "deterministic",
         "forge": episode.forge_output.model_name,
         "guardian": "deterministic",
+    }
+    payload["structured_result"] = {
+        "incident_id": incident.id,
+        "root_cause": episode.prism_output.root_cause,
+        "proposed_fix": episode.forge_output.runbook.summary,
+        "safety_decision": episode.guardian_output.decision,
+        "confidence": round(episode.guardian_output.safety_score, 2),
+        "execution_status": payload["execution_result"],
+        "live_reasoning": use_live_llm,
+        "raw_priority_label": priority["raw_label"],
+        "normalized_priority_label": priority["normalized_label"],
+        "normalized_priority_rank": priority["rank"],
+        "reward": round(payload["reward"], 2),
     }
     payload["live_reasoning"] = use_live_llm
     return payload

@@ -152,9 +152,9 @@ def test_versioned_queue_contract_returns_current_incidents(client: TestClient, 
     first = payload["items"][0]
     assert first["nexus_incident_id"]
     assert first["title"]
-    assert first["severity"] in {"P1", "P2", "P3"}
+    assert first["severity"] in {"P1", "P2", "P3", "P4"}
     assert first["status"] == "investigating"
-    assert first["source_channel"] in {"webhook", "manual_form", "slack_command", "stream_anomaly", "batch_import"}
+    assert first["source_channel"] in {"webhook", "raw_text", "manual_form", "slack_command", "stream_anomaly", "batch_import"}
     assert first["current_stage"]
     assert first["updated_at"]
 
@@ -203,6 +203,164 @@ def test_manual_report_contract_creates_incident_and_status(client: TestClient, 
     assert "incident.manual_report.accepted" in audit_log_path.read_text()
 
 
+def test_guardian_review_contract_records_gate_and_execute(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/manual-report",
+        headers=auth_headers(),
+        json={
+            "affected_service": "checkout-api",
+            "symptoms": ["timeout spikes", "retry budget exhausted"],
+            "severity": "P1",
+            "reported_by": "operator",
+            "team": "platform",
+            "additional_context": "Need to validate the safety gate.",
+        },
+    )
+
+    assert response.status_code == 202
+    payload = response.json()
+
+    review_response = client.post(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/guardian-review',
+        headers=auth_headers(),
+        json={
+            "decision": "approve",
+            "reasoning": "The proposed rollback path is safe to execute.",
+        },
+    )
+    assert review_response.status_code == 200
+    review_payload = review_response.json()
+    assert review_payload["guardian_decision"] == "approve"
+    assert review_payload["guardian_reasoning"] == "The proposed rollback path is safe to execute."
+    assert review_payload["status"] == "investigating"
+
+    execute_response = client.post(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/execute',
+        headers=auth_headers(),
+    )
+    assert execute_response.status_code == 200
+    execute_payload = execute_response.json()
+    assert execute_payload["status"] == "executed"
+    assert execute_payload["guardian_decision"] == "approve"
+
+    status_response = client.get(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/status',
+        headers=auth_headers(),
+    )
+    assert status_response.status_code == 200
+    status_payload = status_response.json()
+    assert status_payload["guardian_decision"] == "approve"
+    assert status_payload["current_stage"] == "executed_verified_learned"
+
+
+def test_guardian_block_contract_blocks_execution(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/manual-report",
+        headers=auth_headers(),
+        json={
+            "affected_service": "billing-api",
+            "symptoms": ["sudden error spike", "unknown side effects"],
+            "severity": "P1",
+            "reported_by": "operator",
+            "team": "platform",
+        },
+    )
+
+    assert response.status_code == 202
+    payload = response.json()
+
+    review_response = client.post(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/guardian-review',
+        headers=auth_headers(),
+        json={
+            "decision": "reject",
+            "reasoning": "The change is too risky to run during the incident.",
+        },
+    )
+    assert review_response.status_code == 200
+    review_payload = review_response.json()
+    assert review_payload["guardian_decision"] == "reject"
+    assert review_payload["status"] == "blocked_by_guardian"
+
+    execute_response = client.post(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/execute',
+        headers=auth_headers(),
+    )
+    assert execute_response.status_code == 200
+    execute_payload = execute_response.json()
+    assert execute_payload["status"] == "blocked_by_guardian"
+    assert execute_payload["guardian_decision"] == "reject"
+
+
+def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": "2026-05-30T10:14:22Z checkout-api ERROR timeout waiting for payment service\n2026-05-30T10:14:23Z checkout-api WARN retry budget exhausted\nservice=checkout-api severity=P4",
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "platform",
+            "severity_hint": "P4",
+        },
+    )
+
+    assert response.status_code == 202
+    payload = response.json()
+    assert payload["status"] == "investigating"
+    assert payload["source"] == "raw_text"
+    assert payload["severity"] == "P4"
+    assert payload["queue_position"] == 1
+    assert payload["eta_sec"] == 30
+
+    context_response = client.get(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/context',
+        headers=auth_headers(),
+    )
+    assert context_response.status_code == 200
+    context_payload = context_response.json()
+    assert context_payload["incident"]["source_channel"] == "raw_text"
+    assert context_payload["incident"]["severity"] == "P4"
+    assert context_payload["incident"]["raw_input_text"]
+    assert context_payload["incident"]["normalized_evidence"]
+    assert context_payload["observability"]["evidence_sources"][0]["source"] == "raw input"
+    assert context_payload["observability"]["recent_logs"][0].startswith("Raw input normalized")
+    assert context_payload["structured_result"]["proposed_fix"]
+    assert context_payload["structured_result"]["raw_priority_label"] == "P4"
+    assert context_payload["structured_result"]["normalized_priority_rank"] == 4
+
+    audit_log_path = Path.cwd() / ".nexus_audit_log.json"
+    assert audit_log_path.exists()
+    assert "incident.raw_text.accepted" in audit_log_path.read_text()
+
+
+def test_raw_text_contract_accepts_arbitrary_priority_labels(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": "2026-05-30T10:14:22Z checkout-api ERROR timeout waiting for payment service\nseverity=P6\npriority=critical",
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "platform",
+            "severity_hint": "P6",
+        },
+    )
+
+    assert response.status_code == 202
+    payload = response.json()
+    assert payload["severity"] == "P6"
+
+    context_response = client.get(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/context',
+        headers=auth_headers(),
+    )
+    assert context_response.status_code == 200
+    context_payload = context_response.json()
+    assert context_payload["incident"]["severity"] == "P6"
+    assert context_payload["classification"]["severity"] == "P6"
+
+
 def test_live_incident_context_contract_returns_backend_evidence(client: TestClient, auth_headers) -> None:
     create_response = client.post(
         "/api/v1/incidents/manual-report",
@@ -239,7 +397,7 @@ def test_live_incident_context_contract_returns_backend_evidence(client: TestCli
     assert payload["runbook"]["candidate_fixes"]
     assert payload["guardian"]["safety_checks"]
     assert len(payload["workflow"]) >= 1
-    assert payload["execution_result"] in {"executed", "blocked"}
+    assert payload["execution_result"] in {"executed", "blocked", "approved", "pending"}
 
 
 def test_batch_import_and_execute_contracts(client: TestClient, auth_headers) -> None:
@@ -350,6 +508,13 @@ def test_history_replay_training_and_platform_contracts(client: TestClient, auth
     assert training_payload["episode_records"]
     assert training_payload["summary"]
     assert training_payload["artifact_summary"]["training_snapshots"] >= 1
+    assert training_payload["artifact_summary"]["learning_contracts"] >= 1
+    assert training_payload["reward_evaluation"]["reward_curve_final"] >= 0.65
+    assert training_payload["rl_episode_contract"]["observation"]["incident_id"]
+    assert training_payload["rl_episode_contract"]["agent_trace"]
+    assert training_payload["rl_episode_contract"]["raw_priority_label"]
+    assert training_payload["rl_episode_contract"]["solution_proposal"]
+    assert training_payload["rl_episode_contract"]["live_reasoning"] is False
     assert platform_payload["webhook_signature_verification"] == "Active"
     assert platform_payload["replay_launches"] >= 0
     assert platform_payload["training_snapshots"] >= 1

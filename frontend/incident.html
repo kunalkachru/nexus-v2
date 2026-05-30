@@ -73,6 +73,20 @@
                 <div class="detail-card compact-note">
                     <div class="badge" id="incidentOverviewNote">Waiting for incident selection.</div>
                     <p class="hero-copy">The console below shows incident evidence, signal correlation, remediation, and guardrail review in one operating view.</p>
+                    <p class="section-note" id="liveReasoningDetail">Live reasoning mode will be shown here after the incident loads.</p>
+                    <div class="shell-actions">
+                        <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
+                        <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
+                    </div>
+                </div>
+                <div class="detail-card compact-note guardian-gate-card">
+                    <div class="badge">Guardian gate</div>
+                    <p class="hero-copy">Choose whether the proposed runbook is safe to execute. Approve sends the runbook forward. Block keeps the incident under review.</p>
+                    <div class="shell-actions guardian-gate-actions">
+                        <button class="nav-link channel-cta" id="guardianApproveBtn" type="button">Approve and execute</button>
+                        <button class="nav-link channel-cta" id="guardianBlockBtn" type="button">Block execution</button>
+                    </div>
+                    <p class="section-note" id="guardianGateState">Decision pending.</p>
                 </div>
             </div>
         </section>
@@ -130,9 +144,8 @@
                     <div class="badge">Audit trail</div>
                     <div class="audit-feed" id="incidentAuditLogs"></div>
                     <div class="badge">Execute path</div>
-                    <p class="hero-copy">The execute endpoint is wired as a live contract seam so the UI can show the product path even before full backend automation lands.</p>
-                    <button class="nav-link channel-cta" id="executeIncidentBtn" type="button">Request execution</button>
-                    <div class="result-banner" id="executionResult">Awaiting a user action.</div>
+                    <p class="hero-copy">The execution path now sits behind an explicit Guardian approval or block choice so the control gate is easy to explain.</p>
+                    <div class="result-banner" id="executionResult">Awaiting a Guardian decision.</div>
                 </div>
             </div>
         </section>
@@ -169,6 +182,7 @@
                         <div class="flow-node-title">FORGE</div>
                     </div>
                     <div class="flow-node-copy">Chooses the safest rollback-ready remediation path.</div>
+                    <div class="flow-node-copy">Proposed fix stays visible before the safety gate opens.</div>
                     <div class="flow-node-transfer" id="forgeFlowTransfer">Diagnosis packet → runbook proposal</div>
                     <div class="flow-node-meta" id="forgeFlowMeta">Awaiting data</div>
                 </article>

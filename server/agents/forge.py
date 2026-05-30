@@ -72,6 +72,12 @@ class ForgeAgent(BaseAgent):
             system_prompt=self._SYSTEM_PROMPT,
             user_prompt=user_prompt,
         )
+        if "language" in response_data:
+            response_data["language"] = str(response_data["language"]).strip().lower()
+        if "summary" in response_data:
+            response_data["summary"] = str(response_data["summary"]).strip()
+        if "code" in response_data:
+            response_data["code"] = str(response_data["code"]).strip()
         runbook = RunbookScript.model_validate(response_data)
         sandbox_validation = await self._sandbox.validate(runbook)
         if not sandbox_validation.syntax_valid:

@@ -45,7 +45,7 @@
                     This page shows the supported ways incidents enter NEXUS and how each source maps into the same workflow so queue, console, and learning stay consistent.
                 </p>
                 <div class="hero-stats">
-                    <div class="stat"><div class="stat-label">Supported channels</div><div class="stat-value">5</div></div>
+                    <div class="stat"><div class="stat-label">Supported channels</div><div class="stat-value">6</div></div>
                     <div class="stat"><div class="stat-label">Normalized output</div><div class="stat-value">1 envelope</div></div>
                     <div class="stat"><div class="stat-label">Auth models</div><div class="stat-value">Mixed</div></div>
                     <div class="stat"><div class="stat-label">Launch path</div><div class="stat-value">Incident Console</div></div>
@@ -61,6 +61,10 @@
                     <div class="detail-card">
                         <div class="badge">2. Normalize</div>
                         <p class="hero-copy">The envelope records severity, affected service, symptoms, and evidence lookup hints in a single shape.</p>
+                        <div class="shell-actions">
+                            <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
+                            <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -72,7 +76,11 @@
                 <div class="section-note">Select a channel to see how the same incident object is formed.</div>
             </div>
             <div class="input-flow" id="channelCards">
-                <button class="input-channel-card active" type="button" data-channel="webhook" data-incident-id="INC001" data-summary="Primary machine-to-machine alert ingestion." data-auth="Signed request or integration token." data-next="Webhook input lands in the incident queue, is normalized, and opens the Incident Console with the same workflow states." data-payload="POST /webhooks/incident&#10;X-Signature: sha256=...&#10;Body: service, severity, summary, symptoms">
+                <button class="input-channel-card active" type="button" data-channel="raw_text" data-incident-id="INC001" data-summary="Paste raw logs, stack traces, or incident text." data-auth="Operator paste or copied incident transcript." data-next="Raw text is parsed into structured evidence, then routed into the same reasoning workflow as other channels." data-payload="2026-05-30T10:14:22Z checkout-api ERROR timeout waiting for payment service\n2026-05-30T10:14:23Z checkout-api WARN retry budget exhausted\n2026-05-30T10:14:25Z payments-worker ERROR queue depth exceeded threshold\nservice=checkout-api severity=P1">
+                    <strong>Paste Raw Logs</strong>
+                    <p class="hero-copy">Paste raw text or stack traces and let the system normalize them into incident evidence.</p>
+                </button>
+                <button class="input-channel-card" type="button" data-channel="webhook" data-incident-id="INC001" data-summary="Primary machine-to-machine alert ingestion." data-auth="Signed request or integration token." data-next="Webhook input lands in the incident queue, is normalized, and opens the Incident Console with the same workflow states." data-payload="POST /webhooks/incident&#10;X-Signature: sha256=...&#10;Body: service, severity, summary, symptoms">
                     <strong>Webhook</strong>
                     <p class="hero-copy">Alerts from monitoring systems and incident sources.</p>
                 </button>
@@ -97,53 +105,45 @@
 
         <section class="section">
             <div class="section-header">
-                <h2>Manual Intake Preview</h2>
-                <div class="section-note">A structured operator-facing form that mirrors the normalized envelope.</div>
+                <h2>Raw Incident Intake Preview</h2>
+                <div class="section-note">Paste logs now, normalize them in the browser, and hand the structured evidence to the reasoning flow.</div>
             </div>
             <div class="story-grid">
                 <div class="detail-card">
-                    <div class="badge">Form fields</div>
+                    <div class="badge">Raw input</div>
                     <form class="input-form">
-                        <div class="input-form-row">
-                            <div class="input-field">
-                                <label for="serviceName">Service</label>
-                                <input id="serviceName" value="payments-api" />
-                            </div>
-                            <div class="input-field">
-                                <label for="severity">Severity</label>
-                                <select id="severity">
-                                    <option>P1</option>
-                                    <option selected>P2</option>
-                                    <option>P3</option>
-                                </select>
-                            </div>
-                        </div>
                         <div class="input-field">
-                            <label for="summary">Summary</label>
-                            <input id="summary" value="Checkout latency increase with timeout spikes" />
-                        </div>
-                        <div class="input-field">
-                            <label for="symptoms">Symptoms</label>
-                            <textarea id="symptoms">HTTP 500s, elevated queue depth, and increased checkout latency.</textarea>
+                            <label for="rawLogInput">Paste incident text or logs</label>
+                            <p class="section-note">This field starts empty so you can paste your own logs immediately. If you want a sample, use <strong>Load example logs</strong>, then click <strong>Submit raw logs</strong>.</p>
+                            <textarea id="rawLogInput" rows="12" placeholder="Paste raw incident text, stack traces, or logs here."></textarea>
+                            <button class="nav-link channel-cta" id="loadRawExample" type="button">Load example logs</button>
                         </div>
                     </form>
                 </div>
                 <div class="detail-card">
-                    <div class="badge">Selected channel</div>
+                    <div class="badge">Parsed evidence</div>
                     <div class="input-details">
-                        <p class="hero-copy" id="channelPreview">Webhook: primary machine-to-machine alert ingestion.</p>
-                        <p class="hero-copy" id="channelAuth">Auth: signed request or integration token.</p>
-                        <p class="hero-copy" id="channelNextStep">Webhook input lands in the incident queue, is normalized, and opens the Incident Console with the same workflow states.</p>
-                        <pre class="input-code" id="channelPayload">POST /webhooks/incident
-X-Signature: sha256=...
-Body: service, severity, summary, symptoms</pre>
+                        <p class="hero-copy" id="channelPreview">Raw text intake: paste the logs first, then normalize them into the reasoning flow.</p>
+                        <p class="hero-copy" id="channelAuth">Auth: operator paste or copied incident transcript.</p>
+                        <p class="hero-copy" id="channelNextStep">The browser will extract the likely service, severity, and error signature before the backend reasoning step.</p>
+                        <pre class="input-code" id="channelPayload">2026-05-30T10:14:22Z checkout-api ERROR timeout waiting for payment service
+2026-05-30T10:14:23Z checkout-api WARN retry budget exhausted
+2026-05-30T10:14:25Z payments-worker ERROR queue depth exceeded threshold
+service=checkout-api severity=P1</pre>
+                        <div class="badge">Browser parse</div>
+                        <div class="hero-stats raw-intake-grid">
+                            <div class="stat"><div class="stat-label">Detected service</div><div class="stat-value" id="rawDetectedService">checkout-api</div></div>
+                            <div class="stat"><div class="stat-label">Severity hint</div><div class="stat-value" id="rawDetectedSeverity">P1</div></div>
+                            <div class="stat"><div class="stat-label">Error signature</div><div class="stat-value" id="rawDetectedSignature">Timeout / queue pressure</div></div>
+                            <div class="stat"><div class="stat-label">Expected action</div><div class="stat-value" id="rawDetectedAction">Open console</div></div>
+                        </div>
                         <div class="badge">Live API</div>
-                        <pre class="input-code" id="channelEndpoint">POST /webhooks/incident</pre>
-                        <button class="nav-link channel-cta" id="channelSubmit" type="button">Send webhook intake</button>
+                        <pre class="input-code" id="channelEndpoint">Preview only: no raw-log backend endpoint yet</pre>
+                        <button class="nav-link channel-cta" id="channelSubmit" type="button">Submit raw logs</button>
                         <div class="badge">Open console</div>
-                        <a class="inline-link channel-cta" id="channelLaunch" href="incident?nexus_incident_id=INC001">Open webhook incident console</a>
-                        <div class="result-banner" id="channelResult">No intake submitted yet.</div>
-                        <p class="hero-copy">The same incident console keeps intake, diagnosis, and outcome review in one workflow.</p>
+                        <a class="inline-link channel-cta" id="channelLaunch" href="incident?nexus_incident_id=INC001">Open reasoning console</a>
+                        <div class="result-banner" id="channelResult">No intake parsed yet.</div>
+                        <p class="hero-copy">The same incident console will later receive the normalized log bundle and reason over it with the agents.</p>
                     </div>
                 </div>
             </div>

@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from incidents.catalogue import load_incident_types
 from server.agents.base import BaseAgent
 from server.models import AgentStubInfo, IncidentDefinition, SentinelClassification, SystemContext
+from server.services.priority import normalize_priority_label
 
 
 class SentinelAgent(BaseAgent):
@@ -91,7 +92,7 @@ class SentinelAgent(BaseAgent):
         return SentinelClassification(
             incident_id=incident_id,
             incident_name=incident_name,
-            severity=severity if severity in {"P1", "P2", "P3"} else self._normalize_severity(severity),
+            severity=normalize_priority_label(severity),
             confidence=confidence,
             reasoning=reasoning,
         )
@@ -146,11 +147,12 @@ class SentinelAgent(BaseAgent):
         return min(0.99, 0.6 + (best_score / (best_score + runner_up_score + 1.0)) * 0.4)
 
     def _normalize_severity(self, severity: str) -> str:
-        severity_map = {"P0": "P1", "P1": "P2", "P2": "P3"}
-        try:
-            return severity_map[severity]
-        except KeyError as exc:
-            raise ValueError(f"unsupported severity: {severity}") from exc
+        normalized = normalize_priority_label(severity)
+        if normalized == "P0":
+            return "P1"
+        if normalized.startswith("P") and normalized[1:].isdigit():
+            return f"P{int(normalized[1:]) + 1}"
+        return normalized
 
     def _tokenize_many(self, parts: Iterable[str]) -> set[str]:
         tokens: set[str] = set()

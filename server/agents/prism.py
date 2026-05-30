@@ -5,7 +5,7 @@ import re
 from collections.abc import Iterable
 
 from server.agents.base import BaseAgent
-from server.models import AgentStubInfo, IncidentDefinition, PrismDiagnosis, SentinelClassification
+from server.models import AgentStubInfo, IncidentDefinition, PrismDiagnosis, SentinelClassification, SystemContext
 from server.services.observability import ObservabilityService
 
 
@@ -40,12 +40,30 @@ class PrismAgent(BaseAgent):
         if not incident_id:
             raise ValueError("sentinel_output.incident_id must not be empty")
 
-        incident = await self._observability.resolve_incident_definition(incident_id)
-
         signal_map = await self._normalize_signals(incident_id, signals)
         signal_list = self._flatten_signals(signal_map)
-        evidence = self._select_evidence(signal_list, incident)
         queried_sources = [source for source, values in signal_map.items() if values]
+
+        try:
+            incident = await self._observability.resolve_incident_definition(incident_id)
+        except ValueError:
+            incident = IncidentDefinition(
+                id=incident_id or sentinel_output.incident_name or "raw-incident",
+                name=sentinel_output.incident_name or incident_id or "Raw incident",
+                severity=sentinel_output.severity,
+                difficulty="Medium",
+                symptoms=signal_list[:4] or [incident_id or sentinel_output.incident_name or "raw-incident"],
+                system_context=SystemContext(
+                    service=incident_id or "raw-incident",
+                    language="unknown",
+                    infra="live",
+                    dependencies=queried_sources or [],
+                ),
+                root_cause=signal_list[0] if signal_list else sentinel_output.incident_name or incident_id,
+                fix="Review the pasted logs, confirm ownership, and prepare rollback-safe mitigation.",
+            )
+
+        evidence = self._select_evidence(signal_list, incident)
         confidence = self._confidence(signal_list, incident)
 
         if self._client is not None:

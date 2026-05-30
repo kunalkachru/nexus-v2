@@ -10,7 +10,7 @@ pinned: false
 
 # NEXUS v2
 
-NEXUS v2 is an enterprise incident-response product that turns noisy alerts into a queue-first operator workflow, an explainable incident console, and a controlled path from intake to resolution.
+NEXUS v2 is an enterprise incident-reasoning product that starts from raw incident text or logs, turns them into structured evidence, and routes the incident through a controlled queue, console, and safety flow.
 
 Current phase:
 - UI-first roadmap: complete
@@ -41,7 +41,8 @@ NEXUS v2 solves that by making the queue the primary surface, normalizing every 
 ## Our solution
 
 The product combines:
-- A queue-first landing page for active incidents.
+- A raw-log intake path for pasting incident text, logs, or stack traces.
+- A queue landing page for active incidents after intake is normalized.
 - An incident console with workflow stages, evidence provenance, audit history, and execution state.
 - Multiple intake channels that normalize into the same backend contract.
 - Replay and training surfaces that explain how incidents are replayed, learned from, and measured.
@@ -51,11 +52,12 @@ The product combines:
 
 The main user journeys are:
 
-1. Intake an incident from webhook, manual form, Slack-style command, stream anomaly, or batch import.
-2. Land it in the queue with visible priority, stage, and age.
-3. Open the incident console to inspect timeline, evidence, agent analysis, audit trail, and execution status.
-4. Replay a scenario or inspect training output to understand how the system learns.
-5. Review settings and trust posture before expanding into production usage.
+1. Paste raw incident text or logs and see the system normalize it into structured evidence.
+2. Intake an incident from webhook, manual form, Slack-style command, stream anomaly, or batch import.
+3. Land it in the queue with visible priority, stage, and age.
+4. Open the incident console to inspect timeline, raw input, evidence, agent analysis, audit trail, and execution status.
+5. Replay a scenario or inspect training output to understand how the system learns.
+6. Review settings and trust posture before expanding into production usage.
 
 The current UI is intentionally enterprise-shaped so it feels credible in front of users, operators, and reviewers even before every backend integration is fully live.
 
@@ -81,6 +83,7 @@ The current UI is intentionally enterprise-shaped so it feels credible in front 
 
 ### Incident console
 
+- Shows the raw incident text when it exists and the normalized evidence derived from it.
 - Shows the 9-step workflow.
 - Surfaces SENTINEL, PRISM, FORGE, and GUARDIAN contributions in sequence.
 - Includes audit trail, evidence provenance, queue position, ETA, and execution state.
@@ -104,6 +107,7 @@ Current runtime behavior:
 - `PRISM` is deterministic by default, with an optional live OpenAI-backed diagnosis path when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
 - `FORGE` is deterministic by default in the web app, with an optional live OpenAI path in the demo and seeded incident views when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
 - `GUARDIAN` is deterministic and acts as the safety/policy gate.
+- The raw-log intake path uses the same live reasoning mode when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set; otherwise it stays deterministic and testable.
 
 Recommended production direction:
 
@@ -116,6 +120,7 @@ See [docs/AGENT_MODEL_MATRIX.md](docs/AGENT_MODEL_MATRIX.md) for the current-sta
 
 ### Input channels
 
+- Raw log paste
 - Webhook
 - Manual form
 - Slack-style command

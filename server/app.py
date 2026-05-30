@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 import logging
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -17,8 +17,10 @@ from server.integrations.alerts import AlertNormalizer
 from server.integrations.deployments import DeploymentLookupService
 from server.integrations.models import (
     BatchImportRequest,
+    GuardianDecisionRequest,
     IncomingIncidentWebhook,
     ManualIncidentReport,
+    RawIncidentTextRequest,
     SlackIncidentCommand,
     StreamAnomalyReport,
 )
@@ -225,6 +227,7 @@ async def get_platform_status(
     response = build_platform_status(payload)
     response["contract_surface"] = [
         "/webhooks/incident",
+        "/api/v1/incidents/raw-text",
         "/api/v1/incidents/manual-report",
         "/api/v1/incidents/slack-command",
         "/api/v1/incidents/stream-anomaly",
@@ -232,6 +235,7 @@ async def get_platform_status(
         "/api/v1/incidents/{incident_id}/context",
         "/api/v1/incidents/{incident_id}/status",
         "/api/v1/audit-logs/{incident_id}",
+        "/api/v1/incidents/{incident_id}/guardian-review",
         "/api/v1/incidents/{incident_id}/execute",
     ]
     await write_audit_log(
@@ -252,6 +256,19 @@ async def receive_manual_report(
     await request.app.state.rate_limiter.check(auth=auth, route_key="manual_report")
     response = await service.create_incident_from_manual_report(payload, tenant_id=auth.tenant_id)
     await write_audit_log("incident.manual_report.accepted", auth.tenant_id, response)
+    return response
+
+
+@app.post("/api/v1/incidents/raw-text", status_code=202)
+async def receive_raw_text(
+    request: Request,
+    payload: RawIncidentTextRequest,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="raw_text")
+    response = await service.create_incident_from_raw_text(payload, tenant_id=auth.tenant_id)
+    await write_audit_log("incident.raw_text.accepted", auth.tenant_id, response)
     return response
 
 
@@ -289,11 +306,16 @@ async def get_incident_status_v1(
 async def get_incident_context_v1(
     nexus_incident_id: str,
     request: Request,
+    live_reasoning: bool | None = Query(default=None),
     service: IncidentService = Depends(get_incident_service),
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="incident_context_v1")
-    response = await service.get_incident_context_v1(nexus_incident_id, tenant_id=auth.tenant_id)
+    response = await service.get_incident_context_v1(
+        nexus_incident_id,
+        tenant_id=auth.tenant_id,
+        live_reasoning=live_reasoning,
+    )
     await write_audit_log(
         "incident.context_v1.read",
         auth.tenant_id,
@@ -330,6 +352,24 @@ async def execute_incident_v1(
     response = await service.execute_incident(nexus_incident_id, tenant_id=auth.tenant_id)
     await write_audit_log(
         "incident.execute_v1.requested",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, **response},
+    )
+    return response
+
+
+@app.post("/api/v1/incidents/{nexus_incident_id}/guardian-review")
+async def guardian_review_incident_v1(
+    nexus_incident_id: str,
+    request: Request,
+    payload: GuardianDecisionRequest,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_execute")
+    response = await service.record_guardian_decision(nexus_incident_id, payload=payload, tenant_id=auth.tenant_id)
+    await write_audit_log(
+        "incident.guardian_review_v1.requested",
         auth.tenant_id,
         {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, **response},
     )
@@ -378,9 +418,9 @@ async def get_metrics():
 
 
 @app.get("/run-incident")
-async def run_incident(incident_id: str = "INC001"):
+async def run_incident(incident_id: str = "INC001", live_reasoning: bool | None = Query(default=None)):
     try:
-        return await build_demo_payload(incident_id)
+        return await build_demo_payload(incident_id, live_reasoning_override=live_reasoning)
     except ValueError as exc:
         return JSONResponse(status_code=404, content={"error": str(exc)})
     except KeyError:

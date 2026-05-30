@@ -96,4 +96,12 @@ def test_training_metrics_include_dashboard_summary_fields(tmp_path) -> None:
     assert "forge" in saved["agent_accuracy"]
     assert "guardian" in saved["agent_accuracy"]
     assert saved["training_evaluation"]["reward_curve_final"] >= 0.65
+    assert saved["reward_evaluation"]["reward_curve_delta"] >= 0.0
+    assert saved["rl_episode_contract"]["observation"]["incident_id"]
+    assert saved["rl_episode_contract"]["guardian_decision"] in {"approve", "reject", "request_modification"}
+    assert saved["rl_episode_contract"]["raw_priority_label"]
+    assert saved["rl_episode_contract"]["solution_proposal"]
+    assert saved["rl_episode_contract"]["live_reasoning"] is False
+    assert saved["artifact_summary"]
+    assert "learning_contracts" in saved["artifact_summary"]
     assert "sentinel" in saved["training_evaluation"]["policy_drift"]

@@ -28,6 +28,7 @@ This is the one-stop index for the presenter materials used to explain NEXUS v2 
 ## What The Deck Covers
 
 - Situation, task, action, and result
+- Raw-log intake as the primary MVP entrypoint
 - The live product proof
 - The sequential `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff
 - Stakeholder value

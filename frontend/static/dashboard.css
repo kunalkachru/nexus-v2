@@ -206,7 +206,7 @@ body::before {
 
 .hero-panel,
 .section {
-  padding: 22px;
+  padding: 18px;
 }
 
 .hero-panel::before,
@@ -236,26 +236,26 @@ body::before {
 }
 
 h1 {
-  font-size: clamp(2.4rem, 4vw, 4.2rem);
-  line-height: 0.96;
+  font-size: clamp(2rem, 3.2vw, 3.4rem);
+  line-height: 0.98;
   letter-spacing: -0.04em;
   margin-bottom: 14px;
   max-width: 13ch;
 }
 
 h2 {
-  font-size: 1.2rem;
+  font-size: 1.08rem;
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
 
 h3 {
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.25;
 }
 
 .incident-shell h1 {
-  font-size: clamp(1.9rem, 3vw, 3.2rem);
+  font-size: clamp(1.65rem, 2.5vw, 2.7rem);
 }
 
 .incident-shell .hero-copy,
@@ -265,23 +265,24 @@ h3 {
 .incident-shell .timeline li,
 .incident-shell .simple-list li,
 .incident-shell .logs li {
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 .incident-shell .stat-value,
 .incident-shell .summary-card .value {
-  font-size: 1rem;
+  font-size: 0.96rem;
 }
 
 .incident-shell .flow-node-title {
-  font-size: 0.94rem;
+  font-size: 0.88rem;
 }
 
 .hero-copy,
 .agent-copy,
 .section-note {
   color: var(--muted);
-  line-height: 1.55;
+  line-height: 1.45;
+  font-size: 0.92rem;
   max-width: 72ch;
 }
 
@@ -312,7 +313,7 @@ h3 {
 .metric-card,
 .detail-card,
 .agent-card {
-  padding: 16px;
+  padding: 14px;
 }
 
 .stat-label,
@@ -324,7 +325,7 @@ h3 {
 
 .stat-value,
 .summary-card .value {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -337,7 +338,7 @@ h3 {
 
 .incident-shell .agent-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .queue-list {
@@ -601,7 +602,7 @@ h3 {
   grid-template-columns: 54px 1fr;
   gap: 14px;
   align-items: stretch;
-  padding: 14px;
+  padding: 12px;
   border-radius: 18px;
   border: 1px solid var(--border-soft);
   background: var(--surface-soft);
@@ -714,7 +715,7 @@ h3 {
 }
 
 .flow-node {
-  padding: 16px;
+  padding: 14px;
   border-radius: 18px;
   border: 1px solid var(--border-soft);
   background: var(--surface-soft);
@@ -748,7 +749,8 @@ h3 {
 
 .flow-node-copy {
   color: var(--muted);
-  line-height: 1.4;
+  line-height: 1.35;
+  font-size: 0.88rem;
 }
 
 .flow-node-transfer {
@@ -767,7 +769,7 @@ h3 {
   border-radius: 12px;
   border: 1px solid var(--border-soft);
   background: var(--surface-inset);
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   line-height: 1.45;
 }
 
@@ -855,7 +857,7 @@ h3 {
 }
 
 .input-channel-card {
-  padding: 16px;
+  padding: 14px;
   border-radius: 16px;
   border: 1px solid var(--border-soft);
   background: var(--surface-strong);
@@ -1211,8 +1213,15 @@ h3 {
   border-radius: 999px;
   padding: 10px 14px;
   background: var(--nav-item-bg);
+  cursor: pointer;
   position: relative;
   transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.nav-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
 }
 
 .nav-link:hover {
@@ -1350,6 +1359,14 @@ h3 {
   gap: 10px;
 }
 
+.guardian-gate-card {
+  min-height: 100%;
+}
+
+.guardian-gate-actions {
+  flex-wrap: wrap;
+}
+
 .theme-toggle {
   appearance: none;
   cursor: pointer;
@@ -1376,13 +1393,13 @@ h3 {
 }
 
 .input-code {
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-radius: 16px;
   background: var(--surface-inset);
   border: 1px solid var(--border-soft);
   color: var(--text);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   line-height: 1.5;
   white-space: pre-wrap;
 }

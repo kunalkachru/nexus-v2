@@ -1,14 +1,10 @@
 from server.models import Episode, EpisodeReward
-
-
-SEVERITY_ORDER = {"P1": 3, "P2": 2, "P3": 1}
-SEVERITY_MAP = {"P0": "P1", "P1": "P2", "P2": "P3"}
-
+from server.services.priority import priority_rank
 
 def compute_episode_reward(episode: Episode) -> EpisodeReward:
     """Compute a deterministic 5-dimensional reward for a completed episode."""
 
-    expected_severity = SEVERITY_MAP[episode.incident.severity]
+    expected_severity = _expected_severity(episode.incident.severity)
     mttr = _bounded(1.0 - (episode.duration_minutes / 30.0))
     diagnosis = 1.0 if episode.prism_output.root_cause == episode.incident.root_cause else 0.0
     customer = _bounded(
@@ -43,14 +39,23 @@ def compute_episode_reward(episode: Episode) -> EpisodeReward:
 
 
 def _severity_penalty(*, predicted: str, expected: str) -> float:
-    predicted_value = SEVERITY_ORDER[predicted]
-    expected_value = SEVERITY_ORDER[expected]
+    predicted_value = priority_rank(predicted)
+    expected_value = priority_rank(expected)
 
     if predicted_value == expected_value:
         return 0.0
     if predicted_value < expected_value:
-        return 0.20 * (expected_value - predicted_value)
-    return 0.10 * (predicted_value - expected_value)
+        return 0.10 * (expected_value - predicted_value)
+    return 0.20 * (predicted_value - expected_value)
+
+
+def _expected_severity(severity: str) -> str:
+    normalized = str(severity).strip().upper()
+    if normalized == "P0":
+        return "P1"
+    if normalized.startswith("P") and normalized[1:].isdigit():
+        return f"P{int(normalized[1:]) + 1}"
+    return normalized
 
 
 def _bounded(value: float) -> float:

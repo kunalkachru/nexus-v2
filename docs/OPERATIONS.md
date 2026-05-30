@@ -21,6 +21,7 @@ Optional demo path settings:
 For local development, copy [.env.example](../.env.example) to `.env` and keep your tokens there. The app reads `NEXUS_*` environment variables directly.
 
 When the optional OpenAI path is enabled, the seeded incident console and `/run-incident` route will show live LLM-backed SENTINEL, PRISM, and FORGE reasoning while GUARDIAN stays deterministic.
+The raw-log intake path uses the same live reasoning mode when OpenAI is enabled, so you can demo the real incident input flow from pasted logs through the agent chain.
 
 ## Start Up
 
@@ -32,6 +33,7 @@ When the optional OpenAI path is enabled, the seeded incident console and `/run-
 
 - `GET /health`
 - `GET /dashboard`
+- `GET /inputs` and submit a raw-log paste incident
 - `GET /queue`
 - `GET /incident?nexus_incident_id=INC001`
 - Authenticated `GET /api/v1/incidents/queue` with tenant headers

@@ -16,8 +16,13 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 
 ## Current Objective
 - Build the MVP reasoning loop first: raw logs input, LLM-backed reasoning, solution proposal, safety gate, and RL-ready structured output.
+- The consolidated backlog now lives in [docs/NEXUS_v2_PRIORITY_BACKLOG.md](docs/NEXUS_v2_PRIORITY_BACKLOG.md) and is the current ordered task source of truth.
 
 ## Latest Completed Milestones
+- Raw incident intake now accepts arbitrary priority labels instead of being limited to `P0`-`P4`.
+- The raw-log intake field now starts empty, with `Load example logs` as the explicit sample action.
+- The incident console and Inputs page now expose a live reasoning toggle so the current incident can switch between live and fallback rendering from the UI.
+- Severity handling now accepts `P4` end to end.
 - The incident console was refactored into a guided-story layout with lighter cards, collapsible deep-dive panels, and an animated handoff rail between SENTINEL, PRISM, FORGE, and GUARDIAN.
 - Queue-first shell, incident console, input channels, replay, training, and settings surfaces are in place.
 - The docs status matrix now treats the UI-first roadmap as complete and the next phase as only partially complete.
@@ -44,9 +49,9 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - Production persistence is still not durable enough for restart-safe incident, replay, and training state.
 - Auth, tenant, and deployment hardening still need stronger production boundaries.
 - No blocking issue for the current documentation/presenter-pack task.
-- The live reasoning path is wired for seeded demos, and the raw-text path now exposes parsed evidence, but the full live LLM raw-log reasoning loop still needs to be wired in.
 - The product definition is now corrected: the core loop is raw input -> LLM reasoning -> solution -> safety gate -> RL scoring.
 - Production persistence still needs to capture the RL episode contract durably across restarts.
+- The live reasoning mode still needs a real browser verification pass on a local machine because Chromium is sandbox-blocked in this environment.
 
 ## Most Important Source Of Truth
 - [README.md](README.md)
