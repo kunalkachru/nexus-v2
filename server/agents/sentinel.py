@@ -11,8 +11,10 @@ class SentinelAgent(BaseAgent):
 
     name = "sentinel"
 
-    def __init__(self) -> None:
+    def __init__(self, client: object | None = None, model_name: str | None = None) -> None:
         self._incident_catalogue = load_incident_types()
+        self._client = client
+        self._model_name = model_name
 
     def describe(self) -> AgentStubInfo:
         """Report that SENTINEL is implemented while other agents remain stubs."""
@@ -34,6 +36,9 @@ class SentinelAgent(BaseAgent):
         if not self._incident_catalogue:
             raise RuntimeError("incident catalogue is empty")
 
+        if self._client is not None:
+            return self._classify_with_live_client(cleaned_symptoms, system_context)
+
         scored_incidents = [
             (incident, self._score_incident(cleaned_symptoms, system_context, incident))
             for incident in self._incident_catalogue
@@ -53,6 +58,42 @@ class SentinelAgent(BaseAgent):
                 f"Matched {best_incident.id} using symptom and context overlap "
                 f"with {confidence:.0%} confidence"
             ),
+        )
+
+    def _classify_with_live_client(
+        self,
+        raw_symptoms: list[str],
+        system_context: SystemContext,
+    ) -> SentinelClassification:
+        model_name = self._model_name or "gpt-4o"
+        user_prompt = (
+            f"Symptoms: {raw_symptoms}\n"
+            f"System context: service={system_context.service}, language={system_context.language}, "
+            f"infra={system_context.infra}, dependencies={system_context.dependencies}\n"
+            "Return grounded JSON with incident_id, incident_name, severity, confidence, reasoning."
+        )
+        response_data = self._client.generate_json(
+            model=model_name,
+            system_prompt=(
+                "You are SENTINEL, an incident classification agent. "
+                "Use only the supplied symptoms and system context. "
+                "Return concise JSON that explains the most likely incident pattern."
+            ),
+            user_prompt=user_prompt,
+        )
+        incident_id = str(response_data.get("incident_id", "")).strip() or self._incident_catalogue[0].id
+        incident_name = str(response_data.get("incident_name", "")).strip() or self._incident_catalogue[0].name
+        severity = str(response_data.get("severity", "")).strip() or self._normalize_severity(self._incident_catalogue[0].severity)
+        confidence = float(response_data.get("confidence", 0.8))
+        reasoning = str(response_data.get("reasoning", "")).strip() or (
+            f"Live LLM classification for {incident_id} grounded in {len(raw_symptoms)} symptom(s)"
+        )
+        return SentinelClassification(
+            incident_id=incident_id,
+            incident_name=incident_name,
+            severity=severity if severity in {"P1", "P2", "P3"} else self._normalize_severity(severity),
+            confidence=confidence,
+            reasoning=reasoning,
         )
 
     def _score_incident(

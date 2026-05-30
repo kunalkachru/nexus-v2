@@ -24,8 +24,9 @@ from server.integrations.models import (
 )
 from server.rate_limit import RateLimiter
 from server.services.incidents import IncidentService
+from server.services.live_demo import build_demo_payload
 from server.services.observability import ObservabilityService
-from server.services.surface_payloads import build_incident_response, build_platform_status, load_metrics_payload
+from server.services.surface_payloads import build_platform_status, load_metrics_payload
 from server.services.tenancy import TenancyService
 
 logger = logging.getLogger(__name__)
@@ -379,7 +380,7 @@ async def get_metrics():
 @app.get("/run-incident")
 async def run_incident(incident_id: str = "INC001"):
     try:
-        return build_incident_response(incident_id)
+        return await build_demo_payload(incident_id)
     except ValueError as exc:
         return JSONResponse(status_code=404, content={"error": str(exc)})
     except KeyError:

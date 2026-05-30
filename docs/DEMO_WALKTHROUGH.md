@@ -369,6 +369,13 @@ That means a real intake action can feed the console with:
 
 This is the difference between a static demo payload and the current live incident path.
 
+If you started the app with optional OpenAI mode enabled, this same screen will also show live LLM-backed reasoning for the seeded incident path:
+
+- `SENTINEL` uses a live classification call.
+- `PRISM` uses a live diagnosis call.
+- `FORGE` uses a live runbook-generation call.
+- `GUARDIAN` remains deterministic and keeps the safety gate visible.
+
 The four agents should read as a sequential handoff:
 
 1. `SENTINEL` classifies the incident and establishes priority.

@@ -163,6 +163,16 @@ class FakeObservabilityService:
         raise ValueError(f"unknown incident_id: {incident_id}")
 
 
+class FakeLiveClient:
+    def __init__(self, payload: dict[str, object]) -> None:
+        self.payload = payload
+        self.last_model: str | None = None
+
+    def generate_json(self, *, model: str, system_prompt: str, user_prompt: str) -> dict[str, object]:
+        self.last_model = model
+        return dict(self.payload)
+
+
 def test_prism_uses_observability_service_for_logs_and_metrics() -> None:
     async def scenario() -> None:
         observability = FakeObservabilityService()
@@ -184,6 +194,41 @@ def test_prism_uses_observability_service_for_logs_and_metrics() -> None:
         assert "metrics" in result.queried_sources
         assert result.evidence
         assert observability.requests == [("INC002", ("logs", "metrics", "traces"))]
+
+    asyncio.run(scenario())
+
+
+def test_prism_accepts_live_client_output() -> None:
+    async def scenario() -> None:
+        observability = FakeObservabilityService()
+        prism = PrismAgent(
+            observability=observability,
+            client=FakeLiveClient(
+                {
+                    "root_cause": "Checkout API saturation",
+                    "confidence": 0.95,
+                    "evidence": ["p95 latency spike"],
+                    "queried_sources": ["logs", "metrics"],
+                    "reasoning": "Live LLM diagnosis",
+                }
+            ),
+            model_name="gpt-4o-mini",
+        )
+        sentinel_output = SentinelClassification(
+            incident_id="INC002",
+            incident_name="Checkout pool exhaustion",
+            severity="P1",
+            confidence=0.97,
+            reasoning="fixture",
+        )
+
+        result = await prism.diagnose(sentinel_output=sentinel_output, signals=None)
+
+        assert result.root_cause == "Checkout API saturation"
+        assert result.confidence == 0.95
+        assert result.evidence == ["p95 latency spike"]
+        assert result.queried_sources == ["logs", "metrics"]
+        assert result.reasoning == "Live LLM diagnosis"
 
     asyncio.run(scenario())
 

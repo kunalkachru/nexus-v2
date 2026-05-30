@@ -20,6 +20,8 @@ Optional demo path settings:
 
 For local development, copy [.env.example](../.env.example) to `.env` and keep your tokens there. The app reads `NEXUS_*` environment variables directly.
 
+When the optional OpenAI path is enabled, the seeded incident console and `/run-incident` route will show live LLM-backed SENTINEL, PRISM, and FORGE reasoning while GUARDIAN stays deterministic.
+
 ## Start Up
 
 - Local product smoke test: `docker compose up --build`

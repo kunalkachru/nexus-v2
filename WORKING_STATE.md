@@ -28,6 +28,9 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - A dedicated agent model matrix now records which agents are deterministic, optional-LLM, or still partially wired.
 - `server/config.py` now carries explicit runtime defaults, and `.env.example` documents the local token/model setup.
 - The incident console now prefers a backend live-context endpoint for real incidents instead of browser-side synthetic data.
+- The seeded demo and `/run-incident` path now support optional live OpenAI-backed SENTINEL, PRISM, and FORGE reasoning when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
+- The manual walkthrough now calls out the optional live LLM mode so seeded incident demos can show the reasoning path end to end.
+- The full test suite is green after the live reasoning wiring: `99 passed, 1 warning`.
 
 ## Open Blockers
 - Observability and evidence are still mostly fixture-backed instead of coming from real adapters.
@@ -37,6 +40,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - No blocking issue for the current documentation/presenter-pack task.
 - The app-level model/provider story is clearer now, but the enterprise hybrid LLM plan still needs a real PRISM/Forge implementation round.
 - The current live-context path is backend-driven, but the underlying observability adapters are still not fully real external integrations.
+- The live reasoning path is now wired for seeded demos, but real observability ingestion for newly created incidents is still the next credibility gap.
 
 ## Most Important Source Of Truth
 - [README.md](README.md)

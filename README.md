@@ -100,9 +100,9 @@ That order matters because it makes the incident story readable for operators, p
 
 Current runtime behavior:
 
-- `SENTINEL` is deterministic and classifies incidents from known patterns.
-- `PRISM` is deterministic and correlates observability evidence.
-- `FORGE` is deterministic by default in the web app, with an optional live OpenAI path in `demo.py` when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
+- `SENTINEL` is deterministic by default, with an optional live OpenAI-backed classification path when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
+- `PRISM` is deterministic by default, with an optional live OpenAI-backed diagnosis path when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
+- `FORGE` is deterministic by default in the web app, with an optional live OpenAI path in the demo and seeded incident views when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
 - `GUARDIAN` is deterministic and acts as the safety/policy gate.
 
 Recommended production direction:

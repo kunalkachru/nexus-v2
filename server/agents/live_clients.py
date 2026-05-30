@@ -1,0 +1,114 @@
+from __future__ import annotations
+
+import json
+import os
+
+
+class OpenAIForgeClient:
+    """Optional live OpenAI backend for FORGE."""
+
+    def generate_json(self, *, model: str, system_prompt: str, user_prompt: str) -> dict[str, object]:
+        from openai import OpenAI
+
+        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        response = client.responses.create(
+            model=model,
+            input=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "forge_runbook",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "language": {"type": "string"},
+                            "summary": {"type": "string"},
+                            "code": {"type": "string"},
+                            "estimated_cost_usd": {"type": "number"},
+                        },
+                        "required": ["language", "summary", "code", "estimated_cost_usd"],
+                        "additionalProperties": False,
+                    },
+                }
+            },
+        )
+        return json.loads(response.output_text)
+
+
+class OpenAISentinelClient:
+    """Optional live OpenAI backend for SENTINEL classification."""
+
+    def generate_json(self, *, model: str, system_prompt: str, user_prompt: str) -> dict[str, object]:
+        from openai import OpenAI
+
+        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        response = client.responses.create(
+            model=model,
+            input=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "sentinel_classification",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "incident_id": {"type": "string"},
+                            "incident_name": {"type": "string"},
+                            "severity": {"type": "string"},
+                            "confidence": {"type": "number"},
+                            "reasoning": {"type": "string"},
+                        },
+                        "required": ["incident_id", "incident_name", "severity", "confidence", "reasoning"],
+                        "additionalProperties": False,
+                    },
+                }
+            },
+        )
+        return json.loads(response.output_text)
+
+
+class OpenAIPrismClient:
+    """Optional live OpenAI backend for PRISM diagnosis synthesis."""
+
+    def generate_json(self, *, model: str, system_prompt: str, user_prompt: str) -> dict[str, object]:
+        from openai import OpenAI
+
+        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        response = client.responses.create(
+            model=model,
+            input=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "prism_diagnosis",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "root_cause": {"type": "string"},
+                            "confidence": {"type": "number"},
+                            "evidence": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                            },
+                            "queried_sources": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                            },
+                            "reasoning": {"type": "string"},
+                        },
+                        "required": ["root_cause", "confidence", "evidence", "queried_sources", "reasoning"],
+                        "additionalProperties": False,
+                    },
+                }
+            },
+        )
+        return json.loads(response.output_text)

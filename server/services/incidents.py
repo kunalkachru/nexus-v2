@@ -277,9 +277,9 @@ class IncidentService:
         tenant_id: str | None = None,
     ) -> dict[str, object]:
         if nexus_incident_id in list_supported_incident_ids():
-            from server.services.surface_payloads import build_incident_response
+            from server.services.live_demo import build_demo_payload
 
-            return build_incident_response(nexus_incident_id)
+            return await build_demo_payload(nexus_incident_id)
 
         if tenant_id is None:
             loaded = await self._session.incidents.get_incident(nexus_incident_id)

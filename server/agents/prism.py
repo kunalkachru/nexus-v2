@@ -1,4 +1,6 @@
+import json
 import asyncio
+import os
 import re
 from collections.abc import Iterable
 
@@ -12,8 +14,15 @@ class PrismAgent(BaseAgent):
 
     name = "prism"
 
-    def __init__(self, observability: ObservabilityService | None = None) -> None:
+    def __init__(
+        self,
+        observability: ObservabilityService | None = None,
+        client: object | None = None,
+        model_name: str | None = None,
+    ) -> None:
         self._observability = observability or ObservabilityService()
+        self._client = client
+        self._model_name = model_name
 
     def describe(self) -> AgentStubInfo:
         """Report that PRISM is implemented while later agents remain stubs."""
@@ -39,6 +48,14 @@ class PrismAgent(BaseAgent):
         queried_sources = [source for source, values in signal_map.items() if values]
         confidence = self._confidence(signal_list, incident)
 
+        if self._client is not None:
+            return self._diagnose_with_live_client(
+                incident=incident,
+                queried_sources=queried_sources,
+                signal_map=signal_map,
+                confidence=confidence,
+            )
+
         return PrismDiagnosis(
             incident_id=incident.id,
             root_cause=incident.root_cause,
@@ -50,6 +67,48 @@ class PrismAgent(BaseAgent):
                 f"with {confidence:.0%} confidence"
             ),
         )
+
+    def _diagnose_with_live_client(
+        self,
+        *,
+        incident: IncidentDefinition,
+        queried_sources: list[str],
+        signal_map: dict[str, list[str]],
+        confidence: float,
+    ) -> PrismDiagnosis:
+        model_name = self._model_name or os.environ.get("LLM_MODEL", "gpt-4o")
+        user_prompt = (
+            f"Incident ID: {incident.id}\n"
+            f"Incident Name: {incident.name}\n"
+            f"Symptoms: {json.dumps(incident.symptoms)}\n"
+            f"Root Cause Hint: {incident.root_cause}\n"
+            f"Signals: {json.dumps(signal_map, sort_keys=True)}\n"
+            "Return grounded JSON with root_cause, confidence, evidence, queried_sources, reasoning."
+        )
+        response_data = self._client.generate_json(
+            model=model_name,
+            system_prompt=(
+                "You are PRISM, an incident diagnosis agent. "
+                "Use only the provided signals and incident context. "
+                "Return concise JSON that explains the likely root cause."
+            ),
+            user_prompt=user_prompt,
+        )
+        payload = {
+            "incident_id": incident.id,
+            "root_cause": str(response_data.get("root_cause", incident.root_cause)).strip() or incident.root_cause,
+            "confidence": float(response_data.get("confidence", confidence)),
+            "evidence": [str(item).strip() for item in response_data.get("evidence", []) if str(item).strip()],
+            "queried_sources": [
+                str(item).strip()
+                for item in response_data.get("queried_sources", queried_sources)
+                if str(item).strip()
+            ]
+            or queried_sources,
+            "reasoning": str(response_data.get("reasoning", "")).strip()
+            or f"Live LLM diagnosis for {incident.id} grounded in {len(queried_sources)} signal source(s)",
+        }
+        return PrismDiagnosis.model_validate(payload)
 
     async def _normalize_signals(
         self,

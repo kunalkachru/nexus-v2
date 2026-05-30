@@ -20,3 +20,4 @@ class AppConfig(BaseModel):
     webhook_signing_secret: str = Field(default_factory=lambda: _env("NEXUS_WEBHOOK_SIGNING_SECRET", "nexus-demo-webhook-secret"))
     allowed_tenant_ids: list[str] = Field(default_factory=lambda: _env_list("NEXUS_ALLOWED_TENANT_IDS", ["tenant-a", "tenant-system"]))
     forge_model_name: str = Field(default_factory=lambda: _env("NEXUS_FORGE_MODEL_NAME", "gpt-4o"))
+    use_live_llm: bool = Field(default_factory=lambda: _env("NEXUS_USE_OPENAI", "0") == "1")
