@@ -1,7 +1,7 @@
 # NEXUS v2: Implementation Sprint Plan
 ## Claude Code CLI + Superpowers Automated Build
 
-> Historical hackathon sprint. The live status, gaps, and next priorities are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../docs/NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../docs/NEXUS_v2_PRIORITY_BACKLOG.md).
+> Historical hackathon sprint. The live status, gaps, and next priorities are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../../../NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../../../NEXUS_v2_PRIORITY_BACKLOG.md).
 
 **Timeline:** 7 days (Hackathon)  
 **Tool:** Claude Code CLI in VS Code + Superpowers plugin  

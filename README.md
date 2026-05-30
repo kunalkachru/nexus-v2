@@ -200,7 +200,6 @@ The current repo is considered ready when the suite is green and the browser pag
 
 Current roadmap alignment:
 - [UI-first roadmap](docs/superpowers/specs/2026-05-29-enterprise-ui-product-roadmap.md)
-- [Implementation plan](docs/superpowers/plans/å-05-29-enterprise-ui-product-roadmap-implementation.md)
 - [Phase 2 roadmap](docs/NEXUS_v2_PHASE2_ROADMAP.md)
 - [Enterprise specification](design-docs/NEXUS_v2_ENTERPRISE_SPECIFICATION.md)
 
@@ -213,10 +212,3 @@ If you want the shortest path to the next phase of product hardening, start with
 - [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](docs/NEXUS_v2_DOC_STATUS_MATRIX.md)
 - [docs/NEXUS_v2_PRIORITY_BACKLOG.md](docs/NEXUS_v2_PRIORITY_BACKLOG.md)
 - [docs/OPERATIONS.md](docs/OPERATIONS.md)
-
-### Historical reference only
-
-- [design-docs/NEXUS_v2_IMPLEMENTATION_SPRINT.md](design-docs/NEXUS_v2_IMPLEMENTATION_SPRINT.md)
-- [design-docs/NEXUS_v2_CLAUDE_CODE_CHEATSHEET.md](design-docs/NEXUS_v2_CLAUDE_CODE_CHEATSHEET.md)
-
-Those historical docs are still useful for context, but they are no longer the authoritative description of the current repo state.

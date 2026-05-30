@@ -12,15 +12,11 @@ Legend:
 | Doc | Overall status | Notes |
 |---|---|---|
 | [docs/superpowers/specs/2026-05-29-enterprise-ui-product-roadmap.md](superpowers/specs/2026-05-29-enterprise-ui-product-roadmap.md) | Done / Partial | UI-first roadmap is complete; backend-reality phase is only partially complete. |
-| [docs/superpowers/plans/å-05-29-enterprise-ui-product-roadmap-implementation.md](superpowers/plans/å-05-29-enterprise-ui-product-roadmap-implementation.md) | Done | The plan has effectively been executed; the checkboxes are stale. |
 | [docs/superpowers/specs/2026-05-28-enterprise-workflow-ui-design.md](superpowers/specs/2026-05-28-enterprise-workflow-ui-design.md) | Done / Partial | UI surfaces are done; backend architecture is still mostly aspirational. |
-| [docs/superpowers/specs/2026-05-28-day-7-production-design.md](superpowers/specs/2026-05-28-day-7-production-design.md) | Done / Partial | Dashboard, demo, and deployment shell exist; production hardening remains. |
 | [docs/NEXUS_v2_PHASE2_ROADMAP.md](NEXUS_v2_PHASE2_ROADMAP.md) | Partial | Week 1 intake normalization is mostly real; Week 2-4 remain incomplete for true enterprise integrations. |
 | [design-docs/NEXUS_v2_Design_Document.md](../design-docs/NEXUS_v2_Design_Document.md) | Partial | Real incident integration is only partially realized. |
 | [design-docs/NEXUS_v2_ENTERPRISE_SPECIFICATION.md](../design-docs/NEXUS_v2_ENTERPRISE_SPECIFICATION.md) | Partial | The UI and demo contracts are in place, but the live enterprise pipeline is not. |
 | [design-docs/NEXUS_v2_Master_Product_Document.md](../design-docs/NEXUS_v2_Master_Product_Document.md) | Partial / Pending | Vision and narrative are intact; business, legal, and scale sections are mostly not implemented in code. |
-| [design-docs/NEXUS_v2_IMPLEMENTATION_SPRINT.md](../design-docs/NEXUS_v2_IMPLEMENTATION_SPRINT.md) | Pending / Historical | This is a hackathon-era sprint doc and no longer authoritative for the current repo state. |
-| [design-docs/NEXUS_v2_CLAUDE_CODE_CHEATSHEET.md](../design-docs/NEXUS_v2_CLAUDE_CODE_CHEATSHEET.md) | Partial / Historical | Useful as workflow reference, but it describes the old sprint rather than current repo tasks. |
 | [docs/OPERATIONS.md](OPERATIONS.md) | Partial | Local/Docker flow is valid; demo and product mode operations plus recovery are not fully hardened. |
 
 ## Priority Backlog
@@ -56,17 +52,6 @@ If you want the shortest path to the next meaningful product step, use this orde
 | Stakeholder Roadmap Summary - Phase 1 | Done | Enterprise feel-first is achieved. |
 | Stakeholder Roadmap Summary - Phase 2 | Partial | Thin backend seams exist; full enterprise backend reality is still pending. |
 | Product Outcome | Partial | The product feels enterprise-grade, but deeper integrations are still missing. |
-
-### 2) `docs/superpowers/plans/å-05-29-enterprise-ui-product-roadmap-implementation.md`
-
-| Task | Status | Notes |
-|---|---|---|
-| Task 1: Standardize The Enterprise Shell And Navigation | Done | Shared shell and Queue-first landing are implemented. |
-| Task 2: Make Queue And Incident Console Feel Like The Core Product | Done | Queue/incident hierarchy and agent narrative are in place. |
-| Task 3: Make Supporting Pages Reinforce The Same Enterprise Narrative | Done | Inputs, history, replay, training, and settings now reinforce the same story. |
-| Task 4: Apply Shared Visual System, Motion, And States | Done | The shared visual language is in place and browser-verified. |
-| Task 5: Add Backend-Ready API Seams For Later Realism | Done | Versioned queue/status/audit/execute seams exist. |
-| Task 6: Verify The UI-First Product End To End | Done | Full test and browser validation are passing. |
 
 ### 3) `docs/NEXUS_v2_PHASE2_ROADMAP.md`
 
@@ -129,23 +114,6 @@ If you want the shortest path to the next meaningful product step, use this orde
 | 11. Risk Management & Mitigation | Pending | Planning content only. |
 | 12. Appendices | Partial | Some sample artifacts and catalogue material exist, but several appendices are still aspirational. |
 
-### 7) `design-docs/NEXUS_v2_IMPLEMENTATION_SPRINT.md`
-
-| Section | Status | Notes |
-|---|---|---|
-| Quickstart / Setup | Partial | Still useful as a general setup guide, but based on the old hackathon plan. |
-| How To Use Claude Code CLI With The Master Documents | Partial | The workflow is still conceptually relevant, but the referenced sprint artifacts are outdated. |
-| Project Structure | Pending | Describes the original scaffold, not the current repo structure. |
-| Create CLAUDE.md | Pending | Historical setup artifact. |
-| Daily Sprint Schedule | Pending | Historical hackathon plan; not the current execution path. |
-| How To Run Claude Code For Each Day | Pending | Historical, not the repo’s current workflow. |
-| Critical Decision Points | Pending | Historical sprint checks. |
-| Failure Modes & Recovery | Partial | Useful as general guidance, but not the current product plan. |
-| Resource Tracking | Pending | Historical time/money plan. |
-| Validation Checklist | Partial | The concepts remain useful, but the concrete commands are outdated. |
-| Git Workflow | Partial | General advice still useful. |
-| Communication During Hackathon | Pending | Historical. |
-| Final Commands | Pending | Historical. |
 
 ### 8) `docs/superpowers/specs/2026-05-28-enterprise-workflow-ui-design.md`
 
@@ -163,17 +131,6 @@ If you want the shortest path to the next meaningful product step, use this orde
 | Containerization And Ops | Partial | Local and Docker flows work; production hardening is incomplete. |
 | Success Criteria | Partial | The main user journey works; the full enterprise spec is not yet complete. |
 
-### 9) `docs/superpowers/specs/2026-05-28-day-7-production-design.md`
-
-| Section | Status | Notes |
-|---|---|---|
-| Goal / Scope | Done | The dashboard/demo packaging goal is implemented. |
-| Metrics | Done | Metrics JSON and dashboard rendering are in place. |
-| Dashboard | Done | `frontend/dashboard.html` and `/api/metrics` are implemented. |
-| Demo | Partial | The judge-facing demo path exists, but the broader product demo is now richer than this doc describes. |
-| Deployment | Partial | Docker and HF-compatible serving exist; production hardening is still incomplete. |
-| Error Handling | Partial | Fallbacks exist, but not every production failure mode is covered. |
-| Testing | Done | App and deployment tests cover the dashboard and serving path. |
 
 ### 10) Repo-Level Docs
 
@@ -191,11 +148,10 @@ These are the main gaps that are still worth adding to the plan if you want to k
 3. Add a real production persistence story for incident events, replay, and training artifacts if this moves beyond demo mode.
 4. Harden auth and tenant boundaries for true production mode, including signature verification and clearer gateway posture.
 5. Continue backend service decomposition where helper logic still belongs in focused modules.
-6. Keep the README and docs matrix as the canonical source of truth and leave historical sprint docs clearly labeled.
+6. Keep the README and docs matrix as the canonical source of truth.
 
 ## Bottom Line
 
 - The UI-first roadmap is done.
 - The thin backend/demo realism layer is done enough for a credible demo.
 - The enterprise-spec production layer is still partial.
-- The oldest sprint docs are historical and should not be used as the authoritative status source.

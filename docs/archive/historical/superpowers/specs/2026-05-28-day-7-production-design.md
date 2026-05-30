@@ -1,6 +1,6 @@
 # Day 7 Production Design
 
-> Historical production packaging reference. Current implementation status and remaining gaps are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../../NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../../NEXUS_v2_PRIORITY_BACKLOG.md).
+> Historical production packaging reference. Current implementation status and remaining gaps are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../../../../NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../../../../NEXUS_v2_PRIORITY_BACKLOG.md).
 
 ## Goal
 

@@ -1,6 +1,6 @@
 # Enterprise Workflow UI Implementation Plan
 
-> Historical execution plan. The repo now reflects this work, and live status is tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../../NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../../NEXUS_v2_PRIORITY_BACKLOG.md).
+> Historical execution plan. The repo now reflects this work, and live status is tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../../../../NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../../../../NEXUS_v2_PRIORITY_BACKLOG.md).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

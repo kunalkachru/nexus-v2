@@ -86,10 +86,9 @@
 **What to do**
 - Keep the README as the canonical product entrypoint.
 - Keep the status matrix and backlog in sync with the code.
-- Leave historical sprint docs clearly labeled as historical.
 
 **Done when**
-- A new reader can tell what is current, what is historical, and what is next.
+- A new reader can tell what is current and what is next.
 
 ## Recommended Next Pick
 
