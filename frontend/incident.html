@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            try {
+                const stored = window.localStorage.getItem("nexus.theme");
+                const theme = stored === "light" || stored === "dark"
+                    ? stored
+                    : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+                document.documentElement.dataset.theme = theme;
+            } catch {
+                document.documentElement.dataset.theme = "dark";
+            }
+        })();
+    </script>
+    <title>NEXUS v2 | Incident Console</title>
+    <link rel="stylesheet" href="static/dashboard.css">
+</head>
+<body>
+    <div class="container incident-shell">
+        <header class="app-shell">
+            <div>
+                <div class="brand">NEXUS v2</div>
+                <div class="brand-copy">Operational console</div>
+            </div>
+            <nav class="app-nav" aria-label="Primary">
+                <a class="nav-link" href="queue">Queue</a>
+                <a class="nav-link active" href="incident?nexus_incident_id=INC001" aria-current="page">Incident</a>
+                <a class="nav-link" href="inputs">Input Channels</a>
+                <a class="nav-link" href="history">History</a>
+                <a class="nav-link" href="replay">Replay</a>
+                <a class="nav-link" href="training">Training</a>
+                <a class="nav-link" href="settings">Settings</a>
+            </nav>
+        </header>
+
+        <div class="top-actions">
+            <a class="nav-link" href="queue">Back to queue</a>
+        </div>
+
+        <section class="hero">
+            <div class="hero-panel">
+                <div class="eyebrow">Incident Console</div>
+                <h1 id="incidentTitle">Incident console</h1>
+                <p class="hero-copy" id="incidentSubtitle">
+                    Open a single incident and inspect the evidence, agents, and safety outcome without queue noise.
+                </p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-label">Current incident</div>
+                        <div class="stat-value" id="incidentHeroId">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Severity</div>
+                        <div class="stat-value" id="incidentHeroSeverity">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Guardian</div>
+                        <div class="stat-value" id="incidentHeroGuardian">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Execution</div>
+                        <div class="stat-value" id="incidentHeroExecution">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-panel controls">
+                <div class="eyebrow">Working context</div>
+                <p class="hero-copy">Use the queue to inspect another incident. This page stays focused on the selected incident only.</p>
+                <div class="detail-card compact-note">
+                    <div class="badge" id="incidentOverviewNote">Waiting for incident selection.</div>
+                    <p class="hero-copy">The console below shows incident evidence, signal correlation, remediation, and guardrail review in one operating view.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section workflow-section">
+            <div class="section-header">
+                <h2>Workflow Timeline</h2>
+                <div class="section-note">The incident moves from intake through outcome in one visible path.</div>
+            </div>
+            <div class="detail-card compact-note workflow-summary">
+                <div class="badge" id="workflowSummary">Waiting for workflow</div>
+                <p class="hero-copy" id="workflowSummaryCopy">This timeline will show the source channel, authentication, enrichment, evidence, agents, safety, and outcome steps flowing from intake to verified outcome.</p>
+            </div>
+            <div class="workflow-timeline" id="workflowTimeline"></div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Live Status and Audit</h2>
+                <div class="section-note">The versioned contract exposes queue position, stage, execution intent, and audit history.</div>
+            </div>
+            <div class="story-grid audit-story-grid">
+                <div class="detail-card audit-summary-card">
+                    <div class="badge">Audit summary</div>
+                    <div class="audit-summary-grid" id="auditSummaryGrid">
+                        <div class="audit-summary-item">
+                            <div class="audit-summary-label">Entries</div>
+                            <div class="audit-summary-value" id="auditEntryCount">-</div>
+                        </div>
+                        <div class="audit-summary-item">
+                            <div class="audit-summary-label">Latest event</div>
+                            <div class="audit-summary-value" id="auditLatestEvent">-</div>
+                        </div>
+                        <div class="audit-summary-item">
+                            <div class="audit-summary-label">Latest actor</div>
+                            <div class="audit-summary-value" id="auditLatestActor">-</div>
+                        </div>
+                        <div class="audit-summary-item">
+                            <div class="audit-summary-label">Latest state</div>
+                            <div class="audit-summary-value" id="auditLatestState">-</div>
+                        </div>
+                    </div>
+                    <div class="audit-chip-row" id="auditSummaryChips"></div>
+                    <div class="audit-preview" id="auditSummaryPreview"></div>
+                </div>
+                <div class="detail-card audit-feed-card">
+                    <div class="badge">Status API</div>
+                    <div class="hero-stats" id="statusSummary">
+                        <div class="stat"><div class="stat-label">Stage</div><div class="stat-value" id="statusStage">-</div></div>
+                        <div class="stat"><div class="stat-label">Queue</div><div class="stat-value" id="statusQueuePosition">-</div></div>
+                        <div class="stat"><div class="stat-label">ETA</div><div class="stat-value" id="statusEta">-</div></div>
+                        <div class="stat"><div class="stat-label">Source</div><div class="stat-value" id="statusSource">-</div></div>
+                    </div>
+                    <ul class="timeline" id="statusTimeline"></ul>
+                    <div class="badge">Audit trail</div>
+                    <div class="audit-feed" id="incidentAuditLogs"></div>
+                    <div class="badge">Execute path</div>
+                    <p class="hero-copy">The execute endpoint is wired as a live contract seam so the UI can show the product path even before full backend automation lands.</p>
+                    <button class="nav-link channel-cta" id="executeIncidentBtn" type="button">Request execution</button>
+                    <div class="result-banner" id="executionResult">Awaiting a user action.</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Agent Data Flow</h2>
+                <div class="section-note">Watch the same incident context move through SENTINEL, PRISM, FORGE, and GUARDIAN in order.</div>
+            </div>
+            <div class="agent-flow" id="agentFlow">
+                <article class="flow-node" id="sentinelFlowNode" data-tone="sentinel">
+                    <div class="flow-node-top">
+                        <div class="flow-step-num">01</div>
+                        <div class="flow-node-title">SENTINEL</div>
+                    </div>
+                    <div class="flow-node-copy">Classifies severity, confidence, and evidence coverage.</div>
+                    <div class="flow-node-meta" id="sentinelFlowMeta">Awaiting data</div>
+                </article>
+                <div class="flow-link"></div>
+                <article class="flow-node" id="prismFlowNode" data-tone="prism">
+                    <div class="flow-node-top">
+                        <div class="flow-step-num">02</div>
+                        <div class="flow-node-title">PRISM</div>
+                    </div>
+                    <div class="flow-node-copy">Correlates signals into a root-cause narrative.</div>
+                    <div class="flow-node-meta" id="prismFlowMeta">Awaiting data</div>
+                </article>
+                <div class="flow-link"></div>
+                <article class="flow-node" id="forgeFlowNode" data-tone="forge">
+                    <div class="flow-node-top">
+                        <div class="flow-step-num">03</div>
+                        <div class="flow-node-title">FORGE</div>
+                    </div>
+                    <div class="flow-node-copy">Chooses the safest rollback-ready remediation path.</div>
+                    <div class="flow-node-meta" id="forgeFlowMeta">Awaiting data</div>
+                </article>
+                <div class="flow-link"></div>
+                <article class="flow-node" id="guardianFlowNode" data-tone="guardian">
+                    <div class="flow-node-top">
+                        <div class="flow-step-num">04</div>
+                        <div class="flow-node-title">GUARDIAN</div>
+                    </div>
+                    <div class="flow-node-copy">Approves or blocks the execution path.</div>
+                    <div class="flow-node-meta" id="guardianFlowMeta">Awaiting data</div>
+                </article>
+            </div>
+        </section>
+
+        <div class="layout incident-layout">
+            <div>
+                <section class="section">
+                    <div class="section-header">
+                        <h2>Incident Overview</h2>
+                        <div class="section-note">Summary, impact, and affected services.</div>
+                    </div>
+                    <div class="incident-summary" id="incidentSummary"></div>
+                    <div class="detail-card" id="incidentNarrative">
+                        <div class="badge">Awaiting selection</div>
+                        <p class="hero-copy">This panel will summarize the impact, affected services, and selected remediation once an incident loads.</p>
+                    </div>
+                    <div class="service-pills" id="servicePills"></div>
+                </section>
+
+                <section class="section">
+                    <div class="section-header">
+                        <h2>Signals</h2>
+                        <div class="section-note">Metrics, recent logs, alert timeline, and deployment context.</div>
+                    </div>
+                    <div class="metrics-grid" id="metricsGrid"></div>
+                    <div class="detail-grid">
+                        <div class="panel-stack">
+                            <div class="detail-card">
+                                <h3>Recent Logs</h3>
+                                <ul class="logs" id="recentLogs"></ul>
+                            </div>
+                            <div class="detail-card">
+                                <h3>Alert Timeline</h3>
+                                <ul class="timeline" id="alertTimeline"></ul>
+                            </div>
+                        </div>
+                        <div class="panel-stack">
+                            <div class="detail-card">
+                                <h3>Recent Deployments</h3>
+                                <ul class="simple-list" id="recentDeployments"></ul>
+                            </div>
+                            <div class="detail-card">
+                                <h3>Similar Past Incidents</h3>
+                                <ul class="simple-list" id="similarIncidents"></ul>
+                            </div>
+                            <div class="detail-card">
+                                <h3>Evidence Provenance</h3>
+                                <ul class="simple-list" id="evidenceProvenance"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div>
+                <section class="section">
+                    <div class="section-header">
+                        <h2>Agent Console</h2>
+                        <div class="section-note">Classification, diagnosis, remediation, and safety review.</div>
+                    </div>
+                    <div class="agent-rail">
+                        <div class="agent-rail-note">
+                            <div class="badge">Live simulation</div>
+                            <p class="hero-copy">The cards pulse while the workflow is in motion so the console reads like a live operating system, not a static summary.</p>
+                        </div>
+                    </div>
+                    <div class="agent-grid">
+                        <div class="agent-card" id="sentinelCard">
+                            <div class="agent-title-row">
+                                <div class="agent-title">SENTINEL</div>
+                                <div class="confidence" id="sentinelConfidence">0%</div>
+                            </div>
+                            <div class="progress"><div class="progress-fill" id="sentinelProgress"></div></div>
+                            <p class="agent-copy" id="sentinelReasoning">Waiting for incident context.</p>
+                            <div class="subsection-label">Confidence Breakdown + Evidence</div>
+                            <div class="breakdown" id="sentinelBreakdown"></div>
+                            <ul class="simple-list" id="sentinelEvidence"></ul>
+                        </div>
+
+                        <div class="agent-card" id="prismCard">
+                            <div class="agent-title-row">
+                                <div class="agent-title">PRISM</div>
+                                <div class="confidence" id="prismConfidence">0%</div>
+                            </div>
+                            <div class="progress"><div class="progress-fill" id="prismProgress"></div></div>
+                            <p class="agent-copy" id="prismReasoning">Waiting for diagnosis.</p>
+                            <div class="subsection-label">Correlation Analysis + Log Snippets</div>
+                            <p class="agent-copy" id="prismCorrelation">No analysis yet.</p>
+                            <ul class="simple-list" id="prismLogs"></ul>
+                        </div>
+
+                        <div class="agent-card" id="forgeCard">
+                            <div class="agent-title-row">
+                                <div class="agent-title">FORGE</div>
+                                <div class="confidence" id="forgeConfidence">0%</div>
+                            </div>
+                            <div class="progress"><div class="progress-fill" id="forgeProgress"></div></div>
+                            <p class="agent-copy" id="forgeReasoning">Waiting for diagnosis.</p>
+                            <div class="subsection-label">Runbook Selection Logic + Success Rates</div>
+                            <p class="agent-copy" id="forgeLogic">No runbook selected.</p>
+                            <ul class="simple-list" id="forgeFixes"></ul>
+                        </div>
+
+                        <div class="agent-card" id="guardianCard">
+                            <div class="agent-title-row">
+                                <div class="agent-title">GUARDIAN</div>
+                                <div class="confidence" id="guardianConfidence">0%</div>
+                            </div>
+                            <div class="progress"><div class="progress-fill" id="guardianProgress"></div></div>
+                            <p class="agent-copy" id="guardianReasoning">Waiting for runbook.</p>
+                            <div class="subsection-label">Safety Checks + Policy Violations</div>
+                            <ul class="simple-list" id="guardianChecks"></ul>
+                            <ul class="simple-list" id="guardianViolations"></ul>
+                        </div>
+                    </div>
+                    <div class="result-banner" id="resultBanner">Choose an incident to see the full incident console.</div>
+                </section>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="static/app-shell.js"></script>
+    <script type="module" src="static/incident.js"></script>
+</body>
+</html>

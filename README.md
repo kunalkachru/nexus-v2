@@ -12,6 +12,8 @@ pinned: false
 
 An autonomous incident response system trained with reinforcement learning (GRPO) to solve production problems in milliseconds.
 
+Current roadmap alignment and remaining gaps are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](docs/NEXUS_v2_DOC_STATUS_MATRIX.md).
+
 ## Features
 
 - 4 RL-trained agents: SENTINEL, PRISM, FORGE, GUARDIAN

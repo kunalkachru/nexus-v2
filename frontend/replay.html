@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            try {
+                const stored = window.localStorage.getItem("nexus.theme");
+                const theme = stored === "light" || stored === "dark"
+                    ? stored
+                    : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+                document.documentElement.dataset.theme = theme;
+            } catch {
+                document.documentElement.dataset.theme = "dark";
+            }
+        })();
+    </script>
+    <title>NEXUS v2 | Sample Replay</title>
+    <link rel="stylesheet" href="static/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-shell">
+            <div>
+                <div class="brand">NEXUS v2</div>
+                <div class="brand-copy">Validation replay</div>
+            </div>
+            <nav class="app-nav" aria-label="Primary">
+                <a class="nav-link" href="queue">Queue</a>
+                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident</a>
+                <a class="nav-link" href="inputs">Input Channels</a>
+                <a class="nav-link" href="history">History</a>
+                <a class="nav-link active" href="replay" aria-current="page">Replay</a>
+                <a class="nav-link" href="training">Training</a>
+                <a class="nav-link" href="settings">Settings</a>
+            </nav>
+        </header>
+
+        <section class="hero">
+            <div class="hero-panel">
+                <div class="eyebrow">Replay</div>
+                <h1>Replay validation.</h1>
+                <p class="hero-copy">Replay provides repeatable validation of the agent workflow on known scenarios. It proves the platform can run the same incident path end to end on demand.</p>
+                <div class="hero-stats">
+                    <div class="stat"><div class="stat-label">Scenarios</div><div class="stat-value">8</div></div>
+                    <div class="stat"><div class="stat-label">Covered agents</div><div class="stat-value">4</div></div>
+                    <div class="stat"><div class="stat-label">Protected runs</div><div class="stat-value">All</div></div>
+                    <div class="stat"><div class="stat-label">Replay mode</div><div class="stat-value">Deterministic</div></div>
+                </div>
+                <a class="nav-link channel-cta" id="replayLaunchScenarioHero" href="#">Launch replay run</a>
+            </div>
+            <div class="hero-panel">
+                <div class="eyebrow">Replay set</div>
+                <div class="scenario-grid" id="scenarioCards">
+                    <button class="scenario-card active" type="button" data-scenario-id="api_timeout_cascade">
+                        <div class="badge">Open console</div>
+                        <strong>API timeout cascade</strong>
+                        <p class="section-note">Stress tests classification, metrics correlation, and guardrail handoff.</p>
+                    </button>
+                    <button class="scenario-card" type="button" data-scenario-id="db_connection_pool_exhaustion">
+                        <div class="badge">Open console</div>
+                        <strong>DB connection pool exhaustion</strong>
+                        <p class="section-note">Validates diagnosis and rollback logic under saturation.</p>
+                    </button>
+                    <button class="scenario-card" type="button" data-scenario-id="redis_saturation">
+                        <div class="badge">Open console</div>
+                        <strong>Redis saturation</strong>
+                        <p class="section-note">Exercises memory growth, eviction pressure, and recovery choices.</p>
+                    </button>
+                    <button class="scenario-card" type="button" data-scenario-id="memory_leak_after_deploy">
+                        <div class="badge">Open console</div>
+                        <strong>Memory leak after deploy</strong>
+                        <p class="section-note">Checks deployment-aware root cause and remediation selection.</p>
+                    </button>
+                    <button class="scenario-card" type="button" data-scenario-id="queue_backlog_worker_stall">
+                        <div class="badge">Open console</div>
+                        <strong>Queue backlog and worker stall</strong>
+                        <p class="section-note">Confirms consumer recovery and safe remediation sequencing.</p>
+                    </button>
+                    <button class="scenario-card" type="button" data-scenario-id="bad_deployment_regression">
+                        <div class="badge">Open console</div>
+                        <strong>Bad deployment regression</strong>
+                        <p class="section-note">Proves rollback-first reasoning with change history context.</p>
+                    </button>
+                    <button class="scenario-card" type="button" data-scenario-id="certificate_expiry">
+                        <div class="badge">Open console</div>
+                        <strong>Certificate expiry</strong>
+                        <p class="section-note">Validates alerting, safety review, and operator escalation.</p>
+                    </button>
+                    <button class="scenario-card" type="button" data-scenario-id="cache_explosion">
+                        <div class="badge">Open console</div>
+                        <strong>Cache explosion</strong>
+                        <p class="section-note">Shows repetitive remediation logic on a classic enterprise failure mode.</p>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Launch replay</h2>
+                <div class="section-note">Choose a scenario and open the same incident console used for live workflow cases.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card scenario-detail">
+                    <div class="badge">Selected scenario</div>
+                    <h3 id="replayTitle">API timeout cascade</h3>
+                    <p class="hero-copy" id="replaySummary">Stress tests classification, metrics correlation, and guardrail handoff.</p>
+                    <div class="service-pills" id="replayPills"></div>
+                    <div class="input-code" id="replayPayload"></div>
+                </div>
+                <div class="detail-card scenario-detail">
+                    <div class="badge">Replay evidence</div>
+                    <div class="input-code" id="replayEvidence"></div>
+                    <div class="input-code" id="replayAgents"></div>
+                    <div class="input-code" id="replayOutcome"></div>
+                    <div class="badge">Open console</div>
+                    <a class="nav-link channel-cta" id="replayLaunchScenario" href="#">Launch replay run</a>
+                    <a class="inline-link channel-cta" id="replayLaunch" href="incident?nexus_incident_id=INC001">Open API timeout console</a>
+                    <div class="result-banner" id="replayStatus">Choose a scenario and launch it to create a fresh incident.</div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script type="module" src="static/app-shell.js"></script>
+    <script type="module" src="static/replay.js"></script>
+</body>
+</html>

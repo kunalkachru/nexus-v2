@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -24,6 +25,7 @@ class IncidentRepository:
         source: str | None = None,
         service: str = "",
     ) -> IncidentRecord:
+        timestamp = datetime.now(timezone.utc).isoformat()
         incident = IncidentRecord(
             nexus_incident_id=f"nxs_{uuid4().hex[:12]}",
             external_id=external_id,
@@ -33,6 +35,8 @@ class IncidentRepository:
             tenant_id=tenant_id,
             source=source,
             service=service,
+            created_at=timestamp,
+            updated_at=timestamp,
         )
         self._incident_store[incident.nexus_incident_id] = incident
         try:
@@ -54,3 +58,33 @@ class IncidentRepository:
         if incident is None or incident.tenant_id != tenant_id:
             return None
         return incident
+
+    async def list_incidents(self) -> list[IncidentRecord]:
+        return list(self._incident_store.values())
+
+    async def list_incidents_for_tenant(self, tenant_id: str) -> list[IncidentRecord]:
+        return [incident for incident in self._incident_store.values() if incident.tenant_id == tenant_id]
+
+    async def update_incident_status(
+        self,
+        nexus_incident_id: str,
+        *,
+        status: str,
+    ) -> IncidentRecord | None:
+        incident = self._incident_store.get(nexus_incident_id)
+        if incident is None:
+            return None
+
+        updated = incident.model_copy(
+            update={
+                "status": status,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        self._incident_store[nexus_incident_id] = updated
+        try:
+            await self._flush_callback()
+        except Exception:
+            self._incident_store[nexus_incident_id] = incident
+            raise
+        return updated

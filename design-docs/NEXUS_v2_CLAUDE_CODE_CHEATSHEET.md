@@ -1,5 +1,7 @@
 # NEXUS v2: Claude Code CLI — Quick Reference & Commands
 
+> Historical setup reference. Current status and backlog are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../docs/NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../docs/NEXUS_v2_PRIORITY_BACKLOG.md).
+
 **Use this to copy-paste commands into your terminal.**
 
 ---

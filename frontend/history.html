@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            try {
+                const stored = window.localStorage.getItem("nexus.theme");
+                const theme = stored === "light" || stored === "dark"
+                    ? stored
+                    : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+                document.documentElement.dataset.theme = theme;
+            } catch {
+                document.documentElement.dataset.theme = "dark";
+            }
+        })();
+    </script>
+    <title>NEXUS v2 | History</title>
+    <link rel="stylesheet" href="static/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-shell">
+            <div>
+                <div class="brand">NEXUS v2</div>
+                <div class="brand-copy">Incident archive</div>
+            </div>
+            <nav class="app-nav" aria-label="Primary">
+                <a class="nav-link" href="queue">Queue</a>
+                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident</a>
+                <a class="nav-link" href="inputs">Input Channels</a>
+                <a class="nav-link active" href="history" aria-current="page">History</a>
+                <a class="nav-link" href="replay">Replay</a>
+                <a class="nav-link" href="training">Training</a>
+                <a class="nav-link" href="settings">Settings</a>
+            </nav>
+        </header>
+
+        <section class="hero">
+            <div class="hero-panel">
+                <div class="eyebrow">History</div>
+                <h1>Incident archive.</h1>
+                <p class="hero-copy">Review what happened, who owned it, and how the console resolved it. This archive separates historical cases from live queue operations and training telemetry.</p>
+                <div class="hero-stats">
+                    <div class="stat"><div class="stat-label">Resolved</div><div class="stat-value" id="historyResolved">18</div></div>
+                    <div class="stat"><div class="stat-label">Blocked</div><div class="stat-value" id="historyBlocked">2</div></div>
+                    <div class="stat"><div class="stat-label">Median time</div><div class="stat-value" id="historyMedian">3m 12s</div></div>
+                    <div class="stat"><div class="stat-label">Top service</div><div class="stat-value" id="historyTopService">API</div></div>
+                </div>
+            </div>
+            <div class="hero-panel">
+                <div class="eyebrow">Filters</div>
+                <div class="filter-panel">
+                    <div class="filter-grid">
+                        <div class="filter-field">
+                            <label for="historySeverity">Severity</label>
+                            <select id="historySeverity">
+                                <option value="">All severities</option>
+                                <option value="P1">P1</option>
+                                <option value="P2">P2</option>
+                            </select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="historySource">Source channel</label>
+                            <select id="historySource">
+                                <option value="">All sources</option>
+                                <option value="webhook">Webhook</option>
+                                <option value="manual">Manual</option>
+                                <option value="slack">Slack</option>
+                                <option value="stream">Stream</option>
+                                <option value="batch">Batch</option>
+                            </select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="historyOutcome">Outcome</label>
+                            <select id="historyOutcome">
+                                <option value="">All outcomes</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="blocked">Blocked</option>
+                            </select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="historyWindow">Time window</label>
+                            <select id="historyWindow">
+                                <option value="">Last 30 days</option>
+                                <option value="last-7-days">Last 7 days</option>
+                                <option value="last-24-hours">Last 24 hours</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-field">
+                        <label for="historySearch">Search archive</label>
+                        <input id="historySearch" placeholder="API timeout, queue backlog, cache explosion..." />
+                    </div>
+                </div>
+                <div class="detail-card compact-note">
+                    <div class="badge">Historical view</div>
+                    <p class="hero-copy">Each record links back into the incident console for a full replay of the same case.</p>
+                    <p class="hero-copy">Use this archive to show the platform is operational across incidents, not just one live event.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section list-card">
+            <div class="section-header">
+                <h2>Incident archive</h2>
+                <div class="section-note">Sorted by most recent resolution.</div>
+            </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Incident</th>
+                        <th>Severity</th>
+                        <th>Outcome</th>
+                            <th>Console</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-severity="P1" data-source="webhook" data-outcome="resolved" data-window="last-24-hours">
+                            <td>INC001</td>
+                            <td>API timeout</td>
+                            <td>P1</td>
+                            <td>Resolved</td>
+                            <td><a class="inline-link" href="incident?nexus_incident_id=INC001">Open</a></td>
+                        </tr>
+                        <tr data-severity="P1" data-source="batch" data-outcome="resolved" data-window="last-7-days">
+                            <td>INC005</td>
+                            <td>Queue backlog</td>
+                            <td>P1</td>
+                            <td>Resolved</td>
+                            <td><a class="inline-link" href="incident?nexus_incident_id=INC005">Open</a></td>
+                        </tr>
+                        <tr data-severity="P2" data-source="webhook" data-outcome="resolved" data-window="last-7-days">
+                            <td>INC004</td>
+                            <td>Cache explosion</td>
+                            <td>P2</td>
+                            <td>Resolved</td>
+                            <td><a class="inline-link" href="incident?nexus_incident_id=INC004">Open</a></td>
+                        </tr>
+                        <tr data-severity="P2" data-source="stream" data-outcome="resolved" data-window="last-30-days">
+                            <td>INC003</td>
+                            <td>Memory leak</td>
+                            <td>P2</td>
+                            <td>Resolved</td>
+                            <td><a class="inline-link" href="incident?nexus_incident_id=INC003">Open</a></td>
+                        </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+    <script type="module" src="static/app-shell.js"></script>
+    <script type="module" src="static/history.js"></script>
+</body>
+</html>

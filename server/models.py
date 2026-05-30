@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -33,8 +34,18 @@ class IncidentRecord(BaseModel):
     severity: Literal["P1", "P2", "P3"]
     status: Literal["investigating", "resolved", "blocked_by_guardian"]
     tenant_id: str = "tenant-system"
-    source: Literal["datadog", "prometheus"] | None = None
+    source: Literal[
+        "datadog",
+        "prometheus",
+        "webhook",
+        "manual_form",
+        "slack_command",
+        "stream_anomaly",
+        "batch_import",
+    ] | None = None
     service: str = ""
+    created_at: str = ""
+    updated_at: str = ""
 
 
 class NormalizedAlertEnvelope(BaseModel):
@@ -53,8 +64,66 @@ class IncidentLifecycleResponse(BaseModel):
     title: str
     severity: Literal["P1", "P2", "P3"]
     status: Literal["investigating", "resolved", "blocked_by_guardian"]
-    source: Literal["datadog", "prometheus"] | None = None
+    source: Literal[
+        "datadog",
+        "prometheus",
+        "webhook",
+        "manual_form",
+        "slack_command",
+        "stream_anomaly",
+        "batch_import",
+    ] | None = None
     recent_deployments: list[dict[str, object]] = Field(default_factory=list)
+    queue_position: int | None = None
+    eta_sec: int | None = None
+
+
+class IncidentWorkflowStage(str, Enum):
+    INCIDENT_RECEIVED = "incident_received"
+    VALIDATED_AUTHENTICATED = "validated_authenticated"
+    ENRICHED_WITH_SERVICE_CONTEXT = "enriched_with_service_context"
+    EVIDENCE_RETRIEVED = "evidence_retrieved"
+    SENTINEL_CLASSIFIED = "sentinel_classified"
+    PRISM_DIAGNOSED = "prism_diagnosed"
+    FORGE_PROPOSED_RUNBOOK = "forge_proposed_runbook"
+    GUARDIAN_REVIEWED_SAFETY = "guardian_reviewed_safety"
+    EXECUTED_VERIFIED_LEARNED = "executed_verified_learned"
+
+
+class QueueIncidentSummary(BaseModel):
+    nexus_incident_id: str
+    title: str
+    severity: Literal["P1", "P2", "P3"]
+    status: Literal["investigating", "resolved", "blocked_by_guardian"]
+    source_channel: Literal["webhook", "manual_form", "slack_command", "stream_anomaly", "batch_import"]
+    current_stage: IncidentWorkflowStage
+    updated_at: str
+
+
+class QueueResponse(BaseModel):
+    items: list[QueueIncidentSummary] = Field(default_factory=list)
+
+
+class IncidentStatusResponse(BaseModel):
+    nexus_incident_id: str
+    external_id: str
+    title: str
+    severity: Literal["P1", "P2", "P3"]
+    status: Literal["investigating", "resolved", "blocked_by_guardian"]
+    source: Literal[
+        "datadog",
+        "prometheus",
+        "webhook",
+        "manual_form",
+        "slack_command",
+        "stream_anomaly",
+        "batch_import",
+    ] | None = None
+    current_stage: IncidentWorkflowStage
+    queue_position: int
+    eta_sec: int
+    timeline: list[dict[str, object]] = Field(default_factory=list)
+    audit_logs: list[dict[str, object]] = Field(default_factory=list)
 
 
 class SentinelClassification(BaseModel):
@@ -128,6 +197,8 @@ class IncidentContext(BaseModel):
     raw_symptoms: list[str] = Field(default_factory=list)
     system_context: SystemContext
     signals: dict[str, list[str]] = Field(default_factory=dict)
+    signal_provenance: dict[str, list[str]] = Field(default_factory=dict)
+    evidence_sources: list[dict[str, object]] = Field(default_factory=list)
 
 
 class EpisodeReward(BaseModel):

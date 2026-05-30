@@ -10,14 +10,21 @@ from fastapi.staticfiles import StaticFiles
 
 from server.audit import write_audit_log
 from server.auth import AuthenticatedContext, require_auth
+from server.auth import verify_webhook_signature
 from server.config import AppConfig
 from server.db import DatabaseSession, create_session_factory, get_db
-from server.incident_payloads import get_incident_definition, get_incident_details, list_supported_incident_ids
 from server.integrations.alerts import AlertNormalizer
 from server.integrations.deployments import DeploymentLookupService
-from server.integrations.models import IncomingIncidentWebhook
+from server.integrations.models import (
+    BatchImportRequest,
+    IncomingIncidentWebhook,
+    ManualIncidentReport,
+    SlackIncidentCommand,
+    StreamAnomalyReport,
+)
 from server.rate_limit import RateLimiter
 from server.services.incidents import IncidentService
+from server.services.surface_payloads import build_incident_response, build_platform_status, load_metrics_payload
 from server.services.tenancy import TenancyService
 
 logger = logging.getLogger(__name__)
@@ -46,72 +53,9 @@ def get_incident_service(
         alert_normalizer=AlertNormalizer(),
         deployment_lookup=DeploymentLookupService(),
     )
-
-
-def _build_incident_response(incident_id: str) -> dict[str, object]:
-    incident = get_incident_definition(incident_id)
-    details = get_incident_details(incident_id)
-
-    return {
-        "incident": {
-            "id": incident.id,
-            "name": incident.name,
-            "severity": "P1" if incident.severity == "P1" else "P2" if incident.severity == "P2" else "P3",
-            "summary": details["summary"],
-            "detected_at": details["detected_at"],
-            "duration_minutes": details["duration_minutes"],
-            "related_services": details["related_services"],
-            "recent_deployments": details["recent_deployments"],
-            "similar_past_incidents": details["similar_past_incidents"],
-        },
-        "observability": {
-            "metrics": details["metrics"],
-            "recent_logs": details["recent_logs"],
-            "alert_timeline": details["alert_timeline"],
-            "recommended_runbooks": details["recommended_runbooks"],
-        },
-        "classification": {
-            "incident_id": incident.id,
-            "incident_name": incident.name,
-            "severity": "P1" if incident.severity == "P1" else "P2" if incident.severity == "P2" else "P3",
-            "confidence": details["sentinel"]["confidence"],
-            "confidence_breakdown": details["sentinel"]["confidence_breakdown"],
-            "evidence": details["sentinel"]["evidence"],
-            "reasoning": details["sentinel"]["reasoning"],
-        },
-        "diagnosis": {
-            "root_cause": incident.root_cause,
-            "confidence": details["prism"]["confidence"],
-            "supporting_logs": details["prism"]["log_snippets"],
-            "correlation_analysis": details["prism"]["correlation_analysis"],
-            "reasoning": details["prism"]["reasoning"],
-        },
-        "runbook": {
-            "language": "bash",
-            "summary": details["forge"]["recommended_runbook"],
-            "selection_logic": details["forge"]["selection_logic"],
-            "candidate_fixes": details["forge"]["candidate_fixes"],
-            "recommended_runbook": details["forge"]["recommended_runbook"],
-            "reasoning": details["forge"]["reasoning"],
-            "cost_usd": 0.12,
-        },
-        "guardian": {
-            "decision": details["guardian"]["decision"],
-            "confidence": details["guardian"]["confidence"],
-            "safety_checks": details["guardian"]["safety_checks"],
-            "policy_violations": details["guardian"]["policy_violations"],
-            "reasoning": details["guardian"]["reasoning"],
-        },
-        "execution_result": "executed",
-        "reward": 0.87,
-        "execution_time_ms": 8.7,
-        "supported_incidents": list_supported_incident_ids(),
-    }
-
-
 @app.get("/")
 async def root() -> FileResponse:
-    return FileResponse("frontend/dashboard.html", media_type="text/html")
+    return FileResponse("frontend/queue.html", media_type="text/html")
 
 
 @app.get("/dashboard")
@@ -119,9 +63,255 @@ async def dashboard() -> FileResponse:
     return FileResponse("frontend/dashboard.html", media_type="text/html")
 
 
+@app.get("/queue")
+async def queue() -> FileResponse:
+    return FileResponse("frontend/queue.html", media_type="text/html")
+
+
+@app.get("/incident")
+async def incident() -> FileResponse:
+    return FileResponse("frontend/incident.html", media_type="text/html")
+
+
+@app.get("/inputs")
+async def inputs() -> FileResponse:
+    return FileResponse("frontend/inputs.html", media_type="text/html")
+
+
+@app.get("/history")
+async def history() -> FileResponse:
+    return FileResponse("frontend/history.html", media_type="text/html")
+
+
+@app.get("/replay")
+async def replay() -> FileResponse:
+    return FileResponse("frontend/replay.html", media_type="text/html")
+
+
+@app.get("/training")
+async def training() -> FileResponse:
+    return FileResponse("frontend/training.html", media_type="text/html")
+
+
+@app.get("/settings")
+async def settings() -> FileResponse:
+    return FileResponse("frontend/settings.html", media_type="text/html")
+
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/v1/incidents/queue")
+async def get_incident_queue(
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_queue")
+    response = await service.list_queue_items(tenant_id=auth.tenant_id)
+    await write_audit_log(
+        "incident.queue.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id, "items": len(response.items)},
+    )
+    return response.model_dump(mode="json")
+
+
+@app.post("/api/v1/incidents/slack-command", status_code=202)
+async def receive_slack_command(
+    request: Request,
+    payload: SlackIncidentCommand,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="slack_command")
+    response = await service.create_incident_from_slack_command(payload, tenant_id=auth.tenant_id)
+    await write_audit_log("incident.slack_command.accepted", auth.tenant_id, response)
+    return response
+
+
+@app.post("/api/v1/incidents/stream-anomaly", status_code=202)
+async def receive_stream_anomaly(
+    request: Request,
+    payload: StreamAnomalyReport,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="stream_anomaly")
+    response = await service.create_incident_from_stream_anomaly(payload, tenant_id=auth.tenant_id)
+    await write_audit_log("incident.stream_anomaly.accepted", auth.tenant_id, response)
+    return response
+
+
+@app.get("/api/v1/incidents/history")
+async def get_incident_history(
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_history")
+    response = {"items": await service.list_history_archive(tenant_id=auth.tenant_id)}
+    await write_audit_log(
+        "incident.history.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id, "items": len(response["items"])},
+    )
+    return response
+
+
+@app.get("/api/v1/replay/scenarios")
+async def get_replay_scenarios(
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="replay_scenarios")
+    response = {"items": await service.list_replay_scenarios()}
+    await write_audit_log(
+        "replay.scenarios.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id, "items": len(response["items"])},
+    )
+    return response
+
+
+@app.post("/api/v1/replay/scenarios/{scenario_id}/launch", status_code=202)
+async def launch_replay_scenario(
+    scenario_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="replay_launch")
+    response = await service.launch_replay_scenario(scenario_id, tenant_id=auth.tenant_id)
+    await write_audit_log(
+        "replay.scenario.launched",
+        auth.tenant_id,
+        {"user_id": auth.user_id, **response},
+    )
+    return response
+
+
+@app.get("/api/v1/training/summary")
+async def get_training_summary(
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="training_summary")
+    payload = await asyncio.to_thread(load_metrics_payload)
+    response = await service.build_training_summary(payload, tenant_id=auth.tenant_id)
+    await write_audit_log(
+        "training.summary.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id, "episodes": len(response["episode_records"])},
+    )
+    return response
+
+
+@app.get("/api/v1/platform/status")
+async def get_platform_status(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="platform_status")
+    payload = await asyncio.to_thread(load_metrics_payload)
+    response = build_platform_status(payload)
+    response["contract_surface"] = [
+        "/webhooks/incident",
+        "/api/v1/incidents/manual-report",
+        "/api/v1/incidents/slack-command",
+        "/api/v1/incidents/stream-anomaly",
+        "/api/v1/incidents/batch-import",
+        "/api/v1/incidents/{incident_id}/status",
+        "/api/v1/audit-logs/{incident_id}",
+        "/api/v1/incidents/{incident_id}/execute",
+    ]
+    await write_audit_log(
+        "platform.status.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id},
+    )
+    return response
+
+
+@app.post("/api/v1/incidents/manual-report", status_code=202)
+async def receive_manual_report(
+    request: Request,
+    payload: ManualIncidentReport,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="manual_report")
+    response = await service.create_incident_from_manual_report(payload, tenant_id=auth.tenant_id)
+    await write_audit_log("incident.manual_report.accepted", auth.tenant_id, response)
+    return response
+
+
+@app.post("/api/v1/incidents/batch-import", status_code=202)
+async def receive_batch_import(
+    request: Request,
+    payload: BatchImportRequest,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="batch_import")
+    response = await service.create_incident_from_batch_import(payload, tenant_id=auth.tenant_id)
+    await write_audit_log("incident.batch_import.accepted", auth.tenant_id, response)
+    return response
+
+
+@app.get("/api/v1/incidents/{nexus_incident_id}/status")
+async def get_incident_status_v1(
+    nexus_incident_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_status_v1")
+    response = await service.get_incident_status_v1(nexus_incident_id, tenant_id=auth.tenant_id)
+    await write_audit_log(
+        "incident.status_v1.read",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id},
+    )
+    return response
+
+
+@app.get("/api/v1/audit-logs/{nexus_incident_id}")
+async def get_audit_logs_v1(
+    nexus_incident_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> list[dict[str, object]]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="audit_logs_v1")
+    logs = await service.get_audit_logs(nexus_incident_id)
+    await write_audit_log(
+        "incident.audit_logs_v1.read",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, "items": len(logs)},
+    )
+    return logs
+
+
+@app.post("/api/v1/incidents/{nexus_incident_id}/execute")
+async def execute_incident_v1(
+    nexus_incident_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_execute")
+    response = await service.execute_incident(nexus_incident_id, tenant_id=auth.tenant_id)
+    await write_audit_log(
+        "incident.execute_v1.requested",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, **response},
+    )
+    return response
 
 
 @app.post("/webhooks/incident", status_code=202)
@@ -130,6 +320,7 @@ async def receive_incident_webhook(
     payload: IncomingIncidentWebhook,
     service: IncidentService = Depends(get_incident_service),
 ) -> dict[str, object]:
+    await verify_webhook_signature(request)
     tenant_id = request.app.state.tenancy_service.resolve_webhook_tenant(request)
     response = await service.create_incident_from_webhook(payload, tenant_id=tenant_id)
     await write_audit_log("incident.webhook.accepted", tenant_id, response)
@@ -156,7 +347,7 @@ async def get_incident_status(
 @app.get("/api/metrics")
 async def get_metrics():
     try:
-        return await asyncio.to_thread(_load_metrics_payload)
+        return await asyncio.to_thread(load_metrics_payload)
     except FileNotFoundError:
         return JSONResponse(status_code=404, content={"error": "metrics payload not found"})
     except json.JSONDecodeError:
@@ -167,14 +358,9 @@ async def get_metrics():
 @app.get("/run-incident")
 async def run_incident(incident_id: str = "INC001"):
     try:
-        return _build_incident_response(incident_id)
+        return build_incident_response(incident_id)
     except ValueError as exc:
         return JSONResponse(status_code=404, content={"error": str(exc)})
     except KeyError:
         logger.exception("incident payload is incomplete for %s", incident_id)
         return JSONResponse(status_code=500, content={"error": "incident payload is incomplete"})
-
-
-def _load_metrics_payload() -> dict[str, object]:
-    with open("frontend/metrics.json") as file_handle:
-        return json.load(file_handle)

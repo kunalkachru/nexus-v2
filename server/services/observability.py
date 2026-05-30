@@ -30,6 +30,7 @@ class ObservabilityService:
             "traces": self._trace_signals(details),
             "deployment": self._deployment_signals(details.get("recent_deployments", [])),
         }
+        signal_provenance = self._signal_provenance(details)
 
         return IncidentContext(
             incident=incident,
@@ -37,6 +38,8 @@ class ObservabilityService:
             raw_symptoms=list(incident.symptoms),
             system_context=incident.system_context,
             signals=signals,
+            signal_provenance=signal_provenance,
+            evidence_sources=self._evidence_sources(details),
         )
 
     async def fetch_supporting_signals(
@@ -54,6 +57,10 @@ class ObservabilityService:
             "deployment": self._deployment_signals(details.get("recent_deployments", [])),
         }
         return {source: available.get(source, []) for source in requested_sources}
+
+    def build_evidence_sources(self, incident_id: str) -> list[dict[str, object]]:
+        details = self._incident_details.get(incident_id, {})
+        return self._evidence_sources(details)
 
     async def resolve_incident_definition(self, external_id: str) -> IncidentDefinition:
         await asyncio.sleep(0)
@@ -93,3 +100,51 @@ class ObservabilityService:
             if service:
                 signals.append(f"deployment {service} {version} {change}".strip())
         return signals
+
+    def _signal_provenance(self, details: dict[str, object]) -> dict[str, list[str]]:
+        recent_logs = list(details.get("recent_logs", []))
+        metrics = list(details.get("metrics", []))
+        deployments = list(details.get("recent_deployments", []))
+        related_services = list(details.get("related_services", []))
+        return {
+            "logs": [f"loki: {len(recent_logs)} correlated log lines"] if recent_logs else ["loki: no correlated log lines"],
+            "metrics": [f"datadog / prometheus: {len(metrics)} aligned metric signals"] if metrics else ["datadog / prometheus: no metrics"],
+            "traces": [f"service graph: {len(related_services)} dependent services traced"] if related_services else ["service graph: no dependent services"],
+            "deployment": [f"release metadata: {len(deployments)} deployments enriched"] if deployments else ["release metadata: no deployment changes"],
+        }
+
+    def _evidence_sources(self, details: dict[str, object]) -> list[dict[str, object]]:
+        logs = list(details.get("recent_logs", []))
+        metrics = list(details.get("metrics", []))
+        deployments = list(details.get("recent_deployments", []))
+        related_services = list(details.get("related_services", []))
+        return [
+            {
+                "source": "loki",
+                "signal": "logs",
+                "count": len(logs),
+                "summary": "Correlated log lines from the incident window.",
+                "detail": logs[0] if logs else "No log lines available.",
+            },
+            {
+                "source": "datadog",
+                "signal": "metrics",
+                "count": len(metrics),
+                "summary": "Metric series normalized into the incident narrative.",
+                "detail": self._metric_signals(metrics)[0] if metrics else "No metric series available.",
+            },
+            {
+                "source": "deployment history",
+                "signal": "release",
+                "count": len(deployments),
+                "summary": "Recent release metadata fused into the operator view.",
+                "detail": self._deployment_signals(deployments)[0] if deployments else "No deployment metadata available.",
+            },
+            {
+                "source": "service graph",
+                "signal": "traces",
+                "count": len(related_services),
+                "summary": "Dependency paths used to explain the blast radius.",
+                "detail": related_services[0] if related_services else "No dependency graph available.",
+            },
+        ]

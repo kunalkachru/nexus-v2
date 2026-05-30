@@ -1,4 +1,4 @@
-import { loadIncident, loadMetrics } from "/static/api.js";
+import { loadIncident, loadMetrics } from "./api.js";
 
 function percent(value) {
   return `${Math.round(value * 100)}%`;
@@ -131,7 +131,8 @@ function renderIncident(data) {
 
   document.getElementById("resultBanner").innerHTML = `
     <strong>${incident.id} resolved in simulation.</strong><br>
-    Reward ${Math.round(data.reward * 100)}%, execution time ${data.execution_time_ms}ms, estimated runbook cost $${runbook.cost_usd.toFixed(2)}.
+    Reward ${Math.round(data.reward * 100)}%, execution time ${data.execution_time_ms}ms, estimated runbook cost $${runbook.cost_usd.toFixed(2)}.<br>
+    <a class="link-btn" href="incident?nexus_incident_id=${encodeURIComponent(incident.id)}">Open incident console</a>
   `;
 
   activateCards();
@@ -168,23 +169,10 @@ async function renderMetrics() {
   `).join("");
 }
 
-async function runSelectedIncident(incidentId, button) {
+function runSelectedIncident(incidentId, button) {
   document.querySelectorAll(".incident-btn").forEach((node) => node.classList.remove("active"));
   button.classList.add("active");
-
-  const status = document.getElementById("demoStatus");
-  status.textContent = `Loading ${incidentId} with production-style logs, metrics, deployments, and runbook history...`;
-  status.className = "status loading";
-
-  try {
-    const data = await loadIncident(incidentId);
-    renderIncident(data);
-    status.textContent = `${incidentId} loaded. Agent reasoning and observability context are now visible.`;
-    status.className = "status success";
-  } catch (error) {
-    status.textContent = `Failed to load ${incidentId}: ${error.message}`;
-    status.className = "status";
-  }
+  window.location.href = `incident?nexus_incident_id=${encodeURIComponent(incidentId)}`;
 }
 
 window.addEventListener("load", async () => {
@@ -205,13 +193,16 @@ window.addEventListener("load", async () => {
 
   document.getElementById("similarIncidents").addEventListener("click", (event) => {
     if (event.target.matches("[data-similar]")) {
-      document.getElementById("demoStatus").textContent = `Historical reference ${event.target.dataset.similar} selected for review context.`;
-      document.getElementById("demoStatus").className = "status success";
+      const statusNode = document.getElementById("reviewStatus") || document.getElementById("demoStatus");
+      if (statusNode) {
+        statusNode.textContent = `Historical reference ${event.target.dataset.similar} selected for review context.`;
+        statusNode.className = "status success";
+      }
     }
   });
 
   const defaultButton = document.querySelector('[data-incident="INC001"]');
   if (defaultButton) {
-    await runSelectedIncident("INC001", defaultButton);
+    defaultButton.classList.add("active");
   }
 });

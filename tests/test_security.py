@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import json
 import asyncio
 from pathlib import Path
 
@@ -44,4 +47,46 @@ def test_tenant_cannot_read_other_tenant_incident(client: TestClient, auth_heade
         headers=auth_headers(tenant_id="tenant-b"),
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 403
+
+
+def test_webhook_requires_valid_signature(client: TestClient) -> None:
+    body = {
+        "incident_id": "inc_xyz",
+        "title": "Payment API timeout",
+        "severity": "P1",
+        "detected_at": "2026-05-25T14:32:00Z",
+        "monitoring_source": "datadog",
+        "metrics": {"service": "payment-svc", "error_rate": 0.45},
+    }
+    payload = json.dumps(body, separators=(",", ":"))
+
+    missing_signature = client.post(
+        "/webhooks/incident",
+        headers={"x-tenant-id": "tenant-system"},
+        content=payload,
+    )
+    assert missing_signature.status_code == 401
+
+    bad_signature = client.post(
+        "/webhooks/incident",
+        headers={
+            "x-tenant-id": "tenant-system",
+            "x-signature": "sha256=deadbeef",
+        },
+        content=payload,
+    )
+    assert bad_signature.status_code == 401
+
+    secret = app.state.config.webhook_signing_secret
+    digest = hmac.new(secret.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256).hexdigest()
+    valid_signature = client.post(
+        "/webhooks/incident",
+        headers={
+            "x-tenant-id": "tenant-system",
+            "x-signature": f"sha256={digest}",
+            "content-type": "application/json",
+        },
+        content=payload,
+    )
+    assert valid_signature.status_code == 202

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            try {
+                const stored = window.localStorage.getItem("nexus.theme");
+                const theme = stored === "light" || stored === "dark"
+                    ? stored
+                    : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+                document.documentElement.dataset.theme = theme;
+            } catch {
+                document.documentElement.dataset.theme = "dark";
+            }
+        })();
+    </script>
+    <title>NEXUS v2 | RL Training Lab</title>
+    <link rel="stylesheet" href="static/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-shell">
+            <div>
+                <div class="brand">NEXUS v2</div>
+                <div class="brand-copy">Learning operations</div>
+            </div>
+            <nav class="app-nav" aria-label="Primary">
+                <a class="nav-link" href="queue">Queue</a>
+                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident</a>
+                <a class="nav-link" href="inputs">Input Channels</a>
+                <a class="nav-link" href="history">History</a>
+                <a class="nav-link" href="replay">Replay</a>
+                <a class="nav-link active" href="training" aria-current="page">Training</a>
+                <a class="nav-link" href="settings">Settings</a>
+            </nav>
+        </header>
+
+        <section class="hero">
+            <div class="hero-panel">
+                <div class="eyebrow">Training</div>
+                <h1>Learning operations.</h1>
+                <p class="hero-copy">This page shows the reward curve, episode history, and how the nine workflow states become training signals in the same operating model the product exposes.</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-label">Baseline</div>
+                        <div class="stat-value" id="baselineReward">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Trained</div>
+                        <div class="stat-value" id="trainedReward">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Episodes</div>
+                        <div class="stat-value" id="episodeCount">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Improvement</div>
+                        <div class="stat-value" id="rewardImprovement">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Live incidents</div>
+                        <div class="stat-value" id="liveIncidents">-</div>
+                    </div>
+                <div class="stat">
+                        <div class="stat-label">Audit events</div>
+                        <div class="stat-value" id="liveAuditEvents">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Snapshots</div>
+                        <div class="stat-value" id="artifactSnapshots">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-panel">
+                <div class="eyebrow">Agent accuracy</div>
+                <div class="kpi-grid" id="agentStats"></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Learning Curves</h2>
+                <div class="section-note">Reward and cost over time, plus the difficulty ladder that drives the curriculum.</div>
+            </div>
+            <div class="train-metrics">
+                <div class="detail-card chart-shell">
+                    <div class="chart-label"><span>Reward curve</span><span>Episode reward</span></div>
+                    <div class="reward-curve" id="rewardCurve"></div>
+                </div>
+                <div class="detail-card chart-shell">
+                    <div class="chart-label"><span>Cost curve</span><span>USD per episode</span></div>
+                    <div class="reward-curve" id="costCurve"></div>
+                </div>
+            </div>
+            <div class="kpi-grid" style="margin-top: 12px;">
+                <div class="summary-card"><div class="label">Total cost</div><div class="value" id="totalCost">-</div></div>
+                <div class="summary-card"><div class="label">Final difficulty</div><div class="value" id="finalDifficulty">-</div></div>
+                <div class="summary-card"><div class="label">Avg cost / episode</div><div class="value" id="avgCostPerEpisode">-</div></div>
+                <div class="summary-card"><div class="label">Execution target</div><div class="value" id="executionTarget">-</div></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Episode History</h2>
+                <div class="section-note">Recent episodes show how the same workflow states map into reward and cost.</div>
+            </div>
+            <div class="detail-card list-card">
+                <table class="episode-table" id="episodeTable"></table>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Latest Episode</h2>
+                <div class="section-note">The most recent episode ties the workflow sequence to the learning loop.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card episode-detail" id="latestEpisodeSummary"></div>
+                <div class="detail-card">
+                    <div class="badge">Reward breakdown</div>
+                    <div class="episode-step-list" id="rewardBreakdown"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Episode Trajectory</h2>
+                <div class="section-note">Per-agent trajectory steps show how the latest episode evolved through the workflow.</div>
+            </div>
+            <div class="detail-card list-card">
+                <table class="trajectory-table" id="trajectoryTable"></table>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Observation States</h2>
+                <div class="section-note">The training system and the product use the same nine visible workflow states.</div>
+            </div>
+            <div class="state-map" id="stateMap"></div>
+            <div class="detail-card" style="margin-top: 14px;">
+                <div class="badge">Persistent artifacts</div>
+                <p class="hero-copy">Replay launches and training snapshots are persisted on disk so the learning loop keeps state across restarts.</p>
+            </div>
+        </section>
+    </div>
+    <script type="module" src="static/app-shell.js"></script>
+    <script type="module" src="static/training.js"></script>
+</body>
+</html>

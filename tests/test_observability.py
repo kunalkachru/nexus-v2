@@ -28,5 +28,8 @@ def test_observability_service_builds_incident_context_from_alert_envelope() -> 
         assert context.signals["logs"]
         assert context.signals["metrics"]
         assert "deployment" in context.signals
+        assert context.signal_provenance["logs"]
+        assert context.evidence_sources
+        assert context.evidence_sources[0]["source"] in {"loki", "datadog", "deployment history", "service graph"}
 
     asyncio.run(scenario())

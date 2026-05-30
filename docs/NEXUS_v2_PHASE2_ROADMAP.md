@@ -1,5 +1,7 @@
 # NEXUS v2 Phase 2 Roadmap
 
+> Current implementation alignment is tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](NEXUS_v2_DOC_STATUS_MATRIX.md).
+
 ## Timeline: Weeks 1-4
 
 ### Week 1: Ingestion And Data Normalization

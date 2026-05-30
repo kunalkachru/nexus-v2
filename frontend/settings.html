@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            try {
+                const stored = window.localStorage.getItem("nexus.theme");
+                const theme = stored === "light" || stored === "dark"
+                    ? stored
+                    : window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+                document.documentElement.dataset.theme = theme;
+            } catch {
+                document.documentElement.dataset.theme = "dark";
+            }
+        })();
+    </script>
+    <title>NEXUS v2 | Settings</title>
+    <link rel="stylesheet" href="static/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-shell">
+            <div>
+                <div class="brand">NEXUS v2</div>
+                <div class="brand-copy">Deployment controls</div>
+            </div>
+            <nav class="app-nav" aria-label="Primary">
+                <a class="nav-link" href="queue">Queue</a>
+                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident</a>
+                <a class="nav-link" href="inputs">Input Channels</a>
+                <a class="nav-link" href="history">History</a>
+                <a class="nav-link" href="replay">Replay</a>
+                <a class="nav-link" href="training">Training</a>
+                <a class="nav-link active" href="settings" aria-current="page">Settings</a>
+            </nav>
+        </header>
+
+        <section class="hero">
+            <div class="hero-panel">
+                <div class="eyebrow">Settings</div>
+                <h1>Operational controls.</h1>
+                <p class="hero-copy">Operational settings live here. This screen shows the enterprise posture behind the workflow and the controls behind deployment.</p>
+                <div class="hero-stats" id="platformSummary">
+                    <div class="stat"><div class="stat-label">Mode</div><div class="stat-value" id="platformMode">Product</div></div>
+                    <div class="stat"><div class="stat-label">Auth</div><div class="stat-value" id="platformAuth">Enabled</div></div>
+                    <div class="stat"><div class="stat-label">Policies</div><div class="stat-value" id="platformPolicies">Active</div></div>
+                    <div class="stat"><div class="stat-label">Integrations</div><div class="stat-value" id="platformIntegrations">Healthy</div></div>
+                    <div class="stat"><div class="stat-label">Signature</div><div class="stat-value" id="platformSignature">Active</div></div>
+                </div>
+            </div>
+            <div class="hero-panel">
+                <div class="eyebrow">Configuration</div>
+                <div class="story-grid">
+                    <div class="detail-card">
+                        <div class="badge">Validation profile</div>
+                        <p class="hero-copy">Replay-safe defaults, seeded incidents, and deterministic metrics keep validation reliable.</p>
+                    </div>
+                    <div class="detail-card">
+                        <div class="badge">Product mode</div>
+                        <p class="hero-copy">Authenticated APIs, webhook handling, audit logs, and integration posture point at a deployable surface.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Operational Status</h2>
+                <div class="section-note">The product is intended to be deployed, not just presented.</div>
+            </div>
+            <div class="kpi-grid" id="platformStatusCards">
+                <div class="summary-card"><div class="label">Webhook auth</div><div class="value" id="platformWebhookAuth">Configured</div></div>
+                <div class="summary-card"><div class="label">Rate limiting</div><div class="value" id="platformRateLimiting">Enabled</div></div>
+                <div class="summary-card"><div class="label">Audit logs</div><div class="value" id="platformAuditLogs">Enabled</div></div>
+                <div class="summary-card"><div class="label">Replay readiness</div><div class="value" id="platformReplayReadiness">Ready</div></div>
+                <div class="summary-card"><div class="label">Replay launches</div><div class="value" id="platformReplayLaunches">-</div></div>
+                <div class="summary-card"><div class="label">Training snapshots</div><div class="value" id="platformTrainingSnapshots">-</div></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Environment Controls</h2>
+                <div class="section-note">These controls define how the product behaves in validation and in production-like runs.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Deployment environment</div>
+                    <p class="hero-copy">Local product shell with deterministic data, ready for browser validation and demo review.</p>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Replay readiness</div>
+                    <p class="hero-copy">Replay incidents, training payloads, and agent flows are preloaded into the same workflow surface.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Backend Contract Surface</h2>
+                <div class="section-note">The UI now exposes the thin P0 contract layer that will be expanded into real backend functionality next.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Intake contracts</div>
+                    <ul class="simple-list" id="platformIntakeContracts">
+                        <li><code>POST /webhooks/incident</code></li>
+                        <li><code>POST /api/v1/incidents/manual-report</code></li>
+                        <li><code>POST /api/v1/incidents/batch-import</code></li>
+                    </ul>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Read / action contracts</div>
+                    <ul class="simple-list" id="platformReadContracts">
+                        <li><code>GET /api/v1/incidents/{incident_id}/status</code></li>
+                        <li><code>GET /api/v1/audit-logs/{incident_id}</code></li>
+                        <li><code>POST /api/v1/incidents/{incident_id}/execute</code></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script type="module" src="static/app-shell.js"></script>
+    <script type="module" src="static/settings.js"></script>
+</body>
+</html>
