@@ -69,13 +69,15 @@ function synthesizeIncidentFromStatus(status) {
   const source = status.source || "webhook";
   const service = status.external_id || status.title || "service";
   const timeline = status.timeline || [];
-  const recordedGuardianDecision = ["approve", "reject"].includes(String(status.guardian_decision))
+  const recordedGuardianDecision = ["approve", "reject", "request_modification"].includes(String(status.guardian_decision))
     ? status.guardian_decision
     : null;
   const guardianDecision =
     recordedGuardianDecision ||
     (status.status === "blocked_by_guardian"
       ? "reject"
+      : status.status === "needs_modification"
+        ? "request_modification"
       : status.status === "resolved"
         ? "approve"
         : "pending");
@@ -179,6 +181,8 @@ function synthesizeIncidentFromStatus(status) {
         status.guardian_reasoning ||
         (recordedGuardianDecision
           ? "Guardian review has already been recorded on the incident."
+          : status.status === "needs_modification"
+            ? "Guardian requested runbook changes before execution."
           : status.status === "investigating"
             ? "Guardian review is pending. Choose approve or block to make the gate explicit."
             : "The versioned status view is visible and no unsafe operation is being auto-executed."),
@@ -192,11 +196,13 @@ function synthesizeIncidentFromStatus(status) {
       execution_status:
         status.status === "blocked_by_guardian"
           ? "blocked"
-          : status.guardian_decision === "approve"
-            ? "approved"
-            : status.guardian_decision === "pending" || status.status === "investigating"
-              ? "pending"
-              : "executed",
+          : status.status === "needs_modification"
+            ? "needs_modification"
+            : status.guardian_decision === "approve"
+              ? "approved"
+              : status.guardian_decision === "pending" || status.status === "investigating"
+                ? "pending"
+                : "executed",
       live_reasoning: false,
       raw_priority_label: status.severity,
       normalized_priority_label: status.severity,
@@ -207,11 +213,13 @@ function synthesizeIncidentFromStatus(status) {
     execution_result:
       status.status === "blocked_by_guardian"
         ? "blocked"
-        : status.guardian_decision === "approve"
-          ? "approved"
-          : status.guardian_decision === "pending" || status.status === "investigating"
-          ? "pending"
-          : "executed",
+        : status.status === "needs_modification"
+          ? "needs_modification"
+          : status.guardian_decision === "approve"
+            ? "approved"
+            : status.guardian_decision === "pending" || status.status === "investigating"
+              ? "pending"
+              : "executed",
     reward: 0.68,
     execution_time_ms: 11.2,
     supported_incidents: [status.nexus_incident_id],

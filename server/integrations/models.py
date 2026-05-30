@@ -41,7 +41,7 @@ class RawIncidentTextRequest(BaseModel):
 
 
 class GuardianDecisionRequest(BaseModel):
-    decision: Literal["approve", "reject"]
+    decision: Literal["approve", "reject", "request_modification"]
     reasoning: str | None = None
 
 

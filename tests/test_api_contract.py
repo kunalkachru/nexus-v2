@@ -298,6 +298,45 @@ def test_guardian_block_contract_blocks_execution(client: TestClient, auth_heade
     assert execute_payload["guardian_decision"] == "reject"
 
 
+def test_guardian_request_modification_contract_pauses_execution(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/manual-report",
+        headers=auth_headers(),
+        json={
+            "affected_service": "billing-api",
+            "symptoms": ["runbook needs revision", "safety review requested"],
+            "severity": "P1",
+            "reported_by": "operator",
+            "team": "platform",
+        },
+    )
+
+    assert response.status_code == 202
+    payload = response.json()
+
+    review_response = client.post(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/guardian-review',
+        headers=auth_headers(),
+        json={
+            "decision": "request_modification",
+            "reasoning": "The runbook needs a safer rollback sequence.",
+        },
+    )
+    assert review_response.status_code == 200
+    review_payload = review_response.json()
+    assert review_payload["guardian_decision"] == "request_modification"
+    assert review_payload["status"] == "needs_modification"
+
+    execute_response = client.post(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/execute',
+        headers=auth_headers(),
+    )
+    assert execute_response.status_code == 200
+    execute_payload = execute_response.json()
+    assert execute_payload["status"] == "needs_modification"
+    assert execute_payload["guardian_decision"] == "request_modification"
+
+
 def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth_headers) -> None:
     response = client.post(
         "/api/v1/incidents/raw-text",

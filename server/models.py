@@ -32,7 +32,7 @@ class IncidentRecord(BaseModel):
     external_id: str
     title: str
     severity: str
-    status: Literal["investigating", "resolved", "blocked_by_guardian"]
+    status: Literal["investigating", "resolved", "blocked_by_guardian", "needs_modification"]
     tenant_id: str = "tenant-system"
     source: Literal[
         "datadog",
@@ -47,7 +47,7 @@ class IncidentRecord(BaseModel):
     service: str = ""
     raw_input_text: str = ""
     normalized_evidence: dict[str, object] = Field(default_factory=dict)
-    guardian_decision: Literal["pending", "approve", "reject"] = "pending"
+    guardian_decision: Literal["pending", "approve", "reject", "request_modification"] = "pending"
     guardian_reasoning: str = ""
     guardian_reviewed_at: str = ""
     created_at: str = ""
@@ -69,7 +69,7 @@ class IncidentLifecycleResponse(BaseModel):
     external_id: str
     title: str
     severity: str
-    status: Literal["investigating", "resolved", "blocked_by_guardian"]
+    status: Literal["investigating", "resolved", "blocked_by_guardian", "needs_modification"]
     source: Literal[
         "datadog",
         "prometheus",
@@ -83,7 +83,7 @@ class IncidentLifecycleResponse(BaseModel):
     recent_deployments: list[dict[str, object]] = Field(default_factory=list)
     queue_position: int | None = None
     eta_sec: int | None = None
-    guardian_decision: Literal["pending", "approve", "reject"] = "pending"
+    guardian_decision: Literal["pending", "approve", "reject", "request_modification"] = "pending"
     guardian_reasoning: str = ""
     guardian_reviewed_at: str = ""
 
@@ -104,7 +104,7 @@ class QueueIncidentSummary(BaseModel):
     nexus_incident_id: str
     title: str
     severity: str
-    status: Literal["investigating", "resolved", "blocked_by_guardian"]
+    status: Literal["investigating", "resolved", "blocked_by_guardian", "needs_modification"]
     source_channel: Literal["webhook", "raw_text", "manual_form", "slack_command", "stream_anomaly", "batch_import"]
     current_stage: IncidentWorkflowStage
     updated_at: str
@@ -119,7 +119,7 @@ class IncidentStatusResponse(BaseModel):
     external_id: str
     title: str
     severity: str
-    status: Literal["investigating", "resolved", "blocked_by_guardian"]
+    status: Literal["investigating", "resolved", "blocked_by_guardian", "needs_modification"]
     source: Literal[
         "datadog",
         "prometheus",
@@ -135,7 +135,7 @@ class IncidentStatusResponse(BaseModel):
     eta_sec: int
     timeline: list[dict[str, object]] = Field(default_factory=list)
     audit_logs: list[dict[str, object]] = Field(default_factory=list)
-    guardian_decision: Literal["pending", "approve", "reject"] = "pending"
+    guardian_decision: Literal["pending", "approve", "reject", "request_modification"] = "pending"
     guardian_reasoning: str = ""
     guardian_reviewed_at: str = ""
 

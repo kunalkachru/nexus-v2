@@ -20,7 +20,8 @@ The latest implementation and browser pass confirmed:
 - arbitrary priority labels such as `P6` and `critical` are accepted
 - the observability adapter layer can fuse log, metric, trace, and deployment evidence from a file-backed source when available
 - the incident console shows the proposed fix, priority, normalized rank, and live reasoning state
-- the `Guardian gate` is the explicit approval and block control surface
+- the `Guardian gate` is the explicit approval, block, and request-modification control surface
+- the console shows `APPROVE`, `REJECT`, and `REQUEST_MODIFICATION`, and the execution state can become `needs_modification` when revision is required
 - the training lab shows the solution proposal, learning-contract count, audit-event count, and Guardian-review count
 - the settings page shows the learning-contract count, audit-event count, and Guardian-review count
 - mutating incident routes are operator-gated, so the browser demo runs with the same control surface as the hardened backend
@@ -30,7 +31,7 @@ The latest implementation and browser pass confirmed:
 If you want the shortest plain-English summary of what was built, use this list:
 
 1. Real observability and evidence fusion: the incident console now blends raw incident context with logs, metrics, traces, and deployment snapshots.
-2. GUARDIAN policy and governance: the approve/block control is explicit in the UI and the decision is stored as part of the incident record and artifact trail.
+2. GUARDIAN policy and governance: the approve/block/request-modification control is explicit in the UI and the decision is stored as part of the incident record and artifact trail.
 3. Persistent RL and audit artifacts: the learning loop, audit history, and Guardian reviews are persisted and surfaced in Training and Settings.
 4. Auth, tenant, and deployment hardening: state-changing routes require an operator role, and the request path still enforces tenant and signature checks.
 5. Backend decomposition and cleanup: the incident service is now split across focused helpers for observability, governance, artifacts, and platform state.
@@ -312,14 +313,14 @@ Expected result:
 3. Read the `Normalized evidence` section.
 4. Read the `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff rail.
 5. If you want to switch live reasoning after opening the incident, use the `Live reasoning` toggle and let the page update in place.
-6. If you see the `Guardian gate`, use `Approve and execute` once or `Block execution` to stop the runbook.
+6. If you see the `Guardian gate`, use `Approve and execute` once, `Block execution` to stop the runbook, or `Request modification` if the runbook needs revision before execution.
 
 What to remember:
 
 - `Normalized evidence` is read-only. It is not a button.
 - The agent handoff rail is also read-only. It is there for inspection.
 - The live reasoning toggle is the control that changes how the incident is rendered.
-- The incident console now exposes explicit `Approve and execute` and `Block execution` controls in the `Guardian gate`.
+- The incident console now exposes explicit `Approve and execute`, `Block execution`, and `Request modification` controls in the `Guardian gate`.
 
 Expected result:
 

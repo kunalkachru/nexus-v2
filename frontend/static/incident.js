@@ -25,6 +25,8 @@ function renderAgentFlow(data) {
   const guardianMeta =
     data.guardian?.decision === "pending"
       ? "PENDING · approval required"
+      : data.guardian?.decision === "request_modification"
+        ? `REQUEST MODIFICATION · ${Math.round(data.guardian.confidence * 100)}% safety confidence`
       : `${guardianDecision} · ${Math.round(data.guardian.confidence * 100)}% safety confidence`;
   document.getElementById("sentinelFlowMeta").textContent = `${confidence(data.classification.confidence)} · ${data.classification.evidence.length} evidence items`;
   document.getElementById("prismFlowMeta").textContent = `${confidence(data.diagnosis.confidence)} · ${data.diagnosis.root_cause}`;
@@ -34,7 +36,11 @@ function renderAgentFlow(data) {
   document.getElementById("prismFlowTransfer").textContent = `Evidence bundle → diagnosis packet for FORGE`;
   document.getElementById("forgeFlowTransfer").textContent = `Diagnosis packet → runbook proposal for GUARDIAN`;
   document.getElementById("guardianFlowTransfer").textContent =
-    data.guardian.decision === "pending" ? "Runbook proposal → approval gate" : `Runbook proposal → ${guardianDecision} decision`;
+    data.guardian.decision === "pending"
+      ? "Runbook proposal → approval gate"
+      : data.guardian.decision === "request_modification"
+        ? "Runbook proposal → modification request"
+        : `Runbook proposal → ${guardianDecision} decision`;
 }
 
 function renderGuardianGate(data) {
@@ -47,6 +53,8 @@ function renderGuardianGate(data) {
         ? "Approval recorded. The runbook can be executed."
         : decision === "reject"
           ? "Block recorded. The runbook will not execute."
+          : decision === "request_modification"
+            ? "Modification requested. The runbook should be revised before execution."
           : "Decision pending. Approve to execute or block to stop the runbook.";
   }
 
@@ -59,10 +67,15 @@ function renderGuardianGate(data) {
   if (blockButton) {
     blockButton.textContent = decision === "reject" ? "Block again" : "Block execution";
   }
+
+  const modifyButton = document.getElementById("guardianModifyBtn");
+  if (modifyButton) {
+    modifyButton.textContent = decision === "request_modification" ? "Request again" : "Request modification";
+  }
 }
 
 function setGuardianButtonsDisabled(disabled) {
-  ["guardianApproveBtn", "guardianBlockBtn"].forEach((id) => {
+  ["guardianApproveBtn", "guardianBlockBtn", "guardianModifyBtn"].forEach((id) => {
     const button = document.getElementById(id);
     if (button) {
       button.disabled = disabled;
@@ -473,9 +486,11 @@ function renderIncident(data) {
       ? "Execution completed after Guardian approval."
       : data.execution_result === "blocked"
         ? "Execution was blocked by Guardian."
+        : data.execution_result === "needs_modification"
+          ? "Guardian requested a runbook revision before execution."
         : data.execution_result === "approved"
           ? "Guardian approved the runbook. Execution will follow once it is requested."
-        : "Execution is waiting on an explicit Guardian decision.";
+          : "Execution is waiting on an explicit Guardian decision.";
   document.getElementById("resultBanner").innerHTML = `
     <strong>${incident.id} · ${guardian.decision.toUpperCase()}</strong><br>
     ${executionSummary} Guardian decision ${guardian.decision.toUpperCase()} with ${Math.round(guardian.confidence * 100)}% confidence. Execution time ${data.execution_time_ms}ms.
@@ -496,6 +511,7 @@ window.addEventListener("load", async () => {
   syncLiveReasoningToggle();
   const guardianApproveButton = document.getElementById("guardianApproveBtn");
   const guardianBlockButton = document.getElementById("guardianBlockBtn");
+  const guardianModifyButton = document.getElementById("guardianModifyBtn");
 
   async function applyGuardianDecision(decision) {
     const resultBanner = document.getElementById("executionResult");
@@ -504,7 +520,9 @@ window.addEventListener("load", async () => {
       resultBanner.textContent =
         decision === "approve"
           ? "Guardian approval recorded. Executing the approved runbook..."
-          : "Guardian block recorded. The runbook will not execute.";
+          : decision === "request_modification"
+            ? "Guardian requested a runbook revision. Execution remains paused."
+            : "Guardian block recorded. The runbook will not execute.";
     }
 
     try {
@@ -513,13 +531,20 @@ window.addEventListener("load", async () => {
         reasoning:
           decision === "approve"
             ? "Operator approved the proposed runbook."
-            : "Operator blocked the proposed runbook.",
+            : decision === "request_modification"
+              ? "Operator requested a runbook revision."
+              : "Operator blocked the proposed runbook.",
       });
       if (decision === "approve") {
         const response = await postAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/execute`, {});
         await loadAndRenderIncident(incidentId);
         if (resultBanner) {
           resultBanner.textContent = `Execution ${response.status} for ${response.incident_id}. Guardian approved the runbook.`;
+        }
+      } else if (decision === "request_modification") {
+        await loadAndRenderIncident(incidentId);
+        if (resultBanner) {
+          resultBanner.textContent = "Guardian requested a runbook revision. The incident remains under review.";
         }
       } else {
         await loadAndRenderIncident(incidentId);
@@ -562,6 +587,9 @@ window.addEventListener("load", async () => {
     });
     guardianBlockButton?.addEventListener("click", async () => {
       await applyGuardianDecision("reject");
+    });
+    guardianModifyButton?.addEventListener("click", async () => {
+      await applyGuardianDecision("request_modification");
     });
   } catch (error) {
     document.getElementById("incidentTitle").textContent = "Incident unavailable";

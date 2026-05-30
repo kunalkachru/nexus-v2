@@ -8,7 +8,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - Arbitrary priority labels such as `P6` and `critical` are accepted.
 - Evidence provenance now shows the fused observability adapter story, not only the static fixtures.
 - The incident console shows proposed fix, priority, normalized rank, and live reasoning state.
-- The Guardian gate exposes explicit approve and block controls.
+- The Guardian gate exposes explicit approve, block, and request-modification controls.
 - The training lab shows the solution proposal, raw priority, learning-contract count, audit-event count, and Guardian-review count.
 - The settings page exposes the learning-contract count, audit-event count, and Guardian-review count.
 - Mutating incident routes require an operator role.
@@ -109,6 +109,9 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Confirm the live reasoning toggle can switch the incident view on the fly.
 - [ ] Confirm the incident summary shows the proposed fix and priority fields.
 - [ ] Use the `Guardian gate` buttons if they are visible.
+- [ ] Confirm the `Request modification` path moves the incident into `NEEDS_MODIFICATION` and leaves execution paused.
+- [ ] Confirm the approve path moves the incident into `EXECUTED`.
+- [ ] Confirm the block path leaves the incident blocked and does not execute the runbook.
 - [ ] Show input channels.
 - [ ] Show history.
 - [ ] Launch a sample replay.

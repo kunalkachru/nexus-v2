@@ -14,7 +14,8 @@ Use this list when you want to confirm the exact changes that landed in the late
 - The raw-log parser accepts arbitrary labels like `P6` and `critical`.
 - The observability layer now fuses fixture incident data with file-backed evidence sources and deployment snapshots.
 - The incident console shows the structured result fields, including proposed fix, priority, normalized rank, safety decision, and live reasoning state.
-- The `Guardian gate` is an explicit approve/block control surface and the decision path is persisted.
+- The `Guardian gate` is an explicit approve/block/request-modification control surface and the decision path is persisted.
+- The console now distinguishes `APPROVE`, `REJECT`, and `REQUEST_MODIFICATION`, and the incident summary can surface a `needs_modification` execution state.
 - The training lab shows solution proposal, raw priority, priority rank, live reasoning state, learning-contract count, audit-event count, and Guardian-review count.
 - The settings page exposes the learning-contract count, audit-event count, and Guardian-review count alongside replay launches and training snapshots.
 - Mutating incident routes are operator-gated, which keeps the browser demo aligned with the hardened backend flow.
@@ -24,7 +25,7 @@ Use this list when you want to confirm the exact changes that landed in the late
 Use this map when you want to understand what each backlog item now means in the running product:
 
 1. Real observability and evidence fusion: the incident console now reads log, metric, trace, and deployment evidence from a fused adapter layer instead of only static joins.
-2. GUARDIAN policy and governance: the approve/block gate is visible in the console, and the explicit review is persisted for later review.
+2. GUARDIAN policy and governance: the approve/block/request-modification gate is visible in the console, and the explicit review is persisted for later review.
 3. Persistent RL and audit artifacts: training, audit, replay, learning contracts, and Guardian review counts are stored durably and surfaced in the UI.
 4. Auth, tenant, and deployment hardening: the operator role is required for state-changing incident actions, and tenant/signature checks still protect the request path.
 5. Backend decomposition and cleanup: the evidence, governance, and artifact responsibilities now live in smaller focused services rather than one oversized incident module.
@@ -134,7 +135,7 @@ Confirm:
 - `Normalized evidence` is read-only.
 - The `SENTINEL -> PRISM -> FORGE -> GUARDIAN` rail is read-only.
 - A live reasoning toggle is visible and changes the rendered incident without editing the URL manually.
-- The `Guardian gate` buttons are the explicit approval and block controls, if they are visible.
+- The `Guardian gate` buttons are the explicit approval, block, and request-modification controls, if they are visible.
 - The incident summary exposes the structured result fields, including proposed fix, priority, normalized rank, safety decision, and live reasoning state.
 
 Pass criteria:

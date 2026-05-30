@@ -540,10 +540,14 @@ class IncidentService:
             execution_result = "executed"
         elif incident.status == "blocked_by_guardian":
             execution_result = "blocked"
+        elif incident.status == "needs_modification":
+            execution_result = "needs_modification"
         elif guardian_decision == "approve":
             execution_result = "approved"
         elif guardian_decision == "reject":
             execution_result = "blocked"
+        elif guardian_decision == "request_modification":
+            execution_result = "needs_modification"
         else:
             execution_result = "pending"
         return {
@@ -606,6 +610,8 @@ class IncidentService:
             next_status = "resolved"
         elif payload.decision == "reject":
             next_status = "blocked_by_guardian"
+        elif payload.decision == "request_modification":
+            next_status = "needs_modification"
         else:
             next_status = "investigating"
         updated = await self._session.incidents.update_incident_status(
@@ -709,7 +715,12 @@ class IncidentService:
             (sentinel_output.confidence + prism_output.confidence + guardian_output.safety_score) / 3,
             2,
         )
-        execution_result = "executed" if guardian_output.decision == "approve" else "blocked"
+        if guardian_output.decision == "approve":
+            execution_result = "executed"
+        elif guardian_output.decision == "request_modification":
+            execution_result = "needs_modification"
+        else:
+            execution_result = "blocked"
         live_observability = {
             "metrics": [
                 {
@@ -863,10 +874,10 @@ class IncidentService:
     ) -> dict[str, object]:
         lifecycle = await self.get_incident_status(nexus_incident_id, tenant_id=tenant_id)
         guardian_decision = str(lifecycle.get("guardian_decision") or "pending")
-        executed = lifecycle.get("status") != "blocked_by_guardian"
+        executed = lifecycle.get("status") not in {"blocked_by_guardian", "needs_modification"}
         if guardian_decision == "approve":
             executed = True
-        elif guardian_decision == "reject":
+        elif guardian_decision in {"reject", "request_modification"}:
             executed = False
         if executed:
             updated = await self._session.incidents.update_incident_status(
@@ -881,7 +892,7 @@ class IncidentService:
                 )
         payload = {
             "incident_id": nexus_incident_id,
-            "status": "executed" if executed else "blocked_by_guardian",
+            "status": "executed" if executed else "needs_modification" if guardian_decision == "request_modification" else "blocked_by_guardian",
             "result": "deterministic_demo_run",
             "queue_position": lifecycle.get("queue_position", 1),
             "eta_sec": lifecycle.get("eta_sec", 30),
@@ -1050,9 +1061,9 @@ class IncidentService:
         guardian_decision = str(lifecycle.get("guardian_decision") or "pending")
         if lifecycle.get("status") == "resolved":
             return IncidentWorkflowStage.EXECUTED_VERIFIED_LEARNED
-        if lifecycle.get("status") == "blocked_by_guardian":
+        if lifecycle.get("status") in {"blocked_by_guardian", "needs_modification"}:
             return IncidentWorkflowStage.GUARDIAN_REVIEWED_SAFETY
-        if guardian_decision in {"approve", "reject"}:
+        if guardian_decision in {"approve", "reject", "request_modification"}:
             return IncidentWorkflowStage.GUARDIAN_REVIEWED_SAFETY
         source = lifecycle.get("source")
         if source == "manual_form":
