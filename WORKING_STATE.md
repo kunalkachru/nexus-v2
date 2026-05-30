@@ -6,17 +6,19 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - Finish the current Nexus V3 work with minimal token usage.
 
 ## Current Phase
+- MVP reasoning loop: next
 - UI-first roadmap: complete
 - Thin backend demo layer: complete
-- Production hardening / live integrations: next
+- Production hardening / live integrations: after MVP
 
 ## App In One Sentence
-- NEXUS v2 is an enterprise incident-response product that turns noisy alerts into a queue-first workflow, an explainable incident console, and a controlled path from intake to resolution.
+- NEXUS v2 is an AI incident-reasoning product that accepts raw incident text or logs, infers likely root cause, proposes solutions, and routes outputs through a safety and learning loop.
 
 ## Current Objective
-- Finish the current Nexus V3 project with minimal token usage and keep the working state concise.
+- Build the MVP reasoning loop first: raw logs input, LLM-backed reasoning, solution proposal, safety gate, and RL-ready structured output.
 
 ## Latest Completed Milestones
+- The incident console was refactored into a guided-story layout with lighter cards, collapsible deep-dive panels, and an animated handoff rail between SENTINEL, PRISM, FORGE, and GUARDIAN.
 - Queue-first shell, incident console, input channels, replay, training, and settings surfaces are in place.
 - The docs status matrix now treats the UI-first roadmap as complete and the next phase as only partially complete.
 - Full manual walkthrough, speaker notes, and presenter pack are now documented.
@@ -31,6 +33,10 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - The seeded demo and `/run-incident` path now support optional live OpenAI-backed SENTINEL, PRISM, and FORGE reasoning when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
 - The manual walkthrough now calls out the optional live LLM mode so seeded incident demos can show the reasoning path end to end.
 - The full test suite is green after the live reasoning wiring: `99 passed, 1 warning`.
+- The Inputs screen now includes a raw-log paste entrypoint and live parse preview for the MVP reasoning loop.
+- The Incident Console now shows raw incident text plus normalized evidence for live raw-text incidents.
+- The raw-text intake endpoint now creates live incidents with parsed service, severity, signature, and reasoning hints.
+- The training surface now exposes an RL-ready episode contract, reward evaluation, and latest-episode observation state.
 
 ## Open Blockers
 - Observability and evidence are still mostly fixture-backed instead of coming from real adapters.
@@ -38,9 +44,9 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - Production persistence is still not durable enough for restart-safe incident, replay, and training state.
 - Auth, tenant, and deployment hardening still need stronger production boundaries.
 - No blocking issue for the current documentation/presenter-pack task.
-- The app-level model/provider story is clearer now, but the enterprise hybrid LLM plan still needs a real PRISM/Forge implementation round.
-- The current live-context path is backend-driven, but the underlying observability adapters are still not fully real external integrations.
-- The live reasoning path is now wired for seeded demos, but real observability ingestion for newly created incidents is still the next credibility gap.
+- The live reasoning path is wired for seeded demos, and the raw-text path now exposes parsed evidence, but the full live LLM raw-log reasoning loop still needs to be wired in.
+- The product definition is now corrected: the core loop is raw input -> LLM reasoning -> solution -> safety gate -> RL scoring.
+- Production persistence still needs to capture the RL episode contract durably across restarts.
 
 ## Most Important Source Of Truth
 - [README.md](README.md)
@@ -56,15 +62,23 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - [design-docs/NEXUS_v2_Design_Document.md](design-docs/NEXUS_v2_Design_Document.md)
 
 ## Files Most Likely To Change Next
+- `server/services/live_ingest.py`
 - `server/services/observability.py`
 - `server/services/incidents.py`
 - `server/app.py`
 - `server/models.py`
 - `server/agents/forge.py`
+- `server/agents/prism.py`
+- `server/agents/sentinel.py`
 - `.env.example`
+- `frontend/inputs.html`
+- `frontend/static/inputs.js`
+- `frontend/incident.html`
+- `frontend/static/incident.js`
 - `tests/test_observability.py`
 - `tests/test_api_contract.py`
 - `tests/test_agents.py`
+- `tests/test_demo.py`
 - `frontend/static/api.js`
 - `docs/NEXUS_v2_DOC_STATUS_MATRIX.md`
 - `docs/AGENT_MODEL_MATRIX.md`
@@ -72,7 +86,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - `WORKING_STATE.md`
 
 ## Next Exact Action
-- Use `WORKING_STATE.md` as the short handoff and update it before the next substantive change.
+- Make GUARDIAN an explicit approval/block control gate in the incident console and backend flow.
 
 ## Current Mode
 - Default model: `gpt-5.4-mini`
@@ -96,19 +110,22 @@ Goal:
 Finish the current Nexus work with minimal token usage.
 
 Current phase:
+- MVP reasoning loop: next
 - UI-first roadmap: complete
 - Thin backend demo layer: complete
-- Production hardening / live integrations: next
+- Production hardening / live integrations: after MVP
 
 Current objective:
-- Close the biggest credibility gap by implementing live backend incident context and then real observability adapter fusion.
+- Build the MVP reasoning loop first: raw logs input, LLM-backed reasoning, solution proposal, safety gate, and RL-ready structured output.
 
 Application state:
 - The queue-first shell, incident console, input channels, replay, training, and settings surfaces are already in place.
-- The product feels enterprise-grade in the UI, and the incident console now prefers a backend live-context payload for created incidents.
-- The next meaningful step is to replace fixture-backed evidence with real adapter-backed observability and provenance.
+- The product feels enterprise-grade in the UI, but the core product now needs a raw-log-to-root-cause reasoning flow.
+- The next meaningful step is to make raw incident text the primary input and preserve structured outputs for RL scoring.
 
 Open blockers:
+- Raw-log intake and parsing are not yet the primary user entrypoint.
+- The MVP still needs a clearer structured output contract for RL scoring.
 - Observability and evidence are still mostly fixture-backed.
 - GUARDIAN policy enforcement is visible, but not a fully explicit control gate.
 - Production persistence is not yet durable enough for restart-safe state.
@@ -140,7 +157,7 @@ Files most likely to change:
 - `tests/test_api_contract.py`
 
 Next exact action:
-- Implement real observability ingestion and evidence fusion starting with the service layer and observability tests.
+- Implement the MVP raw-log intake and reasoning flow first, then wire it into the incident console and RL-ready output contract.
 
 Current operating mode:
 - Default to `gpt-5.4-mini`

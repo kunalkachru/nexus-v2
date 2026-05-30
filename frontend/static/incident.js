@@ -19,10 +19,16 @@ function renderList(elementId, items, renderer) {
 }
 
 function renderAgentFlow(data) {
-  document.getElementById("sentinelFlowMeta").textContent = `${Math.round(data.classification.confidence * 100)}% confidence · ${data.classification.evidence.length} evidence items`;
-  document.getElementById("prismFlowMeta").textContent = `${Math.round(data.diagnosis.confidence * 100)}% confidence · ${data.diagnosis.root_cause}`;
+  const confidence = (value) => `${Math.round(value * 100)}% confidence`;
+  const service = data.incident?.related_services?.[0] || "incident";
+  document.getElementById("sentinelFlowMeta").textContent = `${confidence(data.classification.confidence)} · ${data.classification.evidence.length} evidence items`;
+  document.getElementById("prismFlowMeta").textContent = `${confidence(data.diagnosis.confidence)} · ${data.diagnosis.root_cause}`;
   document.getElementById("forgeFlowMeta").textContent = data.runbook.recommended_runbook;
   document.getElementById("guardianFlowMeta").textContent = `${data.guardian.decision.toUpperCase()} · ${Math.round(data.guardian.confidence * 100)}% safety confidence`;
+  document.getElementById("sentinelFlowTransfer").textContent = `Raw input from ${service} → evidence bundle for PRISM`;
+  document.getElementById("prismFlowTransfer").textContent = `Evidence bundle → diagnosis packet for FORGE`;
+  document.getElementById("forgeFlowTransfer").textContent = `Diagnosis packet → runbook proposal for GUARDIAN`;
+  document.getElementById("guardianFlowTransfer").textContent = `Runbook proposal → ${data.guardian.decision.toUpperCase()} decision`;
 }
 
 function animateAgentFlow() {
@@ -50,6 +56,11 @@ function animateAgentFlow() {
           flowNode.classList.remove("complete");
           card.classList.remove("complete");
         }
+      });
+
+      document.querySelectorAll(".flow-link").forEach((link, linkIndex) => {
+        link.classList.toggle("active", linkIndex === index - 1);
+        link.classList.toggle("complete", linkIndex < index - 1);
       });
 
       document.getElementById(stage.flowId)?.classList.add("active");
@@ -177,6 +188,55 @@ function renderStatusPanel(status) {
   renderStatusTimeline(status.timeline || []);
 }
 
+function renderRawIntake(incident) {
+  const rawText = String(incident.raw_input_text || "").trim();
+  document.getElementById("rawInputText").textContent = rawText || "No raw incident text captured yet.";
+
+  const normalized = incident.normalized_evidence || {};
+  const stats = [
+    ["rawDetectedService", normalized.service || incident.related_services?.[0] || "-"],
+    ["rawDetectedSeverity", normalized.severity || incident.severity || "-"],
+    ["rawDetectedSignature", normalized.signature || "General incident"],
+    ["rawDetectedAction", rawText ? "Open reasoning console" : "Waiting for raw input"],
+  ];
+  stats.forEach(([id, value]) => {
+    document.getElementById(id).textContent = value;
+  });
+
+  const evidenceItems = [];
+  if (normalized.source_hint) {
+    evidenceItems.push(["Source hint", normalized.source_hint]);
+  }
+  if (normalized.reported_by) {
+    evidenceItems.push(["Reported by", normalized.reported_by]);
+  }
+  if (normalized.team) {
+    evidenceItems.push(["Team", normalized.team]);
+  }
+  if (Array.isArray(normalized.evidence)) {
+    normalized.evidence.forEach((item, index) => {
+      evidenceItems.push([`Evidence ${index + 1}`, item]);
+    });
+  }
+  if (Array.isArray(normalized.symptoms)) {
+    normalized.symptoms.forEach((item, index) => {
+      evidenceItems.push([`Symptom ${index + 1}`, item]);
+    });
+  }
+
+  const element = document.getElementById("normalizedEvidenceList");
+  element.innerHTML = evidenceItems.length
+    ? evidenceItems
+        .map(([label, value]) => `
+          <li>
+            <strong>${label}</strong><br>
+            <span>${typeof value === "object" ? JSON.stringify(value) : value}</span>
+          </li>
+        `)
+        .join("")
+    : `<li>No normalized evidence available yet.</li>`;
+}
+
 function renderAuditTrail(logs) {
   const element = document.getElementById("incidentAuditLogs");
   const orderedLogs = logs.length ? [...logs].reverse() : [{ event_type: "audit", timestamp: "-", payload: { note: "No audit entries yet." } }];
@@ -252,6 +312,8 @@ function renderIncident(data) {
   document.getElementById("servicePills").innerHTML = incident.related_services
     .map((service) => `<div class="pill">${service}</div>`)
     .join("");
+
+  renderRawIntake(incident);
 
   document.getElementById("metricsGrid").innerHTML = observability.metrics.map((metric) => `
     <div class="metric-card">

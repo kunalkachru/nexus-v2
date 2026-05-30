@@ -44,16 +44,26 @@ def test_dashboard_routes_are_served() -> None:
     assert "Workflow Timeline" in incident.text
     assert "Audit summary" in incident.text
     assert "Evidence Provenance" in incident.text
+    assert "Raw Intake" in incident.text
+    assert "Normalized evidence" in incident.text
+    assert "Evidence details" in incident.text
+    assert "Raw input → evidence bundle" in incident.text
     assert "flowing from" in incident.text
     assert "Input Channels" in inputs.text
+    assert "Paste Raw Logs" in inputs.text
+    assert "Raw Incident Intake Preview" in inputs.text
+    assert "Submit raw logs" in inputs.text
+    assert "Detected service" in inputs.text
     assert "Webhook" in inputs.text
     assert "Slack Command" in inputs.text
-    assert "Open webhook incident console" in inputs.text
+    assert "Open reasoning console" in inputs.text
     assert "Incident archive." in history.text
     assert "Replay validation." in replay.text
     assert "certificate expiry" in replay.text.lower()
     assert "Learning operations." in training.text
     assert "Episode History" in training.text
+    assert "RL Episode Contract" in training.text
+    assert "Reward evaluation" in training.text
     assert "Observation States" in training.text
     assert "Operational controls." in settings.text
     assert "Signature" in settings.text

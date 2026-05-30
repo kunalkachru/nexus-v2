@@ -254,6 +254,29 @@ h3 {
   line-height: 1.25;
 }
 
+.incident-shell h1 {
+  font-size: clamp(1.9rem, 3vw, 3.2rem);
+}
+
+.incident-shell .hero-copy,
+.incident-shell .section-note,
+.incident-shell .flow-node-copy,
+.incident-shell .workflow-step-meta,
+.incident-shell .timeline li,
+.incident-shell .simple-list li,
+.incident-shell .logs li {
+  font-size: 0.92rem;
+}
+
+.incident-shell .stat-value,
+.incident-shell .summary-card .value {
+  font-size: 1rem;
+}
+
+.incident-shell .flow-node-title {
+  font-size: 0.94rem;
+}
+
 .hero-copy,
 .agent-copy,
 .section-note {
@@ -310,6 +333,11 @@ h3 {
 .agent-grid {
   display: grid;
   gap: 14px;
+}
+
+.incident-shell .agent-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .queue-list {
@@ -654,11 +682,35 @@ h3 {
 }
 
 .flow-link {
+  position: relative;
   align-self: center;
   height: 2px;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--border-soft), var(--accent), var(--border-soft));
+  overflow: hidden;
   opacity: 0.7;
+}
+
+.flow-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(57, 192, 237, 0.95) 48%, rgba(74, 222, 128, 0.9) 50%, transparent 100%);
+  transform: translateX(-120%);
+}
+
+.flow-link.active::after {
+  animation: sweep 1.15s ease-in-out infinite;
+}
+
+.flow-link.complete {
+  background: linear-gradient(90deg, rgba(74, 222, 128, 0.45), rgba(57, 192, 237, 0.5));
+  opacity: 0.9;
+}
+
+.flow-link.complete::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(74, 222, 128, 0.9) 50%, transparent 100%);
+  transform: translateX(0%);
 }
 
 .flow-node {
@@ -699,6 +751,17 @@ h3 {
   line-height: 1.4;
 }
 
+.flow-node-transfer {
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: var(--surface-active);
+  border: 1px solid var(--border-accent);
+  color: var(--text-on-accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .flow-node-meta {
   padding: 10px 12px;
   border-radius: 12px;
@@ -727,6 +790,48 @@ h3 {
   border-color: var(--border-success);
   background: var(--surface-success);
   color: var(--accent-2);
+}
+
+.agent-details {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 12px;
+}
+
+.agent-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  list-style: none;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.agent-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.agent-details summary::after {
+  content: "Expand";
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+.agent-details[open] summary::after {
+  content: "Collapse";
+}
+
+.agent-details-body {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
 }
 
 .agent-rail {
@@ -1358,6 +1463,7 @@ h3 {
   .story-grid,
   .scenario-grid,
   .kpi-grid,
+  .incident-shell .agent-grid,
   .input-flow,
   .train-metrics {
     grid-template-columns: 1fr;
@@ -1387,6 +1493,7 @@ h3 {
   .metrics-grid,
   .training-grid,
   .agent-stats,
+  .incident-shell .agent-grid,
   .incident-grid,
   .input-form-row {
     grid-template-columns: 1fr;
