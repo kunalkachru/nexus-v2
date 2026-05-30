@@ -9,6 +9,7 @@ from server.config import AppConfig
 from server.incident_payloads import get_incident_definition, get_incident_details
 from server.models import NormalizedAlertEnvelope
 from server.orchestrator import NexusCore
+from server.integrations.deployments import DeploymentLookupService
 from server.services.observability import ObservabilityService
 from server.services.surface_payloads import build_incident_response
 from server.services.priority import priority_snapshot, shift_priority_label
@@ -39,7 +40,7 @@ async def build_demo_payload(
     forge_client = OpenAIForgeClient() if use_live_llm else TrainingForgeClient()
 
     core = NexusCore(
-        observability=ObservabilityService(),
+        observability=ObservabilityService(deployment_lookup=DeploymentLookupService()),
         sentinel=SentinelAgent(client=sentinel_client, model_name=config.forge_model_name),
         prism=PrismAgent(client=prism_client, model_name=config.forge_model_name),
         forge=ForgeAgent(client=forge_client, model_name=config.forge_model_name),
@@ -67,7 +68,7 @@ async def build_demo_payload(
         prism_client = None
         forge_client = TrainingForgeClient()
         core = NexusCore(
-            observability=ObservabilityService(),
+            observability=ObservabilityService(deployment_lookup=DeploymentLookupService()),
             sentinel=SentinelAgent(client=sentinel_client, model_name=config.forge_model_name),
             prism=PrismAgent(client=prism_client, model_name=config.forge_model_name),
             forge=ForgeAgent(client=forge_client, model_name=config.forge_model_name),

@@ -1,8 +1,12 @@
 import asyncio
+import json
+from pathlib import Path
 
+from incidents.catalogue import load_incident_types
 from server.integrations.alerts import AlertNormalizer
 from server.integrations.deployments import DeploymentLookupService
 from server.integrations.models import IncomingIncidentWebhook
+from server.models import NormalizedAlertEnvelope
 from server.services.incidents import IncidentService
 from server.services.observability import ObservabilityService
 
@@ -46,11 +50,120 @@ def test_alert_normalizer_uses_prometheus_job_when_service_missing() -> None:
     assert envelope.observed_values["alertname"] == "HighLatency"
 
 
-def test_deployment_lookup_returns_placeholder_recent_deployments() -> None:
+def test_deployment_lookup_returns_file_backed_recent_deployments(tmp_path: Path) -> None:
     async def scenario() -> None:
-        deployments = await DeploymentLookupService().get_recent_deployments("payment-svc")
+        deployments_path = tmp_path / "deployments.json"
+        deployments_path.write_text(
+            json.dumps(
+                {
+                    "deployments": [
+                        {
+                            "service": "payment-svc",
+                            "version": "2026.05.30.1",
+                            "change": "Retry middleware patch",
+                            "time": "2026-05-30T09:10:00Z",
+                        },
+                        {
+                            "service": "payment-svc",
+                            "version": "2026.05.29.9",
+                            "change": "Feature flag rollout",
+                            "time": "2026-05-29T09:10:00Z",
+                        },
+                        {
+                            "service": "other-svc",
+                            "version": "2026.05.28.4",
+                            "change": "Ignored",
+                            "time": "2026-05-28T09:10:00Z",
+                        },
+                    ]
+                }
+            )
+        )
+        deployments = await DeploymentLookupService(deployments_path=deployments_path).get_recent_deployments("payment-svc")
 
-        assert deployments == []
+        assert len(deployments) == 2
+        assert deployments[0]["version"] == "2026.05.30.1"
+        assert deployments[1]["version"] == "2026.05.29.9"
+
+    asyncio.run(scenario())
+
+
+def test_observability_service_uses_file_backed_catalog_and_deployments(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        incident = load_incident_types()[0]
+        catalog_path = tmp_path / "observability.json"
+        deployments_path = tmp_path / "deployments.json"
+        catalog_path.write_text(
+            json.dumps(
+                {
+                    "incidents": {
+                        incident.id: {
+                            "logs": ["loki: raw log line from file-backed catalog"],
+                            "metrics": ["latency 420ms"],
+                            "traces": ["service graph: api -> db"],
+                            "deployments": [
+                                {
+                                    "service": incident.system_context.service,
+                                    "version": "2026.05.30.2",
+                                    "change": "File-backed release feed",
+                                }
+                            ],
+                            "provenance": {
+                                "logs": ["loki: file-backed datasource"],
+                                "metrics": ["datadog: file-backed datasource"],
+                                "deployment": ["release metadata: file-backed datasource"],
+                            },
+                            "evidence_sources": [
+                                {
+                                    "source": "loki",
+                                    "signal": "logs",
+                                    "count": 1,
+                                    "summary": "File-backed catalog logs",
+                                    "detail": "loki: raw log line from file-backed catalog",
+                                }
+                            ],
+                        }
+                    }
+                }
+            )
+        )
+        deployments_path.write_text(
+            json.dumps(
+                {
+                    "deployments": [
+                        {
+                            "service": incident.system_context.service,
+                            "version": "2026.05.30.3",
+                            "change": "Deployment feed from adapter",
+                            "time": "2026-05-30T12:00:00Z",
+                        }
+                    ]
+                }
+            )
+        )
+
+        deployment_lookup = DeploymentLookupService(deployments_path=deployments_path)
+        service = ObservabilityService(
+            evidence_catalog_path=catalog_path,
+            deployment_lookup=deployment_lookup,
+        )
+
+        context = await service.fetch_incident_context(
+            NormalizedAlertEnvelope(
+                source="datadog",
+                external_id=incident.id,
+                title=incident.name,
+                severity="P1",
+                service=incident.system_context.service,
+                detected_at="2026-05-28T10:22:00Z",
+                observed_values={"service": incident.system_context.service},
+            )
+        )
+
+        assert any("file-backed" in signal for signal in context.signals["logs"])
+        assert any("2026.05.30.3" in signal for signal in context.signals["deployment"])
+        assert context.signal_provenance["logs"] == ["loki: file-backed datasource"]
+        assert context.evidence_sources[0]["detail"] == "loki: raw log line from file-backed catalog"
 
     asyncio.run(scenario())
 

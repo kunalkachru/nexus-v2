@@ -52,11 +52,12 @@ app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 def get_incident_service(
     session: DatabaseSession = Depends(get_db),
 ) -> IncidentService:
+    deployment_lookup = DeploymentLookupService()
     return IncidentService(
         session=session,
         alert_normalizer=AlertNormalizer(),
-        deployment_lookup=DeploymentLookupService(),
-        observability=ObservabilityService(),
+        deployment_lookup=deployment_lookup,
+        observability=ObservabilityService(deployment_lookup=deployment_lookup),
     )
 
 @app.get("/")
