@@ -32,6 +32,7 @@ It describes how to start the product, verify the main surfaces, and recover fro
 For the full browser walkthrough and demo script, see [docs/DEMO_WALKTHROUGH.md](DEMO_WALKTHROUGH.md).
 For the quick live demo reference, see [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md).
 For live presentation notes by screen, see [docs/LIVE_DEMO_SPEAKER_NOTES.md](LIVE_DEMO_SPEAKER_NOTES.md).
+For the full presenter pack, see [docs/PRESENTATION_PACK.md](PRESENTATION_PACK.md).
 
 ## Recover
 

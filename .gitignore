@@ -5,3 +5,4 @@ artifacts/
 *.pyc
 .worktrees/
 .nexus_audit_log.json
+WORKING_STATE.md

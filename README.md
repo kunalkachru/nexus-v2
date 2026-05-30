@@ -199,6 +199,7 @@ The current repo is considered ready when the suite is green and the browser pag
 For a full screen-by-screen manual validation and demo script, see [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md).
 For a quick live demo reference, see [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md).
 For live presentation notes by screen, see [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md).
+For the full presenter pack, see [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md).
 
 ## Roadmap
 
@@ -219,3 +220,4 @@ If you want the shortest path to the next phase of product hardening, start with
 - [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md)
 - [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
 - [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md)
+- [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)

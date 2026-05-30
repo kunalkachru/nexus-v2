@@ -21,6 +21,7 @@ Legend:
 | [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md) | Done | Quick live demo reference for fast navigation through the product. |
 | [docs/LIVE_DEMO_SPEAKER_NOTES.md](LIVE_DEMO_SPEAKER_NOTES.md) | Done | Screen-by-screen speaking notes for live demos and walkthroughs. |
 | [docs/DEMO_WALKTHROUGH.md](DEMO_WALKTHROUGH.md) | Done | This is the current screen-by-screen manual validation and demo script. |
+| [docs/PRESENTATION_PACK.md](PRESENTATION_PACK.md) | Done | Single index for the demo walkthrough, speaker notes, and presenter deck. |
 
 ## Priority Backlog
 
