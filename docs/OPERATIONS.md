@@ -1,7 +1,7 @@
 # Operations
 
 This is the runtime companion to the README.
-It describes how to start the product, verify the main surfaces, and recover from the most common failures.
+It describes how to start the product, verify the main surfaces, and recover from the most common failures in demo or product mode.
 
 ## Modes
 

@@ -15,7 +15,7 @@ NEXUS v2 is an enterprise incident-response product that turns noisy alerts into
 Current phase:
 - UI-first roadmap: complete
 - Thin backend demo layer: complete
-- Enterprise hardening / live integrations: next
+- Production hardening / live integrations: next
 
 The current source of truth for scope and status is:
 - [Documentation status matrix](docs/NEXUS_v2_DOC_STATUS_MATRIX.md)
@@ -142,7 +142,7 @@ Current architecture, in practical terms:
 - Security and tenancy checks on authenticated paths.
 - Signature verification for webhook intake.
 
-The broader enterprise target, which is still only partially complete, is tracked in the docs matrix and backlog.
+The broader production hardening target, which is still only partially complete, is tracked in the docs matrix and backlog.
 
 ## Setup
 

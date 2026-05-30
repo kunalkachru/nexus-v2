@@ -21,7 +21,7 @@ Legend:
 | [design-docs/NEXUS_v2_Master_Product_Document.md](../design-docs/NEXUS_v2_Master_Product_Document.md) | Partial / Pending | Vision and narrative are intact; business, legal, and scale sections are mostly not implemented in code. |
 | [design-docs/NEXUS_v2_IMPLEMENTATION_SPRINT.md](../design-docs/NEXUS_v2_IMPLEMENTATION_SPRINT.md) | Pending / Historical | This is a hackathon-era sprint doc and no longer authoritative for the current repo state. |
 | [design-docs/NEXUS_v2_CLAUDE_CODE_CHEATSHEET.md](../design-docs/NEXUS_v2_CLAUDE_CODE_CHEATSHEET.md) | Partial / Historical | Useful as workflow reference, but it describes the old sprint rather than current repo tasks. |
-| [docs/OPERATIONS.md](OPERATIONS.md) | Partial | Local/Docker flow is valid; production ops and recovery are not fully hardened. |
+| [docs/OPERATIONS.md](OPERATIONS.md) | Partial | Local/Docker flow is valid; demo and product mode operations plus recovery are not fully hardened. |
 
 ## Priority Backlog
 
@@ -179,8 +179,8 @@ If you want the shortest path to the next meaningful product step, use this orde
 
 | Doc | Status | Notes |
 |---|---|---|
-| `README.md` | Partial | Generally accurate, but some language is aspirational relative to the current state. |
-| `docs/OPERATIONS.md` | Partial | Good local ops guide; production-mode operations and recovery still need hardening. |
+| `README.md` | Partial | Current entrypoint for product, architecture, setup, and documentation navigation; some forward-looking language remains. |
+| `docs/OPERATIONS.md` | Partial | Good runtime guide; demo and product mode operations plus recovery still need hardening. |
 
 ## Current Deviations From The Active Plan
 
