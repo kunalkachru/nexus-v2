@@ -359,6 +359,13 @@ Expected behavior:
 - The evidence section shows where the information came from.
 - The execution state is visible and updates when the incident changes.
 
+The four agents should read as a sequential handoff:
+
+1. `SENTINEL` classifies the incident and establishes priority.
+2. `PRISM` correlates logs, metrics, and context to diagnose the likely cause.
+3. `FORGE` proposes the remediation path or runbook.
+4. `GUARDIAN` reviews the proposal and decides whether it can proceed.
+
 How to validate the important parts:
 
 #### Workflow timeline
@@ -380,7 +387,7 @@ Expected result:
 Expected result:
 
 - You can tell which agent is doing what.
-- The flow looks like a real handoff, not random text.
+- The flow looks like a real sequential handoff, not random text.
 
 #### Evidence provenance
 
@@ -574,7 +581,7 @@ If you want the simplest good demo, follow this exact path:
 3. Create a new incident using the manual form.
 4. Open the returned incident link.
 5. Walk through the Incident Console.
-6. Show the agent flow.
+6. Show the `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff.
 7. Show the audit trail and evidence provenance.
 8. Trigger execution if the screen allows it.
 9. Open History and show the incident is retained.

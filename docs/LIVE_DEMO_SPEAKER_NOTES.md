@@ -56,11 +56,12 @@ Use them when you want to explain the product live, screen by screen, without re
 - “This is the core operator workspace.”
 - “It explains what happened, what the agents found, and what action is possible.”
 - “The workflow timeline shows the incident moving through the system.”
+- “The agents run in sequence: SENTINEL classifies, PRISM diagnoses, FORGE proposes, and GUARDIAN decides whether execution can proceed.”
 
 ### What the audience should notice
 
 - The 9-step workflow is visible.
-- The agent handoff across `SENTINEL`, `PRISM`, `FORGE`, and `GUARDIAN` is visible.
+- The sequential agent handoff across `SENTINEL`, `PRISM`, `FORGE`, and `GUARDIAN` is visible.
 - Evidence provenance and audit trail are readable.
 
 ### If asked

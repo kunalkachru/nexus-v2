@@ -29,6 +29,7 @@ This is the one-stop index for the presenter materials used to explain NEXUS v2 
 
 - Situation, task, action, and result
 - The live product proof
+- The sequential `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff
 - Stakeholder value
 - Technical design and next phase
 

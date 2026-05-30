@@ -81,8 +81,19 @@ The current UI is intentionally enterprise-shaped so it feels credible in front 
 ### Incident console
 
 - Shows the 9-step workflow.
-- Surfaces SENTINEL, PRISM, FORGE, and GUARDIAN contributions.
+- Surfaces SENTINEL, PRISM, FORGE, and GUARDIAN contributions in sequence.
 - Includes audit trail, evidence provenance, queue position, ETA, and execution state.
+
+### Sequential agent flow
+
+The incident console presents the four agents as a handoff chain:
+
+1. `SENTINEL` classifies the incident and sets the initial priority.
+2. `PRISM` correlates evidence and diagnoses the likely root cause.
+3. `FORGE` proposes the safest remediation path or runbook.
+4. `GUARDIAN` reviews the proposal and allows, blocks, or requests modification before execution.
+
+That order matters because it makes the incident story readable for operators, product reviewers, and judges.
 
 ### Input channels
 

@@ -66,7 +66,7 @@ Expected:
 
 - Main operator view.
 - Show the 9-step workflow.
-- Highlight `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
+- Highlight the sequential handoff: `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
 - Point out evidence provenance and audit trail.
 - Trigger execution if appropriate.
 
