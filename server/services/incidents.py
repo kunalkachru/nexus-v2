@@ -39,6 +39,7 @@ from server.models import (
     SystemContext,
 )
 from server.services.live_ingest import RawIncidentParser
+from server.services.governance import GovernanceService
 from server.services.priority import normalize_priority_label, priority_rank, priority_snapshot, shift_priority_label
 from server.services.observability import ObservabilityService
 
@@ -58,51 +59,17 @@ class IncidentService:
         self._alert_normalizer = alert_normalizer
         self._deployment_lookup = deployment_lookup
         self._observability = observability
+        self._governance = GovernanceService()
         self._raw_parser = RawIncidentParser()
 
     def _display_severity(self, severity: str) -> str:
         return normalize_priority_label(severity)
 
     def _guardian_decision_for_incident(self, incident: IncidentRecord) -> str:
-        if incident.guardian_decision in {"approve", "reject"}:
-            return incident.guardian_decision
-        if incident.status == "blocked_by_guardian":
-            return "reject"
-        if incident.status == "resolved":
-            return "approve"
-        return "pending"
+        return self._governance.guardian_decision_for_incident(incident)
 
     def _guardian_context(self, incident: IncidentRecord) -> dict[str, object]:
-        decision = self._guardian_decision_for_incident(incident)
-        if decision == "pending":
-            return {
-                "decision": decision,
-                "confidence": 0.0,
-                "safety_checks": [
-                    "Runbook proposal ready for review",
-                    "Execution stays blocked until approval is recorded",
-                    "Audit trail is waiting for the operator decision",
-                ],
-                "policy_violations": [],
-                "reasoning": "Guardian review is pending. Choose approve or block to make the gate explicit.",
-            }
-
-        return {
-            "decision": decision,
-            "confidence": 0.89,
-            "safety_checks": [
-                "Authenticated live incident read",
-                "Audit trail available from backend state",
-                "Rollback-safe execution path preserved",
-            ],
-            "policy_violations": [] if decision == "approve" else ["Execution blocked by Guardian"],
-            "reasoning": incident.guardian_reasoning
-            or (
-                "GUARDIAN approved the runbook and the incident can proceed."
-                if decision == "approve"
-                else "GUARDIAN blocked the runbook and kept the incident out of execution."
-            ),
-        }
+        return self._governance.guardian_context(incident)
 
     async def create_incident_from_webhook(
         self,
