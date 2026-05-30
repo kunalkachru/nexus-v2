@@ -29,6 +29,8 @@ It describes how to start the product, verify the main surfaces, and recover fro
 - Authenticated `GET /api/v1/incidents/queue` with tenant headers
 - Review audit logs after webhook ingestion and incident reads
 
+For the full browser walkthrough and demo script, see [docs/DEMO_WALKTHROUGH.md](DEMO_WALKTHROUGH.md).
+
 ## Recover
 
 - If incident persistence is corrupted, restore the backing store and replay recent webhooks.
