@@ -359,6 +359,16 @@ Expected behavior:
 - The evidence section shows where the information came from.
 - The execution state is visible and updates when the incident changes.
 
+The page now prefers a backend live-context payload for newly created incidents.
+That means a real intake action can feed the console with:
+
+- backend audit history
+- workflow timeline state
+- live deployment lookups
+- evidence provenance assembled server-side
+
+This is the difference between a static demo payload and the current live incident path.
+
 The four agents should read as a sequential handoff:
 
 1. `SENTINEL` classifies the incident and establishes priority.
@@ -397,7 +407,20 @@ Expected result:
 Expected result:
 
 - The system explains where evidence came from.
-- The user can trust that the incident is based on visible inputs.
+- The user can see the backend assemble provenance from live incident state.
+- The incident is not just browser-synthesized text anymore.
+
+#### Live incident context
+
+1. Create a new incident from `Inputs`.
+2. Open the incident from the created result link.
+3. Compare it with a seeded demo incident such as `INC001`.
+
+Expected result:
+
+- The new incident opens with backend-generated context.
+- Audit trail, status, and evidence all align.
+- The console still keeps the same look and feel for the demo, but the data path is now live.
 
 #### Audit trail
 

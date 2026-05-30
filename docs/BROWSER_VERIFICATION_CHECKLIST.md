@@ -104,10 +104,12 @@ Confirm:
 - The workflow starts with intake and moves through agent stages.
 - SENTINEL, PRISM, FORGE, and GUARDIAN are each represented.
 - Evidence sections for logs, metrics, traces, and deployments are present.
+- A newly created incident opens with backend-assembled live context, not just browser-synthesized data.
 
 Pass criteria:
 
 - You can explain the incident from intake to outcome using the page alone.
+- You can see the difference between a seeded demo incident and a newly created live incident.
 
 ## Input Channels
 

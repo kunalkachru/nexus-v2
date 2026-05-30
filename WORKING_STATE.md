@@ -22,6 +22,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - Full manual walkthrough, speaker notes, and presenter pack are now documented.
 - The manual walkthrough now includes explicit functional checks for queue, inputs, incident console, history, replay, training, and settings.
 - Browser verification checklist, pass/fail checklist, and automation script are now available from the live docs.
+- The manual walkthrough now explains the live incident context path for newly created incidents versus seeded demo incidents.
 - A 5-slide presenter deck has been created as a `.pptx` for review/judging.
 - Live docs now explicitly describe the sequential 4-agent handoff: `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
 - A dedicated agent model matrix now records which agents are deterministic, optional-LLM, or still partially wired.
@@ -120,6 +121,7 @@ Most important source of truth:
 - `docs/BROWSER_VERIFICATION_CHECKLIST.md`
 - `docs/VERIFICATION_PASS_FAIL_CHECKLIST.md`
 - `scripts/browser_verification.sh`
+- `docs/DEMO_WALKTHROUGH.md`
 - `docs/NEXUS_v2_PHASE2_ROADMAP.md`
 - `design-docs/NEXUS_v2_ENTERPRISE_SPECIFICATION.md`
 - `design-docs/NEXUS_v2_Master_Product_Document.md`

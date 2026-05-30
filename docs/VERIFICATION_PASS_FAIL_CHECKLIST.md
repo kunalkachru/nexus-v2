@@ -25,6 +25,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] FORGE is shown.
 - [ ] GUARDIAN is shown.
 - [ ] Logs, metrics, traces, and deployments are visible.
+- [ ] A newly created incident opens with backend-assembled live context.
 
 ## Input Channels
 
@@ -66,6 +67,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Start on Queue.
 - [ ] Open one incident.
 - [ ] Walk the timeline from intake to outcome.
+- [ ] Create a new incident from Inputs and open its live context.
 - [ ] Show input channels.
 - [ ] Show history.
 - [ ] Launch a sample replay.
