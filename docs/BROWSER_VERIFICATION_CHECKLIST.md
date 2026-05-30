@@ -106,6 +106,9 @@ Confirm:
 - Raw incident text and normalized evidence are visible for live incidents.
 - Evidence sections for logs, metrics, traces, and deployments are present.
 - A newly created incident opens with backend-assembled live context, not just browser-synthesized data.
+- `Normalized evidence` is read-only.
+- The `SENTINEL -> PRISM -> FORGE -> GUARDIAN` rail is read-only.
+- `Request execution` is the action button, if it is visible.
 
 Pass criteria:
 

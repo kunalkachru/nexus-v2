@@ -264,16 +264,38 @@ How to validate each intake path:
 #### Raw log paste
 
 1. Keep the raw-log paste path selected.
-2. Paste or edit a short log snippet.
-3. Confirm the parsed evidence preview updates.
-4. Submit the raw logs.
+2. Leave the sample logs in place, or replace them with your own incident text.
+3. Confirm the parsed evidence preview updates while you type.
+4. Click `Submit raw logs`.
 
 Expected result:
 
 - the browser shows the extracted service, severity, and error signature
 - the backend creates a new incident
 - the result area gives you a link to the incident console
-- the new incident opens with the same workflow as the other channels
+- click the incident console link that appears in the result area
+- the incident opens with the same workflow as the other channels
+
+#### On The Incident Console
+
+1. Open the incident console link returned from Inputs.
+2. Read the `Raw Intake` section.
+3. Read the `Normalized evidence` section.
+4. Read the `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff rail.
+5. If you see `Request execution`, click it once.
+
+What to remember:
+
+- `Normalized evidence` is read-only. It is not a button.
+- The agent handoff rail is also read-only. It is there for inspection.
+- The only action button on the incident console is `Request execution`, when it is visible.
+
+Expected result:
+
+- you can tell which raw logs were pasted
+- you can see the parsed evidence that the backend derived
+- you can read the four-agent sequence in order
+- if you click `Request execution`, the incident state updates and the audit trail records it
 
 #### Webhook
 

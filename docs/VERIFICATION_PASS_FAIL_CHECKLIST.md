@@ -24,11 +24,14 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] PRISM is shown.
 - [ ] FORGE is shown.
 - [ ] GUARDIAN is shown.
+- [ ] Raw incident text is visible for live incidents.
+- [ ] Normalized evidence is visible for live incidents.
 - [ ] Logs, metrics, traces, and deployments are visible.
 - [ ] A newly created incident opens with backend-assembled live context.
 
 ## Input Channels
 
+- [ ] Raw-log paste intake is visible.
 - [ ] Webhook intake is visible.
 - [ ] Manual intake is visible.
 - [ ] Slack-style intake is visible.
@@ -53,6 +56,8 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Baseline reward is visible.
 - [ ] Trained reward is visible.
 - [ ] Reward curve is visible.
+- [ ] RL episode contract is visible.
+- [ ] Reward evaluation is visible.
 - [ ] Reward breakdown is visible.
 - [ ] Observation states are visible.
 
@@ -67,11 +72,18 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Start on Queue.
 - [ ] Open one incident.
 - [ ] Walk the timeline from intake to outcome.
-- [ ] Create a new incident from Inputs and open its live context.
+- [ ] Open Inputs, keep or replace the sample raw logs, and confirm the parsed preview updates.
+- [ ] Click `Submit raw logs` and confirm a new incident is created.
+- [ ] Open the incident console link returned from Inputs.
+- [ ] Confirm `Raw Intake` is visible.
+- [ ] Confirm `Normalized evidence` is visible and read-only.
+- [ ] Confirm the `SENTINEL -> PRISM -> FORGE -> GUARDIAN` rail is visible and read-only.
+- [ ] Click `Request execution` if it is visible.
 - [ ] Show input channels.
 - [ ] Show history.
 - [ ] Launch a sample replay.
 - [ ] Open the training lab.
+- [ ] Confirm the RL episode contract.
 - [ ] Finish in settings.
 
 ## Pass Criteria
