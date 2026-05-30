@@ -13,8 +13,15 @@
 ## Current Implementation Note
 
 - The original MVP block of this backlog is now implemented and browser-validated in this pass.
+- The first six implementation-practical follow-up items are also now implemented and browser-validated:
+  - observability and evidence fusion
+  - GUARDIAN policy and governance
+  - durable RL and audit persistence
+  - auth, tenant, and deployment hardening
+  - backend service decomposition cleanup
+  - docs and validation refresh
 - The docs and validation items were refreshed to match the shipped flow.
-- The remaining product docs still track the longer-term production work that sits beyond the MVP block.
+- The remaining product docs still track the longer-term production work that sits beyond the shipped core.
 
 ## Today's Target
 
@@ -219,20 +226,16 @@ Deliver the smallest credible MVP that proves:
 **Done when**
 - The product is still understandable, but now looks and behaves like something that could be taken into production.
 
-## Suggested Build Order For Today
+## Suggested Build Order Beyond The Shipped Core
 
-1. Raw Log Intake UI
-2. Raw Log Normalization
-3. LLM Reasoning Loop
-4. Safety Gate And Action Decision
-5. RL-Ready Structured Output
-6. Incident Console Updates
-7. Input Channel Coverage
-8. Manual Demo And Validation Updates
-9. Backend Adapter Follow-Up
-10. GUARDIAN Explicit Control Gate
-11. Persistent RL And Audit Artifacts
-12. Production Hardening
+The core items above are already in the product. If you are continuing beyond the shipped core, use this order:
+
+1. Input Channel Coverage
+2. Manual Demo And Validation Updates
+3. Backend Adapter Follow-Up
+4. GUARDIAN Explicit Control Gate
+5. Persistent RL And Audit Artifacts
+6. Production Hardening
 
 ## Practical MVP Boundary
 

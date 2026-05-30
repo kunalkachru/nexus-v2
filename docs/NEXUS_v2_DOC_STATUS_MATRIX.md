@@ -28,18 +28,19 @@ Legend:
 
 ## Priority Backlog
 
-If you want the shortest path to the next meaningful product step, use this order:
+The first six implementation-practical items are shipped and browser-validated. If you want the next meaningful product step beyond that shipped core, use this order:
 
-1. [Real observability ingestion and evidence fusion](NEXUS_v2_PRIORITY_BACKLOG.md#1-real-observability-ingestion-and-evidence-fusion)
-2. [GUARDIAN execution policy and runbook governance](NEXUS_v2_PRIORITY_BACKLOG.md#2-guardian-execution-policy-and-runbook-governance)
-3. [Production persistence and durable artifacts](NEXUS_v2_PRIORITY_BACKLOG.md#3-production-persistence-and-durable-artifacts)
-4. [Auth, tenant, and deployment hardening](NEXUS_v2_PRIORITY_BACKLOG.md#4-auth-tenant-and-deployment-hardening)
-5. [Further backend service decomposition and operational cleanup](NEXUS_v2_PRIORITY_BACKLOG.md#5-further-backend-service-decomposition-and-operational-cleanup)
-6. [Docs and source-of-truth maintenance](NEXUS_v2_PRIORITY_BACKLOG.md#6-docs-and-source-of-truth-maintenance)
+1. [Input Channel Coverage](NEXUS_v2_PRIORITY_BACKLOG.md#7-input-channel-coverage)
+2. [Manual Demo And Validation Updates](NEXUS_v2_PRIORITY_BACKLOG.md#8-manual-demo-and-validation-updates)
+3. [Backend Adapter Follow-Up](NEXUS_v2_PRIORITY_BACKLOG.md#9-backend-adapter-follow-up)
+4. [GUARDIAN Explicit Control Gate](NEXUS_v2_PRIORITY_BACKLOG.md#10-guardian-explicit-control-gate)
+5. [Persistent RL And Audit Artifacts](NEXUS_v2_PRIORITY_BACKLOG.md#11-persistent-rl-and-audit-artifacts)
+6. [Production Hardening](NEXUS_v2_PRIORITY_BACKLOG.md#12-production-hardening)
 
 Implementation note:
 
 - The MVP block that this priority list described is now implemented and browser-validated.
+- The first six implementation-practical backlog items are also now implemented and browser-validated.
 - The walkthrough and browser checklists have been updated to explain exactly what each shipped item now shows.
 
 ## Section Matrix
@@ -155,12 +156,12 @@ Implementation note:
 
 These are the main gaps that are still worth adding to the plan if you want to keep going beyond the current demo-grade state:
 
-1. Add real observability adapters for Prometheus, Datadog, ELK/Loki, and deployment metadata instead of deterministic fixture joins.
-2. Add a stronger execution-policy layer for GUARDIAN, including explicit approval/rejection state and more visible gate outcomes.
-3. Add a real production persistence story for incident events, replay, and training artifacts if this moves beyond demo mode.
-4. Harden auth and tenant boundaries for true production mode, including signature verification and clearer gateway posture.
-5. Continue backend service decomposition where helper logic still belongs in focused modules.
-6. Keep the README and docs matrix as the canonical source of truth.
+1. Continue pushing observability adapters beyond the file-backed catalog toward real upstream service integrations.
+2. Keep deepening the Guardian policy registry and audit story as the product moves toward production.
+3. Expand the persistence layer if the incident lifecycle moves beyond the current demo-safe local store.
+4. Harden auth, tenant boundaries, and ingress posture for real production deployments.
+5. Keep decomposing backend services as the production surface grows.
+6. Keep the README and docs matrix aligned with the shipped code and manual verification steps.
 
 ## Bottom Line
 

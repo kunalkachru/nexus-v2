@@ -7,7 +7,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - Raw input starts empty and `Load example logs` works.
 - Arbitrary priority labels such as `P6` and `critical` are accepted.
 - Evidence provenance now shows the fused observability adapter story, not only the static fixtures.
-- The incident console shows proposed fix, priority, normalized rank, and live reasoning state.
+- The incident console shows proposed fix, priority, normalized rank, live reasoning state, and guardian policy metadata.
 - The Guardian gate exposes explicit approve, block, and request-modification controls.
 - The training lab shows the solution proposal, raw priority, learning-contract count, audit-event count, and Guardian-review count.
 - The settings page exposes the learning-contract count, audit-event count, and Guardian-review count.
@@ -38,6 +38,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Raw incident text is visible for live incidents.
 - [ ] Normalized evidence is visible for live incidents.
 - [ ] The structured result cards expose proposed fix, priority, normalized rank, and live reasoning state.
+- [ ] The structured result cards expose the guardian policy field when a decision has been recorded.
 - [ ] Logs, metrics, traces, and deployments are visible.
 - [ ] Evidence provenance includes the fused adapter story for logs, metrics, traces, and deployments.
 - [ ] A newly created incident opens with backend-assembled live context.
@@ -108,6 +109,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Confirm the `SENTINEL -> PRISM -> FORGE -> GUARDIAN` rail is visible and read-only.
 - [ ] Confirm the live reasoning toggle can switch the incident view on the fly.
 - [ ] Confirm the incident summary shows the proposed fix and priority fields.
+- [ ] Confirm the incident summary shows the guardian policy field when it is present.
 - [ ] Use the `Guardian gate` buttons if they are visible.
 - [ ] Confirm the `Request modification` path moves the incident into `NEEDS_MODIFICATION` and leaves execution paused.
 - [ ] Confirm the approve path moves the incident into `EXECUTED`.

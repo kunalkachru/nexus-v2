@@ -14,6 +14,7 @@ Use this list when you want to confirm the exact changes that landed in the late
 - The raw-log parser accepts arbitrary labels like `P6` and `critical`.
 - The observability layer now fuses fixture incident data with file-backed evidence sources and deployment snapshots.
 - The incident console shows the structured result fields, including proposed fix, priority, normalized rank, safety decision, and live reasoning state.
+- The incident console now shows guardian policy metadata alongside the safety decision when it is available.
 - The `Guardian gate` is an explicit approve/block/request-modification control surface and the decision path is persisted.
 - The console now distinguishes `APPROVE`, `REJECT`, and `REQUEST_MODIFICATION`, and the incident summary can surface a `needs_modification` execution state.
 - The training lab shows solution proposal, raw priority, priority rank, live reasoning state, learning-contract count, audit-event count, and Guardian-review count.
@@ -137,6 +138,7 @@ Confirm:
 - A live reasoning toggle is visible and changes the rendered incident without editing the URL manually.
 - The `Guardian gate` buttons are the explicit approval, block, and request-modification controls, if they are visible.
 - The incident summary exposes the structured result fields, including proposed fix, priority, normalized rank, safety decision, and live reasoning state.
+- The incident summary exposes the guardian policy field when the backend returns one.
 
 Pass criteria:
 
