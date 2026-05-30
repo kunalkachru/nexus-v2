@@ -241,6 +241,8 @@ Browser validation targets:
 The current repo is considered ready when the suite is green and the browser pages load without console errors in the main demo flow.
 
 For a full screen-by-screen manual validation and demo script, see [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md).
+For a browser verification checklist, see [docs/BROWSER_VERIFICATION_CHECKLIST.md](docs/BROWSER_VERIFICATION_CHECKLIST.md).
+For a quick pass/fail checklist, see [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](docs/VERIFICATION_PASS_FAIL_CHECKLIST.md).
 For a quick live demo reference, see [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md).
 For live presentation notes by screen, see [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md).
 For the full presenter pack, see [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md).
@@ -262,6 +264,8 @@ If you want the shortest path to the next phase of product hardening, start with
 - [docs/NEXUS_v2_PRIORITY_BACKLOG.md](docs/NEXUS_v2_PRIORITY_BACKLOG.md)
 - [docs/OPERATIONS.md](docs/OPERATIONS.md)
 - [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md)
+- [docs/BROWSER_VERIFICATION_CHECKLIST.md](docs/BROWSER_VERIFICATION_CHECKLIST.md)
+- [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](docs/VERIFICATION_PASS_FAIL_CHECKLIST.md)
 - [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
 - [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md)
 - [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
