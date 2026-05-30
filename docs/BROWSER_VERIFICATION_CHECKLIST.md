@@ -103,6 +103,7 @@ Confirm:
 - The incident timeline is visible.
 - The workflow starts with intake and moves through agent stages.
 - SENTINEL, PRISM, FORGE, and GUARDIAN are each represented.
+- Raw incident text and normalized evidence are visible for live incidents.
 - Evidence sections for logs, metrics, traces, and deployments are present.
 - A newly created incident opens with backend-assembled live context, not just browser-synthesized data.
 
@@ -121,6 +122,7 @@ http://127.0.0.1:8000/inputs
 
 Confirm:
 
+- The raw-log paste path is visible and clearly described.
 - Multiple intake options are visible.
 - The page shows more than one input method.
 - The intent of the page is to demonstrate how incidents enter the system.
@@ -128,6 +130,7 @@ Confirm:
 Pass criteria:
 
 - Each input method appears to feed the same incident workflow.
+- The raw-log preview updates when the pasted text changes.
 
 ## History
 
@@ -179,6 +182,8 @@ Confirm:
 - Baseline reward and trained reward are visible.
 - A reward curve is visible.
 - Reward breakdown information is visible.
+- The RL episode contract is visible.
+- Reward evaluation is visible.
 - The observation-state story is visible.
 
 Pass criteria:
@@ -213,7 +218,7 @@ After the pages are verified individually, do one full walkthrough:
 4. Switch to `Input Channels` and show the intake options.
 5. Open `History` and show a past incident.
 6. Open `Sample Replay` and show a curated replay scenario.
-7. Open `RL Training Lab` and point to the reward curve and observation states.
+7. Open `RL Training Lab` and point to the reward curve, RL episode contract, and observation states.
 8. Finish in `Settings`.
 
 ## What Good Looks Like
@@ -241,7 +246,11 @@ After the pages are verified individually, do one full walkthrough:
 If you want a quick backend sanity check before opening the browser, run:
 
 ```bash
-pytest tests/ -q
+curl -s http://127.0.0.1:8000/api/v1/training/summary \
+  -H 'x-user-id: user-123' \
+  -H 'x-tenant-id: tenant-a' \
+  -H 'x-roles: operator' \
+| python3 -c "import json,sys; p=json.load(sys.stdin); c=p['rl_episode_contract']; e=p['reward_evaluation']; print('reward_curve_final=', e['reward_curve_final']); print('incident_id=', c['observation']['incident_id']); print('guardian_decision=', c['guardian_decision'])"
 ```
 
-That does not replace browser verification, but it confirms the backend and page routes are healthy.
+That does not replace browser verification, but it confirms the backend training contract is healthy and readable from the terminal.

@@ -18,9 +18,11 @@ NEXUS v2 is a browser-based incident-response product.
 
 It has:
 
+- a raw-log intake path for pasting incident text, logs, or stack traces
 - one backend server that serves the pages and API
 - one browser UI that acts as the client
-- queue-first navigation
+- raw-log intake as the primary MVP entrypoint
+- queue navigation for operational follow-up
 - a detailed incident console
 - intake channels for new incidents
 - history, replay, training, and settings screens
@@ -144,7 +146,7 @@ Open this URL in your browser:
 Expected result:
 
 - The app loads.
-- You land on the queue-first surface.
+- You land on the operational shell and can immediately move into raw-log intake or queue review.
 - You see the top navigation and the incident queue.
 
 If the page does not load:
@@ -204,6 +206,7 @@ Expected behavior:
 - Each incident looks actionable.
 - The queue does not feel like a placeholder.
 - Clicking an incident opens that incident in the console.
+- The queue is the follow-up surface after raw intake has been normalized.
 
 How to validate:
 
@@ -228,11 +231,12 @@ Open:
 
 What this screen is for:
 
-- It lets a person create or simulate new incidents.
+- It lets a person paste raw logs or create or simulate new incidents.
 - It shows the supported incident intake paths.
 
 The supported intake paths are:
 
+- Raw log paste
 - Webhook
 - Manual form
 - Slack-style command
@@ -242,18 +246,34 @@ The supported intake paths are:
 What to look for:
 
 - a channel selector or clear channel sections
+- a raw log paste box
 - fields for service, severity, and summary
 - submit or create controls
 - a result area that shows what happened after submission
 
 Expected behavior:
 
+- the raw-log path is the clearest and most important path on the page
 - The screen explains each intake type in plain language.
 - A submission creates a new incident.
 - The product tells you the incident ID or gives you a link to open it.
 - The new incident appears in the queue.
 
 How to validate each intake path:
+
+#### Raw log paste
+
+1. Keep the raw-log paste path selected.
+2. Paste or edit a short log snippet.
+3. Confirm the parsed evidence preview updates.
+4. Submit the raw logs.
+
+Expected result:
+
+- the browser shows the extracted service, severity, and error signature
+- the backend creates a new incident
+- the result area gives you a link to the incident console
+- the new incident opens with the same workflow as the other channels
 
 #### Webhook
 
@@ -343,6 +363,8 @@ What to look for on the page:
 - severity
 - queue position
 - ETA
+- raw incident text, when present
+- normalized evidence derived from the raw text
 - the 9-step workflow timeline
 - agent cards for `SENTINEL`, `PRISM`, `FORGE`, and `GUARDIAN`
 - evidence provenance
@@ -356,6 +378,7 @@ Expected behavior:
 - The workflow timeline makes sense in order.
 - The agent flow is visible.
 - The audit trail is readable.
+- The raw input and normalized evidence are visible on live incidents.
 - The evidence section shows where the information came from.
 - The execution state is visible and updates when the incident changes.
 
@@ -369,7 +392,7 @@ That means a real intake action can feed the console with:
 
 This is the difference between a static demo payload and the current live incident path.
 
-If you started the app with optional OpenAI mode enabled, this same screen will also show live LLM-backed reasoning for the seeded incident path:
+If you started the app with optional OpenAI mode enabled, this same screen will also show live LLM-backed reasoning for the seeded incident path and the raw-log incident path:
 
 - `SENTINEL` uses a live classification call.
 - `PRISM` uses a live diagnosis call.
@@ -421,13 +444,15 @@ Expected result:
 
 1. Create a new incident from `Inputs`.
 2. Open the incident from the created result link.
-3. Compare it with a seeded demo incident such as `INC001`.
+3. Confirm the raw input and normalized evidence appear in the console.
+4. Compare it with a seeded demo incident such as `INC001`.
 
 Expected result:
 
 - The new incident opens with backend-generated context.
 - Audit trail, status, and evidence all align.
 - The console still keeps the same look and feel for the demo, but the data path is now live.
+- The raw text you pasted is visible in the console.
 
 #### Audit trail
 
@@ -548,7 +573,9 @@ What to look for:
 - baseline reward
 - trained reward
 - episode count
+- RL episode contract
 - improvement or delta
+- reward evaluation
 - training snapshots
 - live incident artifacts if shown
 
@@ -567,6 +594,24 @@ How to validate:
 Expected result:
 
 - You can understand whether the system is improving.
+
+Optional terminal check:
+
+If you want to confirm the same training contract from the terminal, run:
+
+```bash
+curl -s http://127.0.0.1:7860/api/v1/training/summary \
+  -H 'x-user-id: user-123' \
+  -H 'x-tenant-id: tenant-a' \
+  -H 'x-roles: operator' \
+| python3 -c "import json,sys; p=json.load(sys.stdin); c=p['rl_episode_contract']; e=p['reward_evaluation']; print('reward_curve_final=', e['reward_curve_final']); print('incident_id=', c['observation']['incident_id']); print('guardian_decision=', c['guardian_decision'])"
+```
+
+Expected result:
+
+- The command prints the training reward summary.
+- The command prints an incident ID from the RL episode contract.
+- The command prints the guardian decision.
 
 ### 6.7 Settings
 
@@ -629,7 +674,7 @@ Expected result:
 You are in a healthy state if:
 
 - every main page loads
-- the queue is the landing page
+- the queue is the operational follow-up page after intake is normalized
 - intake creates incidents
 - incidents open in the console
 - the workflow timeline is visible
