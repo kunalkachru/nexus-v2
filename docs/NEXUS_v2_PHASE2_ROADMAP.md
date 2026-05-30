@@ -1,6 +1,6 @@
 # NEXUS v2 Phase 2 Roadmap
 
-> Current implementation alignment is tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](NEXUS_v2_DOC_STATUS_MATRIX.md).
+> Target-state Phase 2 roadmap. Current implementation alignment and remaining gaps are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](NEXUS_v2_PRIORITY_BACKLOG.md).
 
 ## Timeline: Weeks 1-4
 

@@ -1,5 +1,7 @@
 # Enterprise UI Product Roadmap Implementation Plan
 
+> Historical execution plan. The repo now reflects this plan, and live status is tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../../NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../../NEXUS_v2_PRIORITY_BACKLOG.md).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make NEXUS feel like an enterprise incident response product from the user experience first, then add backend-backed realism behind the same shell.

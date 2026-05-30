@@ -1,5 +1,7 @@
 # Enterprise UI Product Roadmap
 
+> Current implementation status and remaining gaps are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../../NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../../NEXUS_v2_PRIORITY_BACKLOG.md).
+
 ## Objective
 
 Define the short-term work needed to make NEXUS feel like an enterprise product from the user experience first, then add real backend functionality afterward.

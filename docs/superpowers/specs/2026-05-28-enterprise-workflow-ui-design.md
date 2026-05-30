@@ -1,5 +1,7 @@
 # Enterprise Workflow UI Design
 
+> Design reference for the UI-first phase. Current implementation status and remaining gaps are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../../NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../../NEXUS_v2_PRIORITY_BACKLOG.md).
+
 ## Goal
 
 Turn the current single-page deterministic dashboard into a multi-page enterprise web app that shows how incidents enter NEXUS, how each agent contributes to diagnosis and remediation, and how the RL system learns from each episode.

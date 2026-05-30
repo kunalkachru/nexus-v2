@@ -1,5 +1,7 @@
 # NEXUS Enterprise Grade Phase 2 Implementation Plan
 
+> Target-state Phase 2 implementation plan. Current implementation alignment and remaining gaps are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../../NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../../NEXUS_v2_PRIORITY_BACKLOG.md).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Turn the current deterministic demo into an enterprise-grade Phase 2 product with real alert ingestion, evidence correlation, runbook retrieval, policy enforcement, persistence, authenticated APIs, and a maintainable operator dashboard.

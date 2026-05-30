@@ -1,5 +1,7 @@
 # Day 7 Production Design
 
+> Historical production packaging reference. Current implementation status and remaining gaps are tracked in [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../../NEXUS_v2_DOC_STATUS_MATRIX.md) and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../../NEXUS_v2_PRIORITY_BACKLOG.md).
+
 ## Goal
 
 Ship a production-ready NEXUS v2 package for HuggingFace Spaces with a judge-facing demo path, a static metrics dashboard, and containerized FastAPI serving.
@@ -71,4 +73,3 @@ Docker will run `uvicorn` on port `7860`, matching HF Spaces defaults.
 - App tests cover dashboard/static serving and metrics API.
 - Demo tests cover artifact generation and required output fields.
 - Training tests continue to enforce the 30-episode reward target and cost tracking.
-
