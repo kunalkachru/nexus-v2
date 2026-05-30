@@ -197,6 +197,7 @@ Browser validation targets:
 The current repo is considered ready when the suite is green and the browser pages load without console errors in the main demo flow.
 
 For a full screen-by-screen manual validation and demo script, see [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md).
+For a quick live demo reference, see [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md).
 
 ## Roadmap
 
@@ -215,3 +216,4 @@ If you want the shortest path to the next phase of product hardening, start with
 - [docs/NEXUS_v2_PRIORITY_BACKLOG.md](docs/NEXUS_v2_PRIORITY_BACKLOG.md)
 - [docs/OPERATIONS.md](docs/OPERATIONS.md)
 - [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md)
+- [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)

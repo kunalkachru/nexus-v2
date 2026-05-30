@@ -18,6 +18,7 @@ Legend:
 | [design-docs/NEXUS_v2_ENTERPRISE_SPECIFICATION.md](../design-docs/NEXUS_v2_ENTERPRISE_SPECIFICATION.md) | Partial | The UI and demo contracts are in place, but the live enterprise pipeline is not. |
 | [design-docs/NEXUS_v2_Master_Product_Document.md](../design-docs/NEXUS_v2_Master_Product_Document.md) | Partial / Pending | Vision and narrative are intact; business, legal, and scale sections are mostly not implemented in code. |
 | [docs/OPERATIONS.md](OPERATIONS.md) | Partial | Local/Docker flow is valid; demo and product mode operations plus recovery are not fully hardened. |
+| [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md) | Done | Quick live demo reference for fast navigation through the product. |
 | [docs/DEMO_WALKTHROUGH.md](DEMO_WALKTHROUGH.md) | Done | This is the current screen-by-screen manual validation and demo script. |
 
 ## Priority Backlog

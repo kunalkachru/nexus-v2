@@ -30,6 +30,7 @@ It describes how to start the product, verify the main surfaces, and recover fro
 - Review audit logs after webhook ingestion and incident reads
 
 For the full browser walkthrough and demo script, see [docs/DEMO_WALKTHROUGH.md](DEMO_WALKTHROUGH.md).
+For the quick live demo reference, see [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md).
 
 ## Recover
 
