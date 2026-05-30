@@ -10,9 +10,13 @@ It describes how to start the product, verify the main surfaces, and recover fro
 
 ## Required Secrets
 
-- `OPENAI_API_KEY`
+- `OPENAI_API_KEY` if you enable the optional OpenAI demo path
 - platform auth header or gateway credentials
 - database or object-store credentials if you are running outside demo mode
+
+Optional demo path settings:
+- `NEXUS_USE_OPENAI=1`
+- `LLM_MODEL`
 
 ## Start Up
 
@@ -33,6 +37,7 @@ For the full browser walkthrough and demo script, see [docs/DEMO_WALKTHROUGH.md]
 For the quick live demo reference, see [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md).
 For live presentation notes by screen, see [docs/LIVE_DEMO_SPEAKER_NOTES.md](LIVE_DEMO_SPEAKER_NOTES.md).
 For the full presenter pack, see [docs/PRESENTATION_PACK.md](PRESENTATION_PACK.md).
+For the agent model matrix, see [docs/AGENT_MODEL_MATRIX.md](AGENT_MODEL_MATRIX.md).
 
 ## Recover
 

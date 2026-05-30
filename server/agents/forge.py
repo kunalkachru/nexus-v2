@@ -37,10 +37,12 @@ class ForgeAgent(BaseAgent):
         client: ForgeClient | None = None,
         memory_graph: IncidentMemoryGraph | None = None,
         sandbox: SandboxExecutor | None = None,
+        model_name: str | None = None,
     ) -> None:
         self._client = client or _MissingForgeClient()
         self._memory_graph = memory_graph or IncidentMemoryGraph()
         self._sandbox = sandbox or SandboxExecutor()
+        self._model_name = model_name
 
     def describe(self) -> AgentStubInfo:
         """Report that FORGE is implemented while GUARDIAN remains a stub."""
@@ -62,7 +64,7 @@ class ForgeAgent(BaseAgent):
         if not system_context.service.strip():
             raise ValueError("system_context.service must not be empty")
 
-        model_name = os.environ.get("LLM_MODEL", "gpt-4o")
+        model_name = self._model_name or os.environ.get("LLM_MODEL", "gpt-4o")
         historical_runbooks = await self._memory_graph.find_similar(prism_output.root_cause)
         user_prompt = self._build_prompt(prism_output, system_context, historical_runbooks)
         response_data = self._client.generate_json(

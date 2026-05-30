@@ -4,6 +4,7 @@ import time
 import asyncio
 
 from server.agents import ForgeAgent, GuardianAgent, PrismAgent, SentinelAgent
+from server.config import AppConfig
 from server.incident_payloads import get_incident_definition, get_incident_details
 from server.models import NormalizedAlertEnvelope
 from server.orchestrator import NexusCore
@@ -57,11 +58,12 @@ def run_demo(*, incident_id: str = "INC001", print_output: bool = False) -> dict
     checkpoint = load_checkpoint()
     incident = get_incident_definition(incident_id)
     incident_details = get_incident_details(incident_id)
+    config = AppConfig()
     core = NexusCore(
         observability=ObservabilityService(),
         sentinel=SentinelAgent(),
         prism=PrismAgent(),
-        forge=ForgeAgent(client=_forge_client()),
+        forge=ForgeAgent(client=_forge_client(), model_name=config.forge_model_name),
         guardian=GuardianAgent(),
     )
 

@@ -22,6 +22,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - Full manual walkthrough, speaker notes, and presenter pack are now documented.
 - A 5-slide presenter deck has been created as a `.pptx` for review/judging.
 - Live docs now explicitly describe the sequential 4-agent handoff: `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
+- A dedicated agent model matrix now records which agents are deterministic, optional-LLM, or still partially wired.
 
 ## Open Blockers
 - Observability and evidence are still mostly fixture-backed instead of coming from real adapters.
@@ -29,6 +30,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - Production persistence is still not durable enough for restart-safe incident, replay, and training state.
 - Auth, tenant, and deployment hardening still need stronger production boundaries.
 - No blocking issue for the current documentation/presenter-pack task.
+- The app-level model/provider story is clearer now, but the enterprise hybrid LLM plan still needs a real PRISM/Forge implementation round.
 
 ## Most Important Source Of Truth
 - [README.md](README.md)
@@ -48,9 +50,12 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - `server/services/incidents.py`
 - `server/app.py`
 - `server/models.py`
+- `server/agents/forge.py`
 - `tests/test_observability.py`
 - `tests/test_api_contract.py`
+- `tests/test_agents.py`
 - `docs/NEXUS_v2_DOC_STATUS_MATRIX.md`
+- `docs/AGENT_MODEL_MATRIX.md`
 - `docs/NEXUS_v2_PRIORITY_BACKLOG.md`
 - `WORKING_STATE.md`
 

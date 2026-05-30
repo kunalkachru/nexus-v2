@@ -19,6 +19,7 @@ Current phase:
 
 The current source of truth for scope and status is:
 - [Documentation status matrix](docs/NEXUS_v2_DOC_STATUS_MATRIX.md)
+- [Agent model matrix](docs/AGENT_MODEL_MATRIX.md)
 - [Priority backlog](docs/NEXUS_v2_PRIORITY_BACKLOG.md)
 - [Operations guide](docs/OPERATIONS.md)
 
@@ -94,6 +95,24 @@ The incident console presents the four agents as a handoff chain:
 4. `GUARDIAN` reviews the proposal and allows, blocks, or requests modification before execution.
 
 That order matters because it makes the incident story readable for operators, product reviewers, and judges.
+
+### Agent model strategy
+
+Current runtime behavior:
+
+- `SENTINEL` is deterministic and classifies incidents from known patterns.
+- `PRISM` is deterministic and correlates observability evidence.
+- `FORGE` is deterministic by default in the web app, with an optional live OpenAI path in `demo.py` when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
+- `GUARDIAN` is deterministic and acts as the safety/policy gate.
+
+Recommended production direction:
+
+- `SENTINEL`: hybrid classifier with deterministic defaults and LLM fallback only for ambiguous incidents.
+- `PRISM`: retrieval-grounded LLM synthesis with explicit evidence provenance.
+- `FORGE`: LLM-backed runbook generation with sandbox and policy validation.
+- `GUARDIAN`: deterministic enforcement, with LLMs used only for explanation if needed.
+
+See [docs/AGENT_MODEL_MATRIX.md](docs/AGENT_MODEL_MATRIX.md) for the current-state matrix.
 
 ### Input channels
 
@@ -182,11 +201,16 @@ python demo.py
 
 ### Useful runtime settings
 
-The current demo-friendly defaults live in `server/config.py`:
-- `OPENAI_API_KEY`
+The current app/runtime defaults live in `server/config.py`:
 - `database_path`
 - `webhook_signing_secret`
 - `allowed_tenant_ids`
+- `forge_model_name`
+
+Optional demo/OpenAI settings:
+- `NEXUS_USE_OPENAI`
+- `OPENAI_API_KEY`
+- `LLM_MODEL`
 
 ## Testing and automation
 
