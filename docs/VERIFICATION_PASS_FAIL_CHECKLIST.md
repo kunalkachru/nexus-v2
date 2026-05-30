@@ -26,12 +26,17 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] GUARDIAN is shown.
 - [ ] Raw incident text is visible for live incidents.
 - [ ] Normalized evidence is visible for live incidents.
+- [ ] The structured result cards expose proposed fix, priority, normalized rank, and live reasoning state.
 - [ ] Logs, metrics, traces, and deployments are visible.
 - [ ] A newly created incident opens with backend-assembled live context.
+- [ ] A live reasoning toggle is visible and can switch the current incident view without manual URL edits.
 
 ## Input Channels
 
 - [ ] Raw-log paste intake is visible.
+- [ ] The raw input field starts empty.
+- [ ] A `Load example logs` button is visible.
+- [ ] The parsed preview updates when the pasted text changes.
 - [ ] Webhook intake is visible.
 - [ ] Manual intake is visible.
 - [ ] Slack-style intake is visible.
@@ -60,12 +65,14 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Reward evaluation is visible.
 - [ ] Reward breakdown is visible.
 - [ ] Observation states are visible.
+- [ ] The RL episode contract shows the solution proposal, raw priority, priority rank, and live reasoning state.
 
 ## Settings
 
 - [ ] Demo mode or product mode is visible.
 - [ ] Integration posture is visible.
 - [ ] Replay readiness or configuration is visible.
+- [ ] The learning-contract count is visible.
 
 ## End-To-End Flow
 
@@ -73,17 +80,22 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Open one incident.
 - [ ] Walk the timeline from intake to outcome.
 - [ ] Open Inputs, keep or replace the sample raw logs, and confirm the parsed preview updates.
+- [ ] Open Inputs, confirm the raw field starts empty, and use `Load example logs` only if you want a sample.
+- [ ] Paste a severity like `P6` or `critical` and confirm the parser accepts it.
 - [ ] Click `Submit raw logs` and confirm a new incident is created.
 - [ ] Open the incident console link returned from Inputs.
 - [ ] Confirm `Raw Intake` is visible.
 - [ ] Confirm `Normalized evidence` is visible and read-only.
 - [ ] Confirm the `SENTINEL -> PRISM -> FORGE -> GUARDIAN` rail is visible and read-only.
-- [ ] Click `Request execution` if it is visible.
+- [ ] Confirm the live reasoning toggle can switch the incident view on the fly.
+- [ ] Confirm the incident summary shows the proposed fix and priority fields.
+- [ ] Use the `Guardian gate` buttons if they are visible.
 - [ ] Show input channels.
 - [ ] Show history.
 - [ ] Launch a sample replay.
 - [ ] Open the training lab.
 - [ ] Confirm the RL episode contract.
+- [ ] Confirm the training view shows the solution proposal, raw priority, and learning contract count.
 - [ ] Finish in settings.
 
 ## Pass Criteria

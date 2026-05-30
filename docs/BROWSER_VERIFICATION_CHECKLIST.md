@@ -108,7 +108,9 @@ Confirm:
 - A newly created incident opens with backend-assembled live context, not just browser-synthesized data.
 - `Normalized evidence` is read-only.
 - The `SENTINEL -> PRISM -> FORGE -> GUARDIAN` rail is read-only.
-- `Request execution` is the action button, if it is visible.
+- A live reasoning toggle is visible and changes the rendered incident without editing the URL manually.
+- The `Guardian gate` buttons are the explicit approval and block controls, if they are visible.
+- The incident summary exposes the structured result fields, including proposed fix, priority, normalized rank, safety decision, and live reasoning state.
 
 Pass criteria:
 
@@ -126,14 +128,19 @@ http://127.0.0.1:8000/inputs
 Confirm:
 
 - The raw-log paste path is visible and clearly described.
+- The raw input field starts empty.
+- A `Load example logs` button is visible for quick demos.
 - Multiple intake options are visible.
 - The page shows more than one input method.
 - The intent of the page is to demonstrate how incidents enter the system.
+- A live reasoning toggle is visible and can be switched before submission.
 
 Pass criteria:
 
 - Each input method appears to feed the same incident workflow.
 - The raw-log preview updates when the pasted text changes.
+- The parsed preview reflects the pasted content, including arbitrary labels such as `P6` or `critical`.
+- Submitting raw logs creates an incident and updates the console link with the new incident ID.
 
 ## History
 
@@ -190,6 +197,7 @@ Confirm:
 - The observation-state story is visible.
 - The latest episode links back to a real incident.
 - The page reads like a learning story, not a research dump.
+- The RL episode contract shows the structured result fields, including raw priority, priority rank, solution proposal, and live reasoning.
 
 Pass criteria:
 
@@ -208,6 +216,7 @@ Confirm:
 - Demo mode or product mode is shown.
 - Integration posture is visible.
 - Replay readiness or operational configuration is visible.
+- The learning-contract count is visible alongside replay launches and training snapshots.
 
 Pass criteria:
 
@@ -221,10 +230,12 @@ After the pages are verified individually, do one full walkthrough:
 2. Open one incident in `Incident Console`.
 3. Walk the timeline from intake to outcome.
 4. Switch to `Input Channels` and show the intake options.
-5. Open `History` and show a past incident.
-6. Open `Sample Replay` and show a curated replay scenario.
-7. Open `RL Training Lab` and point to the reward curve, RL episode contract, and observation states.
-8. Finish in `Settings`.
+5. Paste raw logs, including a label such as `P6` or `critical`, and show the parsed preview update.
+6. Submit the raw logs, open the returned incident console, and point to the proposed fix and live reasoning toggle.
+7. Open `History` and show a past incident.
+8. Open `Sample Replay` and show a curated replay scenario.
+9. Open `RL Training Lab` and point to the reward curve, RL episode contract, solution proposal, and observation states.
+10. Finish in `Settings`.
 
 ## What Good Looks Like
 

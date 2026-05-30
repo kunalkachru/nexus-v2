@@ -264,17 +264,22 @@ How to validate each intake path:
 #### Raw log paste
 
 1. Keep the raw-log paste path selected.
-2. Leave the sample logs in place, or replace them with your own incident text.
-3. Confirm the parsed evidence preview updates while you type.
-4. Click `Submit raw logs`.
+2. The text box starts empty.
+3. If you want a sample, click `Load example logs`. Otherwise paste your own incident text.
+4. Confirm the parsed evidence preview updates while you type.
+5. Click `Submit raw logs`.
 
 Expected result:
 
 - the browser shows the extracted service, severity, and error signature
+- the parser accepts arbitrary priority labels such as `P6` or text like `critical`
 - the backend creates a new incident
 - the result area gives you a link to the incident console
 - click the incident console link that appears in the result area
 - the incident opens with the same workflow as the other channels
+- if the pasted log contains `P4`, the parsed severity should show `P4`
+- the live reasoning toggle on Inputs and the incident console can be used to switch live reasoning on or off before opening the incident
+- the incident summary shows the proposed fix, priority, normalized rank, and live reasoning state
 
 #### On The Incident Console
 
@@ -282,20 +287,24 @@ Expected result:
 2. Read the `Raw Intake` section.
 3. Read the `Normalized evidence` section.
 4. Read the `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff rail.
-5. If you see `Request execution`, click it once.
+5. If you want to switch live reasoning after opening the incident, use the `Live reasoning` toggle and let the page update in place.
+6. If you see the `Guardian gate`, use `Approve and execute` once or `Block execution` to stop the runbook.
 
 What to remember:
 
 - `Normalized evidence` is read-only. It is not a button.
 - The agent handoff rail is also read-only. It is there for inspection.
-- The only action button on the incident console is `Request execution`, when it is visible.
+- The live reasoning toggle is the control that changes how the incident is rendered.
+- The incident console now exposes explicit `Approve and execute` and `Block execution` controls in the `Guardian gate`.
 
 Expected result:
 
 - you can tell which raw logs were pasted
 - you can see the parsed evidence that the backend derived
 - you can read the four-agent sequence in order
-- if you click `Request execution`, the incident state updates and the audit trail records it
+- you can switch live reasoning on or off and see the incident content update in place
+- if you click `Approve and execute`, the incident state updates and the audit trail records it
+- if you block execution, the incident stays under review and the audit trail records the block
 
 #### Webhook
 
@@ -596,6 +605,9 @@ What to look for:
 - trained reward
 - episode count
 - RL episode contract
+- solution proposal
+- raw priority and normalized priority rank
+- learning-contract count
 - improvement or delta
 - reward evaluation
 - training snapshots
@@ -609,6 +621,7 @@ Expected behavior:
 - The training story is understandable.
 - The screen does not feel like a raw research dump.
 - The product makes the learning loop visible.
+- The RL episode contract includes the structured result fields and the solution proposal is visible.
 
 How to validate:
 
@@ -640,6 +653,7 @@ Expected result:
 - The command prints the training reward summary.
 - The command prints an incident ID from the RL episode contract.
 - The command prints the guardian decision.
+- The API also exposes the structured result fields used by the browser training view.
 
 ### 6.7 Settings
 
@@ -657,6 +671,7 @@ What to look for:
 - signature verification state
 - replay launch counts
 - training snapshot counts
+- learning-contract counts
 - integration or platform status
 - trust-related settings or indicators
 
