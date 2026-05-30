@@ -6,6 +6,17 @@ Use this document to verify the UI manually in a browser after the implementatio
 
 This checklist confirms that the enterprise workflow UI loads correctly, the main pages are wired, and the demo flow can be followed end to end.
 
+## What Changed In This Pass
+
+Use this list when you want to confirm the exact changes that landed in the latest check-in:
+
+- The raw-input field on `Inputs` starts empty and `Load example logs` fills a sample on demand.
+- The raw-log parser accepts arbitrary labels like `P6` and `critical`.
+- The incident console shows the structured result fields, including proposed fix, priority, normalized rank, safety decision, and live reasoning state.
+- The `Guardian gate` is an explicit approve/block control surface.
+- The training lab shows solution proposal, raw priority, priority rank, live reasoning state, and learning-contract count.
+- The settings page exposes the learning-contract count alongside replay launches and training snapshots.
+
 ## Prerequisites
 
 - A local checkout of the repository.

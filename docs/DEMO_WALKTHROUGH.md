@@ -12,6 +12,17 @@ Use this doc if you want to:
 - verify that the current UI and backend behavior are working
 - explain the product to a non-technical person
 
+## What This Pass Verified
+
+The latest implementation and browser pass confirmed:
+
+- raw-log intake starts empty and `Load example logs` fills a sample on demand
+- arbitrary priority labels such as `P6` and `critical` are accepted
+- the incident console shows the proposed fix, priority, normalized rank, and live reasoning state
+- the `Guardian gate` is the explicit approval and block control surface
+- the training lab shows the solution proposal and learning-contract count
+- the settings page shows the learning-contract count
+
 ## What This Product Is
 
 NEXUS v2 is a browser-based incident-response product.

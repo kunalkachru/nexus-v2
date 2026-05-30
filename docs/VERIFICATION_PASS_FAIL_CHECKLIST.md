@@ -2,6 +2,15 @@
 
 Use this as a quick yes/no checklist while verifying the UI in a browser.
 
+## What Was Checked In This Pass
+
+- Raw input starts empty and `Load example logs` works.
+- Arbitrary priority labels such as `P6` and `critical` are accepted.
+- The incident console shows proposed fix, priority, normalized rank, and live reasoning state.
+- The Guardian gate exposes explicit approve and block controls.
+- The training lab shows the solution proposal, raw priority, and learning-contract count.
+- The settings page exposes the learning-contract count.
+
 ## Before You Start
 
 - [ ] The app starts locally without errors.
