@@ -30,9 +30,9 @@ Expected:
 
 ## Demo Order
 
-1. Queue
-2. Inputs
-3. Incident Console
+1. Inputs
+2. Incident Console
+3. Queue
 4. History
 5. Replay
 6. Training
@@ -53,12 +53,14 @@ Expected:
 
 ### Inputs
 
-- Use this to create a new incident.
-- Pick `Manual form` for the simplest story or `Webhook` for the most realistic machine-driven story.
-- Submit a sample incident.
+- Use this to paste raw logs or create a new incident.
+- Start with the raw-log paste path for the MVP story.
+- Pick `Manual form` for the simplest alternate story or `Webhook` for the most realistic machine-driven story.
+- Submit a sample incident and open the resulting console link.
 
 Expected:
 
+- The raw-log preview updates as you edit text.
 - A new incident ID or incident link appears.
 - The incident shows up in the queue.
 
@@ -66,6 +68,7 @@ Expected:
 
 - Main operator view.
 - Show the 9-step workflow.
+- Show the raw incident text and normalized evidence for live incidents.
 - Highlight the sequential handoff: `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
 - Point out evidence provenance and audit trail.
 - Trigger execution if appropriate.
@@ -96,11 +99,14 @@ Expected:
 
 ### Training
 
-- Show summary metrics, reward movement, and episodes.
+- Show summary metrics, reward movement, the RL episode contract, and the latest episode link.
+- Point to the reward evaluation and say that the system is turning incidents into a structured learning record.
+- Open the latest episode incident if you want to connect training back to the console.
 
 Expected:
 
 - The learning story is understandable to a non-engineer.
+- The audience can see how reward and episodes connect to a real incident.
 
 ### Settings
 
@@ -112,22 +118,23 @@ Expected:
 
 ## Fast Demo Script
 
-1. Open the queue.
-2. Create a manual incident from Inputs.
+1. Open Inputs.
+2. Paste raw logs and submit the incident.
 3. Open the new incident.
 4. Show the workflow timeline.
-5. Show agent flow and evidence provenance.
+5. Show raw incident text, normalized evidence, agent flow, and evidence provenance.
 6. Show audit trail.
 7. Trigger execution if allowed.
-8. Jump to History.
-9. Jump to Replay.
-10. Finish with Training and Settings.
+8. Jump to Queue.
+9. Jump to History.
+10. Jump to Replay.
+11. Finish with Training and Settings.
 
 ## Quick Checks
 
-- Queue loads first.
-- Inputs creates an incident.
-- Incident Console renders all main sections.
+- Inputs creates an incident and shows the parsed preview.
+- Incident Console renders all main sections and raw intake evidence.
+- Queue loads and shows the new incident.
 - History links back into the console.
 - Replay is launchable.
 - Training shows readable progress.

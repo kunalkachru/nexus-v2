@@ -7,49 +7,31 @@ Use them when you want to explain the product live, screen by screen, without re
 
 ## How To Use These Notes
 
-- Start at the queue.
+- Start with raw-log intake in Inputs.
 - Move through the screens in the order below.
 - Keep the language simple and outcome-focused.
 - Point to what the user can see, not just what the backend is doing.
 
-## 1) Queue
+## 1) Inputs
 
 ### What to say
 
-- “This is the main operational entry point.”
-- “The queue shows what needs attention first.”
-- “Priority, source, severity, and stage are visible immediately.”
+- “This is where a real incident begins.”
+- “A user can paste raw logs, an error message, or a stack trace.”
+- “The product normalizes that input before the agents reason about it.”
 
 ### What the audience should notice
 
-- The landing page is queue-first.
-- Incidents are clearly ordered.
-- The page looks like an operations console, not a dashboard mock-up.
+- The raw-log preview updates as text changes.
+- The page makes the intake path obvious.
+- The product feels like a real incident front door.
 
 ### If asked
 
-- Explain that this is where triage begins.
-- Explain that the queue is meant to reduce scanning and guesswork.
+- Explain that this is the MVP entrypoint.
+- Explain that the system will later apply the same flow to Slack, webhooks, and streams.
 
-## 2) Inputs
-
-### What to say
-
-- “This is how incidents enter the system.”
-- “We support webhook, manual, chat-style, stream, and batch intake.”
-- “Every path lands in the same incident model.”
-
-### What the audience should notice
-
-- The product is not limited to one kind of input.
-- The intake screen feels like a real operational front door.
-
-### If asked
-
-- Use manual form for the easiest live demo.
-- Use webhook if you want to emphasize machine-driven incident creation.
-
-## 3) Incident Console
+## 2) Incident Console
 
 ### What to say
 
@@ -57,11 +39,13 @@ Use them when you want to explain the product live, screen by screen, without re
 - “It explains what happened, what the agents found, and what action is possible.”
 - “The workflow timeline shows the incident moving through the system.”
 - “The agents run in sequence: SENTINEL classifies, PRISM diagnoses, FORGE proposes, and GUARDIAN decides whether execution can proceed.”
+- “If live OpenAI mode is enabled, the raw-log path and the seeded demo path both show live reasoning from the same agent chain.”
 
 ### What the audience should notice
 
 - The 9-step workflow is visible.
 - The sequential agent handoff across `SENTINEL`, `PRISM`, `FORGE`, and `GUARDIAN` is visible.
+- Raw incident text and normalized evidence are visible for live incidents.
 - Evidence provenance and audit trail are readable.
 
 ### If asked
@@ -69,6 +53,24 @@ Use them when you want to explain the product live, screen by screen, without re
 - Point out queue position and ETA.
 - Point out that execution state changes are visible in the console.
 - Mention that this is the main place operators spend their time.
+
+## 3) Queue
+
+### What to say
+
+- “This is the operational backlog.”
+- “It shows what needs attention first.”
+- “Priority, source, severity, and stage are visible immediately.”
+
+### What the audience should notice
+
+- Incidents are clearly ordered.
+- The page looks like an operations console, not a dashboard mock-up.
+
+### If asked
+
+- Explain that this is where triage starts after intake.
+- Explain that the queue is meant to reduce scanning and guesswork.
 
 ## 4) History
 
@@ -108,15 +110,19 @@ Use them when you want to explain the product live, screen by screen, without re
 
 - “This is the learning loop.”
 - “We show reward movement, episode history, and training snapshots.”
+- “The page also exposes the RL episode contract so the learning story is visible, not hidden.”
+- “There is nothing to click here unless I want to open the latest episode in the incident console.”
 
 ### What the audience should notice
 
 - Training is understandable without needing to read source code.
 - The screen makes progress visible.
+- The latest episode links learning back to a real incident.
 
 ### If asked
 
 - Explain that this is where the system gets better from experience.
+- Explain that reward evaluation and the episode contract are the parts that later feed the RL loop.
 
 ## 7) Settings
 

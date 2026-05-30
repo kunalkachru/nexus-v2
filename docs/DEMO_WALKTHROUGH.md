@@ -600,6 +600,9 @@ What to look for:
 - reward evaluation
 - training snapshots
 - live incident artifacts if shown
+- reward curve bars
+- latest episode details
+- the incident link inside the episode table
 
 Expected behavior:
 
@@ -612,10 +615,13 @@ How to validate:
 1. Open the page.
 2. Read the summary metrics.
 3. Review the episodes or snapshots.
+4. Open the latest episode incident link if you want to see the learning record in the console.
 
 Expected result:
 
 - You can understand whether the system is improving.
+- You can point to the latest episode and explain what the agents did.
+- You can see how the learning surface connects back to a real incident.
 
 Optional terminal check:
 

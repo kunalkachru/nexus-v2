@@ -188,6 +188,8 @@ Confirm:
 - The RL episode contract is visible.
 - Reward evaluation is visible.
 - The observation-state story is visible.
+- The latest episode links back to a real incident.
+- The page reads like a learning story, not a research dump.
 
 Pass criteria:
 
