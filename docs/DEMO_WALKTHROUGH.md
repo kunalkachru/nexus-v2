@@ -610,6 +610,55 @@ You are in a healthy state if:
 - training shows understandable progress
 - settings shows trust posture
 
+## Part 8A: Functional Checks
+
+Use this section to verify the product is working, not just rendering.
+
+### Queue
+
+- Open `/queue`.
+- Confirm the top incident is first because it has the highest urgency or oldest age.
+- Expected result: each row shows incident ID, source, severity, stage, and time.
+
+### Inputs
+
+- Open `/inputs`.
+- Submit one manual report and one webhook-style report.
+- Expected result: each submission creates or routes to an incident and shows a usable incident link.
+
+### Incident Console
+
+- Open an incident from the queue or Inputs.
+- Confirm the workflow timeline loads.
+- Confirm the agent handoff shows `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
+- Confirm the audit trail and evidence provenance are visible.
+- Click the execution action if it is available.
+- Expected result: the incident updates state, and the audit trail reflects the action.
+
+### History
+
+- Open `/history`.
+- Open a historical incident from the list.
+- Expected result: it returns to the same incident console experience.
+
+### Replay
+
+- Open `/replay`.
+- Launch a replay scenario.
+- Expected result: a new incident is created or opened, and the replay path is visible in the console.
+
+### Training
+
+- Open `/training`.
+- Confirm the training summary and reward movement are visible.
+- Expected result: the training surface explains the learning loop in plain language.
+
+### Settings
+
+- Open `/settings`.
+- Confirm the trust posture and runtime configuration are visible.
+- Expected result: you can see the platform readiness story without reading code.
+
 ## Part 9: What To Do If Something Fails
 
 If a page does not load:

@@ -20,6 +20,7 @@ Use this file as the short handoff for long Codex sessions. Keep it current and 
 - Queue-first shell, incident console, input channels, replay, training, and settings surfaces are in place.
 - The docs status matrix now treats the UI-first roadmap as complete and the next phase as only partially complete.
 - Full manual walkthrough, speaker notes, and presenter pack are now documented.
+- The manual walkthrough now includes explicit functional checks for queue, inputs, incident console, history, replay, training, and settings.
 - A 5-slide presenter deck has been created as a `.pptx` for review/judging.
 - Live docs now explicitly describe the sequential 4-agent handoff: `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
 - A dedicated agent model matrix now records which agents are deterministic, optional-LLM, or still partially wired.
