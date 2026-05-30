@@ -354,6 +354,8 @@ def build_platform_status(payload: dict[str, object]) -> dict[str, object]:
         "replay_launches": artifact_summary["replay_launches"],
         "training_snapshots": artifact_summary["training_snapshots"],
         "learning_contracts": artifact_summary["learning_contracts"],
+        "audit_events": artifact_summary.get("audit_events", 0),
+        "guardian_reviews": artifact_summary.get("guardian_reviews", 0),
     }
 
 

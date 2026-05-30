@@ -252,6 +252,12 @@ def test_guardian_review_contract_records_gate_and_execute(client: TestClient, a
     assert status_payload["guardian_decision"] == "approve"
     assert status_payload["current_stage"] == "executed_verified_learned"
 
+    platform_response = client.get("/api/v1/platform/status", headers=auth_headers())
+    assert platform_response.status_code == 200
+    platform_payload = platform_response.json()
+    assert platform_payload["audit_events"] >= 1
+    assert platform_payload["guardian_reviews"] >= 1
+
 
 def test_guardian_block_contract_blocks_execution(client: TestClient, auth_headers) -> None:
     response = client.post(

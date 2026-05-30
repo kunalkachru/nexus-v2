@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from server.audit import get_audit_logs
 from server.artifacts import record_replay_launch, record_training_snapshot
 from server.artifacts import record_learning_contract
+from server.artifacts import record_guardian_review
 from server.artifacts import get_artifact_summary
 from server.agents.forge import ForgeAgent
 from server.agents.guardian import GuardianAgent
@@ -649,6 +650,16 @@ class IncidentService:
         )
         if updated is None:
             raise HTTPException(status_code=404, detail="incident not found")
+        await record_guardian_review(
+            {
+                "tenant_id": updated.tenant_id,
+                "incident_id": updated.nexus_incident_id,
+                "guardian_decision": updated.guardian_decision,
+                "guardian_reasoning": updated.guardian_reasoning,
+                "guardian_reviewed_at": updated.guardian_reviewed_at,
+                "status": updated.status,
+            }
+        )
 
         recent_deployments = await self._deployment_lookup.get_recent_deployments(updated.service)
         queue_position, eta_sec = await self._queue_position_and_eta(

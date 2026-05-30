@@ -191,6 +191,8 @@ function renderSummary(data) {
   document.getElementById("liveAuditEvents").textContent = String(data.summary.live_audit_events ?? 0);
   document.getElementById("artifactSnapshots").textContent = String(data.artifact_summary?.training_snapshots ?? 0);
   document.getElementById("learningContracts").textContent = String(data.artifact_summary?.learning_contracts ?? 0);
+  document.getElementById("artifactAuditEvents").textContent = String(data.artifact_summary?.audit_events ?? 0);
+  document.getElementById("guardianReviews").textContent = String(data.artifact_summary?.guardian_reviews ?? 0);
 
   document.getElementById("agentStats").innerHTML = [
     ["SENTINEL", data.agent_accuracy.sentinel],

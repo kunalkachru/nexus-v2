@@ -6,6 +6,8 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
+from server.artifacts import record_audit_event
+
 
 _AUDIT_LOCK = asyncio.Lock()
 _AUDIT_CACHE: list[dict[str, object]] | None = None
@@ -25,6 +27,7 @@ async def write_audit_log(event_type: str, tenant_id: str, payload: dict[str, ob
         logs = _load_audit_logs()
         logs.append(entry)
         _persist_audit_logs(logs)
+    await record_audit_event(entry)
     logger.info("audit event=%s tenant=%s payload=%s", event_type, tenant_id, payload)
 
 

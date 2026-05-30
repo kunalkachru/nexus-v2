@@ -19,6 +19,8 @@ def _default_payload() -> dict[str, list[dict[str, object]]]:
         "replay_launches": [],
         "training_snapshots": [],
         "learning_contracts": [],
+        "audit_events": [],
+        "guardian_reviews": [],
     }
 
 
@@ -45,10 +47,14 @@ def _load_artifacts() -> dict[str, list[dict[str, object]]]:
     replay_launches = payload.get("replay_launches", [])
     training_snapshots = payload.get("training_snapshots", [])
     learning_contracts = payload.get("learning_contracts", [])
+    audit_events = payload.get("audit_events", [])
+    guardian_reviews = payload.get("guardian_reviews", [])
     result = {
         "replay_launches": [item for item in replay_launches if isinstance(item, dict)],
         "training_snapshots": [item for item in training_snapshots if isinstance(item, dict)],
         "learning_contracts": [item for item in learning_contracts if isinstance(item, dict)],
+        "audit_events": [item for item in audit_events if isinstance(item, dict)],
+        "guardian_reviews": [item for item in guardian_reviews if isinstance(item, dict)],
     }
     _ARTIFACT_CACHE = result
     return {key: list(value) for key, value in result.items()}
@@ -100,10 +106,36 @@ async def record_learning_contract(record: dict[str, object]) -> None:
         _persist_artifacts(payload)
 
 
+async def record_audit_event(record: dict[str, object]) -> None:
+    async with _ARTIFACT_LOCK:
+        payload = _load_artifacts()
+        payload["audit_events"].append(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                **record,
+            }
+        )
+        _persist_artifacts(payload)
+
+
+async def record_guardian_review(record: dict[str, object]) -> None:
+    async with _ARTIFACT_LOCK:
+        payload = _load_artifacts()
+        payload["guardian_reviews"].append(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                **record,
+            }
+        )
+        _persist_artifacts(payload)
+
+
 def get_artifact_summary() -> dict[str, int]:
     payload = _load_artifacts()
     return {
         "replay_launches": len(payload["replay_launches"]),
         "training_snapshots": len(payload["training_snapshots"]),
         "learning_contracts": len(payload["learning_contracts"]),
+        "audit_events": len(payload["audit_events"]),
+        "guardian_reviews": len(payload["guardian_reviews"]),
     }
