@@ -1,9 +1,11 @@
 import argparse
+import asyncio
 import json
 from pathlib import Path
 
 from server.agents import ForgeAgent, GuardianAgent, PrismAgent, SentinelAgent
 from server.orchestrator import NexusCore
+from server.artifacts import record_learning_contract, record_training_snapshot
 from server.services.observability import ObservabilityService
 from training.curriculum import CurriculumAdapter
 from training.grpo_loop import GRPOTrainer, TrainingSummary
@@ -59,6 +61,10 @@ def run_training(
         max_steps_per_episode=20,
     )
     summary = trainer.train(num_episodes=num_episodes)
+
+    asyncio.run(record_training_snapshot(summary.to_dict()))
+    if summary.rl_episode_contract:
+        asyncio.run(record_learning_contract(summary.rl_episode_contract))
 
     if save_curve_path is not None:
         from training.reporting import build_metrics_payload

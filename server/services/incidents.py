@@ -42,6 +42,7 @@ from server.services.live_ingest import RawIncidentParser
 from server.services.governance import GovernanceService
 from server.services.priority import normalize_priority_label, priority_rank, priority_snapshot, shift_priority_label
 from server.services.observability import ObservabilityService
+from server.services.result_contracts import build_structured_result
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,9 @@ class IncidentService:
 
     def _guardian_context(self, incident: IncidentRecord) -> dict[str, object]:
         return self._governance.guardian_context(incident)
+
+    def _guardian_policy(self, decision: str) -> dict[str, str]:
+        return self._governance.guardian_policy_for_decision(decision)
 
     async def create_incident_from_webhook(
         self,
@@ -140,6 +144,9 @@ class IncidentService:
             guardian_decision=incident.guardian_decision,
             guardian_reasoning=incident.guardian_reasoning,
             guardian_reviewed_at=incident.guardian_reviewed_at,
+            guardian_policy_id=incident.guardian_policy_id,
+            guardian_policy_name=incident.guardian_policy_name,
+            guardian_policy_basis=incident.guardian_policy_basis,
         )
         return response.model_dump(mode="json")
 
@@ -360,6 +367,9 @@ class IncidentService:
             guardian_decision=str(lifecycle.get("guardian_decision") or "pending"),
             guardian_reasoning=str(lifecycle.get("guardian_reasoning") or ""),
             guardian_reviewed_at=str(lifecycle.get("guardian_reviewed_at") or ""),
+            guardian_policy_id=str(lifecycle.get("guardian_policy_id") or ""),
+            guardian_policy_name=str(lifecycle.get("guardian_policy_name") or ""),
+            guardian_policy_basis=str(lifecycle.get("guardian_policy_basis") or ""),
         )
         return response.model_dump(mode="json")
 
@@ -570,19 +580,22 @@ class IncidentService:
             "diagnosis": diagnosis,
             "runbook": runbook,
             "guardian": guardian,
-            "structured_result": {
-                "incident_id": incident.nexus_incident_id,
-                "root_cause": diagnosis["root_cause"],
-                "proposed_fix": runbook["recommended_runbook"],
-                "safety_decision": guardian_decision,
-                "confidence": guardian.get("confidence", 0.0),
-                "execution_status": execution_result,
-                "live_reasoning": False,
-                "raw_priority_label": priority["raw_label"],
-                "normalized_priority_label": priority["normalized_label"],
-                "normalized_priority_rank": priority["rank"],
-                "reward": 0.72,
-            },
+            "structured_result": build_structured_result(
+                incident_id=incident.nexus_incident_id,
+                root_cause=diagnosis["root_cause"],
+                proposed_fix=runbook["recommended_runbook"],
+                safety_decision=guardian_decision,
+                confidence=guardian.get("confidence", 0.0),
+                execution_status=execution_result,
+                live_reasoning=False,
+                raw_priority_label=priority["raw_label"],
+                normalized_priority_label=priority["normalized_label"],
+                normalized_priority_rank=priority["rank"],
+                reward=0.72,
+                guardian_policy_id=guardian.get("policy_id", ""),
+                guardian_policy_name=guardian.get("policy_name", ""),
+                guardian_policy_basis=guardian.get("policy_basis", ""),
+            ),
             "workflow": workflow,
             "execution_result": execution_result,
             "reward": 0.72,
@@ -614,12 +627,16 @@ class IncidentService:
             next_status = "needs_modification"
         else:
             next_status = "investigating"
+        policy = self._guardian_policy(payload.decision)
         updated = await self._session.incidents.update_incident_status(
             nexus_incident_id,
             status=next_status,
             guardian_decision=payload.decision,
             guardian_reasoning=payload.reasoning or "",
             guardian_reviewed_at=reviewed_at,
+            guardian_policy_id=policy["policy_id"],
+            guardian_policy_name=policy["policy_name"],
+            guardian_policy_basis=policy["policy_basis"],
         )
         if updated is None:
             raise HTTPException(status_code=404, detail="incident not found")
@@ -630,6 +647,9 @@ class IncidentService:
                 "guardian_decision": updated.guardian_decision,
                 "guardian_reasoning": updated.guardian_reasoning,
                 "guardian_reviewed_at": updated.guardian_reviewed_at,
+                "guardian_policy_id": updated.guardian_policy_id,
+                "guardian_policy_name": updated.guardian_policy_name,
+                "guardian_policy_basis": updated.guardian_policy_basis,
                 "status": updated.status,
             }
         )
@@ -652,6 +672,9 @@ class IncidentService:
             guardian_decision=updated.guardian_decision,
             guardian_reasoning=updated.guardian_reasoning,
             guardian_reviewed_at=updated.guardian_reviewed_at,
+            guardian_policy_id=updated.guardian_policy_id,
+            guardian_policy_name=updated.guardian_policy_name,
+            guardian_policy_basis=updated.guardian_policy_basis,
         )
         return response.model_dump(mode="json")
 
@@ -825,20 +848,26 @@ class IncidentService:
                 ],
                 "policy_violations": guardian_output.blocked_patterns,
                 "reasoning": guardian_output.reasoning,
+                "policy_id": guardian_output.policy_id,
+                "policy_name": guardian_output.policy_name,
+                "policy_basis": guardian_output.policy_basis,
             },
-            "structured_result": {
-                "incident_id": incident.nexus_incident_id,
-                "root_cause": prism_output.root_cause,
-                "proposed_fix": forge_output.runbook.summary,
-                "safety_decision": guardian_output.decision,
-                "confidence": guardian_output.safety_score,
-                "execution_status": execution_result,
-                "live_reasoning": True,
-                "raw_priority_label": priority["raw_label"],
-                "normalized_priority_label": priority["normalized_label"],
-                "normalized_priority_rank": priority["rank"],
-                "reward": reward,
-            },
+            "structured_result": build_structured_result(
+                incident_id=incident.nexus_incident_id,
+                root_cause=prism_output.root_cause,
+                proposed_fix=forge_output.runbook.summary,
+                safety_decision=guardian_output.decision,
+                confidence=guardian_output.safety_score,
+                execution_status=execution_result,
+                live_reasoning=True,
+                raw_priority_label=priority["raw_label"],
+                normalized_priority_label=priority["normalized_label"],
+                normalized_priority_rank=priority["rank"],
+                reward=reward,
+                guardian_policy_id=guardian_output.policy_id,
+                guardian_policy_name=guardian_output.policy_name,
+                guardian_policy_basis=guardian_output.policy_basis,
+            ),
             "workflow": workflow,
             "execution_result": execution_result,
             "reward": reward,
@@ -874,6 +903,7 @@ class IncidentService:
     ) -> dict[str, object]:
         lifecycle = await self.get_incident_status(nexus_incident_id, tenant_id=tenant_id)
         guardian_decision = str(lifecycle.get("guardian_decision") or "pending")
+        policy = self._guardian_policy(guardian_decision)
         executed = lifecycle.get("status") not in {"blocked_by_guardian", "needs_modification"}
         if guardian_decision == "approve":
             executed = True
@@ -897,6 +927,9 @@ class IncidentService:
             "queue_position": lifecycle.get("queue_position", 1),
             "eta_sec": lifecycle.get("eta_sec", 30),
             "guardian_decision": guardian_decision,
+            "guardian_policy_id": lifecycle.get("guardian_policy_id") or policy["policy_id"],
+            "guardian_policy_name": lifecycle.get("guardian_policy_name") or policy["policy_name"],
+            "guardian_policy_basis": lifecycle.get("guardian_policy_basis") or policy["policy_basis"],
         }
         return payload
 

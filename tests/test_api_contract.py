@@ -326,6 +326,9 @@ def test_guardian_request_modification_contract_pauses_execution(client: TestCli
     review_payload = review_response.json()
     assert review_payload["guardian_decision"] == "request_modification"
     assert review_payload["status"] == "needs_modification"
+    assert review_payload["guardian_policy_id"].endswith(":request_modification")
+    assert review_payload["guardian_policy_name"]
+    assert review_payload["guardian_policy_basis"]
 
     execute_response = client.post(
         f'/api/v1/incidents/{payload["nexus_incident_id"]}/execute',
@@ -335,6 +338,7 @@ def test_guardian_request_modification_contract_pauses_execution(client: TestCli
     execute_payload = execute_response.json()
     assert execute_payload["status"] == "needs_modification"
     assert execute_payload["guardian_decision"] == "request_modification"
+    assert execute_payload["guardian_policy_id"].endswith(":request_modification")
 
 
 def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth_headers) -> None:
@@ -370,9 +374,11 @@ def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth
     assert context_payload["incident"]["normalized_evidence"]
     assert context_payload["observability"]["evidence_sources"][0]["source"] == "raw input"
     assert context_payload["observability"]["recent_logs"][0].startswith("Raw input normalized")
+    assert context_payload["guardian"]["policy_id"]
     assert context_payload["structured_result"]["proposed_fix"]
     assert context_payload["structured_result"]["raw_priority_label"] == "P4"
     assert context_payload["structured_result"]["normalized_priority_rank"] == 4
+    assert context_payload["structured_result"]["guardian_policy_id"]
 
     audit_log_path = Path.cwd() / ".nexus_audit_log.json"
     assert audit_log_path.exists()
@@ -442,7 +448,7 @@ def test_live_incident_context_contract_returns_backend_evidence(client: TestCli
     assert payload["runbook"]["candidate_fixes"]
     assert payload["guardian"]["safety_checks"]
     assert len(payload["workflow"]) >= 1
-    assert payload["execution_result"] in {"executed", "blocked", "approved", "pending"}
+    assert payload["execution_result"] in {"executed", "blocked", "approved", "pending", "needs_modification"}
 
 
 def test_batch_import_and_execute_contracts(client: TestClient, auth_headers) -> None:

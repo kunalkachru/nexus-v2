@@ -42,6 +42,9 @@ class IncidentRepository:
             guardian_decision="pending",
             guardian_reasoning="",
             guardian_reviewed_at="",
+            guardian_policy_id="",
+            guardian_policy_name="",
+            guardian_policy_basis="",
             created_at=timestamp,
             updated_at=timestamp,
         )
@@ -80,6 +83,9 @@ class IncidentRepository:
         guardian_decision: str | None = None,
         guardian_reasoning: str | None = None,
         guardian_reviewed_at: str | None = None,
+        guardian_policy_id: str | None = None,
+        guardian_policy_name: str | None = None,
+        guardian_policy_basis: str | None = None,
     ) -> IncidentRecord | None:
         incident = self._incident_store.get(nexus_incident_id)
         if incident is None:
@@ -95,6 +101,12 @@ class IncidentRepository:
             updates["guardian_reasoning"] = guardian_reasoning
         if guardian_reviewed_at is not None:
             updates["guardian_reviewed_at"] = guardian_reviewed_at
+        if guardian_policy_id is not None:
+            updates["guardian_policy_id"] = guardian_policy_id
+        if guardian_policy_name is not None:
+            updates["guardian_policy_name"] = guardian_policy_name
+        if guardian_policy_basis is not None:
+            updates["guardian_policy_basis"] = guardian_policy_basis
 
         updated = incident.model_copy(
             update=updates

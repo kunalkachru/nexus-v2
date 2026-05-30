@@ -171,6 +171,9 @@ function synthesizeIncidentFromStatus(status) {
     guardian: {
       decision: guardianDecision,
       confidence: recordedGuardianDecision ? 0.88 : status.status === "investigating" ? 0.0 : 0.88,
+      policy_id: status.guardian_policy_id || "",
+      policy_name: status.guardian_policy_name || "",
+      policy_basis: status.guardian_policy_basis || "",
       safety_checks: [
         "Authenticated status view",
         "Audit trail available",
@@ -208,6 +211,9 @@ function synthesizeIncidentFromStatus(status) {
       normalized_priority_label: status.severity,
       normalized_priority_rank: Number.parseInt(String(status.severity || "").replace(/^P/, ""), 10) || 0,
       reward: 0.68,
+      guardian_policy_id: status.guardian_policy_id || "",
+      guardian_policy_name: status.guardian_policy_name || "",
+      guardian_policy_basis: status.guardian_policy_basis || "",
     },
     workflow: timeline,
     execution_result:
@@ -220,11 +226,11 @@ function synthesizeIncidentFromStatus(status) {
             : status.guardian_decision === "pending" || status.status === "investigating"
               ? "pending"
               : "executed",
-    reward: 0.68,
-    execution_time_ms: 11.2,
-    supported_incidents: [status.nexus_incident_id],
-  };
-}
+      reward: 0.68,
+      execution_time_ms: 11.2,
+      supported_incidents: [status.nexus_incident_id],
+    };
+  }
 
 export async function loadIncident(incidentId) {
   const liveReasoning = getLiveReasoningPreference() ? "1" : "0";

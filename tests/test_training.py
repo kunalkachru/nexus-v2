@@ -105,3 +105,17 @@ def test_training_metrics_include_dashboard_summary_fields(tmp_path) -> None:
     assert saved["artifact_summary"]
     assert "learning_contracts" in saved["artifact_summary"]
     assert "sentinel" in saved["training_evaluation"]["policy_drift"]
+
+
+def test_training_persists_artifacts_durably(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    summary = run_training(num_episodes=4, seed=11)
+
+    artifact_path = tmp_path / "artifacts" / "platform_artifacts.json"
+    assert artifact_path.exists()
+
+    payload = json.loads(artifact_path.read_text())
+    assert len(payload["training_snapshots"]) >= 1
+    assert len(payload["learning_contracts"]) >= 1
+    assert payload["training_snapshots"][-1]["reward_curve"] == summary.reward_curve

@@ -7,6 +7,7 @@ from server.incident_payloads import get_incident_definition, get_incident_detai
 from server.models import IncidentWorkflowStage, QueueIncidentSummary, QueueResponse
 from server.artifacts import get_artifact_summary
 from server.services.observability import ObservabilityService
+from server.services.result_contracts import build_structured_result
 from server.services.priority import normalize_priority_label, priority_snapshot
 
 
@@ -78,21 +79,24 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
             "reasoning": details["guardian"]["reasoning"],
         },
         "structured_result": {
-            "incident_id": incident.id,
-            "root_cause": incident.root_cause,
-            "proposed_fix": details["forge"]["recommended_runbook"],
-            "safety_decision": details["guardian"]["decision"],
-            "confidence": details["guardian"]["confidence"],
+            **build_structured_result(
+                incident_id=incident.id,
+                root_cause=incident.root_cause,
+                proposed_fix=details["forge"]["recommended_runbook"],
+                safety_decision=details["guardian"]["decision"],
+                confidence=details["guardian"]["confidence"],
+                execution_status="executed",
+                live_reasoning=False,
+                raw_priority_label=priority["raw_label"],
+                normalized_priority_label=priority["normalized_label"],
+                normalized_priority_rank=priority["rank"],
+                reward=0.0,
+            ),
             "evidence": {
                 "log_count": len(details["recent_logs"]),
                 "metric_count": len(details["metrics"]),
                 "deployment_count": len(details["recent_deployments"]),
             },
-            "execution_status": "executed",
-            "live_reasoning": False,
-            "raw_priority_label": priority["raw_label"],
-            "normalized_priority_label": priority["normalized_label"],
-            "normalized_priority_rank": priority["rank"],
         },
         "workflow": build_workflow_timeline(incident_id, source_channel, incident, details),
         "execution_result": "executed",

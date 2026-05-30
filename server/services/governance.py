@@ -4,6 +4,9 @@ from server.models import IncidentRecord
 
 
 class GovernanceService:
+    _POLICY_ID = "guardian-runbook-policy-v2"
+    _POLICY_NAME = "GUARDIAN runbook review policy"
+
     def guardian_decision_for_incident(self, incident: IncidentRecord) -> str:
         if incident.guardian_decision in {"approve", "reject", "request_modification"}:
             return incident.guardian_decision
@@ -17,10 +20,12 @@ class GovernanceService:
 
     def guardian_context(self, incident: IncidentRecord) -> dict[str, object]:
         decision = self.guardian_decision_for_incident(incident)
+        policy = self.guardian_policy_for_decision(decision)
         if decision == "pending":
             return {
                 "decision": decision,
                 "confidence": 0.0,
+                **policy,
                 "safety_checks": [
                     "Runbook proposal ready for review",
                     "Execution stays blocked until approval is recorded",
@@ -34,6 +39,7 @@ class GovernanceService:
             return {
                 "decision": decision,
                 "confidence": 0.67,
+                **policy,
                 "safety_checks": [
                     "Authenticated live incident read",
                     "Runbook proposal needs revision before execution",
@@ -47,6 +53,7 @@ class GovernanceService:
         return {
             "decision": decision,
             "confidence": 0.89,
+            **policy,
             "safety_checks": [
                 "Authenticated live incident read",
                 "Audit trail available from backend state",
@@ -59,4 +66,29 @@ class GovernanceService:
                 if decision == "approve"
                 else "GUARDIAN blocked the runbook and kept the incident out of execution."
             ),
+        }
+
+    def guardian_policy_for_decision(self, decision: str) -> dict[str, str]:
+        if decision == "approve":
+            return {
+                "policy_id": f"{self._POLICY_ID}:approve",
+                "policy_name": self._POLICY_NAME,
+                "policy_basis": "The runbook is safe enough to proceed after the final operator review.",
+            }
+        if decision == "reject":
+            return {
+                "policy_id": f"{self._POLICY_ID}:reject",
+                "policy_name": self._POLICY_NAME,
+                "policy_basis": "The runbook was rejected and kept out of execution.",
+            }
+        if decision == "request_modification":
+            return {
+                "policy_id": f"{self._POLICY_ID}:request_modification",
+                "policy_name": self._POLICY_NAME,
+                "policy_basis": "The runbook needs revision before it can be executed safely.",
+            }
+        return {
+            "policy_id": f"{self._POLICY_ID}:pending",
+            "policy_name": self._POLICY_NAME,
+            "policy_basis": "Runbook proposal ready, but operator approval is still required before execution.",
         }

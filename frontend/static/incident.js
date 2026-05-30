@@ -27,11 +27,12 @@ function renderAgentFlow(data) {
       ? "PENDING · approval required"
       : data.guardian?.decision === "request_modification"
         ? `REQUEST MODIFICATION · ${Math.round(data.guardian.confidence * 100)}% safety confidence`
-      : `${guardianDecision} · ${Math.round(data.guardian.confidence * 100)}% safety confidence`;
+        : `${guardianDecision} · ${Math.round(data.guardian.confidence * 100)}% safety confidence`;
+  const guardianPolicy = data.guardian?.policy_name || data.guardian?.policy_id || "policy pending";
   document.getElementById("sentinelFlowMeta").textContent = `${confidence(data.classification.confidence)} · ${data.classification.evidence.length} evidence items`;
   document.getElementById("prismFlowMeta").textContent = `${confidence(data.diagnosis.confidence)} · ${data.diagnosis.root_cause}`;
   document.getElementById("forgeFlowMeta").textContent = data.runbook.recommended_runbook;
-  document.getElementById("guardianFlowMeta").textContent = guardianMeta;
+  document.getElementById("guardianFlowMeta").textContent = `${guardianMeta} · ${guardianPolicy}`;
   document.getElementById("sentinelFlowTransfer").textContent = `Raw input from ${service} → evidence bundle for PRISM`;
   document.getElementById("prismFlowTransfer").textContent = `Evidence bundle → diagnosis packet for FORGE`;
   document.getElementById("forgeFlowTransfer").textContent = `Diagnosis packet → runbook proposal for GUARDIAN`;
@@ -384,6 +385,7 @@ function renderIncident(data) {
     ["Priority", structuredResult.raw_priority_label || incident.severity],
     ["Normalized rank", structuredResult.normalized_priority_rank ?? "-"],
     ["Safety", structuredResult.safety_decision ? String(structuredResult.safety_decision).toUpperCase() : guardian.decision.toUpperCase()],
+    ["Policy", structuredResult.guardian_policy_id || guardian.policy_id || "-"],
     ["Live reasoning", structuredResult.live_reasoning ? "ON" : "OFF"],
     ["Reward", `${Math.round(data.reward * 100)}%`],
   ].map(([label, value]) => `

@@ -8,7 +8,7 @@ def test_demo_runs_end_to_end_under_five_seconds() -> None:
     assert result["classification"]
     assert result["diagnosis"]
     assert result["runbook"]
-    assert result["execution_result"] in {"executed", "blocked_by_guardian"}
+    assert result["execution_result"] in {"executed", "blocked_by_guardian", "needs_modification"}
     assert 0.0 <= result["final_reward"] <= 1.0
 
 
@@ -36,6 +36,8 @@ def test_demo_exposes_rich_observability_and_reasoning() -> None:
     assert result["diagnosis"]["supporting_logs"]
     assert result["runbook"]["candidate_fixes"]
     assert result["guardian"]["safety_checks"]
+    assert result["guardian"]["policy_id"]
     assert result["structured_result"]["proposed_fix"]
     assert result["structured_result"]["raw_priority_label"]
     assert result["structured_result"]["normalized_priority_rank"] >= 0
+    assert result["structured_result"]["guardian_policy_id"]

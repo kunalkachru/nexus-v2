@@ -68,6 +68,16 @@ def test_webhook_requires_valid_signature(client: TestClient) -> None:
     )
     assert missing_signature.status_code == 401
 
+    secret = app.state.config.webhook_signing_secret
+    digest = hmac.new(secret.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256).hexdigest()
+    missing_tenant = client.post(
+        "/webhooks/incident",
+        headers={"x-signature": f"sha256={digest}"},
+        content=payload,
+    )
+    assert missing_tenant.status_code == 403
+    assert missing_tenant.json()["detail"] == "tenant required"
+
     bad_signature = client.post(
         "/webhooks/incident",
         headers={
@@ -78,8 +88,6 @@ def test_webhook_requires_valid_signature(client: TestClient) -> None:
     )
     assert bad_signature.status_code == 401
 
-    secret = app.state.config.webhook_signing_secret
-    digest = hmac.new(secret.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256).hexdigest()
     valid_signature = client.post(
         "/webhooks/incident",
         headers={

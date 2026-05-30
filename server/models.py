@@ -50,6 +50,9 @@ class IncidentRecord(BaseModel):
     guardian_decision: Literal["pending", "approve", "reject", "request_modification"] = "pending"
     guardian_reasoning: str = ""
     guardian_reviewed_at: str = ""
+    guardian_policy_id: str = ""
+    guardian_policy_name: str = ""
+    guardian_policy_basis: str = ""
     created_at: str = ""
     updated_at: str = ""
 
@@ -86,6 +89,9 @@ class IncidentLifecycleResponse(BaseModel):
     guardian_decision: Literal["pending", "approve", "reject", "request_modification"] = "pending"
     guardian_reasoning: str = ""
     guardian_reviewed_at: str = ""
+    guardian_policy_id: str = ""
+    guardian_policy_name: str = ""
+    guardian_policy_basis: str = ""
 
 
 class IncidentWorkflowStage(str, Enum):
@@ -138,6 +144,9 @@ class IncidentStatusResponse(BaseModel):
     guardian_decision: Literal["pending", "approve", "reject", "request_modification"] = "pending"
     guardian_reasoning: str = ""
     guardian_reviewed_at: str = ""
+    guardian_policy_id: str = ""
+    guardian_policy_name: str = ""
+    guardian_policy_basis: str = ""
 
 
 class SentinelClassification(BaseModel):
@@ -197,6 +206,9 @@ class GuardianReviewResult(BaseModel):
     safety_score: float = Field(ge=0.0, le=1.0)
     blocked_patterns: list[str] = Field(default_factory=list)
     reasoning: str
+    policy_id: str = ""
+    policy_name: str = ""
+    policy_basis: str = ""
 
 
 class SandboxValidationResult(BaseModel):

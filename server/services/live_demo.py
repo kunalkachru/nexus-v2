@@ -11,6 +11,7 @@ from server.models import NormalizedAlertEnvelope
 from server.orchestrator import NexusCore
 from server.integrations.deployments import DeploymentLookupService
 from server.services.observability import ObservabilityService
+from server.services.result_contracts import build_structured_result
 from server.services.surface_payloads import build_incident_response
 from server.services.priority import priority_snapshot, shift_priority_label
 from training.runner import TrainingForgeClient
@@ -118,6 +119,9 @@ async def build_demo_payload(
         + [f"LLM-backed {episode.prism_output.root_cause}", f"Model {episode.forge_output.model_name}"],
         "policy_violations": episode.guardian_output.blocked_patterns,
         "reasoning": episode.guardian_output.reasoning,
+        "policy_id": episode.guardian_output.policy_id,
+        "policy_name": episode.guardian_output.policy_name,
+        "policy_basis": episode.guardian_output.policy_basis,
     }
     payload["execution_result"] = "executed" if episode.executed else episode.status
     payload["reward"] = episode.reward.composite if episode.reward else base["reward"]
@@ -128,18 +132,21 @@ async def build_demo_payload(
         "forge": episode.forge_output.model_name,
         "guardian": "deterministic",
     }
-    payload["structured_result"] = {
-        "incident_id": incident.id,
-        "root_cause": episode.prism_output.root_cause,
-        "proposed_fix": episode.forge_output.runbook.summary,
-        "safety_decision": episode.guardian_output.decision,
-        "confidence": round(episode.guardian_output.safety_score, 2),
-        "execution_status": payload["execution_result"],
-        "live_reasoning": use_live_llm,
-        "raw_priority_label": priority["raw_label"],
-        "normalized_priority_label": priority["normalized_label"],
-        "normalized_priority_rank": priority["rank"],
-        "reward": round(payload["reward"], 2),
-    }
+    payload["structured_result"] = build_structured_result(
+        incident_id=incident.id,
+        root_cause=episode.prism_output.root_cause,
+        proposed_fix=episode.forge_output.runbook.summary,
+        safety_decision=episode.guardian_output.decision,
+        confidence=round(episode.guardian_output.safety_score, 2),
+        execution_status=payload["execution_result"],
+        live_reasoning=use_live_llm,
+        raw_priority_label=priority["raw_label"],
+        normalized_priority_label=priority["normalized_label"],
+        normalized_priority_rank=priority["rank"],
+        reward=round(payload["reward"], 2),
+        guardian_policy_id=episode.guardian_output.policy_id,
+        guardian_policy_name=episode.guardian_output.policy_name,
+        guardian_policy_basis=episode.guardian_output.policy_basis,
+    )
     payload["live_reasoning"] = use_live_llm
     return payload

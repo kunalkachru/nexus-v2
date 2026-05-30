@@ -75,6 +75,13 @@ class GuardianAgent(BaseAgent):
                 f"Safety score {safety_score:.0%}, diagnosis confidence "
                 f"{prism_output.confidence:.0%}, threshold {threshold:.0%}"
             ),
+            policy_id="guardian-safety-threshold-v1",
+            policy_name="GUARDIAN safety threshold policy",
+            policy_basis=(
+                "Approve when sandbox validation passes and the combined safety score clears the severity threshold."
+                if decision == "approve"
+                else "Reject blocked runbooks or request revision when the combined score stays below the threshold."
+            ),
         )
 
     def _blocked_patterns(self, code: str) -> list[str]:
