@@ -3,6 +3,9 @@
 
 **Version:** 1.0 | **Classification:** Enterprise | **Author:** Kunal Kachru | **Date:** May 28, 2026
 
+> Target-state reference for the enterprise product.
+> The shipped implementation and current gaps are tracked in [README.md](../README.md), [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](../docs/NEXUS_v2_DOC_STATUS_MATRIX.md), and [docs/NEXUS_v2_PRIORITY_BACKLOG.md](../docs/NEXUS_v2_PRIORITY_BACKLOG.md).
+
 ---
 
 ## TABLE OF CONTENTS
@@ -12,7 +15,7 @@
 3. Log Ingestion Pipeline
 4. Agent Job Definitions & Contributions
 5. UI/UX Specifications
-6. Complete Data Models
+6. Data Models
 7. Integration Points & APIs
 8. Deployment Architecture
 9. Stakeholder Presentation Flow
@@ -21,13 +24,13 @@
 
 ## 1. EXECUTIVE OVERVIEW
 
-### 1.1 NEXUS v2 as Enterprise Software
+### 1.1 NEXUS v2 as Enterprise Software (Target State)
 
 NEXUS v2 is a **multi-channel incident response orchestration platform** that:
 
 - **Accepts incidents** via multiple channels (Slack, webhooks, forms, continuous streams)
 - **Processes incidents** through 4 specialized RL agents with transparent decision-making
-- **Shows complete audit trail** of all agent decisions with supporting evidence
+- **Shows an auditable trail** of all agent decisions with supporting evidence
 - **Enables stakeholder visibility** at every stage of the incident lifecycle
 - **Maintains enterprise compliance** (SOC2, audit logs, access control)
 
@@ -578,7 +581,7 @@ POST /api/v1/incidents/batch-import
         │  STAGE 5: AUDIT & PERSISTENCE            │
         ├──────────────────────────────────────────┤
         │                                          │
-        │  Store complete audit trail:             │
+        │  Store auditable trail:                  │
         │                                          │
         │  IncidentLog Table:                      │
         │  - incident_id                           │
@@ -1792,9 +1795,9 @@ Show input channels:
 
 ---
 
-## SUMMARY: Enterprise Specification Complete
+## SUMMARY: Enterprise Specification Target State
 
-This document defines NEXUS v2 as **enterprise-grade software** with:
+This document defines the intended NEXUS v2 enterprise target state:
 
 ✅ **4 input channels** (webhooks, forms, streams, batch)
 ✅ **Complete log ingestion pipeline** (validation → enrichment → queueing → persistence)
@@ -1805,4 +1808,4 @@ This document defines NEXUS v2 as **enterprise-grade software** with:
 ✅ **Deployment architecture**
 ✅ **Stakeholder presentation flow**
 
-**Ready to build!**
+**Use this as the design reference; the current implementation status lives in the docs matrix and backlog.**
