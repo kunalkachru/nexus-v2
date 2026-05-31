@@ -18,6 +18,7 @@ Use this list when you want to confirm the exact changes that landed in the late
 - The `Guardian gate` is an explicit approve/block/request-modification control surface and the decision path is persisted.
 - The incident console opens with a compact executive summary, while the dense signals, workflow, audit, and agent-flow sections live inside a collapsible `Operational Details` drawer.
 - The `Inputs` page centers the raw-log path first and tucks Slack, stream anomaly, and batch import into a `More Sources` drawer.
+- The main pages now include a visible journey trail and short flow callout so the screen itself explains how Queue, Inputs, Incident, History, Replay, Training, and Settings connect.
 - The console now distinguishes `APPROVE`, `REJECT`, and `REQUEST_MODIFICATION`, and the incident summary can surface a `needs_modification` execution state.
 - The training lab shows solution proposal, raw priority, priority rank, live reasoning state, learning-contract count, audit-event count, and Guardian-review count.
 - The settings page exposes the learning-contract count, audit-event count, and Guardian-review count alongside replay launches and training snapshots.
@@ -112,6 +113,7 @@ Confirm:
 - The queue is the landing page.
 - Active incidents are visible.
 - Severity, source channel, and stage information are shown.
+- The page includes a short trail or callout that explains Queue as the starting point for the rest of the product.
 - Clicking an incident opens the incident console.
 
 Pass criteria:
@@ -142,6 +144,7 @@ Confirm:
 - The incident summary exposes the structured result fields, including proposed fix, priority, normalized rank, safety decision, and live reasoning state.
 - The incident summary exposes the guardian policy field when the backend returns one.
 - The dense incident sections are tucked into `Operational Details` so the top of the console stays readable.
+- The console header shows the page in the product flow, making the handoff from Queue and Inputs obvious.
 
 Pass criteria:
 
@@ -162,6 +165,7 @@ Confirm:
 - The raw input field starts empty.
 - A `Load example logs` button is visible for quick demos.
 - The `More Sources` drawer keeps the alternate intake methods available without crowding the raw-log flow.
+- The page includes a journey trail and flow callout that explain Inputs as the raw-entry path.
 - Multiple intake options are visible.
 - The page shows more than one input method.
 - The intent of the page is to demonstrate how incidents enter the system.
@@ -187,6 +191,7 @@ Confirm:
 - Past incidents are listed.
 - Closed outcomes are visible.
 - Replay or review entry points are available.
+- The page includes a trail or callout that explains History as the replayable archive.
 
 Pass criteria:
 
@@ -206,6 +211,7 @@ Confirm:
 - Scenario names are understandable to a non-technical audience.
 - A replay launch action is available.
 - The page explains what replay produces.
+- The page includes a trail or callout that explains Replay as the repeatable validation lane.
 
 Pass criteria:
 
@@ -231,6 +237,7 @@ Confirm:
 - The page reads like a learning story, not a research dump.
 - The RL episode contract shows the structured result fields, including raw priority, priority rank, solution proposal, and live reasoning.
 - The training header shows the audit-event count and Guardian-review count.
+- The page includes a trail or callout that explains Training as the memory layer.
 
 Pass criteria:
 
@@ -251,6 +258,7 @@ Confirm:
 - Replay readiness or operational configuration is visible.
 - The learning-contract count is visible alongside replay launches and training snapshots.
 - The audit-event count and Guardian-review count are visible.
+- The page includes a trail or callout that explains Settings as the trust and control plane.
 
 Pass criteria:
 

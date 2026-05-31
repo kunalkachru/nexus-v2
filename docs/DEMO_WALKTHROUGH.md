@@ -25,6 +25,7 @@ The latest implementation and browser pass confirmed:
 - the console also shows guardian policy metadata when a decision has been recorded
 - the top of the incident console stays compact, while signals, workflow, audit, and agent-flow data live in a collapsible `Operational Details` drawer
 - the Inputs page keeps raw logs as the clearest path and tucks alternate sources into a collapsible `More Sources` drawer
+- each major page now includes a visible flow trail and short callout so the screen explains how it fits into the product story
 - the training lab shows the solution proposal, learning-contract count, audit-event count, and Guardian-review count
 - the settings page shows the learning-contract count, audit-event count, and Guardian-review count
 - durable artifact counts now survive restarts through the local artifact store
@@ -758,6 +759,7 @@ You are in a healthy state if:
 - replay launches something real
 - training shows understandable progress
 - settings shows trust posture
+- the UI uses progressive disclosure and flow trails instead of dumping every detail on the first screen
 
 ## Part 8A: Functional Checks
 
@@ -782,6 +784,7 @@ Use this section to verify the product is working, not just rendering.
 - Open `Operational Details` and confirm the workflow timeline loads.
 - Confirm the agent handoff shows `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
 - Confirm the audit trail and evidence provenance are visible inside `Operational Details`.
+- Confirm the screen includes a short flow trail or callout that explains where the incident page sits in the overall product.
 - Click the execution action if it is available.
 - Expected result: the incident updates state, and the audit trail reflects the action.
 
@@ -801,12 +804,14 @@ Use this section to verify the product is working, not just rendering.
 
 - Open `/training`.
 - Confirm the training summary and reward movement are visible.
+- Confirm the page includes a trail or callout that explains Training as the memory layer.
 - Expected result: the training surface explains the learning loop in plain language.
 
 ### Settings
 
 - Open `/settings`.
 - Confirm the trust posture and runtime configuration are visible.
+- Confirm the page includes a trail or callout that explains Settings as the trust and control plane.
 - Expected result: you can see the platform readiness story without reading code.
 
 ## Part 9: What To Do If Something Fails

@@ -42,6 +42,15 @@
                 <div class="eyebrow">History</div>
                 <h1>Incident archive.</h1>
                 <p class="hero-copy">Review what happened, who owned it, and how the console resolved it. This archive separates historical cases from live queue operations and training telemetry.</p>
+                <div class="journey-path" aria-label="Product flow">
+                    <span class="journey-path-item">Queue</span>
+                    <span class="journey-path-item">Inputs</span>
+                    <span class="journey-path-item">Incident</span>
+                    <span class="journey-path-item active"><strong>History</strong></span>
+                    <span class="journey-path-item">Replay</span>
+                    <span class="journey-path-item">Training</span>
+                    <span class="journey-path-item">Settings</span>
+                </div>
                 <div class="hero-stats">
                     <div class="stat"><div class="stat-label">Resolved</div><div class="stat-value" id="historyResolved">18</div></div>
                     <div class="stat"><div class="stat-label">Blocked</div><div class="stat-value" id="historyBlocked">2</div></div>
@@ -50,55 +59,68 @@
                 </div>
             </div>
             <div class="hero-panel">
-                <div class="eyebrow">Filters</div>
-                <div class="filter-panel">
-                    <div class="filter-grid">
-                        <div class="filter-field">
-                            <label for="historySeverity">Severity</label>
-                            <select id="historySeverity">
-                                <option value="">All severities</option>
-                                <option value="P1">P1</option>
-                                <option value="P2">P2</option>
-                            </select>
-                        </div>
-                        <div class="filter-field">
-                            <label for="historySource">Source channel</label>
-                            <select id="historySource">
-                                <option value="">All sources</option>
-                                <option value="webhook">Webhook</option>
-                                <option value="manual">Manual</option>
-                                <option value="slack">Slack</option>
-                                <option value="stream">Stream</option>
-                                <option value="batch">Batch</option>
-                            </select>
-                        </div>
-                        <div class="filter-field">
-                            <label for="historyOutcome">Outcome</label>
-                            <select id="historyOutcome">
-                                <option value="">All outcomes</option>
-                                <option value="resolved">Resolved</option>
-                                <option value="blocked">Blocked</option>
-                            </select>
-                        </div>
-                        <div class="filter-field">
-                            <label for="historyWindow">Time window</label>
-                            <select id="historyWindow">
-                                <option value="">Last 30 days</option>
-                                <option value="last-7-days">Last 7 days</option>
-                                <option value="last-24-hours">Last 24 hours</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="filter-field">
-                        <label for="historySearch">Search archive</label>
-                        <input id="historySearch" placeholder="API timeout, queue backlog, cache explosion..." />
-                    </div>
-                </div>
                 <div class="detail-card compact-note">
                     <div class="badge">Historical view</div>
                     <p class="hero-copy">Each record links back into the incident console for a full replay of the same case.</p>
                     <p class="hero-copy">Use this archive to show the platform is operational across incidents, not just one live event.</p>
                 </div>
+                <div class="flow-callout">
+                    <div class="label">How to read this screen</div>
+                    <div class="value">History is the handoff between live operations and replayable learning. Every row should open back into the same incident experience.</div>
+                </div>
+                <details class="section section-collapsible archive-filter-shell">
+                    <summary class="section-summary">
+                        <div>
+                            <h2>Archive Filters</h2>
+                            <div class="section-note">Use these filters when you want to narrow the archive.</div>
+                        </div>
+                    </summary>
+                    <div class="details-body">
+                        <div class="filter-panel">
+                            <div class="filter-grid">
+                                <div class="filter-field">
+                                    <label for="historySeverity">Severity</label>
+                                    <select id="historySeverity">
+                                        <option value="">All severities</option>
+                                        <option value="P1">P1</option>
+                                        <option value="P2">P2</option>
+                                    </select>
+                                </div>
+                                <div class="filter-field">
+                                    <label for="historySource">Source channel</label>
+                                    <select id="historySource">
+                                        <option value="">All sources</option>
+                                        <option value="webhook">Webhook</option>
+                                        <option value="manual">Manual</option>
+                                        <option value="slack">Slack</option>
+                                        <option value="stream">Stream</option>
+                                        <option value="batch">Batch</option>
+                                    </select>
+                                </div>
+                                <div class="filter-field">
+                                    <label for="historyOutcome">Outcome</label>
+                                    <select id="historyOutcome">
+                                        <option value="">All outcomes</option>
+                                        <option value="resolved">Resolved</option>
+                                        <option value="blocked">Blocked</option>
+                                    </select>
+                                </div>
+                                <div class="filter-field">
+                                    <label for="historyWindow">Time window</label>
+                                    <select id="historyWindow">
+                                        <option value="">Last 30 days</option>
+                                        <option value="last-7-days">Last 7 days</option>
+                                        <option value="last-24-hours">Last 24 hours</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-field">
+                                <label for="historySearch">Search archive</label>
+                                <input id="historySearch" placeholder="API timeout, queue backlog, cache explosion..." />
+                            </div>
+                        </div>
+                    </div>
+                </details>
             </div>
         </section>
 

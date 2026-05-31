@@ -42,6 +42,15 @@
                 <div class="eyebrow">Training</div>
                 <h1>Learning operations.</h1>
                 <p class="hero-copy">This page shows the reward curve, episode history, and how the nine workflow states become training signals in the same operating model the product exposes.</p>
+                <div class="journey-path" aria-label="Product flow">
+                    <span class="journey-path-item">Queue</span>
+                    <span class="journey-path-item">Inputs</span>
+                    <span class="journey-path-item">Incident</span>
+                    <span class="journey-path-item">History</span>
+                    <span class="journey-path-item">Replay</span>
+                    <span class="journey-path-item active"><strong>Training</strong></span>
+                    <span class="journey-path-item">Settings</span>
+                </div>
                 <div class="hero-stats">
                     <div class="stat">
                         <div class="stat-label">Baseline</div>
@@ -63,26 +72,43 @@
                         <div class="stat-label">Live incidents</div>
                         <div class="stat-value" id="liveIncidents">-</div>
                     </div>
-                        <div class="stat">
-                            <div class="stat-label">Audit events</div>
-                            <div class="stat-value" id="liveAuditEvents">-</div>
+                </div>
+                <details class="section section-collapsible training-artifact-shell">
+                    <summary class="section-summary">
+                        <div>
+                            <h2>Artifact Ledger</h2>
+                            <div class="section-note">Durable counts for audits, snapshots, contracts, and Guardian reviews.</div>
                         </div>
-                        <div class="stat">
-                            <div class="stat-label">Snapshots</div>
-                            <div class="stat-value" id="artifactSnapshots">-</div>
+                    </summary>
+                    <div class="details-body">
+                        <div class="hero-stats training-artifact-grid">
+                            <div class="stat">
+                                <div class="stat-label">Audit events</div>
+                                <div class="stat-value" id="liveAuditEvents">-</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Snapshots</div>
+                                <div class="stat-value" id="artifactSnapshots">-</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Learning contracts</div>
+                                <div class="stat-value" id="learningContracts">-</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Artifact audit events</div>
+                                <div class="stat-value" id="artifactAuditEvents">-</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Guardian reviews</div>
+                                <div class="stat-value" id="guardianReviews">-</div>
+                            </div>
                         </div>
-                        <div class="stat">
-                            <div class="stat-label">Learning contracts</div>
-                            <div class="stat-value" id="learningContracts">-</div>
+                        <div class="flow-callout">
+                            <div class="label">How to read this screen</div>
+                            <div class="value">Training is the memory layer. These counts prove the product keeps learning artifacts after the browser session ends.</div>
                         </div>
-                        <div class="stat">
-                            <div class="stat-label">Artifact audit events</div>
-                            <div class="stat-value" id="artifactAuditEvents">-</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-label">Guardian reviews</div>
-                            <div class="stat-value" id="guardianReviews">-</div>
-                        </div>
+                    </div>
+                </details>
                 </div>
             </div>
             <div class="hero-panel">

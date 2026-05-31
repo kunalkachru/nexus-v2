@@ -11,6 +11,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - The Guardian gate exposes explicit approve, block, and request-modification controls.
 - The incident console keeps the top-level summary compact and moves signals, workflow, audit, and agent flow into an `Operational Details` drawer.
 - The Inputs page keeps raw logs as the primary demo path and moves Slack, stream anomaly, and batch import into a `More Sources` drawer.
+- The main pages include a flow trail and short callout so the UI explains how the screens connect.
 - The training lab shows the solution proposal, raw priority, learning-contract count, audit-event count, and Guardian-review count.
 - The settings page exposes the learning-contract count, audit-event count, and Guardian-review count.
 - Mutating incident routes require an operator role.
@@ -27,6 +28,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] The queue is the landing page.
 - [ ] Active incidents are visible.
 - [ ] Severity and source channel are visible.
+- [ ] The page shows a trail or callout that makes Queue look like the starting point.
 - [ ] Clicking an incident opens the incident console.
 
 ## Incident Console
@@ -45,6 +47,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Evidence provenance includes the fused adapter story for logs, metrics, traces, and deployments.
 - [ ] A newly created incident opens with backend-assembled live context.
 - [ ] A live reasoning toggle is visible and can switch the current incident view without manual URL edits.
+- [ ] The screen includes a trail or callout that explains how Incident relates to Queue, Inputs, and the rest of the product.
 
 ## Input Channels
 
@@ -52,6 +55,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] The raw input field starts empty.
 - [ ] A `Load example logs` button is visible.
 - [ ] The `More Sources` drawer keeps the alternate intake paths available without crowding the raw-log path.
+- [ ] The page includes a trail or callout that explains Inputs as the raw-entry path.
 - [ ] The parsed preview updates when the pasted text changes.
 - [ ] Webhook intake is visible.
 - [ ] Manual intake is visible.
@@ -64,6 +68,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Past incidents are listed.
 - [ ] Closed outcomes are visible.
 - [ ] Replay or review actions are visible.
+- [ ] The page includes a trail or callout that explains History as the archive between live work and replay.
 
 ## Sample Replay
 
@@ -71,6 +76,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Scenario names are understandable.
 - [ ] A replay launch action is visible.
 - [ ] The page explains what replay produces.
+- [ ] The page includes a trail or callout that explains Replay as the repeatable validation lane.
 
 ## RL Training Lab
 
@@ -83,6 +89,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Observation states are visible.
 - [ ] The RL episode contract shows the solution proposal, raw priority, priority rank, and live reasoning state.
 - [ ] The training page shows audit-event and Guardian-review counts.
+- [ ] The page includes a trail or callout that explains Training as the memory layer.
 
 ## Settings
 
@@ -91,6 +98,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Replay readiness or configuration is visible.
 - [ ] The learning-contract count is visible.
 - [ ] The audit-event and Guardian-review counts are visible.
+- [ ] The page includes a trail or callout that explains Settings as the trust and control plane.
 
 ## Hardening Check
 

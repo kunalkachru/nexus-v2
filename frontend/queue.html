@@ -44,6 +44,15 @@
                 <p class="hero-copy">
                     Queue is the landing screen. It shows what is active now, who needs attention next, and which incident to open in the console.
                 </p>
+                <div class="journey-path" aria-label="Product flow">
+                    <span class="journey-path-item active"><strong>Queue</strong></span>
+                    <span class="journey-path-item">Inputs</span>
+                    <span class="journey-path-item">Incident</span>
+                    <span class="journey-path-item">History</span>
+                    <span class="journey-path-item">Replay</span>
+                    <span class="journey-path-item">Training</span>
+                    <span class="journey-path-item">Settings</span>
+                </div>
                 <div class="hero-stats" id="queueSummary">
                     <div class="stat">
                         <div class="stat-label">Open incidents</div>
@@ -66,23 +75,27 @@
             <div class="hero-panel controls">
                 <div class="eyebrow">Queue Snapshot</div>
                 <p class="hero-copy">Each card opens a focused incident console. No agent panels, no training charts, no unrelated clutter.</p>
-                    <div class="queue-status" id="queueStatus">
-                        <div class="badge">Live status</div>
-                        <div class="queue-activity-grid">
-                            <div class="queue-activity-card">
-                                <div class="label">Current stage</div>
-                                <div class="value" id="queueCurrentStage">Evidence retrieved</div>
-                            </div>
-                            <div class="queue-activity-card">
-                                <div class="label">Latest agent activity</div>
-                                <div class="value" id="queueLatestActivity">FORGE proposed a rollback-safe runbook</div>
-                            </div>
-                            <div class="queue-activity-card">
-                                <div class="label">SLA timer</div>
-                                <div class="value" id="queueSlaTimer">11 min remaining</div>
-                            </div>
+                <div class="flow-callout">
+                    <div class="label">How to read this screen</div>
+                    <div class="value">Start here, then move into Inputs or Incident. The queue is the traffic controller for the rest of the product.</div>
+                </div>
+                <div class="queue-status" id="queueStatus">
+                    <div class="badge">Live status</div>
+                    <div class="queue-activity-grid">
+                        <div class="queue-activity-card">
+                            <div class="label">Current stage</div>
+                            <div class="value" id="queueCurrentStage">Evidence retrieved</div>
+                        </div>
+                        <div class="queue-activity-card">
+                            <div class="label">Latest agent activity</div>
+                            <div class="value" id="queueLatestActivity">FORGE proposed a rollback-safe runbook</div>
+                        </div>
+                        <div class="queue-activity-card">
+                            <div class="label">SLA timer</div>
+                            <div class="value" id="queueSlaTimer">11 min remaining</div>
                         </div>
                     </div>
+                </div>
                 <div class="queue-list">
                     <a class="incident-btn" href="incident?nexus_incident_id=INC001">
                         <div class="queue-row">
@@ -128,25 +141,25 @@
                 <h2>Queue Controls</h2>
                 <div class="section-note">A focused landing page with just the information needed to choose the next incident.</div>
             </div>
-                <div class="kpi-grid" id="queueControls">
-                    <div class="summary-card">
-                        <div class="label">Highest severity</div>
-                        <div class="value" id="queueHighestSeverity">P1</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="label">Most recent source</div>
-                        <div class="value" id="queueMostRecentSource">Webhook</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="label">Current bottleneck</div>
-                        <div class="value" id="queueCurrentBottleneck">API latency</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="label">Open console</div>
-                        <div class="value"><a class="inline-link" id="queueOpenConsole" href="incident?nexus_incident_id=INC001">INC001</a></div>
-                    </div>
+            <div class="kpi-grid" id="queueControls">
+                <div class="summary-card">
+                    <div class="label">Highest severity</div>
+                    <div class="value" id="queueHighestSeverity">P1</div>
                 </div>
-            </section>
+                <div class="summary-card">
+                    <div class="label">Most recent source</div>
+                    <div class="value" id="queueMostRecentSource">Webhook</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">Current bottleneck</div>
+                    <div class="value" id="queueCurrentBottleneck">API latency</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">Open console</div>
+                    <div class="value"><a class="inline-link" id="queueOpenConsole" href="incident?nexus_incident_id=INC001">INC001</a></div>
+                </div>
+            </div>
+        </section>
         </div>
         <script type="module" src="static/app-shell.js"></script>
         <script type="module" src="static/queue.js"></script>
