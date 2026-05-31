@@ -22,10 +22,16 @@ This is the presentation index for the final submission.
    - [docs/BROWSER_VERIFICATION_CHECKLIST.md](BROWSER_VERIFICATION_CHECKLIST.md)
    - [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](VERIFICATION_PASS_FAIL_CHECKLIST.md)
 
-6. Presenter deck
+6. Visual architecture and screenshots
+   - [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](VISUAL_ARCHITECTURE_AND_FLOWS.md)
+
+7. Near-term technical roadmap
+   - [docs/TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md)
+
+8. Presenter deck
    - [NEXUS v2 Presenter Deck - nexus-v2-presenter-deck.pptx](/Users/kunalkachru/Documents/nexus-v3/artifacts/presentations/nexus-v2-presenter-pack/output/nexus-v2-presenter-deck.pptx)
 
-7. Demo video pipeline
+9. Demo video pipeline
    - Build command: `./scripts/build_demo_video.sh`
    - Recorder: [scripts/generate_demo_video.mjs](/Users/kunalkachru/Documents/nexus-v3/scripts/generate_demo_video.mjs)
    - Builder: [scripts/build_demo_video.sh](/Users/kunalkachru/Documents/nexus-v3/scripts/build_demo_video.sh)

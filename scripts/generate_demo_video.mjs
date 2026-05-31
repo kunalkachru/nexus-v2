@@ -1,34 +1,43 @@
-import { mkdir } from "node:fs/promises";
+import { readFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "playwright";
 
 const BASE_URL = process.env.DEMO_BASE_URL || "http://127.0.0.1:7860";
 const OUTPUT_DIR = path.resolve("artifacts/demo-video");
 const VIDEO_DIR = path.join(OUTPUT_DIR, "playwright-video");
+const PLAN_PATH = process.env.DEMO_SCENE_PLAN || path.join(OUTPUT_DIR, "scene_plan.json");
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function pulse(page, locator, ms = 1400) {
+async function pulse(locator, ms = 1800) {
   const count = await locator.count();
   if (!count) {
-    return;
+    return 0;
   }
-  await locator.first().waitFor({ state: "visible", timeout: 8000 }).catch(() => {});
-  await locator.first().evaluate((node) => {
-    node.dataset.demoHighlight = "1";
+  const first = locator.first();
+  await first.waitFor({ state: "visible", timeout: 8000 }).catch(() => {});
+  await first.evaluate((node) => {
     node.style.outline = "3px solid rgba(251, 191, 36, 0.95)";
     node.style.outlineOffset = "4px";
     node.style.transition = "outline 160ms ease";
   });
   await wait(ms);
-  await locator.first().evaluate((node) => {
+  await first.evaluate((node) => {
     node.style.outline = "";
     node.style.outlineOffset = "";
-    delete node.dataset.demoHighlight;
   });
+  return ms;
+}
+
+async function settleScene(sceneMs, consumedMs) {
+  const remaining = Math.max(sceneMs - consumedMs, 1000);
+  await wait(remaining);
 }
 
 async function recordDemo() {
+  const plan = JSON.parse(await readFile(PLAN_PATH, "utf-8"));
+  const [commandCenter, inputs, incident, training] = plan.scenes;
+
   await mkdir(VIDEO_DIR, { recursive: true });
 
   const browser = await chromium.launch({ headless: true });
@@ -47,47 +56,63 @@ async function recordDemo() {
     window.localStorage.setItem("nexus.theme", "dark");
   });
 
-  await page.goto(`${BASE_URL}/inputs`, { waitUntil: "networkidle" });
+  let consumed = 0;
+
+  await page.goto(`${BASE_URL}/queue`, { waitUntil: "networkidle" });
+  consumed += 1200;
   await wait(1200);
+  consumed += await pulse(page.getByRole("heading", { name: "Autonomous agents are already working the incident." }), 2200);
+  consumed += await pulse(page.locator(".agent-crew-strip .crew-bot").first(), 2000);
+  consumed += await pulse(page.locator(".queue-list .incident-btn").first(), 1800);
+  await settleScene(commandCenter.video_duration_ms, consumed);
 
-  await pulse(page, page.getByRole("heading", { name: "Raw logs first." }));
-  await pulse(page, page.getByRole("button", { name: "Load example logs" }), 1100);
+  consumed = 0;
+  await page.goto(`${BASE_URL}/inputs`, { waitUntil: "networkidle" });
+  consumed += 1200;
+  await wait(1200);
+  consumed += await pulse(page.getByRole("heading", { name: "Raw logs first." }), 2200);
+  consumed += await pulse(page.locator("#rawLogInput"), 1800);
+  consumed += await pulse(page.getByRole("button", { name: "Load example logs" }), 1400);
   await page.getByRole("button", { name: "Load example logs" }).click();
-  await wait(1800);
+  consumed += 2200;
+  await wait(2200);
+  consumed += await pulse(page.locator("#rawDetectedService"), 1600);
+  consumed += await pulse(page.locator("#rawDetectedSignature"), 1600);
+  consumed += await pulse(page.getByRole("button", { name: "Submit raw logs" }), 1600);
+  await settleScene(inputs.video_duration_ms, consumed);
 
-  await pulse(page, page.getByRole("button", { name: "Submit raw logs" }), 900);
+  consumed = 0;
   await page.getByRole("button", { name: "Submit raw logs" }).click();
   await page.waitForURL(/\/incident\?[^#]*nexus_incident_id=nxs_[a-z0-9]+/i, { timeout: 20000 });
   await page.waitForLoadState("networkidle");
-  await wait(1800);
-
-  await pulse(page, page.locator("#incidentTitle"), 1400);
-  await pulse(page, page.locator("#threadSentinelCopy"), 1400);
-  await pulse(page, page.locator("#threadPrismCopy"), 1300);
-  await pulse(page, page.locator("#threadForgeCopy"), 1300);
-  await pulse(page, page.locator("#threadGuardianCopy"), 1300);
-  await pulse(page, page.locator("#openaiKeyStatus"), 1300);
-  await pulse(page, page.getByRole("button", { name: "Approve runbook" }), 1100);
+  consumed += 2200;
+  await wait(2200);
+  consumed += await pulse(page.locator("#incidentTitle"), 2200);
+  consumed += await pulse(page.locator("#threadSentinelCopy"), 1800);
+  consumed += await pulse(page.locator("#threadPrismCopy"), 1800);
+  consumed += await pulse(page.locator("#threadForgeCopy"), 1800);
+  consumed += await pulse(page.locator("#threadGuardianCopy"), 1800);
+  consumed += await pulse(page.locator("#openaiKeyStatus"), 2200);
+  consumed += await pulse(page.getByRole("button", { name: "Approve runbook" }), 1800);
   await page.getByRole("button", { name: "Approve runbook" }).click();
+  consumed += 2600;
   await wait(2600);
+  consumed += await pulse(page.locator("#incidentHeroGuardian"), 2000);
+  consumed += await pulse(page.locator("#incidentHeroExecution"), 2000);
+  consumed += await pulse(page.locator("#resultBanner"), 2200);
+  await settleScene(incident.video_duration_ms, consumed);
 
-  await pulse(page, page.locator("#incidentHeroGuardian"), 1400);
-  await pulse(page, page.locator("#incidentHeroExecution"), 1400);
-  await pulse(page, page.locator("#resultBanner"), 1400);
-
+  consumed = 0;
   await page.getByRole("link", { name: "Learning & Controls" }).click();
   await page.waitForLoadState("networkidle");
-  await wait(1700);
-
-  await pulse(page, page.getByRole("heading", { name: "Learning stays visible. Dense artifacts stay quiet." }), 1400);
-  await pulse(page, page.locator("#rewardCurve"), 1700);
-  await pulse(page, page.locator("#agentStats"), 1600);
-  await pulse(page, page.locator("#platformPolicyStatus"), 1200);
-  await pulse(page, page.locator("#artifactSnapshots"), 1200);
-  await wait(2200);
-
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
-  await wait(800);
+  consumed += 1600;
+  await wait(1600);
+  consumed += await pulse(page.getByRole("heading", { name: "Learning stays visible. Dense artifacts stay quiet." }), 2200);
+  consumed += await pulse(page.locator("#rewardCurve"), 2800);
+  consumed += await pulse(page.locator("#agentStats"), 2200);
+  consumed += await pulse(page.locator("#platformPolicyStatus"), 1800);
+  consumed += await pulse(page.locator("#artifactSnapshots"), 1800);
+  await settleScene(training.video_duration_ms, consumed);
 
   const videoPath = await page.video().path();
   await context.close();

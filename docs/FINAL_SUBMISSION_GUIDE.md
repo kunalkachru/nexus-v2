@@ -413,6 +413,8 @@ Use these files as the current implementation source of truth:
 
 - [README.md](../README.md)
 - [docs/FINAL_SUBMISSION_GUIDE.md](FINAL_SUBMISSION_GUIDE.md)
+- [docs/TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md)
+- [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](VISUAL_ARCHITECTURE_AND_FLOWS.md)
 - [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md)
 - [docs/OPERATIONS.md](OPERATIONS.md)
 
