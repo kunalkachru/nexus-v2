@@ -7,6 +7,7 @@ artifacts/*
 !artifacts/demo-video/
 artifacts/demo-video/*
 !artifacts/demo-video/nexus-v2-demo.mp4
+!artifacts/demo-video/nexus-v2-submission-walkthrough.mp4
 *.pyc
 .worktrees/
 .nexus_audit_log.json

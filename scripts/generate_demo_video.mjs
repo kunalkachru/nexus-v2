@@ -55,9 +55,11 @@ async function recordCommandCenter(page) {
   await wait(1200);
   consumed += await focusLocator(page.locator(".hero"), "start", 900);
   consumed += await pulse(page.getByRole("heading", { name: "Autonomous agents are already working the incident." }), 2200);
-  consumed += await pulse(page.locator(".agent-crew-strip .crew-bot").first(), 1800);
-  consumed += await pulse(page.locator(".agent-crew-strip .crew-bot").nth(1), 1500);
-  consumed += await pulse(page.locator(".queue-list .incident-btn").first(), 1800);
+  consumed += await pulse(page.locator(".agent-crew-strip .crew-bot").first(), 2000);
+  consumed += await pulse(page.locator(".agent-crew-strip .crew-bot").nth(1), 1800);
+  consumed += await pulse(page.locator(".agent-crew-strip .crew-bot").nth(2), 1800);
+  consumed += await pulse(page.locator(".agent-crew-strip .crew-bot").nth(3), 1800);
+  consumed += await pulse(page.locator(".queue-list .incident-btn").first(), 2000);
   return consumed;
 }
 
@@ -76,12 +78,12 @@ async function recordInputs(page) {
   consumed += await pulse(page.locator("#rawDetectedService"), 1600);
   consumed += await pulse(page.locator("#rawDetectedSeverity"), 1600);
   consumed += await pulse(page.locator("#rawDetectedSignature"), 1600);
-  consumed += await pulse(page.getByRole("button", { name: "Submit raw logs" }), 1600);
+  consumed += await pulse(page.getByRole("button", { name: "Submit raw logs" }), 1800);
   await page.getByRole("button", { name: "Submit raw logs" }).click();
   await page.waitForURL(/\/incident\?[^#]*nexus_incident_id=nxs_[a-z0-9]+/i, { timeout: 20000 });
   await page.waitForLoadState("networkidle");
-  consumed += 1800;
-  await wait(1800);
+  consumed += 2400;
+  await wait(2400);
   return consumed;
 }
 
@@ -94,12 +96,14 @@ async function recordIncident(page) {
   consumed += await pulse(page.locator("#threadForgeCopy"), 1600);
   consumed += await pulse(page.locator("#threadGuardianCopy"), 1600);
 
-  consumed += await focusLocator(page.locator(".byo-key-card"), "center", 1200);
-  consumed += await pulse(page.locator(".byo-key-card"), 1800);
-  consumed += await pulse(page.locator("#liveReasoningState"), 1600);
-  consumed += await pulse(page.locator("#liveReasoningToggle"), 1600);
-  consumed += await pulse(page.locator("#openaiApiKeyInput"), 2200);
-  consumed += await pulse(page.locator("#openaiKeyStatus"), 2000);
+  consumed += await focusLocator(page.locator(".byo-key-card"), "center", 1400);
+  consumed += await pulse(page.locator(".byo-key-card"), 2200);
+  consumed += await pulse(page.locator("#liveReasoningState"), 1800);
+  consumed += await pulse(page.locator("#liveReasoningToggle"), 1800);
+  consumed += await pulse(page.locator("#openaiApiKeyInput"), 2600);
+  consumed += await pulse(page.locator("#openaiKeyStatus"), 2200);
+  consumed += 1200;
+  await wait(1200);
 
   consumed += await focusLocator(page.locator(".guardian-gate-card"), "center", 1000);
   consumed += await pulse(page.getByRole("button", { name: "Approve runbook" }), 1800);
@@ -109,6 +113,8 @@ async function recordIncident(page) {
   consumed += await pulse(page.locator("#incidentHeroGuardian"), 1800);
   consumed += await pulse(page.locator("#incidentHeroExecution"), 1800);
   consumed += await pulse(page.locator("#resultBanner"), 2000);
+  consumed += 1000;
+  await wait(1000);
   return consumed;
 }
 
@@ -122,15 +128,15 @@ async function recordTraining(page) {
   consumed += await pulse(page.getByRole("heading", { name: "Learning stays visible. Dense artifacts stay quiet." }), 2200);
 
   consumed += await focusLocator(page.locator(".train-metrics"), "center", 1000);
-  consumed += await pulse(page.locator("#rewardCurve"), 2800);
-  consumed += await pulse(page.locator("#agentStats"), 2200);
-  consumed += await pulse(page.locator("#rewardImprovement"), 1600);
+  consumed += await pulse(page.locator("#rewardCurve"), 3400);
+  consumed += await pulse(page.locator("#agentStats"), 2400);
+  consumed += await pulse(page.locator("#rewardImprovement"), 1800);
 
   consumed += await focusLocator(page.getByRole("heading", { name: "Governance summary" }), "center", 1200);
-  consumed += await pulse(page.locator("#platformPolicyStatus"), 1800);
-  consumed += await pulse(page.locator("#platformReplayReadiness"), 1600);
-  consumed += await pulse(page.locator("#artifactSnapshots"), 1800);
-  consumed += await pulse(page.locator("#learningContracts"), 1600);
+  consumed += await pulse(page.locator("#platformPolicyStatus"), 2000);
+  consumed += await pulse(page.locator("#platformReplayReadiness"), 1800);
+  consumed += await pulse(page.locator("#artifactSnapshots"), 2000);
+  consumed += await pulse(page.locator("#learningContracts"), 1800);
   return consumed;
 }
 

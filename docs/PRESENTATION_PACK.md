@@ -38,13 +38,16 @@ Use it as the compact presenter-facing map of the strongest materials in the rep
 10. Presenter deck
    - [NEXUS v2 Presenter Deck - nexus-v2-presenter-deck.pptx](../artifacts/presentations/nexus-v2-presenter-pack/output/nexus-v2-presenter-deck.pptx)
 
-11. Demo video
-   - Final video: [artifacts/demo-video/nexus-v2-demo.mp4](../artifacts/demo-video/nexus-v2-demo.mp4)
+11. Demo videos
+   - Submission walkthrough: [artifacts/demo-video/nexus-v2-submission-walkthrough.mp4](../artifacts/demo-video/nexus-v2-submission-walkthrough.mp4)
+   - Product demo: [artifacts/demo-video/nexus-v2-demo.mp4](../artifacts/demo-video/nexus-v2-demo.mp4)
 
-12. Demo video pipeline
-   - Build command: `./scripts/build_demo_video.sh`
+12. Demo video pipelines
+   - Submission walkthrough build: `./scripts/build_submission_walkthrough.sh`
+   - Product demo build: `./scripts/build_demo_video.sh`
    - Recorder: [scripts/generate_demo_video.mjs](../scripts/generate_demo_video.mjs)
-   - Builder: [scripts/build_demo_video.sh](../scripts/build_demo_video.sh)
+   - Product demo builder: [scripts/build_demo_video.sh](../scripts/build_demo_video.sh)
+   - Submission walkthrough builder: [scripts/build_submission_walkthrough.sh](../scripts/build_submission_walkthrough.sh)
 
 ## Recommended Reading Order
 

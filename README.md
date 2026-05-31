@@ -66,7 +66,8 @@ After NEXUS:
 
 - Public app: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
 - Hugging Face Space: [https://huggingface.co/spaces/kunalkachru23/nexus](https://huggingface.co/spaces/kunalkachru23/nexus)
-- Video walkthrough: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
+- Submission walkthrough video: [artifacts/demo-video/nexus-v2-submission-walkthrough.mp4](artifacts/demo-video/nexus-v2-submission-walkthrough.mp4)
+- Product demo video: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
 - Final submission guide: [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
 - Visual architecture and flows: [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
 
@@ -299,7 +300,8 @@ python demo.py
 ## Hackathon Submission Assets
 
 - Live product/demo link: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
-- Video walkthrough: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
+- Video walkthrough: [artifacts/demo-video/nexus-v2-submission-walkthrough.mp4](artifacts/demo-video/nexus-v2-submission-walkthrough.mp4)
+- Product demo video: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
 - LinkedIn/X announcement: `Add final public URL before submission`
 - Architecture and technical docs: [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
 - Codex/OpenAI usage and validation story: [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
