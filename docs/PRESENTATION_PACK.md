@@ -29,16 +29,19 @@ Use it as the compact presenter-facing map of the strongest materials in the rep
 7. Visual architecture and screenshots
    - [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](VISUAL_ARCHITECTURE_AND_FLOWS.md)
 
-8. Near-term technical roadmap
+8. Product strategy and GTM
+   - [docs/PRODUCT_STRATEGY_AND_GTM.md](PRODUCT_STRATEGY_AND_GTM.md)
+
+9. Near-term technical roadmap
    - [docs/TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md)
 
-9. Presenter deck
+10. Presenter deck
    - [NEXUS v2 Presenter Deck - nexus-v2-presenter-deck.pptx](../artifacts/presentations/nexus-v2-presenter-pack/output/nexus-v2-presenter-deck.pptx)
 
-10. Demo video
+11. Demo video
    - Final video: [artifacts/demo-video/nexus-v2-demo.mp4](../artifacts/demo-video/nexus-v2-demo.mp4)
 
-11. Demo video pipeline
+12. Demo video pipeline
    - Build command: `./scripts/build_demo_video.sh`
    - Recorder: [scripts/generate_demo_video.mjs](../scripts/generate_demo_video.mjs)
    - Builder: [scripts/build_demo_video.sh](../scripts/build_demo_video.sh)
@@ -50,8 +53,9 @@ If you are about to submit or present:
 1. Read the root README
 2. Read the final submission guide
 3. Open the visual architecture doc
-4. Keep the demo cheat sheet and browser checklist nearby
-5. Use the speaker notes only when you want fuller narration
+4. Read the product strategy doc if you want the future vision and buyer story
+5. Keep the demo cheat sheet and browser checklist nearby
+6. Use the speaker notes only when you want fuller narration
 
 ## Current Positioning
 

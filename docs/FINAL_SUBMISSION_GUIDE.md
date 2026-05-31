@@ -23,6 +23,8 @@ The submission is designed to prove one clear idea:
 
 For the product pitch and first impression, start with [README.md](../README.md).
 
+For forward-looking product, GTM, and RL positioning context, see [docs/PRODUCT_STRATEGY_AND_GTM.md](PRODUCT_STRATEGY_AND_GTM.md).
+
 ## What Is Actually Shipped
 
 The shipped repo includes:

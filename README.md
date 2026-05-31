@@ -194,19 +194,63 @@ That makes the public app safe to share without leaking or spending the project 
 - an extensibility path beyond the deterministic demo baseline
 - a stronger proof point that the product can stay safe in public while still supporting real model-backed behavior
 
+## Future Product Vision
+
+NEXUS is designed to grow from a demo-safe incident copilot into an autonomous incident operations platform.
+
+- today: visible triage, diagnosis, remediation, and governance
+- next: deeper integrations, richer evidence, stronger policy control, and replay-backed learning
+- long term: measurable operational improvement from governed AI actions taken across real incidents
+
+The key idea is not just to assist with incidents, but to create a system that gets better at handling them while remaining understandable and controllable.
+
+## Go-To-Market And Who Buys This
+
+NEXUS should be positioned as `governed multi-agent incident response`, not generic AI ops.
+
+- engineering managers want faster triage and clearer escalation paths
+- platform and SRE teams want safer remediation with visible approvals
+- leadership wants stronger auditability, operational trust, and a credible AI adoption story
+
+This positioning matters because the product is not selling raw model access. It is selling trust, workflow clarity, and safer operational automation.
+
+## Why RL Matters
+
+The RL layer matters because it turns NEXUS into a learning system, not just a static prompt-driven assistant.
+
+- it can learn which interventions actually work
+- it can improve prioritization and runbook choice over time
+- it can adapt to incident difficulty and outcome quality
+- it gives the product a measurable path to getting better from real operational feedback
+
+That makes the training surface strategically important, not just visually interesting.
+
+## What Comes Next
+
+The next phases after the demo are straightforward:
+
+- stronger integrations into observability and ticketing systems
+- richer evidence retrieval and correlation
+- a production-grade policy engine around Guardian
+- closed-loop RL from real execution outcomes
+- team workflows, approvals, and incident memory
+- enterprise packaging, security posture, and deployment controls
+
 ## Submission Resource Index
 
 ### Start here
 
 1. [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
 2. [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
-3. [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
-4. [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
+3. [docs/PRODUCT_STRATEGY_AND_GTM.md](docs/PRODUCT_STRATEGY_AND_GTM.md)
+4. [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
+5. [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
 
 ### Core submission docs
 
 - [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
 - [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
+- [docs/PRODUCT_STRATEGY_AND_GTM.md](docs/PRODUCT_STRATEGY_AND_GTM.md)
 - [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
 - [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
 
