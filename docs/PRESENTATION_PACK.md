@@ -29,12 +29,12 @@ This is the presentation index for the final submission.
    - [docs/TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md)
 
 8. Presenter deck
-   - [NEXUS v2 Presenter Deck - nexus-v2-presenter-deck.pptx](/Users/kunalkachru/Documents/nexus-v3/artifacts/presentations/nexus-v2-presenter-pack/output/nexus-v2-presenter-deck.pptx)
+   - [NEXUS v2 Presenter Deck - nexus-v2-presenter-deck.pptx](../artifacts/presentations/nexus-v2-presenter-pack/output/nexus-v2-presenter-deck.pptx)
 
 9. Demo video pipeline
    - Build command: `./scripts/build_demo_video.sh`
-   - Recorder: [scripts/generate_demo_video.mjs](/Users/kunalkachru/Documents/nexus-v3/scripts/generate_demo_video.mjs)
-   - Builder: [scripts/build_demo_video.sh](/Users/kunalkachru/Documents/nexus-v3/scripts/build_demo_video.sh)
+   - Recorder: [scripts/generate_demo_video.mjs](../scripts/generate_demo_video.mjs)
+   - Builder: [scripts/build_demo_video.sh](../scripts/build_demo_video.sh)
 
 ## Recommended Reading Order
 

@@ -14,19 +14,19 @@ This document collects the core visual assets for final submission:
 
 ### Command Center
 
-![Command Center](/Users/kunalkachru/Documents/nexus-v3/docs/assets/screenshots/command-center.png)
+![Command Center](assets/screenshots/command-center.png)
 
 ### Incident Detail
 
-![Incident Detail](/Users/kunalkachru/Documents/nexus-v3/docs/assets/screenshots/incident-detail.png)
+![Incident Detail](assets/screenshots/incident-detail.png)
 
 ### Raw Log To Incident Flow
 
-![Raw Log Flow](/Users/kunalkachru/Documents/nexus-v3/docs/assets/screenshots/raw-log-incident-flow.png)
+![Raw Log Flow](assets/screenshots/raw-log-incident-flow.png)
 
 ### Learning & Controls
 
-![Learning and Controls](/Users/kunalkachru/Documents/nexus-v3/docs/assets/screenshots/learning-controls.png)
+![Learning and Controls](assets/screenshots/learning-controls.png)
 
 ## High-Level Product Flow
 
