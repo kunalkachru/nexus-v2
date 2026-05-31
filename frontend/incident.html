@@ -46,7 +46,7 @@
                 <div class="eyebrow">Incident Console</div>
                 <h1 id="incidentTitle">Incident console</h1>
                 <p class="hero-copy" id="incidentSubtitle">
-                    Open a single incident and inspect the evidence, agents, and safety outcome without queue noise.
+                    Open one incident, see the recommended fix, and make the Guardian decision without wading through extra tables.
                 </p>
                 <div class="hero-stats">
                     <div class="stat">
@@ -69,10 +69,10 @@
             </div>
             <div class="hero-panel controls">
                 <div class="eyebrow">Working context</div>
-                <p class="hero-copy">Use the queue to inspect another incident. This page stays focused on the selected incident only.</p>
+                <p class="hero-copy">This console keeps the story focused: what happened, what should be done, and whether Guardian allows it.</p>
                 <div class="detail-card compact-note">
                     <div class="badge" id="incidentOverviewNote">Waiting for incident selection.</div>
-                    <p class="hero-copy">The console below shows incident evidence, signal correlation, remediation, and guardrail review in one operating view.</p>
+                    <p class="hero-copy">A concise incident summary appears first, and the deeper evidence stays available below when needed.</p>
                     <p class="section-note" id="liveReasoningDetail">Live reasoning mode will be shown here after the incident loads.</p>
                     <div class="shell-actions">
                         <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
@@ -81,7 +81,7 @@
                 </div>
                 <div class="detail-card compact-note guardian-gate-card">
                     <div class="badge">Guardian gate</div>
-                    <p class="hero-copy">Choose whether the proposed runbook is safe to execute. Approve sends it forward. Block stops it. Request modification sends it back for revision before execution.</p>
+                    <p class="hero-copy">Approve, block, or request a revision. Guardian is the explicit human gate before execution starts.</p>
                     <div class="shell-actions guardian-gate-actions">
                         <button class="nav-link channel-cta" id="guardianApproveBtn" type="button">Approve and execute</button>
                         <button class="nav-link channel-cta" id="guardianBlockBtn" type="button">Block execution</button>
@@ -92,120 +92,12 @@
             </div>
         </section>
 
-        <section class="section workflow-section">
-            <div class="section-header">
-                <h2>Workflow Timeline</h2>
-                <div class="section-note">The incident moves from intake through outcome in one visible path.</div>
-            </div>
-            <div class="detail-card compact-note workflow-summary">
-                <div class="badge" id="workflowSummary">Waiting for workflow</div>
-                <p class="hero-copy" id="workflowSummaryCopy">This timeline will show the source channel, authentication, enrichment, evidence, agents, safety, and outcome steps flowing from intake to verified outcome.</p>
-            </div>
-            <div class="workflow-timeline" id="workflowTimeline"></div>
-        </section>
-
-        <section class="section">
-            <div class="section-header">
-                <h2>Live Status and Audit</h2>
-                <div class="section-note">The versioned contract exposes queue position, stage, execution intent, and audit history.</div>
-            </div>
-            <div class="story-grid audit-story-grid">
-                <div class="detail-card audit-summary-card">
-                    <div class="badge">Audit summary</div>
-                    <div class="audit-summary-grid" id="auditSummaryGrid">
-                        <div class="audit-summary-item">
-                            <div class="audit-summary-label">Entries</div>
-                            <div class="audit-summary-value" id="auditEntryCount">-</div>
-                        </div>
-                        <div class="audit-summary-item">
-                            <div class="audit-summary-label">Latest event</div>
-                            <div class="audit-summary-value" id="auditLatestEvent">-</div>
-                        </div>
-                        <div class="audit-summary-item">
-                            <div class="audit-summary-label">Latest actor</div>
-                            <div class="audit-summary-value" id="auditLatestActor">-</div>
-                        </div>
-                        <div class="audit-summary-item">
-                            <div class="audit-summary-label">Latest state</div>
-                            <div class="audit-summary-value" id="auditLatestState">-</div>
-                        </div>
-                    </div>
-                    <div class="audit-chip-row" id="auditSummaryChips"></div>
-                    <div class="audit-preview" id="auditSummaryPreview"></div>
-                </div>
-                <div class="detail-card audit-feed-card">
-                    <div class="badge">Status API</div>
-                    <div class="hero-stats" id="statusSummary">
-                        <div class="stat"><div class="stat-label">Stage</div><div class="stat-value" id="statusStage">-</div></div>
-                        <div class="stat"><div class="stat-label">Queue</div><div class="stat-value" id="statusQueuePosition">-</div></div>
-                        <div class="stat"><div class="stat-label">ETA</div><div class="stat-value" id="statusEta">-</div></div>
-                        <div class="stat"><div class="stat-label">Source</div><div class="stat-value" id="statusSource">-</div></div>
-                    </div>
-                    <ul class="timeline" id="statusTimeline"></ul>
-                    <div class="badge">Audit trail</div>
-                    <div class="audit-feed" id="incidentAuditLogs"></div>
-                    <div class="badge">Execute path</div>
-                    <p class="hero-copy">The execution path now sits behind an explicit Guardian approval or block choice so the control gate is easy to explain.</p>
-                    <div class="result-banner" id="executionResult">Awaiting a Guardian decision.</div>
-                </div>
-            </div>
-        </section>
-
-        <section class="section">
-            <div class="section-header">
-                <h2>Agent Data Flow</h2>
-                <div class="section-note">Watch the same incident context move through SENTINEL, PRISM, FORGE, and GUARDIAN in order.</div>
-            </div>
-            <div class="agent-flow" id="agentFlow">
-                <article class="flow-node" id="sentinelFlowNode" data-tone="sentinel">
-                    <div class="flow-node-top">
-                        <div class="flow-step-num">01</div>
-                        <div class="flow-node-title">SENTINEL</div>
-                    </div>
-                    <div class="flow-node-copy">Classifies severity, confidence, and evidence coverage.</div>
-                    <div class="flow-node-transfer" id="sentinelFlowTransfer">Raw input → evidence bundle</div>
-                    <div class="flow-node-meta" id="sentinelFlowMeta">Awaiting data</div>
-                </article>
-                <div class="flow-link"></div>
-                <article class="flow-node" id="prismFlowNode" data-tone="prism">
-                    <div class="flow-node-top">
-                        <div class="flow-step-num">02</div>
-                        <div class="flow-node-title">PRISM</div>
-                    </div>
-                    <div class="flow-node-copy">Correlates signals into a root-cause narrative.</div>
-                    <div class="flow-node-transfer" id="prismFlowTransfer">Evidence bundle → diagnosis packet</div>
-                    <div class="flow-node-meta" id="prismFlowMeta">Awaiting data</div>
-                </article>
-                <div class="flow-link"></div>
-                <article class="flow-node" id="forgeFlowNode" data-tone="forge">
-                    <div class="flow-node-top">
-                        <div class="flow-step-num">03</div>
-                        <div class="flow-node-title">FORGE</div>
-                    </div>
-                    <div class="flow-node-copy">Chooses the safest rollback-ready remediation path.</div>
-                    <div class="flow-node-copy">Proposed fix stays visible before the safety gate opens.</div>
-                    <div class="flow-node-transfer" id="forgeFlowTransfer">Diagnosis packet → runbook proposal</div>
-                    <div class="flow-node-meta" id="forgeFlowMeta">Awaiting data</div>
-                </article>
-                <div class="flow-link"></div>
-                <article class="flow-node" id="guardianFlowNode" data-tone="guardian">
-                    <div class="flow-node-top">
-                        <div class="flow-step-num">04</div>
-                        <div class="flow-node-title">GUARDIAN</div>
-                    </div>
-                    <div class="flow-node-copy">Approves or blocks the execution path.</div>
-                    <div class="flow-node-transfer" id="guardianFlowTransfer">Runbook proposal → safety decision</div>
-                    <div class="flow-node-meta" id="guardianFlowMeta">Awaiting data</div>
-                </article>
-            </div>
-        </section>
-
         <div class="layout incident-layout">
             <div>
         <section class="section">
             <div class="section-header">
                 <h2>Incident Overview</h2>
-                <div class="section-note">Summary, impact, and affected services.</div>
+                <div class="section-note">A compact executive summary of the incident, the proposed fix, and the current decision state.</div>
             </div>
             <div class="incident-summary" id="incidentSummary"></div>
             <div class="detail-card" id="incidentNarrative">
@@ -218,7 +110,7 @@
         <section class="section">
             <div class="section-header">
                 <h2>Raw Intake</h2>
-                <div class="section-note">This is the raw text the operator pasted or the system ingested before the agents reasoned about it.</div>
+                <div class="section-note">The original input stays visible, but the supporting details are tucked away until you need them.</div>
             </div>
             <div class="detail-grid">
                 <div class="detail-card">
@@ -238,10 +130,18 @@
             </div>
         </section>
 
-        <section class="section">
-            <div class="section-header">
-                <h2>Signals</h2>
-                <div class="section-note">Metrics, recent logs, alert timeline, and deployment context.</div>
+        <details class="section section-collapsible">
+            <summary class="section-summary">
+                <div>
+                    <h2>Operational Details</h2>
+                    <div class="section-note">Signals, timeline, audit history, and the agent flow remain available but stay out of the way by default.</div>
+                </div>
+            </summary>
+            <div class="details-body">
+                <section class="section-inner">
+                    <div class="section-header compact">
+                        <h2>Signals</h2>
+                        <div class="section-note">Metrics, recent logs, alert timeline, and deployment context.</div>
                     </div>
                     <div class="metrics-grid" id="metricsGrid"></div>
                     <div class="detail-grid">
@@ -271,6 +171,113 @@
                         </div>
                     </div>
                 </section>
+                <section class="section-inner">
+                    <div class="section-header compact">
+                        <h2>Workflow Timeline</h2>
+                        <div class="section-note">The incident moves from intake through outcome in one visible path.</div>
+                    </div>
+                    <div class="detail-card compact-note workflow-summary">
+                        <div class="badge" id="workflowSummary">Waiting for workflow</div>
+                        <p class="hero-copy" id="workflowSummaryCopy">This timeline will show the source channel, authentication, enrichment, evidence, agents, safety, and outcome steps flowing from intake to verified outcome.</p>
+                    </div>
+                    <div class="workflow-timeline" id="workflowTimeline"></div>
+                </section>
+                <section class="section-inner">
+                    <div class="section-header compact">
+                        <h2>Live Status and Audit</h2>
+                        <div class="section-note">Queue position, stage, execution intent, and audit history are still there when you need them.</div>
+                    </div>
+                    <div class="story-grid audit-story-grid">
+                        <div class="detail-card audit-summary-card">
+                            <div class="badge">Audit summary</div>
+                            <div class="audit-summary-grid" id="auditSummaryGrid">
+                                <div class="audit-summary-item">
+                                    <div class="audit-summary-label">Entries</div>
+                                    <div class="audit-summary-value" id="auditEntryCount">-</div>
+                                </div>
+                                <div class="audit-summary-item">
+                                    <div class="audit-summary-label">Latest event</div>
+                                    <div class="audit-summary-value" id="auditLatestEvent">-</div>
+                                </div>
+                                <div class="audit-summary-item">
+                                    <div class="audit-summary-label">Latest actor</div>
+                                    <div class="audit-summary-value" id="auditLatestActor">-</div>
+                                </div>
+                                <div class="audit-summary-item">
+                                    <div class="audit-summary-label">Latest state</div>
+                                    <div class="audit-summary-value" id="auditLatestState">-</div>
+                                </div>
+                            </div>
+                            <div class="audit-chip-row" id="auditSummaryChips"></div>
+                            <div class="audit-preview" id="auditSummaryPreview"></div>
+                        </div>
+                        <div class="detail-card audit-feed-card">
+                            <div class="badge">Status API</div>
+                            <div class="hero-stats" id="statusSummary">
+                                <div class="stat"><div class="stat-label">Stage</div><div class="stat-value" id="statusStage">-</div></div>
+                                <div class="stat"><div class="stat-label">Queue</div><div class="stat-value" id="statusQueuePosition">-</div></div>
+                                <div class="stat"><div class="stat-label">ETA</div><div class="stat-value" id="statusEta">-</div></div>
+                                <div class="stat"><div class="stat-label">Source</div><div class="stat-value" id="statusSource">-</div></div>
+                            </div>
+                            <ul class="timeline" id="statusTimeline"></ul>
+                            <div class="badge">Audit trail</div>
+                            <div class="audit-feed" id="incidentAuditLogs"></div>
+                            <div class="badge">Execute path</div>
+                            <p class="hero-copy">The execution path now sits behind an explicit Guardian approval or block choice so the control gate is easy to explain.</p>
+                            <div class="result-banner" id="executionResult">Awaiting a Guardian decision.</div>
+                        </div>
+                    </div>
+                </section>
+                <section class="section-inner">
+                    <div class="section-header compact">
+                        <h2>Agent Data Flow</h2>
+                        <div class="section-note">Watch the same incident context move through SENTINEL, PRISM, FORGE, and GUARDIAN in order.</div>
+                    </div>
+                    <div class="agent-flow" id="agentFlow">
+                        <article class="flow-node" id="sentinelFlowNode" data-tone="sentinel">
+                            <div class="flow-node-top">
+                                <div class="flow-step-num">01</div>
+                                <div class="flow-node-title">SENTINEL</div>
+                            </div>
+                            <div class="flow-node-copy">Classifies severity, confidence, and evidence coverage.</div>
+                            <div class="flow-node-transfer" id="sentinelFlowTransfer">Raw input → evidence bundle</div>
+                            <div class="flow-node-meta" id="sentinelFlowMeta">Awaiting data</div>
+                        </article>
+                        <div class="flow-link"></div>
+                        <article class="flow-node" id="prismFlowNode" data-tone="prism">
+                            <div class="flow-node-top">
+                                <div class="flow-step-num">02</div>
+                                <div class="flow-node-title">PRISM</div>
+                            </div>
+                            <div class="flow-node-copy">Correlates signals into a root-cause narrative.</div>
+                            <div class="flow-node-transfer" id="prismFlowTransfer">Evidence bundle → diagnosis packet</div>
+                            <div class="flow-node-meta" id="prismFlowMeta">Awaiting data</div>
+                        </article>
+                        <div class="flow-link"></div>
+                        <article class="flow-node" id="forgeFlowNode" data-tone="forge">
+                            <div class="flow-node-top">
+                                <div class="flow-step-num">03</div>
+                                <div class="flow-node-title">FORGE</div>
+                            </div>
+                            <div class="flow-node-copy">Chooses the safest rollback-ready remediation path.</div>
+                            <div class="flow-node-copy">Proposed fix stays visible before the safety gate opens.</div>
+                            <div class="flow-node-transfer" id="forgeFlowTransfer">Diagnosis packet → runbook proposal</div>
+                            <div class="flow-node-meta" id="forgeFlowMeta">Awaiting data</div>
+                        </article>
+                        <div class="flow-link"></div>
+                        <article class="flow-node" id="guardianFlowNode" data-tone="guardian">
+                            <div class="flow-node-top">
+                                <div class="flow-step-num">04</div>
+                                <div class="flow-node-title">GUARDIAN</div>
+                            </div>
+                            <div class="flow-node-copy">Approves or blocks the execution path.</div>
+                            <div class="flow-node-transfer" id="guardianFlowTransfer">Runbook proposal → safety decision</div>
+                            <div class="flow-node-meta" id="guardianFlowMeta">Awaiting data</div>
+                        </article>
+                    </div>
+                </section>
+            </div>
+        </details>
             </div>
 
             <div>

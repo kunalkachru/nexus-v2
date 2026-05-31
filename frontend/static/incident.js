@@ -377,17 +377,11 @@ function renderIncident(data) {
   }
 
   document.getElementById("incidentSummary").innerHTML = [
-    ["Detected", incident.detected_at],
-    ["Duration", `${incident.duration_minutes} min`],
-    ["Source", incident.source_channel || "webhook"],
-    ["Runbook", runbook.recommended_runbook],
     ["Proposed fix", structuredResult.proposed_fix || runbook.recommended_runbook],
     ["Priority", structuredResult.raw_priority_label || incident.severity],
-    ["Normalized rank", structuredResult.normalized_priority_rank ?? "-"],
     ["Safety", structuredResult.safety_decision ? String(structuredResult.safety_decision).toUpperCase() : guardian.decision.toUpperCase()],
     ["Policy", structuredResult.guardian_policy_id || guardian.policy_id || "-"],
-    ["Live reasoning", structuredResult.live_reasoning ? "ON" : "OFF"],
-    ["Reward", `${Math.round(data.reward * 100)}%`],
+    ["Detected", incident.detected_at],
   ].map(([label, value]) => `
     <div class="summary-card">
       <div class="label">${label}</div>

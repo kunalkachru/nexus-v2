@@ -40,9 +40,9 @@
         <section class="hero">
             <div class="hero-panel">
                 <div class="eyebrow">Input Channels</div>
-                <h1>Incident intake.</h1>
+                <h1>Raw logs first.</h1>
                 <p class="hero-copy">
-                    This page shows the supported ways incidents enter NEXUS and how each source maps into the same workflow so queue, console, and learning stay consistent.
+                    Start with pasted incident text, see it normalized in the browser, and open the incident console with one clear path.
                 </p>
                 <div class="hero-stats">
                     <div class="stat"><div class="stat-label">Supported channels</div><div class="stat-value">6</div></div>
@@ -52,19 +52,21 @@
                 </div>
             </div>
             <div class="hero-panel">
-                <div class="eyebrow">Normalization</div>
-                <div class="story-grid">
-                    <div class="detail-card">
-                        <div class="badge">1. Intake</div>
-                        <p class="hero-copy">Webhook, manual report, Slack command, stream anomaly, or batch import arrives with source metadata.</p>
-                    </div>
-                    <div class="detail-card">
-                        <div class="badge">2. Normalize</div>
-                        <p class="hero-copy">The envelope records severity, affected service, symptoms, and evidence lookup hints in a single shape.</p>
-                        <div class="shell-actions">
-                            <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
-                            <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
-                        </div>
+                <div class="eyebrow">Demo path</div>
+                <div class="detail-card compact-note">
+                    <div class="badge">1. Paste raw logs</div>
+                    <p class="hero-copy">Use the example payload or paste your own incident text.</p>
+                </div>
+                <div class="detail-card compact-note">
+                    <div class="badge">2. Review parsed evidence</div>
+                    <p class="hero-copy">The browser extracts the service, severity, and error signature before the backend reasoning step.</p>
+                </div>
+                <div class="detail-card compact-note">
+                    <div class="badge">3. Open the console</div>
+                    <p class="hero-copy">Jump directly into the incident view and make the Guardian decision there.</p>
+                    <div class="shell-actions">
+                        <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
+                        <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
                     </div>
                 </div>
             </div>
@@ -72,8 +74,8 @@
 
         <section class="section input-channel-shell">
             <div class="section-header">
-                <h2>Supported Channels</h2>
-                <div class="section-note">Select a channel to see how the same incident object is formed.</div>
+                <h2>Primary Intake Sources</h2>
+                <div class="section-note">Raw logs are the primary demo path. The other channels stay available when you need them.</div>
             </div>
             <div class="input-flow" id="channelCards">
                 <button class="input-channel-card active" type="button" data-channel="raw_text" data-incident-id="INC001" data-summary="Paste raw logs, stack traces, or incident text." data-auth="Operator paste or copied incident transcript." data-next="Raw text is parsed into structured evidence, then routed into the same reasoning workflow as other channels." data-payload="2026-05-30T10:14:22Z checkout-api ERROR timeout waiting for payment service\n2026-05-30T10:14:23Z checkout-api WARN retry budget exhausted\n2026-05-30T10:14:25Z payments-worker ERROR queue depth exceeded threshold\nservice=checkout-api severity=P1">
@@ -88,6 +90,14 @@
                     <strong>Manual Form</strong>
                     <p class="hero-copy">Human-reported incidents with service, severity, and symptoms.</p>
                 </button>
+                <details class="section section-collapsible input-secondary-shell">
+                    <summary class="section-summary">
+                        <div>
+                            <h2>More Sources</h2>
+                            <div class="section-note">Slack, stream anomaly, and batch import remain available without crowding the main demo path.</div>
+                        </div>
+                    </summary>
+                    <div class="details-body">
                 <button class="input-channel-card" type="button" data-channel="slack_command" data-incident-id="INC003" data-summary="Slack-style reporting from an on-call channel." data-auth="Workspace identity and command scope." data-next="Slack intake adds workspace context and then routes to the same incident workflow." data-payload="/incident report&#10;Service: search-api&#10;Severity: P2&#10;Summary: indexing delay">
                     <strong>Slack Command</strong>
                     <p class="hero-copy">Chat-native intake for fast triage from messaging tools.</p>
@@ -100,6 +110,8 @@
                     <strong>Batch Import</strong>
                     <p class="hero-copy">Replay-ready import of historical incidents and training data.</p>
                 </button>
+                    </div>
+                </details>
             </div>
         </section>
 

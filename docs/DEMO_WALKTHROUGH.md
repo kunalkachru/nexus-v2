@@ -23,6 +23,8 @@ The latest implementation and browser pass confirmed:
 - the `Guardian gate` is the explicit approval, block, and request-modification control surface
 - the console shows `APPROVE`, `REJECT`, and `REQUEST_MODIFICATION`, and the execution state can become `needs_modification` when revision is required
 - the console also shows guardian policy metadata when a decision has been recorded
+- the top of the incident console stays compact, while signals, workflow, audit, and agent-flow data live in a collapsible `Operational Details` drawer
+- the Inputs page keeps raw logs as the clearest path and tucks alternate sources into a collapsible `More Sources` drawer
 - the training lab shows the solution proposal, learning-contract count, audit-event count, and Guardian-review count
 - the settings page shows the learning-contract count, audit-event count, and Guardian-review count
 - durable artifact counts now survive restarts through the local artifact store
@@ -324,6 +326,7 @@ What to remember:
 - The live reasoning toggle is the control that changes how the incident is rendered.
 - The incident console now exposes explicit `Approve and execute`, `Block execution`, and `Request modification` controls in the `Guardian gate`.
 - The incident console now exposes the guardian policy metadata field when a decision is available.
+- The console starts with a concise executive summary, not every signal at once.
 
 Expected result:
 
@@ -333,6 +336,7 @@ Expected result:
 - you can switch live reasoning on or off and see the incident content update in place
 - if you click `Approve and execute`, the incident state updates and the audit trail records it
 - if you block execution, the incident stays under review and the audit trail records the block
+- you can open `Operational Details` when you want the longer signal, workflow, and audit trace
 
 #### Webhook
 
@@ -424,19 +428,18 @@ What to look for on the page:
 - ETA
 - raw incident text, when present
 - normalized evidence derived from the raw text
-- the 9-step workflow timeline
-- agent cards for `SENTINEL`, `PRISM`, `FORGE`, and `GUARDIAN`
-- evidence provenance
-- audit trail
-- execution state
-- action buttons or controls
+- the concise incident summary
+- the raw intake and normalized evidence
+- the Guardian gate and incident action buttons
+- the agent cards for `SENTINEL`, `PRISM`, `FORGE`, and `GUARDIAN`
+- the `Operational Details` drawer for signals, workflow, audit, and provenance
 
 Expected behavior:
 
 - The page loads the incident data.
-- The workflow timeline makes sense in order.
-- The agent flow is visible.
-- The audit trail is readable.
+- The workflow timeline is available in the `Operational Details` drawer.
+- The agent flow is available in the `Operational Details` drawer.
+- The audit trail is available in the `Operational Details` drawer.
 - The raw input and normalized evidence are visible on live incidents.
 - The evidence section shows where the information came from.
 - The execution state is visible and updates when the incident changes.
@@ -775,9 +778,10 @@ Use this section to verify the product is working, not just rendering.
 ### Incident Console
 
 - Open an incident from the queue or Inputs.
-- Confirm the workflow timeline loads.
+- Confirm the concise summary is visible first.
+- Open `Operational Details` and confirm the workflow timeline loads.
 - Confirm the agent handoff shows `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
-- Confirm the audit trail and evidence provenance are visible.
+- Confirm the audit trail and evidence provenance are visible inside `Operational Details`.
 - Click the execution action if it is available.
 - Expected result: the incident updates state, and the audit trail reflects the action.
 

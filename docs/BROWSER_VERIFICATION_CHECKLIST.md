@@ -16,6 +16,8 @@ Use this list when you want to confirm the exact changes that landed in the late
 - The incident console shows the structured result fields, including proposed fix, priority, normalized rank, safety decision, and live reasoning state.
 - The incident console now shows guardian policy metadata alongside the safety decision when it is available.
 - The `Guardian gate` is an explicit approve/block/request-modification control surface and the decision path is persisted.
+- The incident console opens with a compact executive summary, while the dense signals, workflow, audit, and agent-flow sections live inside a collapsible `Operational Details` drawer.
+- The `Inputs` page centers the raw-log path first and tucks Slack, stream anomaly, and batch import into a `More Sources` drawer.
 - The console now distinguishes `APPROVE`, `REJECT`, and `REQUEST_MODIFICATION`, and the incident summary can surface a `needs_modification` execution state.
 - The training lab shows solution proposal, raw priority, priority rank, live reasoning state, learning-contract count, audit-event count, and Guardian-review count.
 - The settings page exposes the learning-contract count, audit-event count, and Guardian-review count alongside replay launches and training snapshots.
@@ -127,8 +129,8 @@ http://127.0.0.1:8000/incident
 Confirm:
 
 - The incident timeline is visible.
-- The workflow starts with intake and moves through agent stages.
-- SENTINEL, PRISM, FORGE, and GUARDIAN are each represented.
+- The workflow starts with intake and moves through agent stages when you open `Operational Details`.
+- SENTINEL, PRISM, FORGE, and GUARDIAN are each represented in the drawer.
 - Raw incident text and normalized evidence are visible for live incidents.
 - Evidence sections for logs, metrics, traces, and deployments are present.
 - Evidence provenance shows the fused adapter story rather than only the old fixture-only path.
@@ -139,6 +141,7 @@ Confirm:
 - The `Guardian gate` buttons are the explicit approval, block, and request-modification controls, if they are visible.
 - The incident summary exposes the structured result fields, including proposed fix, priority, normalized rank, safety decision, and live reasoning state.
 - The incident summary exposes the guardian policy field when the backend returns one.
+- The dense incident sections are tucked into `Operational Details` so the top of the console stays readable.
 
 Pass criteria:
 
@@ -158,6 +161,7 @@ Confirm:
 - The raw-log paste path is visible and clearly described.
 - The raw input field starts empty.
 - A `Load example logs` button is visible for quick demos.
+- The `More Sources` drawer keeps the alternate intake methods available without crowding the raw-log flow.
 - Multiple intake options are visible.
 - The page shows more than one input method.
 - The intent of the page is to demonstrate how incidents enter the system.

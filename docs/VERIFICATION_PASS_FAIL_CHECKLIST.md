@@ -9,6 +9,8 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - Evidence provenance now shows the fused observability adapter story, not only the static fixtures.
 - The incident console shows proposed fix, priority, normalized rank, live reasoning state, and guardian policy metadata.
 - The Guardian gate exposes explicit approve, block, and request-modification controls.
+- The incident console keeps the top-level summary compact and moves signals, workflow, audit, and agent flow into an `Operational Details` drawer.
+- The Inputs page keeps raw logs as the primary demo path and moves Slack, stream anomaly, and batch import into a `More Sources` drawer.
 - The training lab shows the solution proposal, raw priority, learning-contract count, audit-event count, and Guardian-review count.
 - The settings page exposes the learning-contract count, audit-event count, and Guardian-review count.
 - Mutating incident routes require an operator role.
@@ -49,6 +51,7 @@ Use this as a quick yes/no checklist while verifying the UI in a browser.
 - [ ] Raw-log paste intake is visible.
 - [ ] The raw input field starts empty.
 - [ ] A `Load example logs` button is visible.
+- [ ] The `More Sources` drawer keeps the alternate intake paths available without crowding the raw-log path.
 - [ ] The parsed preview updates when the pasted text changes.
 - [ ] Webhook intake is visible.
 - [ ] Manual intake is visible.
