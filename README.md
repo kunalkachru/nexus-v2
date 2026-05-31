@@ -1,6 +1,6 @@
 ---
 title: NEXUS v2
-emoji: 🤖
+emoji: "🤖"
 colorFrom: blue
 colorTo: purple
 sdk: docker
@@ -10,303 +10,175 @@ pinned: false
 
 # NEXUS v2
 
-NEXUS v2 is an enterprise incident-reasoning product that starts from raw incident text or logs, turns them into structured evidence, and routes the incident through a controlled queue, console, and safety flow.
+NEXUS v2 is an agent-first incident response product prototype. It turns queue items or raw logs into a visible four-agent workflow:
 
-For the clean final-submission path, start here:
+`SENTINEL -> PRISM -> FORGE -> GUARDIAN`
+
+The product is built to demonstrate three things clearly:
+
+- incidents can move through a readable multi-agent handoff
+- operators can inspect evidence, diagnosis, and governance in one place
+- the public deployment can stay safe by default with optional user-supplied live reasoning
+
+## Start Here
+
+If you only open a few links, use these:
+
+- Final submission guide: [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
+- Public app: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
+- Hugging Face Space: [https://huggingface.co/spaces/kunalkachru23/nexus](https://huggingface.co/spaces/kunalkachru23/nexus)
+- Visual diagrams and screenshots: [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
+- Demo cheat sheet: [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
+- Presentation pack: [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
+- Technical roadmap: [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
+
+## Product Story
+
+NEXUS v2 focuses the user on one live incident and one clear collaboration story:
+
+1. `SENTINEL` classifies the incident and severity.
+2. `PRISM` diagnoses the likely root cause.
+3. `FORGE` proposes the runbook or remediation.
+4. `GUARDIAN` reviews safety and controls execution.
+
+The UI is intentionally agent-first:
+
+- `Command Center` keeps the active incident and queue in view
+- `Incident Detail` shows the live handoff thread between agents
+- `Learning & Controls` shows reward improvement and governance posture
+
+## Core Flow
+
+```mermaid
+flowchart LR
+    A["Queue or raw logs"] --> B["Incident Detail"]
+    B --> C["SENTINEL classifies"]
+    C --> D["PRISM diagnoses"]
+    D --> E["FORGE proposes runbook"]
+    E --> F["GUARDIAN approves or blocks"]
+    F --> G["Execution state updates"]
+    G --> H["Learning and reward tracking"]
+```
+
+## Runtime Safety Model
+
+```mermaid
+flowchart TD
+    A["Public HF Space"] --> B["Deterministic mode by default"]
+    B --> C["No project OpenAI key required"]
+    C --> D["Safe public demo"]
+    A --> E["Optional BYO OpenAI key"]
+    E --> F["Stored in browser session only"]
+    F --> G["Sent request-scoped to backend"]
+    G --> H["Live reasoning only when user opts in"]
+```
+
+## Public Deployment
+
+Public URLs:
+
+- App: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
+- Space repo: [https://huggingface.co/spaces/kunalkachru23/nexus](https://huggingface.co/spaces/kunalkachru23/nexus)
+
+Default posture:
+
+- deterministic demo mode is on by default
+- no project `OPENAI_API_KEY` is required on the public deployment
+- public users cannot spend the project owner's API credits
+- users can optionally attach their own OpenAI key from `Incident Detail`
+
+## Key Docs
+
+### Submission and demo
 
 - [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
 - [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
+- [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md)
+- [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md)
 - [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
 
-Current phase:
-- UI-first roadmap: complete
-- Thin backend demo layer: complete
-- Public demo deployment: complete
-- Production hardening / live integrations: next
+### Validation and operations
 
-The current source of truth for scope and usage is:
-- [Final submission guide](docs/FINAL_SUBMISSION_GUIDE.md)
-- [Operations guide](docs/OPERATIONS.md)
-- [Presentation pack](docs/PRESENTATION_PACK.md)
+- [docs/BROWSER_VERIFICATION_CHECKLIST.md](docs/BROWSER_VERIFICATION_CHECKLIST.md)
+- [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](docs/VERIFICATION_PASS_FAIL_CHECKLIST.md)
+- [docs/OPERATIONS.md](docs/OPERATIONS.md)
 
-## Who this is for
+### Visuals and design
 
-- Business and leadership: see the market problem, product thesis, and operating model.
-- Product: see the user journeys, product surfaces, and phased roadmap.
-- Engineering: see the current architecture, contracts, and test strategy.
-- Triage and ops: see the queue, incident console, audit trail, and recovery posture.
-- Customers: see how incidents are handled, explained, and reviewed.
-- Tier-1 / Tier-2 / Tier-3 support: see how intake, diagnosis, and policy gates map to responsibility.
+- [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
+- [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
+- [design-docs/README.md](design-docs/README.md)
 
-## What problem it solves
+## Fastest Demo Path
 
-Teams lose time when incident intake is fragmented across webhooks, forms, chat commands, log streams, and spreadsheets. The result is slower triage, unclear ownership, weak auditability, and a poor story for business stakeholders who need to understand impact.
+If you need the shortest convincing demo:
 
-NEXUS v2 solves that by making the queue the primary surface, normalizing every intake path into the same incident object, and showing the evidence, decisions, and actions in one place.
+1. Open `/inputs`
+2. Click `Load example logs`
+3. Click `Submit raw logs`
+4. Let the app redirect into the created incident
+5. Show the `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff
+6. Click `Approve runbook`
+7. Open `/training`
+8. Show reward improvement and governance summary
 
-## Our solution
+## Local Run
 
-The product combines:
-- A raw-log intake path for pasting incident text, logs, or stack traces.
-- A queue landing page for active incidents after intake is normalized.
-- An incident console with workflow stages, evidence provenance, audit history, and execution state.
-- Multiple intake channels that normalize into the same backend contract.
-- Replay and training surfaces that explain how incidents are replayed, learned from, and measured.
-- A settings and trust surface that makes the system posture visible instead of hiding it in config.
-
-## Product
-
-The main user journeys are:
-
-1. Paste raw incident text or logs and see the system normalize it into structured evidence.
-2. Intake an incident from webhook, manual form, Slack-style command, stream anomaly, or batch import.
-3. Land it in the queue with visible priority, stage, and age.
-4. Open the incident console to inspect timeline, raw input, evidence, agent analysis, audit trail, and execution status.
-5. Replay a scenario or inspect training output to understand how the system learns.
-6. Review settings and trust posture before expanding into production usage.
-
-The current UI is intentionally agent-first: one live incident stays in focus while the four bots coordinate visibly and the heavy technical detail stays behind disclosure.
-
-## Business angle
-
-| Stakeholder | Why it matters |
-|---|---|
-| Business / leadership | Shows a believable enterprise product story, auditability, and visible control over incident handling. |
-| Product | Provides a coherent shell, clear user journeys, and a roadmap that can be shipped in phases. |
-| Development | Gives stable contracts, defined surfaces, and testable features instead of an amorphous prototype. |
-| Engineering | Reduces integration risk by keeping the UX, API seams, and persistence story explicit. |
-| Triage / ops | Makes the queue, incident state, audit trail, and execution gate easy to inspect during real incident work. |
-| Customers | Improves confidence by making status, evidence, and resolution paths visible. |
-| Tier-1 / Tier-2 / Tier-3 support | Tier-1 gets intake and prioritization, Tier-2 gets diagnosis and evidence, Tier-3 gets policy and execution context. |
-
-## Functional design
-
-### Queue
-
-- Default landing page.
-- Shows incident priority, source, severity, stage, and timing.
-- Makes it obvious why the next incident is first.
-
-### Incident console
-
-- Shows the raw incident text when it exists and the normalized evidence derived from it.
-- Shows the 9-step workflow.
-- Surfaces SENTINEL, PRISM, FORGE, and GUARDIAN contributions in sequence.
-- Includes audit trail, evidence provenance, queue position, ETA, and execution state.
-
-### Sequential agent flow
-
-The incident console presents the four agents as a handoff chain:
-
-1. `SENTINEL` classifies the incident and sets the initial priority.
-2. `PRISM` correlates evidence and diagnoses the likely root cause.
-3. `FORGE` proposes the safest remediation path or runbook.
-4. `GUARDIAN` reviews the proposal and allows, blocks, or requests modification before execution.
-
-That order matters because it makes the incident story readable for operators, product reviewers, and judges.
-
-### Agent model strategy
-
-Current runtime behavior:
-
-- The public app defaults to deterministic demo mode.
-- Users can opt into live reasoning by attaching their own OpenAI API key from the incident detail screen.
-- User keys are request-scoped, stored only in browser session storage, masked in the UI, and never persisted server-side.
-- `SENTINEL` is deterministic by default, with an optional live OpenAI-backed classification path when a valid request-scoped user key is provided or the server is explicitly configured with `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY`.
-- `PRISM` is deterministic by default, with an optional live OpenAI-backed diagnosis path under the same conditions.
-- `FORGE` is deterministic by default in the web app, with an optional live OpenAI path in the demo and incident views under the same conditions.
-- `GUARDIAN` is deterministic and acts as the safety/policy gate.
-- The raw-log intake path uses the same BYO-key live reasoning path; otherwise it stays deterministic and testable.
-
-Recommended production direction:
-
-- `SENTINEL`: hybrid classifier with deterministic defaults and LLM fallback only for ambiguous incidents.
-- `PRISM`: retrieval-grounded LLM synthesis with explicit evidence provenance.
-- `FORGE`: LLM-backed runbook generation with sandbox and policy validation.
-- `GUARDIAN`: deterministic enforcement, with LLMs used only for explanation if needed.
-
-### Input channels
-
-- Raw log paste
-- Webhook
-- Manual form
-- Slack-style command
-- Stream anomaly
-- Batch import
-
-Every intake path lands in the same incident model so the downstream queue and console stay consistent.
-
-### History
-
-- Presents a historical archive.
-- Links historical incidents back into the same console experience.
-
-### Replay
-
-- Launches replay scenarios into the same incident workflow.
-- Keeps replay visible as a product surface rather than a hidden backend operation.
-
-### Training
-
-- Shows training summaries, episode history, and reward movement.
-- Connects the training story to live incident artifacts where possible.
-
-### Settings
-
-- Surfaces trust posture, contract surface, replay/training counts, and signature verification state.
-
-## Technical design
-
-The application is a FastAPI-backed product shell with a static frontend and explicit API seams.
-
-Key implementation layers:
-- `server/app.py` wires the routes.
-- `server/services/` holds incident, observability, surface-payload, and tenancy logic.
-- `server/models.py` defines the current request/response schema.
-- `server/repositories.py`, `server/db.py`, `server/audit.py`, and `server/artifacts.py` handle persisted state.
-- `frontend/` contains the product pages.
-- `frontend/static/` contains the shell, page controllers, and shared styles.
-
-Data flow at a high level:
-1. Intake arrives through a supported channel.
-2. The backend normalizes the payload into an incident envelope.
-3. Incident state, audit entries, and artifacts are persisted.
-4. The queue and console read the same incident record.
-5. Replay and training surfaces read the same artifact history.
-
-## Architecture
-
-Current architecture, in practical terms:
-- FastAPI app serving both HTML pages and JSON contracts.
-- Queue-first UI with a shared shell and page-specific controllers.
-- File-backed local persistence for incidents, audit logs, and artifacts.
-- Versioned API contracts for the most visible product actions.
-- Security and tenancy checks on authenticated paths.
-- Signature verification for webhook intake.
-
-The broader production hardening target, which is still only partially complete, is tracked in the docs matrix and backlog.
-
-## Setup
-
-### Local product mode
+### Docker-first
 
 ```bash
 ./scripts/docker_fresh.sh
 ```
 
-This stops any existing Compose service on `7860`, rebuilds the container, and starts a fresh FastAPI app that serves both the static frontend pages and the backend API together.
+Then open [http://127.0.0.1:7860](http://127.0.0.1:7860).
 
-If you just want to start without a reset, use:
-
-```bash
-docker compose up --build
-```
-
-Open:
-- `http://127.0.0.1:7860/`
-- `http://127.0.0.1:7860/queue`
-- `http://127.0.0.1:7860/incident?nexus_incident_id=INC001`
-
-### Direct server mode
+### Direct server
 
 ```bash
 uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
-### Legacy demo script
+### Judge demo script
 
 ```bash
 python demo.py
 ```
 
-### Useful runtime settings
-
-The current app/runtime defaults live in `server/config.py`:
-- `database_path`
-- `webhook_signing_secret`
-- `allowed_tenant_ids`
-
-### Public Hugging Face Space mode
-
-For the safest public deployment:
-
-- Do not set `OPENAI_API_KEY` on the Space.
-- Let the app boot in deterministic demo mode.
-- Users who want live reasoning can paste their own OpenAI key in `Incident Detail`.
-- The key is sent only on that request, masked in the UI, and not written to disk or logs by the app.
-- `forge_model_name`
-
-Optional demo/OpenAI settings:
-- `NEXUS_USE_OPENAI`
-- `OPENAI_API_KEY`
-- `LLM_MODEL`
-
-For local development, copy [.env.example](.env.example) to `.env` and fill in your own values. The app reads standard `NEXUS_*` environment variables directly.
-
-## Testing and automation
-
-Run the full automated suite:
+## Verification
 
 ```bash
-pytest -q
-```
-
-Recommended focused checks:
-
-```bash
-pytest -q tests/test_api_contract.py tests/test_app.py tests/test_security.py tests/test_observability.py tests/test_deployment.py
-```
-
-Docker-first browser verification:
-
-```bash
-./scripts/docker_fresh.sh
+pytest tests/ -v
 npm run browser:verify
+python demo.py
+./scripts/docker_fresh.sh
 ```
 
-Browser validation targets:
-- `/`
-- `/queue`
-- `/incident?nexus_incident_id=INC001`
-- `/inputs`
-- `/history`
-- `/replay`
-- `/training`
-- `/settings`
+## Repo Map
 
-Primary submission-critical browser flows:
-- `/queue` -> click first incident -> incident details populated
-- `/inputs` -> `Load example logs` -> `Submit raw logs` -> redirected `nxs_...` incident populated
-- incident console -> `Approve runbook` -> Guardian approved and execution executed
+Important implementation surfaces:
 
-The current repo is considered ready when the suite is green and the browser pages load without console errors in the main demo flow.
+- [frontend](frontend)
+- [frontend/static](frontend/static)
+- [server](server)
+- [training](training)
+- [tests](tests)
+- [scripts](scripts)
 
-For a full screen-by-screen manual validation and demo script, see [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md).
-For a browser verification checklist, see [docs/BROWSER_VERIFICATION_CHECKLIST.md](docs/BROWSER_VERIFICATION_CHECKLIST.md).
-For a quick pass/fail checklist, see [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](docs/VERIFICATION_PASS_FAIL_CHECKLIST.md).
-For a quick live demo reference, see [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md).
-For live presentation notes by screen, see [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md).
-For the full presenter pack, see [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md).
+Important submission assets:
 
-## Roadmap
+- [docs](docs)
+- [docs/assets/screenshots](docs/assets/screenshots)
 
-The shipped repo is now trimmed to the final submission surface.
-Any future roadmap work should build forward from:
+## Current Status
 
-- [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
-- [docs/OPERATIONS.md](docs/OPERATIONS.md)
-- [design-docs/README.md](design-docs/README.md)
+- agent-first UI: complete
+- deterministic public deployment: complete
+- BYO-key live reasoning path: complete
+- browser validation and manual runbooks: complete
+- final submission docs and diagrams: complete
 
-## Documentation map
+## Notes For Reviewers
 
-### Current source of truth
-
-- [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
-- [docs/OPERATIONS.md](docs/OPERATIONS.md)
-- [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md)
-- [docs/BROWSER_VERIFICATION_CHECKLIST.md](docs/BROWSER_VERIFICATION_CHECKLIST.md)
-- [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](docs/VERIFICATION_PASS_FAIL_CHECKLIST.md)
-- [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
-- [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md)
-- [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
-- [design-docs/README.md](design-docs/README.md)
+- GitHub `master` contains the full submission docs, diagrams, and screenshots.
+- Hugging Face is intentionally kept lighter so large non-runtime assets do not affect build or load behavior.
+- The public app is safe by default and does not expose or consume the project owner's OpenAI credits.
