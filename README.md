@@ -31,6 +31,8 @@ Incident response is still fragmented across alerts, logs, dashboards, runbooks,
 
 The result is slower triage, weaker auditability, and lower trust in AI-assisted operations.
 
+This problem is experienced most directly by SRE, platform, DevOps, and engineering teams responsible for uptime, but it also affects engineering leadership who need confidence that automation is controlled, explainable, and safe.
+
 ## Solution
 
 NEXUS v2 turns raw logs and queue incidents into one visible incident workflow with four distinct agents and one clear governance checkpoint.
@@ -129,6 +131,19 @@ For organizations adopting AI:
 - deterministic default mode for safe public usage
 - optional live reasoning without exposing house API keys
 - a product surface that treats trust as a core feature, not post-demo cleanup
+
+## Target Users And Workflow Impact
+
+NEXUS is built primarily for SREs, platform engineers, incident commanders, and engineering managers running production systems.
+
+Their pain points are consistent:
+
+- too much time spent reconstructing context from alerts, logs, and dashboards
+- inconsistent triage and unclear ownership
+- low trust in AI-generated remediation suggestions
+- weak auditability around approval and execution decisions
+
+NEXUS improves that workflow by normalizing incident input into one visible agent-driven flow, making the reasoning chain explicit, keeping execution behind `GUARDIAN`, and creating a cleaner operational record that can improve over time through learning.
 
 ## Why This Is Different From A Generic AI Copilot
 
