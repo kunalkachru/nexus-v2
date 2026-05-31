@@ -44,6 +44,22 @@ The product promise is simple:
 
 This is what allows the system to be both impressive in a demo and credible as a product direction.
 
+## Before And After NEXUS
+
+Before NEXUS:
+
+- incidents arrive as fragmented logs, alerts, and context spread across tools
+- triage depends on manual reconstruction and tribal knowledge
+- remediation recommendations feel opaque
+- automation trust is low because approval and safety are not clearly visible
+
+After NEXUS:
+
+- raw input is normalized into one incident object
+- reasoning is visible from classification to diagnosis to runbook selection
+- governance is explicit through `GUARDIAN`
+- execution and learning both stay inspectable, auditable, and safer to trust
+
 ## Live Demo Links
 
 - Public app: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
@@ -114,6 +130,19 @@ For organizations adopting AI:
 - optional live reasoning without exposing house API keys
 - a product surface that treats trust as a core feature, not post-demo cleanup
 
+## Why This Is Different From A Generic AI Copilot
+
+Most AI copilots collapse triage, diagnosis, and remediation into one assistant answer.
+
+NEXUS does the opposite:
+
+- it separates responsibilities across visible specialists
+- it shows the handoff between reasoning stages
+- it keeps governance as a first-class product feature
+- it supports public-safe deployment with deterministic fallback and optional BYO-key live reasoning
+
+That makes the system easier to understand, easier to trust, and easier to present as a serious operations product.
+
 ## Architecture And Technical Credibility
 
 ```mermaid
@@ -152,12 +181,18 @@ This project is also a strong demonstration of AI-assisted product building.
 
 The public deployment is intentionally safe by default:
 
-- no server-side project OpenAI key is required
+- no server-side project `OPENAI_API_KEY` is required for the public demo
 - the product opens in deterministic demo mode
 - a user may optionally attach their own key for live reasoning
 - user keys stay in browser session storage and are sent request-scoped only when needed
 
 That makes the public app safe to share without leaking or spending the project owner's API credits.
+
+### What OpenAI powers
+
+- optional live reasoning for users who bring their own key
+- an extensibility path beyond the deterministic demo baseline
+- a stronger proof point that the product can stay safe in public while still supporting real model-backed behavior
 
 ## Submission Resource Index
 

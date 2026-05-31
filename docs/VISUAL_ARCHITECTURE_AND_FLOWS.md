@@ -179,6 +179,20 @@ sequenceDiagram
     I-->>L: reward, trajectory, and metrics
 ```
 
+## Request Lifecycle
+
+In concrete terms, one incident moves through the system like this:
+
+1. input arrives from queue selection or raw logs
+2. the backend normalizes it into one incident context
+3. `SENTINEL` classifies severity and category
+4. `PRISM` explains the likely cause from available evidence
+5. `FORGE` proposes the runbook or remediation path
+6. `GUARDIAN` authorizes, blocks, or modifies execution
+7. the result is persisted for auditability, replay, and learning
+
+This lifecycle matters because it makes the AI behavior explicit at every step rather than compressing everything into one opaque answer.
+
 ## Agent Design
 
 The four-agent split is a product decision as much as an architecture decision.
@@ -220,6 +234,17 @@ Even as a hackathon demo, NEXUS v2 includes several traits that make it feel clo
 - replayability through consistent incident artifacts
 - auditability through visible status and review flows
 - public-safe deployment posture through BYO-key live reasoning
+
+## Failure Containment And Fallback
+
+NEXUS is intentionally designed so that demo quality does not depend on always-available live model access.
+
+- deterministic reasoning remains the default runtime path
+- the public product does not require a server-side `OPENAI_API_KEY`
+- live behavior is additive and opt-in, not a dependency for the main experience
+- governance remains visible even when live reasoning is not enabled
+
+This is important for both reliability and trust: the product still works, still explains itself, and still feels coherent even when live model access is absent.
 
 ## Runtime Safety Design
 
