@@ -1,42 +1,59 @@
 # NEXUS v2 Presentation Pack
 
-Current as of 2026-05-30.
+Current as of 2026-05-31.
 
-This is the one-stop index for the presenter materials used to explain NEXUS v2 to a judging body, stakeholder group, or demo audience.
+This is the presentation index for the final submission.
 
-## Included Materials
+## Start Here
 
-1. Full manual walkthrough
-- [docs/DEMO_WALKTHROUGH.md](DEMO_WALKTHROUGH.md)
+1. Submission summary
+   - [docs/FINAL_SUBMISSION_GUIDE.md](FINAL_SUBMISSION_GUIDE.md)
 
 2. Quick live demo reference
-- [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md)
+   - [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md)
 
-3. Live demo speaker notes
-- [docs/LIVE_DEMO_SPEAKER_NOTES.md](LIVE_DEMO_SPEAKER_NOTES.md)
+3. Full walkthrough
+   - [docs/DEMO_WALKTHROUGH.md](DEMO_WALKTHROUGH.md)
 
-4. Presenter deck
-- [NEXUS v2 Presenter Deck - nexus-v2-presenter-deck.pptx](/Users/kunalkachru/Documents/nexus-v3/artifacts/presentations/nexus-v2-presenter-pack/output/nexus-v2-presenter-deck.pptx)
+4. Screen-by-screen speaker notes
+   - [docs/LIVE_DEMO_SPEAKER_NOTES.md](LIVE_DEMO_SPEAKER_NOTES.md)
 
-## Recommended Use
+5. Browser validation
+   - [docs/BROWSER_VERIFICATION_CHECKLIST.md](BROWSER_VERIFICATION_CHECKLIST.md)
+   - [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](VERIFICATION_PASS_FAIL_CHECKLIST.md)
 
-- Use the manual walkthrough when you need full setup and validation detail.
-- Use the quick reference when you are driving a live demo.
-- Use the speaker notes when you are presenting screen by screen.
-- Use the deck when you need a polished, shareable PowerPoint for review or judging.
+6. Presenter deck
+   - [NEXUS v2 Presenter Deck - nexus-v2-presenter-deck.pptx](/Users/kunalkachru/Documents/nexus-v3/artifacts/presentations/nexus-v2-presenter-pack/output/nexus-v2-presenter-deck.pptx)
 
-## What The Deck Covers
+7. Demo video pipeline
+   - Build command: `./scripts/build_demo_video.sh`
+   - Recorder: [scripts/generate_demo_video.mjs](/Users/kunalkachru/Documents/nexus-v3/scripts/generate_demo_video.mjs)
+   - Builder: [scripts/build_demo_video.sh](/Users/kunalkachru/Documents/nexus-v3/scripts/build_demo_video.sh)
 
-- Situation, task, action, and result
-- Raw-log intake as the primary MVP entrypoint
-- The live product proof
-- The sequential `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff
-- Stakeholder value
-- Technical design and next phase
+## Recommended Reading Order
 
-## Related Live Docs
+If you are about to submit or present:
 
-- [README.md](../README.md)
-- [docs/OPERATIONS.md](OPERATIONS.md)
-- [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](NEXUS_v2_DOC_STATUS_MATRIX.md)
-- [docs/NEXUS_v2_PRIORITY_BACKLOG.md](NEXUS_v2_PRIORITY_BACKLOG.md)
+1. Read the final submission guide
+2. Open the demo cheat sheet
+3. Keep the browser checklist nearby
+4. Use the speaker notes only if you want fuller narration
+
+## Current Positioning
+
+The cleanest way to present NEXUS v2 is:
+
+- it is a four-agent incident response product
+- it is deterministic and safe by default
+- it can optionally use a user-supplied OpenAI key
+- it shows a visible incident workflow and a visible learning story
+- it is deployed publicly on Hugging Face Spaces
+- it has a reproducible local demo video generation pipeline checked into the repo
+
+## Important Note
+
+The broader business and enterprise strategy docs remain valuable, but they are not the primary submission source of truth.
+
+For historical product thesis and longer-term ambition, see:
+
+- [design-docs/README.md](../design-docs/README.md)

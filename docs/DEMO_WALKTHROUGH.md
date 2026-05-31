@@ -871,5 +871,5 @@ If you only remember one thing, remember this:
 
 - [README.md](../README.md)
 - [docs/OPERATIONS.md](OPERATIONS.md)
-- [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](NEXUS_v2_DOC_STATUS_MATRIX.md)
-- [docs/NEXUS_v2_PRIORITY_BACKLOG.md](NEXUS_v2_PRIORITY_BACKLOG.md)
+- [docs/FINAL_SUBMISSION_GUIDE.md](FINAL_SUBMISSION_GUIDE.md)
+- [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md)

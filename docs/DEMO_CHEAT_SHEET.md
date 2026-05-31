@@ -1,158 +1,73 @@
 # NEXUS v2 Demo Cheat Sheet
 
-Current as of 2026-05-30.
+Current as of 2026-05-31.
 
-This is the one-page live demo reference. Use the full walkthrough for first-time setup and detailed validation.
+This is the short live-demo reference.
+For the full operating picture, use [docs/FINAL_SUBMISSION_GUIDE.md](FINAL_SUBMISSION_GUIDE.md).
 
-## Purpose
+## One-Line Pitch
 
-- Start the product quickly
-- Show the key screens in the right order
-- Explain what to expect on each screen
-- Keep a live demo moving without losing context
+NEXUS v2 is an autonomous incident response product where `SENTINEL`, `PRISM`, `FORGE`, and `GUARDIAN` work a live incident together, show their reasoning, and learn from training episodes over time.
 
-## Start
+## Public URL
 
-1. From the repo root, start the app:
+- [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
 
-```bash
-./scripts/docker_fresh.sh
-```
+## Safest Demo Mode
 
-This stops any existing Compose service on `7860`, rebuilds the app container, and starts a fresh browser UI + API service together on port `7860`.
+- Default mode is deterministic
+- No project OpenAI key is exposed
+- Live reasoning is optional through a user-supplied key in `Incident Detail`
 
-If you do not need a reset, `docker compose up --build` is the lighter option.
+## Fastest Demo Flow
 
-2. Open the app:
+1. Open `/inputs`
+2. Click `Load example logs`
+3. Click `Submit raw logs`
+4. Show the created incident page
+5. Explain the 4-agent handoff
+6. Click `Approve runbook`
+7. Open `/training`
+8. Show the reward curve and learning summary
 
-- `http://127.0.0.1:7860/`
-
-Expected:
-
-- The queue loads as the landing page.
-- No console errors on first load.
-
-## Demo Order
-
-1. Inputs
-2. Incident Console
-3. Queue
-4. History
-5. Replay
-6. Training
-7. Settings
-
-## Screen Guide
-
-### Queue
-
-- Shows the active incidents.
-- Use it to explain priority, severity, source, stage, and age.
-- Open the top item.
-
-Expected:
-
-- The queue feels operational.
-- Incident links open the console.
+## What To Say On Each Screen
 
 ### Inputs
 
-- Use this to paste raw logs or create a new incident.
-- Start with the raw-log paste path for the MVP story.
-- Pick `Manual form` for the simplest alternate story or `Webhook` for the most realistic machine-driven story.
-- Submit a sample incident and open the resulting console link.
+- “This is the fastest path into the system.”
+- “Raw logs become a structured incident.”
 
-Expected:
+### Incident Detail
 
-- The raw-log preview updates as you edit text.
-- A new incident ID or incident link appears.
-- The incident shows up in the queue.
-
-### Incident Console
-
-- Main operator view.
-- Show the 9-step workflow.
-- Show the raw incident text and normalized evidence for live incidents.
-- Highlight the sequential handoff: `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
-- Point out evidence provenance and audit trail.
-- Trigger execution if appropriate.
-
-Expected:
-
-- The agent flow is visible.
-- The audit trail is readable.
-- The status and execution state update when actions happen.
-
-### History
-
-- Shows past incidents.
-- Open any row to show that old incidents still land in the same console.
-
-Expected:
-
-- History feels like an archive, not a dead page.
-
-### Replay
-
-- Show a replay scenario.
-- Launch it if available.
-
-Expected:
-
-- A visible replay path creates or opens a real incident flow.
+- “This is the core product surface.”
+- “You can see `SENTINEL -> PRISM -> FORGE -> GUARDIAN` as a visible handoff.”
+- “Guardian is the explicit safety gate.”
+- “The app is deterministic by default, and a user can bring their own OpenAI key if they want live reasoning.”
 
 ### Training
 
-- Show summary metrics, reward movement, the RL episode contract, and the latest episode link.
-- Point to the reward evaluation and say that the system is turning incidents into a structured learning record.
-- Open the latest episode incident if you want to connect training back to the console.
+- “The system tracks 30 episodes of learning.”
+- “Reward moves from roughly `0.28` baseline to `0.65+` trained.”
+- “This makes the product story more than just a static UI.”
 
-Expected:
+## Expected Good Outcomes
 
-- The learning story is understandable to a non-engineer.
-- The audience can see how reward and episodes connect to a real incident.
+- Queue incidents open populated incident detail pages
+- Raw-log submission redirects into a populated `nxs_...` incident
+- Guardian approval changes the execution state visibly
+- Training shows the reward progression clearly
 
-### Settings
+## If Something Looks Off
 
-- Show signature verification, replay counts, training snapshots, and trust posture.
+1. Refresh once
+2. Re-open the page from `/queue` or `/inputs`
+3. If local, run `./scripts/docker_fresh.sh`
 
-Expected:
+## Local Commands
 
-- The product looks controlled and credible.
-
-## Fast Demo Script
-
-1. Open Inputs.
-2. Paste raw logs and submit the incident.
-3. Open the new incident.
-4. Show the workflow timeline.
-5. Show raw incident text, normalized evidence, agent flow, and evidence provenance.
-6. Show audit trail.
-7. Trigger execution if allowed.
-8. Jump to Queue.
-9. Jump to History.
-10. Jump to Replay.
-11. Finish with Training and Settings.
-
-## Quick Checks
-
-- Inputs creates an incident and shows the parsed preview.
-- Incident Console renders all main sections and raw intake evidence.
-- Queue loads and shows the new incident.
-- History links back into the console.
-- Replay is launchable.
-- Training shows readable progress.
-- Settings shows trust posture.
-
-## If Something Breaks
-
-1. Refresh the page once.
-2. Check the browser console.
-3. Check the server terminal.
-4. Return to the queue and re-open the incident.
-
-## Related Docs
-
-- [Full walkthrough](DEMO_WALKTHROUGH.md)
-- [README](../README.md)
-- [Operations](OPERATIONS.md)
+```bash
+./scripts/docker_fresh.sh
+python demo.py
+pytest tests/ -v
+npm run browser:verify
+```

@@ -12,16 +12,22 @@ pinned: false
 
 NEXUS v2 is an enterprise incident-reasoning product that starts from raw incident text or logs, turns them into structured evidence, and routes the incident through a controlled queue, console, and safety flow.
 
+For the clean final-submission path, start here:
+
+- [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
+- [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
+- [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
+
 Current phase:
 - UI-first roadmap: complete
 - Thin backend demo layer: complete
+- Public demo deployment: complete
 - Production hardening / live integrations: next
 
-The current source of truth for scope and status is:
-- [Documentation status matrix](docs/NEXUS_v2_DOC_STATUS_MATRIX.md)
-- [Agent model matrix](docs/AGENT_MODEL_MATRIX.md)
-- [Priority backlog](docs/NEXUS_v2_PRIORITY_BACKLOG.md)
+The current source of truth for scope and usage is:
+- [Final submission guide](docs/FINAL_SUBMISSION_GUIDE.md)
 - [Operations guide](docs/OPERATIONS.md)
+- [Presentation pack](docs/PRESENTATION_PACK.md)
 
 ## Who this is for
 
@@ -118,8 +124,6 @@ Recommended production direction:
 - `PRISM`: retrieval-grounded LLM synthesis with explicit evidence provenance.
 - `FORGE`: LLM-backed runbook generation with sandbox and policy validation.
 - `GUARDIAN`: deterministic enforcement, with LLMs used only for explanation if needed.
-
-See [docs/AGENT_MODEL_MATRIX.md](docs/AGENT_MODEL_MATRIX.md) for the current-state matrix.
 
 ### Input channels
 
@@ -286,19 +290,18 @@ For the full presenter pack, see [docs/PRESENTATION_PACK.md](docs/PRESENTATION_P
 
 ## Roadmap
 
-Current roadmap alignment:
-- [UI-first roadmap](docs/superpowers/specs/2026-05-29-enterprise-ui-product-roadmap.md)
-- [Phase 2 roadmap](docs/NEXUS_v2_PHASE2_ROADMAP.md)
-- [Enterprise specification](design-docs/NEXUS_v2_ENTERPRISE_SPECIFICATION.md)
+The shipped repo is now trimmed to the final submission surface.
+Any future roadmap work should build forward from:
 
-If you want the shortest path to the next phase of product hardening, start with the [priority backlog](docs/NEXUS_v2_PRIORITY_BACKLOG.md).
+- [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
+- [docs/OPERATIONS.md](docs/OPERATIONS.md)
+- [design-docs/README.md](design-docs/README.md)
 
 ## Documentation map
 
 ### Current source of truth
 
-- [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](docs/NEXUS_v2_DOC_STATUS_MATRIX.md)
-- [docs/NEXUS_v2_PRIORITY_BACKLOG.md](docs/NEXUS_v2_PRIORITY_BACKLOG.md)
+- [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
 - [docs/OPERATIONS.md](docs/OPERATIONS.md)
 - [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md)
 - [docs/BROWSER_VERIFICATION_CHECKLIST.md](docs/BROWSER_VERIFICATION_CHECKLIST.md)
@@ -306,3 +309,4 @@ If you want the shortest path to the next phase of product hardening, start with
 - [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
 - [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md)
 - [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
+- [design-docs/README.md](design-docs/README.md)
