@@ -2,28 +2,30 @@
 
 Current as of 2026-05-31.
 
-This is the primary submission document for NEXUS v2.
-If you only read one file before running, validating, or presenting the project, read this one.
+This is the primary operating guide for the final NEXUS v2 submission.
+Use it when you want the exact runbook for validating, presenting, and explaining the shipped product.
 
-## What NEXUS v2 Is
+## Submission Summary
 
-NEXUS v2 is an autonomous incident response product prototype built around four agents:
+NEXUS v2 is a public-safe, multi-agent incident response product built around four visible specialists:
 
 1. `SENTINEL` classifies the incident.
 2. `PRISM` diagnoses the likely root cause.
 3. `FORGE` proposes the runbook or remediation.
 4. `GUARDIAN` acts as the safety and approval gate.
 
-The product is designed to show one clear idea:
+The submission is designed to prove one clear idea:
 
 - incidents can move through a visible multi-agent workflow
 - operators can understand the evidence and reasoning
 - the system can learn from episodes over time
 - deployment can be public and safe by default
 
+For the product pitch and first impression, start with [README.md](../README.md).
+
 ## What Is Actually Shipped
 
-The current repo ships a complete, demo-ready product surface with:
+The shipped repo includes:
 
 - a FastAPI backend
 - a multi-page frontend
@@ -33,7 +35,15 @@ The current repo ships a complete, demo-ready product surface with:
 - Docker packaging for Hugging Face Spaces
 - automated tests and browser validation
 
-## Public URL
+## Why Judges Should Care
+
+This project is stronger than a generic AI demo for three reasons:
+
+- it solves a real operational trust problem, not just a model-integration problem
+- it turns autonomous reasoning into a visible product workflow
+- it keeps public deployment safe without removing the live AI extension path
+
+## Public URLs
 
 - Hugging Face Space: [https://huggingface.co/spaces/kunalkachru23/nexus](https://huggingface.co/spaces/kunalkachru23/nexus)
 - Public app URL: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)

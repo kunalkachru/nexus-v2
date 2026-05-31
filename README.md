@@ -1,10 +1,48 @@
 # NEXUS v2
 
-NEXUS v2 is an autonomous incident-response product that turns queue items and raw logs into a visible four-agent workflow:
+NEXUS v2 is a multi-agent incident response product that makes autonomous operations understandable, governable, and demo-safe from the first screen.
+
+Instead of hiding AI behind a generic chatbot or a noisy dashboard, NEXUS shows a visible team of specialist agents:
 
 `SENTINEL -> PRISM -> FORGE -> GUARDIAN`
 
-It is designed as a public-safe product demo for the AI Builders Hackathon: operators can inspect classification, diagnosis, remediation, and governance in one place, while the public deployment remains deterministic by default and does not consume the project owner's OpenAI credits.
+Each one has a job, a handoff, and an explicit place in the incident lifecycle.
+
+## Why This Product Gets Attention
+
+Most AI incident tools promise faster remediation, but they still fail in the same place: operators cannot clearly see what the system inferred, why it chose a response, or whether it is safe to trust in production.
+
+NEXUS v2 is compelling because it does not just automate. It makes the automation legible.
+
+- `SENTINEL` classifies the incident and severity.
+- `PRISM` explains the likely root cause.
+- `FORGE` proposes the remediation path.
+- `GUARDIAN` acts as the explicit approval and safety gate.
+
+That makes NEXUS feel less like a black box and more like a real product for modern operations teams.
+
+## Problem
+
+Incident response is still fragmented across alerts, logs, dashboards, runbooks, and human escalation. In practice that creates three persistent failures:
+
+- operators lose time reconstructing context instead of resolving the issue
+- remediation is hard to trust because reasoning is scattered or invisible
+- engineering leaders cannot confidently explain how automation is controlled
+
+The result is slower triage, weaker auditability, and lower trust in AI-assisted operations.
+
+## Solution
+
+NEXUS v2 turns raw logs and queue incidents into one visible incident workflow with four distinct agents and one clear governance checkpoint.
+
+The product promise is simple:
+
+- turn unstructured incident input into structured operational context
+- show the reasoning chain from classification to diagnosis to remediation
+- keep execution behind an explicit governance decision
+- make learning visible without making the product feel unsafe
+
+This is what allows the system to be both impressive in a demo and credible as a product direction.
 
 ## Live Demo Links
 
@@ -13,176 +51,138 @@ It is designed as a public-safe product demo for the AI Builders Hackathon: oper
 - Video walkthrough: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
 - Final submission guide: [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
 - Visual architecture and flows: [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
-- Presentation pack: [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
-
-## Problem
-
-Incident handling is often fragmented across alerts, queue systems, raw logs, and manual escalation paths. That creates three problems:
-
-- triage is slow because evidence is scattered
-- remediation is hard to trust because reasoning is not visible
-- leadership and operators cannot easily see whether automation is safe
-
-In practice this means incident teams spend time stitching together context instead of resolving the issue. Stakeholders get status updates late, operators cannot quickly see why a remediation was chosen, and automation often feels too risky to trust in production.
-
-## Solution
-
-NEXUS v2 addresses that with an agent-first incident workflow:
-
-1. `SENTINEL` classifies the incident and severity.
-2. `PRISM` diagnoses the likely root cause.
-3. `FORGE` proposes the runbook or remediation plan.
-4. `GUARDIAN` acts as the explicit governance and execution gate.
-
-This creates a product experience that is easy to explain to judges, believable for operators, and structured enough to extend into a more production-shaped system.
 
 ## Product Overview
 
-NEXUS v2 is structured as a focused operator workflow rather than a generic dashboard:
+NEXUS v2 is intentionally organized around three primary surfaces:
 
-- `Command Center` gives teams one live operational view of the incident queue
-- `Incident Detail` explains what each agent is doing and why
-- `Learning & Controls` shows how the system improves over time without hiding governance
+### 1. Command Center
 
-The result is a product that feels like autonomous AI workers collaborating on a real incident, while still giving humans a clear approval point before execution.
+The Command Center keeps one live incident in focus while showing the active queue and the four-agent crew. It is designed to feel like an operational control room, not a KPI wall.
 
-## Why This Matters
+### 2. Incident Detail
 
-- It makes autonomous incident response understandable instead of opaque.
-- It gives operators one place to review evidence, reasoning, and approvals.
-- It demonstrates a public deployment model that is safe by default.
-- It shows how AI agents can collaborate while keeping a human-readable control surface.
+Incident Detail is the core product surface. This is where the operator sees the handoff thread:
 
-## How NEXUS Solves The Problem
+- what `SENTINEL` classified
+- what `PRISM` diagnosed
+- what `FORGE` proposed
+- what `GUARDIAN` approved, blocked, or modified
 
-NEXUS v2 solves the earlier fragmentation problem in four concrete ways:
+### 3. Learning & Controls
 
-1. It normalizes queue incidents and raw logs into the same incident object.
-2. It makes the reasoning chain explicit so classification, diagnosis, remediation, and governance are visible.
-3. It keeps execution behind `GUARDIAN`, so safety is part of the product flow rather than an afterthought.
-4. It captures training and reward progression so the learning story is measurable instead of vague.
-
-This matters because the product is not only resolving incidents faster; it is also making the automation inspectable, auditable, and easier to trust.
+Learning & Controls explains how the system improves over time. It shows reward progression, agent accuracy, and governance posture together so the learning story never becomes disconnected from operational safety.
 
 ## How It Works
 
 ```mermaid
 flowchart LR
-    A["Queue or raw logs"] --> B["Incident Detail"]
-    B --> C["SENTINEL classifies"]
-    C --> D["PRISM diagnoses"]
-    D --> E["FORGE proposes runbook"]
-    E --> F["GUARDIAN approves or blocks"]
-    F --> G["Execution state updates"]
+    A["Queue incident or raw logs"] --> B["Incident normalization"]
+    B --> C["SENTINEL classification"]
+    C --> D["PRISM diagnosis"]
+    D --> E["FORGE remediation plan"]
+    E --> F["GUARDIAN governance review"]
+    F --> G["Execution outcome"]
     G --> H["Learning and reward tracking"]
 ```
-
-### Primary Product Surfaces
-
-- `Command Center`: shows the live incident queue and active agent crew
-- `Incident Detail`: shows the handoff thread and governance state
-- `Learning & Controls`: shows reward improvement, training progression, and governance posture
 
 ### Fastest Demo Flow
 
 1. Open `/inputs`
-2. Click `Load example logs`
-3. Click `Submit raw logs`
-4. Let the app redirect into the created incident
-5. Show the `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff
-6. Click `Approve runbook`
+2. Load example logs
+3. Submit raw logs
+4. Land in `Incident Detail`
+5. Show the visible `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff
+6. Approve the runbook through Guardian
 7. Open `/training`
-8. Show the reward curve and learning summary
+8. Show the learning curve and governance posture
 
-## Architecture
+## Why This Is Valuable To Real Teams
 
-```mermaid
-flowchart TD
-    A["Frontend pages"] --> B["FastAPI app"]
-    B --> C["Incident services"]
-    B --> D["Training summary services"]
-    C --> E["Incident persistence"]
-    C --> F["Audit and artifacts"]
-    C --> G["Deterministic demo runtime"]
-    C --> H["Optional request-scoped OpenAI path"]
-```
+NEXUS v2 is interesting as a hackathon project because it is not only technically complete; it also models a believable product category.
 
-The implementation is structured around a thin FastAPI product shell with explicit incident, training, and governance surfaces. The current codebase includes:
+For operators:
+- faster triage through normalized context and visible reasoning
+- less guesswork around why a remediation was selected
 
-- a multi-page frontend in [frontend](frontend)
-- a FastAPI backend in [server](server)
-- training and metrics helpers in [training](training)
-- browser and regression coverage in [tests](tests)
+For engineering leaders:
+- clearer governance and auditability around AI-assisted actions
+- a more understandable story around operational safety
 
-## Business Value
+For organizations adopting AI:
+- deterministic default mode for safe public usage
+- optional live reasoning without exposing house API keys
+- a product surface that treats trust as a core feature, not post-demo cleanup
 
-NEXUS v2 is not just a technical prototype. It is positioned as a product that helps organizations:
-
-- reduce time spent on fragmented incident triage
-- improve operator trust in AI-assisted remediation
-- create a clearer audit trail for approvals and execution
-- give leadership a more understandable story around automation safety and operational maturity
-
-For a hackathon submission, that is an important part of the value proposition: the system is useful not only because it uses AI, but because it packages AI into a product surface that could plausibly be adopted by real operations teams.
-
-## AI Stack And Codex Usage
-
-### Where AI is used in the product
-
-- deterministic multi-agent incident reasoning is the default public mode
-- users can optionally attach their own OpenAI key to enable live reasoning
-- the live reasoning path is request-scoped and used only when the user opts in
-
-### How OpenAI is handled safely
+## Architecture And Technical Credibility
 
 ```mermaid
 flowchart TD
-    A["Public HF Space"] --> B["Deterministic mode by default"]
-    B --> C["No server-side OpenAI key required"]
-    C --> D["Safe public demo"]
-    A --> E["Optional BYO OpenAI key"]
-    E --> F["Stored in browser session only"]
-    F --> G["Sent request-scoped to backend"]
-    G --> H["Live reasoning only when user chooses it"]
+    A["Frontend experience layer"] --> B["FastAPI orchestration layer"]
+    B --> C["Incident and governance services"]
+    C --> D["Persistence and audit layer"]
+    C --> E["Deterministic reasoning path"]
+    C --> F["Optional BYO-key live reasoning path"]
+    D --> G["Incident history and training artifacts"]
 ```
 
-### How Codex and AI tooling were used
+NEXUS v2 uses a deliberately simple architecture so the product remains easy to deploy, easy to explain, and safe to demonstrate publicly.
 
-- product UI refactors and agent-first redesign
-- FastAPI deployment and Hugging Face Space packaging
-- browser validation and regression hardening
-- deterministic and BYO-key live reasoning integration
-- technical docs, diagrams, validation guides, and demo assets
+- FastAPI provides a compact backend that can serve both the product shell and the API surface cleanly.
+- The multi-page frontend keeps the product experience crisp without introducing SPA complexity that would add risk to the demo.
+- Deterministic-by-default reasoning makes the public product reliable and safe.
+- The request-scoped BYO-key path enables live OpenAI-backed behavior only when a user explicitly opts in.
+- Incident persistence, audit state, and learning artifacts support replayability and operational credibility.
 
-## Documentation Index
+For the deeper technical architecture and screenshots, see [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md).
 
-### Read in this order
+## Codex And OpenAI Usage
+
+This project is also a strong demonstration of AI-assisted product building.
+
+### What Codex enabled
+
+- the agent-first product shell and UI refactor
+- backend integration and deployment hardening
+- browser-based regression validation
+- demo-video automation and repo cleanup
+- the final submission docs, diagrams, and validation guides
+
+### How OpenAI is used responsibly
+
+The public deployment is intentionally safe by default:
+
+- no server-side project OpenAI key is required
+- the product opens in deterministic demo mode
+- a user may optionally attach their own key for live reasoning
+- user keys stay in browser session storage and are sent request-scoped only when needed
+
+That makes the public app safe to share without leaking or spending the project owner's API credits.
+
+## Submission Resource Index
+
+### Start here
 
 1. [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
-2. [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
-3. [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
-4. [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
-5. [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
+2. [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
+3. [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
+4. [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
 
-### Submission and demo
+### Core submission docs
 
 - [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
+- [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
+- [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
+- [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
+
+### Supporting demo and validation docs
+
 - [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
 - [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md)
 - [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md)
-- [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
-
-### Validation and operations
-
 - [docs/BROWSER_VERIFICATION_CHECKLIST.md](docs/BROWSER_VERIFICATION_CHECKLIST.md)
 - [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](docs/VERIFICATION_PASS_FAIL_CHECKLIST.md)
 - [docs/OPERATIONS.md](docs/OPERATIONS.md)
-
-### Visuals and design
-
-- [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
-- [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
-- [design-docs/README.md](design-docs/README.md)
 
 ## Validation
 
@@ -194,49 +194,24 @@ flowchart TD
 
 Then open [http://127.0.0.1:7860](http://127.0.0.1:7860).
 
-### Direct server
-
-```bash
-uvicorn server.app:app --host 0.0.0.0 --port 7860
-```
-
-### Demo script
-
-```bash
-python demo.py
-```
-
-### Verification commands
+### Core verification commands
 
 ```bash
 pytest tests/ -v
 npm run browser:verify
 python demo.py
-./scripts/docker_fresh.sh
 ```
 
 ## Hackathon Submission Assets
-
-These are the mandatory assets judges will expect to see.
 
 - Live product/demo link: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
 - Video walkthrough: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
 - LinkedIn/X announcement: `Add final public URL before submission`
 - Architecture and technical docs: [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
-- Codex/OpenAI usage story: [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
-
-### Submission Checklist
-
-- Live product link is working
-- Video walkthrough link is public
-- LinkedIn/X project announcement link is public
-- README is polished and GitHub-renderable
-- Final submission guide is current
-- Visual diagrams and screenshots render correctly on GitHub
-- Browser validation and demo steps are documented
+- Codex/OpenAI usage and validation story: [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
 
 ## Notes For Reviewers
 
-- GitHub `master` is the polished submission branch with full docs, diagrams, and screenshots.
-- The Hugging Face deployment is intentionally lighter so non-runtime assets do not affect build and load behavior.
-- The public app is safe by default and does not expose or spend the project owner's API credits.
+- GitHub `master` is the canonical submission branch.
+- The Hugging Face deployment is intentionally lighter than GitHub so non-runtime assets do not bloat the public demo environment.
+- The product is designed to be impressive in a live demo without sacrificing safety or clarity.
