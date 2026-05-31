@@ -2,6 +2,11 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 artifacts/
+!artifacts/
+artifacts/*
+!artifacts/demo-video/
+artifacts/demo-video/*
+!artifacts/demo-video/nexus-v2-demo.mp4
 *.pyc
 .worktrees/
 .nexus_audit_log.json

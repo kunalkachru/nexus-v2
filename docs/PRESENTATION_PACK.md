@@ -32,6 +32,7 @@ This is the presentation index for the final submission.
    - [NEXUS v2 Presenter Deck - nexus-v2-presenter-deck.pptx](../artifacts/presentations/nexus-v2-presenter-pack/output/nexus-v2-presenter-deck.pptx)
 
 9. Demo video pipeline
+   - Final video: [artifacts/demo-video/nexus-v2-demo.mp4](../artifacts/demo-video/nexus-v2-demo.mp4)
    - Build command: `./scripts/build_demo_video.sh`
    - Recorder: [scripts/generate_demo_video.mjs](../scripts/generate_demo_video.mjs)
    - Builder: [scripts/build_demo_video.sh](../scripts/build_demo_video.sh)

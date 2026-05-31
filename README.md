@@ -10,6 +10,7 @@ It is designed as a public-safe product demo for the AI Builders Hackathon: oper
 
 - Public app: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
 - Hugging Face Space: [https://huggingface.co/spaces/kunalkachru23/nexus](https://huggingface.co/spaces/kunalkachru23/nexus)
+- Video walkthrough: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
 - Final submission guide: [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
 - Visual architecture and flows: [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
 - Presentation pack: [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
@@ -22,6 +23,8 @@ Incident handling is often fragmented across alerts, queue systems, raw logs, an
 - remediation is hard to trust because reasoning is not visible
 - leadership and operators cannot easily see whether automation is safe
 
+In practice this means incident teams spend time stitching together context instead of resolving the issue. Stakeholders get status updates late, operators cannot quickly see why a remediation was chosen, and automation often feels too risky to trust in production.
+
 ## Solution
 
 NEXUS v2 addresses that with an agent-first incident workflow:
@@ -33,12 +36,33 @@ NEXUS v2 addresses that with an agent-first incident workflow:
 
 This creates a product experience that is easy to explain to judges, believable for operators, and structured enough to extend into a more production-shaped system.
 
+## Product Overview
+
+NEXUS v2 is structured as a focused operator workflow rather than a generic dashboard:
+
+- `Command Center` gives teams one live operational view of the incident queue
+- `Incident Detail` explains what each agent is doing and why
+- `Learning & Controls` shows how the system improves over time without hiding governance
+
+The result is a product that feels like autonomous AI workers collaborating on a real incident, while still giving humans a clear approval point before execution.
+
 ## Why This Matters
 
 - It makes autonomous incident response understandable instead of opaque.
 - It gives operators one place to review evidence, reasoning, and approvals.
 - It demonstrates a public deployment model that is safe by default.
 - It shows how AI agents can collaborate while keeping a human-readable control surface.
+
+## How NEXUS Solves The Problem
+
+NEXUS v2 solves the earlier fragmentation problem in four concrete ways:
+
+1. It normalizes queue incidents and raw logs into the same incident object.
+2. It makes the reasoning chain explicit so classification, diagnosis, remediation, and governance are visible.
+3. It keeps execution behind `GUARDIAN`, so safety is part of the product flow rather than an afterthought.
+4. It captures training and reward progression so the learning story is measurable instead of vague.
+
+This matters because the product is not only resolving incidents faster; it is also making the automation inspectable, auditable, and easier to trust.
 
 ## How It Works
 
@@ -89,6 +113,17 @@ The implementation is structured around a thin FastAPI product shell with explic
 - a FastAPI backend in [server](server)
 - training and metrics helpers in [training](training)
 - browser and regression coverage in [tests](tests)
+
+## Business Value
+
+NEXUS v2 is not just a technical prototype. It is positioned as a product that helps organizations:
+
+- reduce time spent on fragmented incident triage
+- improve operator trust in AI-assisted remediation
+- create a clearer audit trail for approvals and execution
+- give leadership a more understandable story around automation safety and operational maturity
+
+For a hackathon submission, that is an important part of the value proposition: the system is useful not only because it uses AI, but because it packages AI into a product surface that could plausibly be adopted by real operations teams.
 
 ## AI Stack And Codex Usage
 
@@ -185,7 +220,7 @@ python demo.py
 These are the mandatory assets judges will expect to see.
 
 - Live product/demo link: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
-- Video walkthrough: `Add final public URL before submission`
+- Video walkthrough: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
 - LinkedIn/X announcement: `Add final public URL before submission`
 - Architecture and technical docs: [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
 - Codex/OpenAI usage story: [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
