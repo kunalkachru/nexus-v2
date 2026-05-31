@@ -128,11 +128,16 @@ async function recordDemo() {
   await page.waitForLoadState("networkidle");
   consumed += 1600;
   await wait(1600);
+  consumed += await focusLocator(page.locator(".hero"), "start", 900);
   consumed += await pulse(page.getByRole("heading", { name: "Learning stays visible. Dense artifacts stay quiet." }), 2200);
+  consumed += await focusLocator(page.locator(".train-metrics"), "center", 1000);
   consumed += await pulse(page.locator("#rewardCurve"), 2800);
   consumed += await pulse(page.locator("#agentStats"), 2200);
+  consumed += await focusLocator(page.getByRole("heading", { name: "Governance summary" }), "center", 1200);
   consumed += await pulse(page.locator("#platformPolicyStatus"), 1800);
+  consumed += await pulse(page.locator("#platformReplayReadiness"), 1600);
   consumed += await pulse(page.locator("#artifactSnapshots"), 1800);
+  consumed += await pulse(page.locator("#learningContracts"), 1600);
   await settleScene(training.video_duration_ms, consumed);
 
   const videoPath = await page.video().path();
