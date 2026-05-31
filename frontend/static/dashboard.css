@@ -1560,6 +1560,25 @@ h3 {
   flex-wrap: wrap;
 }
 
+.byo-key-card {
+  margin-top: 16px;
+}
+
+.key-input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-inset);
+  color: var(--text);
+  font: inherit;
+}
+
+.key-input::placeholder {
+  color: var(--muted);
+}
+
 .theme-toggle {
   appearance: none;
   cursor: pointer;
@@ -1754,5 +1773,159 @@ h3 {
 
   .container {
     padding: 20px 14px 42px;
+  }
+}
+
+.hero-stats-tight {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.command-context-links,
+.tab-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.channel-ghost {
+  background: transparent;
+  border: 1px solid var(--border-soft);
+}
+
+.agent-crew-strip,
+.crew-bot-stack,
+.handoff-thread {
+  display: grid;
+  gap: 12px;
+}
+
+.agent-crew-strip {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.crew-bot {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.crew-bot[data-tone="sentinel"] {
+  border-color: rgba(56, 189, 248, 0.24);
+}
+
+.crew-bot[data-tone="prism"] {
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.crew-bot[data-tone="forge"] {
+  border-color: rgba(251, 191, 36, 0.22);
+}
+
+.crew-bot[data-tone="guardian"] {
+  border-color: rgba(74, 222, 128, 0.22);
+}
+
+.crew-active {
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.12), rgba(10, 18, 32, 0.62));
+  box-shadow: 0 0 0 1px var(--border-accent-strong), var(--shadow);
+}
+
+.crew-bot-top,
+.handoff-entry-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.crew-bot-name {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.crew-bot-state {
+  color: var(--text-on-accent);
+  background: var(--surface-accent);
+  border: 1px solid var(--border-accent);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.crew-bot-role {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.crew-bot-task,
+.crew-bot-handoff {
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+.queue-list-compact {
+  display: grid;
+  gap: 12px;
+}
+
+.working-memory-shell {
+  margin-top: 16px;
+}
+
+.handoff-thread {
+  margin-top: 16px;
+}
+
+.handoff-entry {
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+}
+
+.handoff-entry h3 {
+  margin-top: 10px;
+  font-size: 1.02rem;
+}
+
+.handoff-entry-active {
+  border-color: var(--border-accent-strong);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.14), rgba(10, 18, 32, 0.6));
+}
+
+.tab-pill {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+  color: var(--text);
+  font: inherit;
+}
+
+.tab-pill.active {
+  border-color: var(--border-accent-strong);
+  background: var(--surface-accent);
+  color: var(--text-on-accent);
+}
+
+.command-callout {
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  .agent-crew-strip,
+  .hero-stats-tight {
+    grid-template-columns: 1fr;
   }
 }

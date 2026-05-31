@@ -38,6 +38,7 @@ from server.models import (
     QueueResponse,
     SystemContext,
 )
+from server.openai_keys import build_llm_access
 from server.services.live_ingest import RawIncidentParser
 from server.services.governance import GovernanceService
 from server.services.priority import normalize_priority_label, priority_rank, priority_snapshot, shift_priority_label
@@ -379,11 +380,16 @@ class IncidentService:
         *,
         tenant_id: str | None = None,
         live_reasoning: bool | None = None,
+        openai_api_key: str | None = None,
     ) -> dict[str, object]:
         if nexus_incident_id in list_supported_incident_ids():
             from server.services.live_demo import build_demo_payload
 
-            return await build_demo_payload(nexus_incident_id, live_reasoning_override=live_reasoning)
+            return await build_demo_payload(
+                nexus_incident_id,
+                live_reasoning_override=live_reasoning,
+                openai_api_key=openai_api_key,
+            )
 
         if tenant_id is None:
             loaded = await self._session.incidents.get_incident(nexus_incident_id)
@@ -459,6 +465,7 @@ class IncidentService:
             workflow=workflow,
             raw_evidence=normalized_evidence,
             live_reasoning_override=live_reasoning,
+            openai_api_key=openai_api_key,
         )
         if live_payload is not None:
             return live_payload
@@ -601,6 +608,13 @@ class IncidentService:
             "reward": 0.72,
             "execution_time_ms": 12.4,
             "supported_incidents": [incident.nexus_incident_id],
+            "live_reasoning": False,
+            "llm_access": build_llm_access(
+                live_reasoning_requested=bool(live_reasoning),
+                user_key_provided=bool(openai_api_key),
+                server_key_available=bool(os.environ.get("OPENAI_API_KEY", "").strip()),
+                live_reasoning_active=False,
+            ),
         }
 
     async def record_guardian_decision(
@@ -688,11 +702,14 @@ class IncidentService:
         workflow: list[dict[str, object]],
         raw_evidence: dict[str, object],
         live_reasoning_override: bool | None = None,
+        openai_api_key: str | None = None,
     ) -> dict[str, object] | None:
         config = AppConfig()
-        use_live_llm = config.use_live_llm and bool(os.environ.get("OPENAI_API_KEY"))
+        server_key = os.environ.get("OPENAI_API_KEY", "").strip()
+        effective_key = openai_api_key or server_key
+        use_live_llm = (config.use_live_llm and bool(server_key)) or bool(openai_api_key)
         if live_reasoning_override is not None:
-            use_live_llm = live_reasoning_override and bool(os.environ.get("OPENAI_API_KEY"))
+            use_live_llm = live_reasoning_override and bool(effective_key)
         if not use_live_llm:
             return None
 
@@ -717,9 +734,13 @@ class IncidentService:
             }
 
             config = AppConfig()
-            sentinel = SentinelAgent(client=OpenAISentinelClient(), model_name=config.forge_model_name)
-            prism = PrismAgent(observability=self._observability, client=OpenAIPrismClient(), model_name=config.forge_model_name)
-            forge = ForgeAgent(client=OpenAIForgeClient(), model_name=config.forge_model_name)
+            sentinel = SentinelAgent(client=OpenAISentinelClient(api_key=effective_key), model_name=config.forge_model_name)
+            prism = PrismAgent(
+                observability=self._observability,
+                client=OpenAIPrismClient(api_key=effective_key),
+                model_name=config.forge_model_name,
+            )
+            forge = ForgeAgent(client=OpenAIForgeClient(api_key=effective_key), model_name=config.forge_model_name)
             guardian = GuardianAgent()
 
             sentinel_output = sentinel.classify(raw_symptoms=raw_symptoms, system_context=system_context)
@@ -880,6 +901,12 @@ class IncidentService:
                 "guardian": "deterministic",
             },
             "live_reasoning": True,
+            "llm_access": build_llm_access(
+                live_reasoning_requested=bool(live_reasoning_override),
+                user_key_provided=bool(openai_api_key),
+                server_key_available=bool(server_key),
+                live_reasoning_active=True,
+            ),
             "learning_state": {
                 "observation": {
                     "incident_id": incident.nexus_incident_id,

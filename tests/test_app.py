@@ -36,61 +36,63 @@ def test_dashboard_routes_are_served() -> None:
     assert settings.status_code == 200
     assert "NEXUS v2" in root.text
     assert 'static/app-shell.js' in root.text
-    assert "Incident Queue" in dashboard.text
-    assert "Incident Queue" in queue.text
-    assert "SENTINEL" not in queue.text
-    assert "Incident Console" in incident.text
-    assert "SENTINEL" in incident.text
-    assert "Workflow Timeline" in incident.text
-    assert "Audit summary" in incident.text
-    assert "Evidence Provenance" in incident.text
-    assert "Raw Intake" in incident.text
-    assert "Normalized evidence" in incident.text
-    assert "Proposed fix" in incident.text
-    assert "Evidence details" in incident.text
-    assert "Raw input → evidence bundle" in incident.text
-    assert "Live reasoning" in incident.text
-    assert "Guardian gate" in incident.text
-    assert "Approve and execute" in incident.text
-    assert "Block execution" in incident.text
-    assert "flowing from" in incident.text
+    assert "Command Center" in dashboard.text
+    assert "Command Center" in queue.text
+    assert "Agent Crew" in queue.text
+    assert "SENTINEL" in queue.text
+    assert "PRISM" in queue.text
+    assert "FORGE" in queue.text
+    assert "GUARDIAN" in queue.text
+    assert "Incident Detail" in incident.text
+    assert "Agent Handoff Thread" in incident.text
+    assert "SENTINEL handed evidence to PRISM" in incident.text
+    assert "Governance Bot" in incident.text
+    assert "Working memory" in incident.text
+    assert "Expand technical detail" in incident.text
     assert "Input Channels" in inputs.text
     assert "Paste Raw Logs" in inputs.text
-    assert "Raw Incident Intake Preview" in inputs.text
-    assert "Submit raw logs" in inputs.text
-    assert "Load example logs" in inputs.text
-    assert "Live reasoning" in inputs.text
-    assert "Detected service" in inputs.text
-    assert "Webhook" in inputs.text
-    assert "Slack Command" in inputs.text
-    assert "Open reasoning console" in inputs.text
     assert "Incident archive." in history.text
     assert "Replay validation." in replay.text
     assert "certificate expiry" in replay.text.lower()
-    assert "Learning operations." in training.text
-    assert "Episode History" in training.text
-    assert "RL Episode Contract" in training.text
-    assert "Reward evaluation" in training.text
-    assert "Observation States" in training.text
-    assert "Learning contracts" in training.text
+    assert "Learning & Controls" in training.text
+    assert "Learning tab" in training.text
+    assert "Governance tab" in training.text
+    assert "Advanced Artifacts" in training.text
     assert "Operational controls." in settings.text
-    assert "Signature" in settings.text
-    assert "Learning contracts" in settings.text
-    assert "Learning Curves" in training.text
-    assert "Back to queue" in incident.text
-    assert "Current page:" not in root.text
-    assert "Current page:" not in incident.text
-    assert "Current page:" not in inputs.text
-    assert "Current page:" not in history.text
-    assert "Current page:" not in replay.text
-    assert "Current page:" not in training.text
-    assert "Current page:" not in settings.text
-    assert 'href="history"' in root.text
-    assert 'href="inputs"' in root.text
-    assert 'href="replay"' in root.text
-    assert 'href="training"' in root.text
-    assert 'href="settings"' in root.text
     assert 'href="queue"' in incident.text
+
+
+def test_primary_navigation_is_reduced_to_three_screens() -> None:
+    client = TestClient(app)
+
+    for route in ["/", "/queue", "/incident", "/training", "/inputs", "/history", "/replay", "/settings"]:
+        response = client.get(route)
+
+        assert response.status_code == 200
+        assert response.text.count('class="nav-link') >= 3
+        assert "Command Center" in response.text
+        assert "Incident Detail" in response.text
+        assert "Learning &amp; Controls" in response.text or "Learning & Controls" in response.text
+        assert 'href="inputs"' not in response.text.split("</nav>", maxsplit=1)[0]
+        assert 'href="history"' not in response.text.split("</nav>", maxsplit=1)[0]
+        assert 'href="replay"' not in response.text.split("</nav>", maxsplit=1)[0]
+        assert 'href="settings"' not in response.text.split("</nav>", maxsplit=1)[0]
+
+
+def test_advanced_routes_are_demoted_but_still_linked_contextually() -> None:
+    client = TestClient(app)
+
+    queue = client.get("/queue")
+    incident = client.get("/incident")
+    training = client.get("/training")
+
+    assert queue.status_code == 200
+    assert incident.status_code == 200
+    assert training.status_code == 200
+    assert 'href="history"' in queue.text
+    assert 'href="replay"' in queue.text
+    assert 'href="inputs"' in incident.text
+    assert 'href="settings"' in training.text
 
 
 def test_dashboard_serves_static_assets() -> None:
@@ -123,6 +125,22 @@ def test_metrics_api_returns_dashboard_payload() -> None:
     assert payload["latest_episode"]["incident_id"]
     assert payload["queue_snapshot"]["open_incidents"] >= 1
     assert payload["platform_status"]["mode"] == "Product"
+
+
+def test_primary_screens_hide_dense_details_by_default() -> None:
+    client = TestClient(app)
+
+    queue = client.get("/queue")
+    incident = client.get("/incident")
+    training = client.get("/training")
+
+    assert "Queue Controls" not in queue.text
+    assert "Episode History" not in training.text
+    assert "RL Episode Contract" not in training.text
+    assert "Observation States" not in training.text
+    assert "Workflow Timeline" not in incident.text
+    assert "Audit summary" not in incident.text
+    assert "Raw Intake" not in incident.text
 
 
 def test_run_incident_returns_realistic_incident_context() -> None:

@@ -27,15 +27,16 @@
                 <div class="brand-copy">Intake pipeline</div>
             </div>
             <nav class="app-nav" aria-label="Primary">
-                <a class="nav-link" href="queue">Queue</a>
-                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident</a>
-                <a class="nav-link active" href="inputs" aria-current="page">Input Channels</a>
-                <a class="nav-link" href="history">History</a>
-                <a class="nav-link" href="replay">Replay</a>
-                <a class="nav-link" href="training">Training</a>
-                <a class="nav-link" href="settings">Settings</a>
+                <a class="nav-link" href="queue">Command Center</a>
+                <a class="nav-link active" href="incident?nexus_incident_id=INC001" aria-current="page">Incident Detail</a>
+                <a class="nav-link" href="training">Learning &amp; Controls</a>
             </nav>
         </header>
+
+        <div class="top-actions">
+            <a class="nav-link" href="incident?nexus_incident_id=INC001" data-context-back-link data-fallback-href="incident?nexus_incident_id=INC001" data-fallback-label="Back to incident detail">Back to incident detail</a>
+            <a class="nav-link channel-ghost" href="queue" data-preserve-return>Open command center</a>
+        </div>
 
         <section class="hero">
             <div class="hero-panel">
@@ -44,14 +45,6 @@
                 <p class="hero-copy">
                     Start with pasted incident text, see it normalized in the browser, and open the incident console with one clear path.
                 </p>
-                <div class="journey-path" aria-label="Product flow">
-                    <span class="journey-path-item">Queue</span>
-                    <span class="journey-path-item active"><strong>Inputs</strong></span>
-                    <span class="journey-path-item">Incident</span>
-                    <span class="journey-path-item">History</span>
-                    <span class="journey-path-item">Replay</span>
-                    <span class="journey-path-item">Training</span>
-                </div>
                 <div class="hero-stats">
                     <div class="stat"><div class="stat-label">Supported channels</div><div class="stat-value">6</div></div>
                     <div class="stat"><div class="stat-label">Normalized output</div><div class="stat-value">1 envelope</div></div>
@@ -165,7 +158,7 @@ service=checkout-api severity=P1</pre>
                         <pre class="input-code" id="channelEndpoint">Preview only: no raw-log backend endpoint yet</pre>
                         <button class="nav-link channel-cta" id="channelSubmit" type="button">Submit raw logs</button>
                         <div class="badge">Open console</div>
-                        <a class="inline-link channel-cta" id="channelLaunch" href="incident?nexus_incident_id=INC001">Open reasoning console</a>
+                        <a class="inline-link channel-cta" id="channelLaunch" href="incident?nexus_incident_id=INC001" data-preserve-return>Open reasoning console</a>
                         <div class="result-banner" id="channelResult">No intake parsed yet.</div>
                         <p class="hero-copy">The same incident console will later receive the normalized log bundle and reason over it with the agents.</p>
                     </div>

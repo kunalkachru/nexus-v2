@@ -6,6 +6,23 @@ export async function fetchJson(url) {
   return response.json();
 }
 
+export function formatIncidentHandle(incidentId) {
+  const raw = String(incidentId || "").trim();
+  if (!raw) {
+    return "INC001";
+  }
+
+  if (/^INC\d+$/i.test(raw)) {
+    return raw.toUpperCase();
+  }
+
+  if (raw.startsWith("nxs_")) {
+    return `INC-${raw.slice(4, 8).toUpperCase()}`;
+  }
+
+  return raw.length > 12 ? raw.slice(0, 12) : raw;
+}
+
 export function demoAuthHeaders() {
   return {
     "x-user-id": "user-123",
@@ -19,6 +36,12 @@ export async function fetchAuthedJson(url, options = {}) {
     ...demoAuthHeaders(),
     ...(options.headers || {}),
   };
+  if (options.includeOpenAIKey) {
+    const userKey = getUserOpenAIKey();
+    if (userKey) {
+      headers["x-openai-api-key"] = userKey;
+    }
+  }
   const response = await fetch(url, {
     ...options,
     headers,
@@ -44,6 +67,7 @@ export function loadMetrics() {
 }
 
 const LIVE_REASONING_STORAGE_KEY = "nexus.live_reasoning";
+const USER_OPENAI_KEY_STORAGE_KEY = "nexus.user_openai_api_key";
 
 export function getLiveReasoningPreference() {
   try {
@@ -54,7 +78,7 @@ export function getLiveReasoningPreference() {
   } catch {
     // Ignore storage failures and fall back to the default toggle state.
   }
-  return true;
+  return false;
 }
 
 export function setLiveReasoningPreference(enabled) {
@@ -63,6 +87,69 @@ export function setLiveReasoningPreference(enabled) {
   } catch {
     // Ignore storage failures; the page toggle still updates immediately.
   }
+}
+
+export function isValidOpenAIKeyFormat(value) {
+  const raw = String(value || "").trim();
+  return !raw || (raw.startsWith("sk-") && raw.length >= 12);
+}
+
+export function getUserOpenAIKey() {
+  try {
+    return String(window.sessionStorage.getItem(USER_OPENAI_KEY_STORAGE_KEY) || "").trim();
+  } catch {
+    return "";
+  }
+}
+
+export function hasUserOpenAIKey() {
+  return Boolean(getUserOpenAIKey());
+}
+
+export function setUserOpenAIKey(value) {
+  const raw = String(value || "").trim();
+  if (!isValidOpenAIKeyFormat(raw)) {
+    throw new Error("Invalid OpenAI key format.");
+  }
+  try {
+    if (raw) {
+      window.sessionStorage.setItem(USER_OPENAI_KEY_STORAGE_KEY, raw);
+    } else {
+      window.sessionStorage.removeItem(USER_OPENAI_KEY_STORAGE_KEY);
+    }
+  } catch {
+    // Ignore storage failures; callers still receive the validation result.
+  }
+}
+
+export function clearUserOpenAIKey() {
+  try {
+    window.sessionStorage.removeItem(USER_OPENAI_KEY_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+export function maskUserOpenAIKey(value = getUserOpenAIKey()) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "No user key attached";
+  }
+  if (raw.length <= 8) {
+    return `${raw.slice(0, 4)}...`;
+  }
+  return `${raw.slice(0, 4)}...${raw.slice(-4)}`;
+}
+
+export function summarizeIncidentTitle(title) {
+  const raw = String(title || "").trim();
+  if (!raw) {
+    return "Active incident";
+  }
+
+  const withoutTimestamp = raw.replace(/^\d{4}-\d{2}-\d{2}T[^\s]+\s+/u, "");
+  const cleaned = withoutTimestamp.replace(/\s+/g, " ").trim();
+  return cleaned.length > 56 ? `${cleaned.slice(0, 53).trimEnd()}...` : cleaned;
 }
 
 function synthesizeIncidentFromStatus(status) {
@@ -235,11 +322,21 @@ function synthesizeIncidentFromStatus(status) {
 export async function loadIncident(incidentId) {
   const liveReasoning = getLiveReasoningPreference() ? "1" : "0";
   try {
-    return await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/context?live_reasoning=${liveReasoning}`);
+    return await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/context?live_reasoning=${liveReasoning}`, {
+      includeOpenAIKey: true,
+    });
   } catch (error) {
+    if (String(error?.message || "").includes("400")) {
+      throw error;
+    }
     try {
-      return await fetchJson(`/run-incident?incident_id=${encodeURIComponent(incidentId)}&live_reasoning=${liveReasoning}`);
-    } catch {
+      return await fetchAuthedJson(`/run-incident?incident_id=${encodeURIComponent(incidentId)}&live_reasoning=${liveReasoning}`, {
+        includeOpenAIKey: true,
+      });
+    } catch (fallbackError) {
+      if (String(fallbackError?.message || "").includes("400")) {
+        throw fallbackError;
+      }
       const status = await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/status`);
       return synthesizeIncidentFromStatus(status);
     }

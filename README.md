@@ -4,7 +4,7 @@ emoji: 🤖
 colorFrom: blue
 colorTo: purple
 sdk: docker
-app_file: server/app.py
+app_port: 7860
 pinned: false
 ---
 
@@ -59,7 +59,7 @@ The main user journeys are:
 5. Replay a scenario or inspect training output to understand how the system learns.
 6. Review settings and trust posture before expanding into production usage.
 
-The current UI is intentionally enterprise-shaped so it feels credible in front of users, operators, and reviewers even before every backend integration is fully live.
+The current UI is intentionally agent-first: one live incident stays in focus while the four bots coordinate visibly and the heavy technical detail stays behind disclosure.
 
 ## Business angle
 
@@ -103,11 +103,14 @@ That order matters because it makes the incident story readable for operators, p
 
 Current runtime behavior:
 
-- `SENTINEL` is deterministic by default, with an optional live OpenAI-backed classification path when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
-- `PRISM` is deterministic by default, with an optional live OpenAI-backed diagnosis path when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
-- `FORGE` is deterministic by default in the web app, with an optional live OpenAI path in the demo and seeded incident views when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
+- The public app defaults to deterministic demo mode.
+- Users can opt into live reasoning by attaching their own OpenAI API key from the incident detail screen.
+- User keys are request-scoped, stored only in browser session storage, masked in the UI, and never persisted server-side.
+- `SENTINEL` is deterministic by default, with an optional live OpenAI-backed classification path when a valid request-scoped user key is provided or the server is explicitly configured with `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY`.
+- `PRISM` is deterministic by default, with an optional live OpenAI-backed diagnosis path under the same conditions.
+- `FORGE` is deterministic by default in the web app, with an optional live OpenAI path in the demo and incident views under the same conditions.
 - `GUARDIAN` is deterministic and acts as the safety/policy gate.
-- The raw-log intake path uses the same live reasoning mode when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set; otherwise it stays deterministic and testable.
+- The raw-log intake path uses the same BYO-key live reasoning path; otherwise it stays deterministic and testable.
 
 Recommended production direction:
 
@@ -218,6 +221,15 @@ The current app/runtime defaults live in `server/config.py`:
 - `database_path`
 - `webhook_signing_secret`
 - `allowed_tenant_ids`
+
+### Public Hugging Face Space mode
+
+For the safest public deployment:
+
+- Do not set `OPENAI_API_KEY` on the Space.
+- Let the app boot in deterministic demo mode.
+- Users who want live reasoning can paste their own OpenAI key in `Incident Detail`.
+- The key is sent only on that request, masked in the UI, and not written to disk or logs by the app.
 - `forge_model_name`
 
 Optional demo/OpenAI settings:
@@ -241,6 +253,13 @@ Recommended focused checks:
 pytest -q tests/test_api_contract.py tests/test_app.py tests/test_security.py tests/test_observability.py tests/test_deployment.py
 ```
 
+Docker-first browser verification:
+
+```bash
+./scripts/docker_fresh.sh
+npm run browser:verify
+```
+
 Browser validation targets:
 - `/`
 - `/queue`
@@ -250,6 +269,11 @@ Browser validation targets:
 - `/replay`
 - `/training`
 - `/settings`
+
+Primary submission-critical browser flows:
+- `/queue` -> click first incident -> incident details populated
+- `/inputs` -> `Load example logs` -> `Submit raw logs` -> redirected `nxs_...` incident populated
+- incident console -> `Approve runbook` -> Guardian approved and execution executed
 
 The current repo is considered ready when the suite is green and the browser pages load without console errors in the main demo flow.
 

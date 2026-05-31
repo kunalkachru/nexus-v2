@@ -24,6 +24,7 @@ from server.integrations.models import (
     SlackIncidentCommand,
     StreamAnomalyReport,
 )
+from server.openai_keys import extract_request_openai_api_key
 from server.rate_limit import RateLimiter
 from server.services.incidents import IncidentService
 from server.services.live_demo import build_demo_payload
@@ -67,7 +68,7 @@ async def root() -> FileResponse:
 
 @app.get("/dashboard")
 async def dashboard() -> FileResponse:
-    return FileResponse("frontend/dashboard.html", media_type="text/html")
+    return FileResponse("frontend/queue.html", media_type="text/html")
 
 
 @app.get("/queue")
@@ -318,10 +319,12 @@ async def get_incident_context_v1(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="incident_context_v1")
+    openai_api_key = extract_request_openai_api_key(request)
     response = await service.get_incident_context_v1(
         nexus_incident_id,
         tenant_id=auth.tenant_id,
         live_reasoning=live_reasoning,
+        openai_api_key=openai_api_key,
     )
     await write_audit_log(
         "incident.context_v1.read",
@@ -427,9 +430,17 @@ async def get_metrics():
 
 
 @app.get("/run-incident")
-async def run_incident(incident_id: str = "INC001", live_reasoning: bool | None = Query(default=None)):
+async def run_incident(
+    request: Request,
+    incident_id: str = "INC001",
+    live_reasoning: bool | None = Query(default=None),
+):
     try:
-        return await build_demo_payload(incident_id, live_reasoning_override=live_reasoning)
+        return await build_demo_payload(
+            incident_id,
+            live_reasoning_override=live_reasoning,
+            openai_api_key=extract_request_openai_api_key(request),
+        )
     except ValueError as exc:
         return JSONResponse(status_code=404, content={"error": str(exc)})
     except KeyError:

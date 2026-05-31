@@ -1,7 +1,10 @@
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+
+STRICT_INCIDENT_SEVERITIES = {"P0", "P1", "P2", "P3", "P4"}
 
 
 class SystemContext(BaseModel):
@@ -55,6 +58,13 @@ class IncidentRecord(BaseModel):
     guardian_policy_basis: str = ""
     created_at: str = ""
     updated_at: str = ""
+
+    @model_validator(mode="after")
+    def validate_severity_by_source(self) -> "IncidentRecord":
+        strict_sources = {None, "datadog", "prometheus", "webhook"}
+        if self.source in strict_sources and self.severity not in STRICT_INCIDENT_SEVERITIES:
+            raise ValueError("severity must be one of P0-P4 for persisted monitoring/webhook incidents")
+        return self
 
 
 class NormalizedAlertEnvelope(BaseModel):

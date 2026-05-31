@@ -8,6 +8,7 @@ from server.agents.live_clients import OpenAIForgeClient, OpenAIPrismClient, Ope
 from server.config import AppConfig
 from server.incident_payloads import get_incident_definition, get_incident_details
 from server.models import NormalizedAlertEnvelope
+from server.openai_keys import build_llm_access
 from server.orchestrator import NexusCore
 from server.integrations.deployments import DeploymentLookupService
 from server.services.observability import ObservabilityService
@@ -25,20 +26,23 @@ async def build_demo_payload(
     incident_id: str = "INC001",
     *,
     live_reasoning_override: bool | None = None,
+    openai_api_key: str | None = None,
 ) -> dict[str, object]:
     """Build a demo incident payload, optionally with live LLM-backed agents."""
 
     config = AppConfig()
-    use_live_llm = config.use_live_llm and bool(os.environ.get("OPENAI_API_KEY"))
+    server_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    effective_key = openai_api_key or server_key
+    use_live_llm = (config.use_live_llm and bool(server_key)) or bool(openai_api_key)
     if live_reasoning_override is not None:
-        use_live_llm = live_reasoning_override and bool(os.environ.get("OPENAI_API_KEY"))
+        use_live_llm = live_reasoning_override and bool(effective_key)
     incident = get_incident_definition(incident_id)
     details = get_incident_details(incident_id)
     base = build_incident_response(incident_id)
 
-    sentinel_client = OpenAISentinelClient() if use_live_llm else None
-    prism_client = OpenAIPrismClient() if use_live_llm else None
-    forge_client = OpenAIForgeClient() if use_live_llm else TrainingForgeClient()
+    sentinel_client = OpenAISentinelClient(api_key=effective_key) if use_live_llm else None
+    prism_client = OpenAIPrismClient(api_key=effective_key) if use_live_llm else None
+    forge_client = OpenAIForgeClient(api_key=effective_key) if use_live_llm else TrainingForgeClient()
 
     core = NexusCore(
         observability=ObservabilityService(deployment_lookup=DeploymentLookupService()),
@@ -149,4 +153,10 @@ async def build_demo_payload(
         guardian_policy_basis=episode.guardian_output.policy_basis,
     )
     payload["live_reasoning"] = use_live_llm
+    payload["llm_access"] = build_llm_access(
+        live_reasoning_requested=bool(live_reasoning_override),
+        user_key_provided=bool(openai_api_key),
+        server_key_available=bool(server_key),
+        live_reasoning_active=use_live_llm,
+    )
     return payload

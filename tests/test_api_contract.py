@@ -595,3 +595,90 @@ def test_replay_launch_creates_live_incident(client: TestClient, auth_headers) -
     )
     assert status_response.status_code == 200
     assert status_response.json()["source"] in {"webhook", "manual_form", "slack_command", "stream_anomaly", "batch_import"}
+
+
+def test_incident_context_defaults_to_deterministic_without_user_key(client: TestClient, auth_headers, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    response = client.get(
+        "/api/v1/incidents/INC001/context?live_reasoning=1",
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["live_reasoning"] is False
+    assert payload["llm_access"]["mode"] == "deterministic"
+    assert payload["llm_access"]["user_key_provided"] is False
+    assert "Add your OpenAI key" in payload["llm_access"]["message"]
+
+
+def test_incident_context_rejects_invalid_user_key_header(client: TestClient, auth_headers) -> None:
+    response = client.get(
+        "/api/v1/incidents/INC001/context?live_reasoning=1",
+        headers={**auth_headers(), "x-openai-api-key": "not-a-real-key"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "invalid OpenAI API key format"
+
+
+def test_incident_context_accepts_request_scoped_user_key(client: TestClient, auth_headers, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    class FakeSentinelClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-test-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "incident_id": "INC001",
+                "incident_name": "API Timeout Cascade",
+                "severity": "P1",
+                "confidence": 0.91,
+                "reasoning": "SENTINEL classified the alert with the request-scoped key.",
+            }
+
+    class FakePrismClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-test-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "root_cause": "Connection pool exhaustion",
+                "confidence": 0.88,
+                "evidence": ["timeout spikes", "pool saturation"],
+                "queried_sources": ["logs", "metrics"],
+                "reasoning": "PRISM correlated timeout spikes with saturated connection pools.",
+            }
+
+    class FakeForgeClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-test-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "language": "bash",
+                "summary": "Scale the pool and recycle saturated workers.",
+                "code": "kubectl rollout restart deploy/checkout-api",
+                "estimated_cost_usd": 0.12,
+            }
+
+    monkeypatch.setattr("server.services.live_demo.OpenAISentinelClient", FakeSentinelClient)
+    monkeypatch.setattr("server.services.live_demo.OpenAIPrismClient", FakePrismClient)
+    monkeypatch.setattr("server.services.live_demo.OpenAIForgeClient", FakeForgeClient)
+
+    response = client.get(
+        "/api/v1/incidents/INC001/context?live_reasoning=1",
+        headers={**auth_headers(), "x-openai-api-key": "sk-test-1234567890"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["live_reasoning"] is True
+    assert payload["llm_access"]["mode"] == "live"
+    assert payload["llm_access"]["key_source"] == "user"
+    assert payload["llm_access"]["user_key_provided"] is True
+    assert payload["classification"]["reasoning"] == "SENTINEL classified the alert with the request-scoped key."
+    assert payload["diagnosis"]["root_cause"] == "Connection pool exhaustion"
+    assert payload["runbook"]["summary"] == "Scale the pool and recycle saturated workers."

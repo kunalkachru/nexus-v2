@@ -7,10 +7,13 @@ import os
 class OpenAIForgeClient:
     """Optional live OpenAI backend for FORGE."""
 
+    def __init__(self, api_key: str | None = None) -> None:
+        self._api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+
     def generate_json(self, *, model: str, system_prompt: str, user_prompt: str) -> dict[str, object]:
         from openai import OpenAI
 
-        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        client = OpenAI(api_key=self._api_key)
         response = client.responses.create(
             model=model,
             input=[
@@ -41,10 +44,13 @@ class OpenAIForgeClient:
 class OpenAISentinelClient:
     """Optional live OpenAI backend for SENTINEL classification."""
 
+    def __init__(self, api_key: str | None = None) -> None:
+        self._api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+
     def generate_json(self, *, model: str, system_prompt: str, user_prompt: str) -> dict[str, object]:
         from openai import OpenAI
 
-        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        client = OpenAI(api_key=self._api_key)
         response = client.responses.create(
             model=model,
             input=[
@@ -76,10 +82,13 @@ class OpenAISentinelClient:
 class OpenAIPrismClient:
     """Optional live OpenAI backend for PRISM diagnosis synthesis."""
 
+    def __init__(self, api_key: str | None = None) -> None:
+        self._api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+
     def generate_json(self, *, model: str, system_prompt: str, user_prompt: str) -> dict[str, object]:
         from openai import OpenAI
 
-        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+        client = OpenAI(api_key=self._api_key)
         response = client.responses.create(
             model=model,
             input=[

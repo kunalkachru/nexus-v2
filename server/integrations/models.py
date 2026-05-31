@@ -1,6 +1,9 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+STRICT_SEVERITIES = {"P0", "P1", "P2", "P3", "P4"}
 
 
 class IncomingIncidentWebhook(BaseModel):
@@ -10,6 +13,13 @@ class IncomingIncidentWebhook(BaseModel):
     detected_at: str
     monitoring_source: Literal["datadog", "prometheus"]
     metrics: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("severity")
+    @classmethod
+    def validate_severity(cls, value: str) -> str:
+        if value not in STRICT_SEVERITIES:
+            raise ValueError("severity must be one of P0-P4")
+        return value
 
 
 class ManualIncidentReport(BaseModel):

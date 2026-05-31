@@ -1,0 +1,149 @@
+const { test, expect } = require("@playwright/test");
+
+async function disableLiveReasoning(page) {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("nexus.live_reasoning", "0");
+  });
+}
+
+test.describe("NEXUS browser verification", () => {
+  test.beforeEach(async ({ page }) => {
+    await disableLiveReasoning(page);
+  });
+
+  test("command center feels agent-first and keeps queue internals secondary", async ({ page }) => {
+    await page.goto("/queue");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page).toHaveTitle(/Command Center/);
+    await expect(page.getByRole("navigation", { name: "Primary" })).toContainText("Command Center");
+    await expect(page.getByRole("navigation", { name: "Primary" })).toContainText("Incident Detail");
+    await expect(page.getByRole("navigation", { name: "Primary" })).toContainText("Learning & Controls");
+    await expect(page.getByRole("navigation", { name: "Primary" })).not.toContainText("Inputs");
+    await expect(page.getByRole("navigation", { name: "Primary" })).not.toContainText("History");
+    await expect(page.getByRole("navigation", { name: "Primary" })).not.toContainText("Replay");
+    await expect(page.getByRole("navigation", { name: "Primary" })).not.toContainText("Settings");
+
+    await expect(page.getByRole("heading", { name: "Autonomous agents are already working the incident." })).toBeVisible();
+    await expect(page.getByText("Agent Crew")).toBeVisible();
+    await expect(page.locator(".agent-crew-strip .crew-bot")).toHaveCount(4);
+    await expect(page.locator(".crew-bot-name")).toHaveText(["SENTINEL", "PRISM", "FORGE", "GUARDIAN"]);
+    await expect(page.locator(".section-collapsible")).not.toHaveAttribute("open", "");
+    await expect(page.locator(".queue-list .incident-btn").first()).toContainText(/INC-|INC\d+/);
+
+    await page.screenshot({ path: "artifacts/browser/queue-command-center-default.png", fullPage: true });
+
+    await page.locator(".section-collapsible summary").click();
+    await expect(page.locator("#queueControls")).toBeVisible();
+    await page.screenshot({ path: "artifacts/browser/queue-command-center-expanded.png", fullPage: true });
+  });
+
+  test("incident detail shows autonomous handoffs and hides technical detail by default", async ({ page }) => {
+    await page.goto("/incident?nexus_incident_id=INC001");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page).toHaveTitle(/Incident Detail/);
+    await expect(page.getByRole("heading", { name: /INC001/ })).toBeVisible();
+    await expect(page.getByText("Autonomous crew")).toBeVisible();
+    await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(4);
+    await expect(page.getByRole("heading", { name: "Agent Handoff Thread" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "SENTINEL handed evidence to PRISM" })).toBeVisible();
+    await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
+    await expect(page.locator(".byo-key-card .badge")).toHaveText("Bring your own OpenAI key");
+    await expect(page.locator(".section-collapsible")).not.toHaveAttribute("open", "");
+    await expect(page.locator("#liveReasoningState")).toContainText("OFF");
+    await expect(page.locator("#incidentHeroId")).toContainText(/INC(?:-|)\w+/);
+
+    await page.screenshot({ path: "artifacts/browser/incident-detail-default.png", fullPage: true });
+
+    await page.getByRole("button", { name: /Turn live reasoning on/i }).click();
+    await expect(page.locator("#liveReasoningState")).toContainText("ON");
+
+    await page.locator(".section-collapsible summary").click();
+    await expect(page.locator("#rawInputText")).toBeVisible();
+    await expect(page.locator("#workflowTimeline")).toBeVisible();
+    await expect(page.locator("#incidentAuditLogs")).toBeVisible();
+
+    await page.screenshot({ path: "artifacts/browser/incident-detail-expanded.png", fullPage: true });
+  });
+
+  test("incident detail keeps BYO key masked and request-scoped", async ({ page }) => {
+    await page.goto("/incident?nexus_incident_id=INC001");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("#openaiKeyStatus")).toContainText("No user key attached");
+    await page.locator("#openaiApiKeyInput").fill("sk-test-1234567890");
+    await page.getByRole("button", { name: "Use this key" }).click();
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("#liveReasoningState")).toContainText("ON");
+    await expect(page.locator("#openaiKeyStatus")).toContainText("sk-t...7890");
+    await expect(page.locator("#openaiKeyStatus")).not.toContainText("sk-test-1234567890");
+
+    await page.getByRole("button", { name: "Clear key" }).click();
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("#openaiKeyStatus")).toContainText("No user key attached");
+  });
+
+  test("learning and controls leads with progress while keeping RL artifacts collapsed", async ({ page }) => {
+    await page.goto("/training");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page).toHaveTitle(/Learning & Controls/);
+    await expect(page.getByRole("heading", { name: "Learning stays visible. Dense artifacts stay quiet." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Learning summary" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Governance summary" })).toBeVisible();
+    await expect(page.locator("#rewardCurve > div")).toHaveCount(30);
+    await expect(page.locator("#agentStats .summary-card")).toHaveCount(4);
+    await expect(page.locator(".section-collapsible")).not.toHaveAttribute("open", "");
+
+    await page.screenshot({ path: "artifacts/browser/training-learning-controls-default.png", fullPage: true });
+
+    await page.locator(".section-collapsible summary").click();
+    await expect(page.locator("#episodeTable")).toBeVisible();
+    await expect(page.locator("#trajectoryTable")).toBeVisible();
+    await expect(page.locator("#stateMap")).toBeVisible();
+
+    await page.screenshot({ path: "artifacts/browser/training-learning-controls-expanded.png", fullPage: true });
+  });
+
+  test("advanced routes preserve return context back into the incident console", async ({ page }) => {
+    await page.goto("/incident?nexus_incident_id=INC001");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByRole("link", { name: "Inspect intake" }).click();
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(/\/inputs(?:\?|$)/);
+    await expect(page.getByRole("link", { name: "Back to Incident Detail" })).toBeVisible();
+
+    await page.getByRole("link", { name: /Open reasoning console/i }).click();
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(/\/incident\?[^#]*nexus_incident_id=INC001[^#]*return_to=/);
+    await expect(page.getByRole("link", { name: "Back to Input Channels" })).toBeVisible();
+    await page.getByRole("link", { name: "Back to Input Channels" }).click();
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(/\/inputs(?:\?|$)/);
+
+    await page.goto("/replay");
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("#replayLaunch")).toBeVisible();
+    await page.locator("#replayLaunch").click();
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(/\/incident\?[^#]*nexus_incident_id=INC001[^#]*return_to=/);
+    await expect(page.getByRole("link", { name: "Back to Replay" })).toBeVisible();
+  });
+
+  test("raw log submission opens the created incident with populated agent context", async ({ page }) => {
+    await page.goto("/inputs");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByRole("button", { name: "Load example logs" }).click();
+    await page.getByRole("button", { name: "Submit raw logs" }).click();
+
+    await expect(page).toHaveURL(/\/incident\?[^#]*nexus_incident_id=nxs_[a-z0-9]+/i, { timeout: 10000 });
+    await expect(page.locator("#incidentTitle")).toContainText("INC-");
+    await expect(page.locator("#sentinelReasoning")).not.toHaveText("Waiting for incident context.");
+    await expect(page.locator("#threadSentinelCopy")).not.toHaveText("Waiting for incident context.");
+    await expect(page.locator("#guardianReasoning")).toContainText(/Guardian review is pending|recorded|safe/i);
+  });
+});

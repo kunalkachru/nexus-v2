@@ -16,7 +16,7 @@
             }
         })();
     </script>
-    <title>NEXUS v2 | Incident Console</title>
+    <title>NEXUS v2 | Incident Detail</title>
     <link rel="stylesheet" href="static/dashboard.css">
 </head>
 <body>
@@ -24,80 +24,87 @@
         <header class="app-shell">
             <div>
                 <div class="brand">NEXUS v2</div>
-                <div class="brand-copy">Operational console</div>
+                <div class="brand-copy">Autonomous incident workspace</div>
             </div>
             <nav class="app-nav" aria-label="Primary">
-                <a class="nav-link" href="queue">Queue</a>
-                <a class="nav-link active" href="incident?nexus_incident_id=INC001" aria-current="page">Incident</a>
-                <a class="nav-link" href="inputs">Input Channels</a>
-                <a class="nav-link" href="history">History</a>
-                <a class="nav-link" href="replay">Replay</a>
-                <a class="nav-link" href="training">Training</a>
-                <a class="nav-link" href="settings">Settings</a>
+                <a class="nav-link" href="queue">Command Center</a>
+                <a class="nav-link active" href="incident?nexus_incident_id=INC001" aria-current="page">Incident Detail</a>
+                <a class="nav-link" href="training">Learning &amp; Controls</a>
             </nav>
         </header>
 
         <div class="top-actions">
-            <a class="nav-link" href="queue">Back to queue</a>
+            <a class="nav-link" href="queue" data-context-back-link data-fallback-href="queue" data-fallback-label="Back to command center">Back to command center</a>
+            <a class="nav-link channel-ghost" href="inputs" data-preserve-return>Inspect intake</a>
         </div>
 
         <section class="hero">
             <div class="hero-panel">
-                <div class="eyebrow">Incident Console</div>
-                <h1 id="incidentTitle">Incident console</h1>
-                <p class="hero-copy" id="incidentSubtitle">
-                    Open one incident, see the recommended fix, and make the Guardian decision without wading through extra tables.
-                </p>
-                <div class="journey-path" aria-label="Product flow">
-                    <span class="journey-path-item">Queue</span>
-                    <span class="journey-path-item">Inputs</span>
-                    <span class="journey-path-item active"><strong>Incident</strong></span>
-                    <span class="journey-path-item">History</span>
-                    <span class="journey-path-item">Replay</span>
-                    <span class="journey-path-item">Training</span>
-                    <span class="journey-path-item">Settings</span>
+                <div class="eyebrow">Incident Detail</div>
+                <h1 id="incidentTitle">Incident detail</h1>
+                <p class="hero-copy" id="incidentSubtitle">Watch the autonomous crew coordinate on one live incident, then open the technical evidence only if you need it.</p>
+                <div class="hero-stats hero-stats-tight">
+                    <div class="stat"><div class="stat-label">Current incident</div><div class="stat-value" id="incidentHeroId">-</div></div>
+                    <div class="stat"><div class="stat-label">Severity</div><div class="stat-value" id="incidentHeroSeverity">-</div></div>
+                    <div class="stat"><div class="stat-label">Guardian</div><div class="stat-value" id="incidentHeroGuardian">-</div></div>
+                    <div class="stat"><div class="stat-label">Execution</div><div class="stat-value" id="incidentHeroExecution">-</div></div>
                 </div>
-                <div class="hero-stats">
-                    <div class="stat">
-                        <div class="stat-label">Current incident</div>
-                        <div class="stat-value" id="incidentHeroId">-</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Severity</div>
-                        <div class="stat-value" id="incidentHeroSeverity">-</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Guardian</div>
-                        <div class="stat-value" id="incidentHeroGuardian">-</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Execution</div>
-                        <div class="stat-value" id="incidentHeroExecution">-</div>
-                    </div>
+                <div class="detail-card compact-note working-memory-shell">
+                    <div class="badge">Working memory</div>
+                    <p class="hero-copy" id="incidentOverviewNote">Waiting for incident selection.</p>
+                    <p class="section-note" id="liveReasoningDetail">Live reasoning mode will be shown here after the incident loads.</p>
                 </div>
             </div>
             <div class="hero-panel controls">
-                <div class="eyebrow">Working context</div>
-                <p class="hero-copy">This console keeps the story focused: what happened, what should be done, and whether Guardian allows it.</p>
-                <div class="flow-callout">
-                    <div class="label">What this screen explains</div>
-                    <div class="value">Raw input becomes evidence, evidence becomes a fix, and Guardian decides whether the fix can move forward.</div>
+                <div class="eyebrow">Autonomous crew</div>
+                <p class="hero-copy">Each bot has a role, a current task, and a visible handoff. The page should read like a live coordination room, not a report.</p>
+                <div class="shell-actions">
+                    <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
+                    <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
                 </div>
-                <div class="detail-card compact-note">
-                    <div class="badge" id="incidentOverviewNote">Waiting for incident selection.</div>
-                    <p class="hero-copy">A concise incident summary appears first, and the deeper evidence stays available below when needed.</p>
-                    <p class="section-note" id="liveReasoningDetail">Live reasoning mode will be shown here after the incident loads.</p>
+                <div class="detail-card compact-note byo-key-card">
+                    <div class="badge">Bring your own OpenAI key</div>
+                    <p class="hero-copy">Default mode stays deterministic. Add your own key only when you want live FORGE reasoning for this session.</p>
+                    <label class="section-note" for="openaiApiKeyInput">OpenAI API key</label>
+                    <input class="key-input" id="openaiApiKeyInput" type="password" autocomplete="off" placeholder="sk-..." spellcheck="false">
                     <div class="shell-actions">
-                        <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
-                        <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
+                        <button class="nav-link channel-cta" id="saveOpenAIKeyBtn" type="button">Use this key</button>
+                        <button class="nav-link channel-ghost" id="clearOpenAIKeyBtn" type="button">Clear key</button>
                     </div>
+                    <p class="section-note" id="openaiKeyStatus">No user key attached. The app is in deterministic demo mode.</p>
+                </div>
+                <div class="crew-bot-stack">
+                    <article class="crew-bot crew-active" data-tone="sentinel">
+                        <div class="crew-bot-top"><span class="crew-bot-name">SENTINEL</span><span class="crew-bot-state" id="sentinelFlowMeta">Awaiting data</span></div>
+                        <p class="crew-bot-role">Classification bot</p>
+                        <p class="crew-bot-task" id="sentinelReasoning">Waiting for incident context.</p>
+                        <p class="crew-bot-handoff" id="sentinelFlowTransfer">Raw input becomes an evidence bundle.</p>
+                    </article>
+                    <article class="crew-bot" data-tone="prism">
+                        <div class="crew-bot-top"><span class="crew-bot-name">PRISM</span><span class="crew-bot-state" id="prismFlowMeta">Awaiting data</span></div>
+                        <p class="crew-bot-role">Diagnosis bot</p>
+                        <p class="crew-bot-task" id="prismReasoning">Waiting for correlated evidence.</p>
+                        <p class="crew-bot-handoff" id="prismFlowTransfer">Evidence becomes a diagnosis packet.</p>
+                    </article>
+                    <article class="crew-bot" data-tone="forge">
+                        <div class="crew-bot-top"><span class="crew-bot-name">FORGE</span><span class="crew-bot-state" id="forgeFlowMeta">Awaiting data</span></div>
+                        <p class="crew-bot-role">Remediation bot</p>
+                        <p class="crew-bot-task" id="forgeReasoning">Waiting to shape the safest runbook.</p>
+                        <p class="crew-bot-handoff" id="forgeFlowTransfer">Diagnosis becomes a runbook proposal.</p>
+                    </article>
+                    <article class="crew-bot" data-tone="guardian">
+                        <div class="crew-bot-top"><span class="crew-bot-name">GUARDIAN</span><span class="crew-bot-state" id="guardianFlowMeta">Awaiting data</span></div>
+                        <p class="crew-bot-role">Governance Bot</p>
+                        <p class="crew-bot-task" id="guardianReasoning">Waiting to approve or block execution.</p>
+                        <p class="crew-bot-handoff" id="guardianFlowTransfer">Runbook proposal becomes a governance decision.</p>
+                    </article>
                 </div>
                 <div class="detail-card compact-note guardian-gate-card">
-                    <div class="badge">Guardian gate</div>
-                    <p class="hero-copy">Approve, block, or request a revision. Guardian is the explicit human gate before execution starts.</p>
+                    <div class="badge">Governance Bot</div>
+                    <p class="hero-copy">Guardian is the explicit safety gate. Execution stays subordinate to bot collaboration until this check is clear.</p>
                     <div class="shell-actions guardian-gate-actions">
-                        <button class="nav-link channel-cta" id="guardianApproveBtn" type="button">Approve and execute</button>
-                        <button class="nav-link channel-cta" id="guardianBlockBtn" type="button">Block execution</button>
+                        <button class="nav-link channel-cta" id="guardianApproveBtn" type="button">Approve runbook</button>
+                        <button class="nav-link channel-cta" id="guardianBlockBtn" type="button">Block runbook</button>
                         <button class="nav-link channel-cta" id="guardianModifyBtn" type="button">Request modification</button>
                     </div>
                     <p class="section-note" id="guardianGateState">Decision pending.</p>
@@ -105,56 +112,70 @@
             </div>
         </section>
 
-        <div class="layout incident-layout">
-            <div>
         <section class="section">
             <div class="section-header">
-                <h2>Incident Overview</h2>
-                <div class="section-note">A compact executive summary of the incident, the proposed fix, and the current decision state.</div>
+                <h2>Agent Handoff Thread</h2>
+                <div class="section-note">The incident moves through four autonomous workers. One active handoff stays emphasized at a time.</div>
             </div>
             <div class="incident-summary" id="incidentSummary"></div>
-            <div class="detail-card" id="incidentNarrative">
-                <div class="badge">Awaiting selection</div>
-                <p class="hero-copy">This panel will summarize the impact, affected services, and selected remediation once an incident loads.</p>
-            </div>
-            <div class="service-pills" id="servicePills"></div>
-        </section>
-
-        <section class="section">
-            <div class="section-header">
-                <h2>Raw Intake</h2>
-                <div class="section-note">The original input stays visible, but the supporting details are tucked away until you need them.</div>
-            </div>
-            <div class="detail-grid">
-                <div class="detail-card">
-                    <div class="badge">Raw incident text</div>
-                    <pre class="input-code" id="rawInputText">No raw incident text captured yet.</pre>
-                </div>
-                <div class="detail-card">
-                    <div class="badge">Normalized evidence</div>
-                    <div class="hero-stats raw-intake-grid">
-                        <div class="stat"><div class="stat-label">Detected service</div><div class="stat-value" id="rawDetectedService">-</div></div>
-                        <div class="stat"><div class="stat-label">Severity hint</div><div class="stat-value" id="rawDetectedSeverity">-</div></div>
-                        <div class="stat"><div class="stat-label">Error signature</div><div class="stat-value" id="rawDetectedSignature">-</div></div>
-                        <div class="stat"><div class="stat-label">Next action</div><div class="stat-value" id="rawDetectedAction">-</div></div>
-                    </div>
-                    <ul class="simple-list" id="normalizedEvidenceList"></ul>
-                </div>
+            <div class="handoff-thread" id="handoffThread">
+                <article class="handoff-entry handoff-entry-active" id="handoffSentinel">
+                    <div class="handoff-entry-top"><span class="badge">SENTINEL</span><span class="section-note">Classification bot</span></div>
+                    <h3>SENTINEL handed evidence to PRISM</h3>
+                    <p class="hero-copy" id="threadSentinelCopy">Waiting for incident context.</p>
+                </article>
+                <article class="handoff-entry" id="handoffPrism">
+                    <div class="handoff-entry-top"><span class="badge">PRISM</span><span class="section-note">Diagnosis bot</span></div>
+                    <h3>PRISM is building the root-cause story</h3>
+                    <p class="hero-copy" id="threadPrismCopy">Waiting for correlated evidence.</p>
+                </article>
+                <article class="handoff-entry" id="handoffForge">
+                    <div class="handoff-entry-top"><span class="badge">FORGE</span><span class="section-note">Remediation bot</span></div>
+                    <h3>FORGE is shaping the safest runbook</h3>
+                    <p class="hero-copy" id="threadForgeCopy">Waiting to produce a rollback-ready proposal.</p>
+                </article>
+                <article class="handoff-entry" id="handoffGuardian">
+                    <div class="handoff-entry-top"><span class="badge">GUARDIAN</span><span class="section-note">Governance Bot</span></div>
+                    <h3>GUARDIAN is holding the execution gate</h3>
+                    <p class="hero-copy" id="threadGuardianCopy">Waiting for the runbook to clear safety review.</p>
+                </article>
             </div>
         </section>
 
         <details class="section section-collapsible">
             <summary class="section-summary">
                 <div>
-                    <h2>Operational Details</h2>
-                    <div class="section-note">Signals, timeline, audit history, and the agent flow remain available but stay out of the way by default.</div>
+                    <h2>Expand technical detail</h2>
+                    <div class="section-note">Raw input, system evidence, audit ledger, and workflow internals stay available behind a single disclosure.</div>
                 </div>
             </summary>
             <div class="details-body">
                 <section class="section-inner">
                     <div class="section-header compact">
-                        <h2>Signals</h2>
-                        <div class="section-note">Metrics, recent logs, alert timeline, and deployment context.</div>
+                        <h2>Source payload</h2>
+                        <div class="section-note">Original incident text and the normalized evidence bundle that launched the crew.</div>
+                    </div>
+                    <div class="detail-grid">
+                        <div class="detail-card">
+                            <div class="badge">Raw incident text</div>
+                            <pre class="input-code" id="rawInputText">No raw incident text captured yet.</pre>
+                        </div>
+                        <div class="detail-card">
+                            <div class="badge">Normalized evidence</div>
+                            <div class="hero-stats raw-intake-grid">
+                                <div class="stat"><div class="stat-label">Detected service</div><div class="stat-value" id="rawDetectedService">-</div></div>
+                                <div class="stat"><div class="stat-label">Severity hint</div><div class="stat-value" id="rawDetectedSeverity">-</div></div>
+                                <div class="stat"><div class="stat-label">Error signature</div><div class="stat-value" id="rawDetectedSignature">-</div></div>
+                                <div class="stat"><div class="stat-label">Next action</div><div class="stat-value" id="rawDetectedAction">-</div></div>
+                            </div>
+                            <ul class="simple-list" id="normalizedEvidenceList"></ul>
+                        </div>
+                    </div>
+                </section>
+                <section class="section-inner">
+                    <div class="section-header compact">
+                        <h2>System evidence</h2>
+                        <div class="section-note">Metrics, recent logs, releases, historical matches, and provenance stay one click away.</div>
                     </div>
                     <div class="metrics-grid" id="metricsGrid"></div>
                     <div class="detail-grid">
@@ -186,40 +207,28 @@
                 </section>
                 <section class="section-inner">
                     <div class="section-header compact">
-                        <h2>Workflow Timeline</h2>
-                        <div class="section-note">The incident moves from intake through outcome in one visible path.</div>
+                        <h2>Workflow internals</h2>
+                        <div class="section-note">Detailed system path remains available without taking over the main workspace.</div>
                     </div>
                     <div class="detail-card compact-note workflow-summary">
                         <div class="badge" id="workflowSummary">Waiting for workflow</div>
-                        <p class="hero-copy" id="workflowSummaryCopy">This timeline will show the source channel, authentication, enrichment, evidence, agents, safety, and outcome steps flowing from intake to verified outcome.</p>
+                        <p class="hero-copy" id="workflowSummaryCopy">This timeline will show the source channel, authentication, enrichment, evidence, agents, safety, and outcome steps.</p>
                     </div>
                     <div class="workflow-timeline" id="workflowTimeline"></div>
                 </section>
                 <section class="section-inner">
                     <div class="section-header compact">
-                        <h2>Live Status and Audit</h2>
-                        <div class="section-note">Queue position, stage, execution intent, and audit history are still there when you need them.</div>
+                        <h2>Audit ledger</h2>
+                        <div class="section-note">Queue position, stage, execution intent, and audit events stay preserved behind disclosure.</div>
                     </div>
                     <div class="story-grid audit-story-grid">
                         <div class="detail-card audit-summary-card">
-                            <div class="badge">Audit summary</div>
+                            <div class="badge">Audit digest</div>
                             <div class="audit-summary-grid" id="auditSummaryGrid">
-                                <div class="audit-summary-item">
-                                    <div class="audit-summary-label">Entries</div>
-                                    <div class="audit-summary-value" id="auditEntryCount">-</div>
-                                </div>
-                                <div class="audit-summary-item">
-                                    <div class="audit-summary-label">Latest event</div>
-                                    <div class="audit-summary-value" id="auditLatestEvent">-</div>
-                                </div>
-                                <div class="audit-summary-item">
-                                    <div class="audit-summary-label">Latest actor</div>
-                                    <div class="audit-summary-value" id="auditLatestActor">-</div>
-                                </div>
-                                <div class="audit-summary-item">
-                                    <div class="audit-summary-label">Latest state</div>
-                                    <div class="audit-summary-value" id="auditLatestState">-</div>
-                                </div>
+                                <div class="audit-summary-item"><div class="audit-summary-label">Entries</div><div class="audit-summary-value" id="auditEntryCount">-</div></div>
+                                <div class="audit-summary-item"><div class="audit-summary-label">Latest event</div><div class="audit-summary-value" id="auditLatestEvent">-</div></div>
+                                <div class="audit-summary-item"><div class="audit-summary-label">Latest actor</div><div class="audit-summary-value" id="auditLatestActor">-</div></div>
+                                <div class="audit-summary-item"><div class="audit-summary-label">Latest state</div><div class="audit-summary-value" id="auditLatestState">-</div></div>
                             </div>
                             <div class="audit-chip-row" id="auditSummaryChips"></div>
                             <div class="audit-preview" id="auditSummaryPreview"></div>
@@ -236,152 +245,15 @@
                             <div class="badge">Audit trail</div>
                             <div class="audit-feed" id="incidentAuditLogs"></div>
                             <div class="badge">Execute path</div>
-                            <p class="hero-copy">The execution path now sits behind an explicit Guardian approval or block choice so the control gate is easy to explain.</p>
+                            <p class="hero-copy">Execution remains behind an explicit Guardian approval or block choice.</p>
                             <div class="result-banner" id="executionResult">Awaiting a Guardian decision.</div>
                         </div>
                     </div>
                 </section>
-                <section class="section-inner">
-                    <div class="section-header compact">
-                        <h2>Agent Data Flow</h2>
-                        <div class="section-note">Watch the same incident context move through SENTINEL, PRISM, FORGE, and GUARDIAN in order.</div>
-                    </div>
-                    <div class="agent-flow" id="agentFlow">
-                        <article class="flow-node" id="sentinelFlowNode" data-tone="sentinel">
-                            <div class="flow-node-top">
-                                <div class="flow-step-num">01</div>
-                                <div class="flow-node-title">SENTINEL</div>
-                            </div>
-                            <div class="flow-node-copy">Classifies severity, confidence, and evidence coverage.</div>
-                            <div class="flow-node-transfer" id="sentinelFlowTransfer">Raw input → evidence bundle</div>
-                            <div class="flow-node-meta" id="sentinelFlowMeta">Awaiting data</div>
-                        </article>
-                        <div class="flow-link"></div>
-                        <article class="flow-node" id="prismFlowNode" data-tone="prism">
-                            <div class="flow-node-top">
-                                <div class="flow-step-num">02</div>
-                                <div class="flow-node-title">PRISM</div>
-                            </div>
-                            <div class="flow-node-copy">Correlates signals into a root-cause narrative.</div>
-                            <div class="flow-node-transfer" id="prismFlowTransfer">Evidence bundle → diagnosis packet</div>
-                            <div class="flow-node-meta" id="prismFlowMeta">Awaiting data</div>
-                        </article>
-                        <div class="flow-link"></div>
-                        <article class="flow-node" id="forgeFlowNode" data-tone="forge">
-                            <div class="flow-node-top">
-                                <div class="flow-step-num">03</div>
-                                <div class="flow-node-title">FORGE</div>
-                            </div>
-                            <div class="flow-node-copy">Chooses the safest rollback-ready remediation path.</div>
-                            <div class="flow-node-copy">Proposed fix stays visible before the safety gate opens.</div>
-                            <div class="flow-node-transfer" id="forgeFlowTransfer">Diagnosis packet → runbook proposal</div>
-                            <div class="flow-node-meta" id="forgeFlowMeta">Awaiting data</div>
-                        </article>
-                        <div class="flow-link"></div>
-                        <article class="flow-node" id="guardianFlowNode" data-tone="guardian">
-                            <div class="flow-node-top">
-                                <div class="flow-step-num">04</div>
-                                <div class="flow-node-title">GUARDIAN</div>
-                            </div>
-                            <div class="flow-node-copy">Approves or blocks the execution path.</div>
-                            <div class="flow-node-transfer" id="guardianFlowTransfer">Runbook proposal → safety decision</div>
-                            <div class="flow-node-meta" id="guardianFlowMeta">Awaiting data</div>
-                        </article>
-                    </div>
-                </section>
             </div>
         </details>
-            </div>
 
-            <div>
-                <section class="section">
-                    <div class="section-header">
-                        <h2>Agent Console</h2>
-                        <div class="section-note">Classification, diagnosis, remediation, and safety review.</div>
-                    </div>
-                    <div class="agent-rail">
-                        <div class="agent-rail-note">
-                            <div class="badge">Live simulation</div>
-                            <p class="hero-copy">The cards pulse while the workflow is in motion so the console reads like a live operating system, not a static summary.</p>
-                        </div>
-                    </div>
-                    <div class="agent-grid">
-                        <div class="agent-card" id="sentinelCard">
-                            <div class="agent-title-row">
-                                <div class="agent-title">SENTINEL</div>
-                                <div class="confidence" id="sentinelConfidence">0%</div>
-                            </div>
-                            <div class="progress"><div class="progress-fill" id="sentinelProgress"></div></div>
-                            <p class="agent-copy" id="sentinelReasoning">Waiting for incident context.</p>
-                            <details class="agent-details">
-                                <summary>Evidence details</summary>
-                                <div class="agent-details-body">
-                                    <div class="subsection-label">Confidence breakdown</div>
-                                    <div class="breakdown" id="sentinelBreakdown"></div>
-                                    <div class="subsection-label">Evidence</div>
-                                    <ul class="simple-list" id="sentinelEvidence"></ul>
-                                </div>
-                            </details>
-                        </div>
-
-                        <div class="agent-card" id="prismCard">
-                            <div class="agent-title-row">
-                                <div class="agent-title">PRISM</div>
-                                <div class="confidence" id="prismConfidence">0%</div>
-                            </div>
-                            <div class="progress"><div class="progress-fill" id="prismProgress"></div></div>
-                            <p class="agent-copy" id="prismReasoning">Waiting for diagnosis.</p>
-                            <details class="agent-details">
-                                <summary>Correlation analysis</summary>
-                                <div class="agent-details-body">
-                                    <div class="subsection-label">Correlation analysis</div>
-                                    <p class="agent-copy" id="prismCorrelation">No analysis yet.</p>
-                                    <div class="subsection-label">Log snippets</div>
-                                    <ul class="simple-list" id="prismLogs"></ul>
-                                </div>
-                            </details>
-                        </div>
-
-                        <div class="agent-card" id="forgeCard">
-                            <div class="agent-title-row">
-                                <div class="agent-title">FORGE</div>
-                                <div class="confidence" id="forgeConfidence">0%</div>
-                            </div>
-                            <div class="progress"><div class="progress-fill" id="forgeProgress"></div></div>
-                            <p class="agent-copy" id="forgeReasoning">Waiting for diagnosis.</p>
-                            <details class="agent-details">
-                                <summary>Runbook selection</summary>
-                                <div class="agent-details-body">
-                                    <div class="subsection-label">Runbook logic</div>
-                                    <p class="agent-copy" id="forgeLogic">No runbook selected.</p>
-                                    <div class="subsection-label">Candidate fixes</div>
-                                    <ul class="simple-list" id="forgeFixes"></ul>
-                                </div>
-                            </details>
-                        </div>
-
-                        <div class="agent-card" id="guardianCard">
-                            <div class="agent-title-row">
-                                <div class="agent-title">GUARDIAN</div>
-                                <div class="confidence" id="guardianConfidence">0%</div>
-                            </div>
-                            <div class="progress"><div class="progress-fill" id="guardianProgress"></div></div>
-                            <p class="agent-copy" id="guardianReasoning">Waiting for runbook.</p>
-                            <details class="agent-details">
-                                <summary>Safety review</summary>
-                                <div class="agent-details-body">
-                                    <div class="subsection-label">Safety checks</div>
-                                    <ul class="simple-list" id="guardianChecks"></ul>
-                                    <div class="subsection-label">Policy violations</div>
-                                    <ul class="simple-list" id="guardianViolations"></ul>
-                                </div>
-                            </details>
-                        </div>
-                    </div>
-                    <div class="result-banner" id="resultBanner">Choose an incident to see the full incident console.</div>
-                </section>
-            </div>
-        </div>
+        <div class="result-banner" id="resultBanner">Waiting for a Guardian-reviewed outcome.</div>
     </div>
     <script type="module" src="static/app-shell.js"></script>
     <script type="module" src="static/incident.js"></script>

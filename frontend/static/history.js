@@ -95,7 +95,7 @@ function renderArchiveRows(items) {
           <td>${item.title}</td>
           <td>${item.severity}</td>
           <td>${item.outcome.charAt(0).toUpperCase() + item.outcome.slice(1)}</td>
-          <td><a class="inline-link" href="incident?nexus_incident_id=${encodeURIComponent(item.incident_id)}">Open</a></td>
+          <td><a class="inline-link" href="${window.NexusNavigation?.withReturnTo(`incident?nexus_incident_id=${encodeURIComponent(item.incident_id)}`) || `incident?nexus_incident_id=${encodeURIComponent(item.incident_id)}`}">Open</a></td>
         </tr>
       `
     )

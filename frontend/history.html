@@ -27,30 +27,22 @@
                 <div class="brand-copy">Incident archive</div>
             </div>
             <nav class="app-nav" aria-label="Primary">
-                <a class="nav-link" href="queue">Queue</a>
-                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident</a>
-                <a class="nav-link" href="inputs">Input Channels</a>
-                <a class="nav-link active" href="history" aria-current="page">History</a>
-                <a class="nav-link" href="replay">Replay</a>
-                <a class="nav-link" href="training">Training</a>
-                <a class="nav-link" href="settings">Settings</a>
+                <a class="nav-link active" href="queue" aria-current="page">Command Center</a>
+                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident Detail</a>
+                <a class="nav-link" href="training">Learning &amp; Controls</a>
             </nav>
         </header>
+
+        <div class="top-actions">
+            <a class="nav-link" href="queue" data-context-back-link data-fallback-href="queue" data-fallback-label="Back to command center">Back to command center</a>
+            <a class="nav-link channel-ghost" href="replay" data-preserve-return>Open replay set</a>
+        </div>
 
         <section class="hero">
             <div class="hero-panel">
                 <div class="eyebrow">History</div>
                 <h1>Incident archive.</h1>
                 <p class="hero-copy">Review what happened, who owned it, and how the console resolved it. This archive separates historical cases from live queue operations and training telemetry.</p>
-                <div class="journey-path" aria-label="Product flow">
-                    <span class="journey-path-item">Queue</span>
-                    <span class="journey-path-item">Inputs</span>
-                    <span class="journey-path-item">Incident</span>
-                    <span class="journey-path-item active"><strong>History</strong></span>
-                    <span class="journey-path-item">Replay</span>
-                    <span class="journey-path-item">Training</span>
-                    <span class="journey-path-item">Settings</span>
-                </div>
                 <div class="hero-stats">
                     <div class="stat"><div class="stat-label">Resolved</div><div class="stat-value" id="historyResolved">18</div></div>
                     <div class="stat"><div class="stat-label">Blocked</div><div class="stat-value" id="historyBlocked">2</div></div>

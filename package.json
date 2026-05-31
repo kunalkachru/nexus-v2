@@ -1,0 +1,12 @@
+{
+  "name": "nexus-v3",
+  "private": true,
+  "scripts": {
+    "browser:verify": "playwright test tests/e2e/browser-verification.spec.js --project=chromium --reporter=line",
+    "browser:verify:headed": "playwright test tests/e2e/browser-verification.spec.js --project=chromium --headed --reporter=line",
+    "browser:record": "playwright test tests/e2e/browser-verification.spec.js --project=chromium --headed --reporter=line"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
+  }
+}

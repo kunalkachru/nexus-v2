@@ -96,6 +96,12 @@ function slugify(value) {
     .replace(/^-+|-+$/g, "");
 }
 
+function incidentHref(incidentId, liveReasoning) {
+  const reasoningParam = liveReasoning ? `&live_reasoning=${liveReasoning}` : "";
+  const target = `incident?nexus_incident_id=${encodeURIComponent(incidentId)}${reasoningParam}`;
+  return window.NexusNavigation?.withReturnTo(target) || target;
+}
+
 function updateField(id, value) {
   const element = document.getElementById(id);
   if (element) {
@@ -183,7 +189,7 @@ function setActiveChannel(card, cards) {
 
   const launch = document.getElementById("channelLaunch");
   if (launch) {
-    launch.href = `incident?nexus_incident_id=${encodeURIComponent(channel.incidentId)}`;
+    launch.href = incidentHref(channel.incidentId);
     launch.textContent = channel.launchLabel;
     launch.dataset.incidentId = channel.incidentId;
   }
@@ -262,8 +268,27 @@ function syncChannelLaunchLiveReasoning() {
   if (!launch?.dataset.incidentId) {
     return;
   }
-  const liveReasoning = getLiveReasoningPreference() ? "&live_reasoning=1" : "&live_reasoning=0";
-  launch.href = `incident?nexus_incident_id=${encodeURIComponent(launch.dataset.incidentId)}${liveReasoning}`;
+  const liveReasoning = getLiveReasoningPreference() ? "1" : "0";
+  launch.href = incidentHref(launch.dataset.incidentId, liveReasoning);
+}
+
+function setSubmissionPending(pending) {
+  const submit = document.getElementById("channelSubmit");
+  const launch = document.getElementById("channelLaunch");
+  const loadExample = document.getElementById("loadRawExample");
+  if (submit) {
+    submit.disabled = pending;
+    submit.dataset.pending = pending ? "1" : "0";
+  }
+  if (launch) {
+    launch.classList.toggle("is-disabled", pending);
+    launch.setAttribute("aria-disabled", pending ? "true" : "false");
+    launch.style.pointerEvents = pending ? "none" : "";
+    launch.style.opacity = pending ? "0.55" : "";
+  }
+  if (loadExample) {
+    loadExample.disabled = pending;
+  }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -335,6 +360,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (result) {
       result.textContent = "Submitting intake to the backend contract...";
     }
+    setSubmissionPending(true);
 
     try {
       const service = document.getElementById("serviceName")?.value || channel.service;
@@ -398,18 +424,26 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
       if (result) {
-        result.textContent = `Created ${response.nexus_incident_id} with status ${response.status}.`;
+        result.textContent = `Created ${response.nexus_incident_id} with status ${response.status}. Opening the incident console...`;
       }
-    if (launch) {
-      const liveReasoning = getLiveReasoningPreference() ? "&live_reasoning=1" : "&live_reasoning=0";
-      launch.href = `incident?nexus_incident_id=${encodeURIComponent(response.nexus_incident_id)}${liveReasoning}`;
-      launch.dataset.incidentId = response.nexus_incident_id;
-      launch.textContent = `Open ${response.nexus_incident_id} incident console`;
-    }
+      if (launch) {
+        const liveReasoning = getLiveReasoningPreference() ? "1" : "0";
+        launch.href = incidentHref(response.nexus_incident_id, liveReasoning);
+        launch.dataset.incidentId = response.nexus_incident_id;
+        launch.textContent = `Open ${response.nexus_incident_id} incident console`;
+      }
+      syncChannelLaunchLiveReasoning();
+      const targetHref = launch?.href;
+      if (targetHref) {
+        window.location.assign(targetHref);
+        return;
+      }
     } catch (error) {
       if (result) {
         result.textContent = `Submission failed: ${error.message}`;
       }
+    } finally {
+      setSubmissionPending(false);
     }
   });
 });

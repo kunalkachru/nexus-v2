@@ -27,30 +27,22 @@
                 <div class="brand-copy">Deployment controls</div>
             </div>
             <nav class="app-nav" aria-label="Primary">
-                <a class="nav-link" href="queue">Queue</a>
-                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident</a>
-                <a class="nav-link" href="inputs">Input Channels</a>
-                <a class="nav-link" href="history">History</a>
-                <a class="nav-link" href="replay">Replay</a>
-                <a class="nav-link" href="training">Training</a>
-                <a class="nav-link active" href="settings" aria-current="page">Settings</a>
+                <a class="nav-link" href="queue">Command Center</a>
+                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident Detail</a>
+                <a class="nav-link active" href="training" aria-current="page">Learning &amp; Controls</a>
             </nav>
         </header>
+
+        <div class="top-actions">
+            <a class="nav-link" href="training" data-context-back-link data-fallback-href="training" data-fallback-label="Back to learning & controls">Back to learning & controls</a>
+            <a class="nav-link channel-ghost" href="replay" data-preserve-return>Open replay set</a>
+        </div>
 
         <section class="hero">
             <div class="hero-panel">
                 <div class="eyebrow">Settings</div>
                 <h1>Operational controls.</h1>
                 <p class="hero-copy">Operational settings live here. This screen shows the enterprise posture behind the workflow and the controls behind deployment.</p>
-                <div class="journey-path" aria-label="Product flow">
-                    <span class="journey-path-item">Queue</span>
-                    <span class="journey-path-item">Inputs</span>
-                    <span class="journey-path-item">Incident</span>
-                    <span class="journey-path-item">History</span>
-                    <span class="journey-path-item">Replay</span>
-                    <span class="journey-path-item">Training</span>
-                    <span class="journey-path-item active"><strong>Settings</strong></span>
-                </div>
                 <div class="hero-stats" id="platformSummary">
                     <div class="stat"><div class="stat-label">Mode</div><div class="stat-value" id="platformMode">Product</div></div>
                     <div class="stat"><div class="stat-label">Auth</div><div class="stat-value" id="platformAuth">Enabled</div></div>

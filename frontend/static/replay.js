@@ -262,6 +262,14 @@ function renderBlock(lines) {
   return lines.join("\n");
 }
 
+function scenarioIncidentId(scenario) {
+  return scenario?.incidentId || scenario?.incident_id || "INC001";
+}
+
+function scenarioLaunchLabel(scenario) {
+  return scenario?.launchLabel || scenario?.launch_label || `Open ${scenarioIncidentId(scenario)} console`;
+}
+
 function setActiveScenario(card, cards) {
   const scenario = BACKEND_SCENARIOS[card.dataset.scenarioId] || SCENARIOS[card.dataset.scenarioId];
   if (!scenario) {
@@ -282,8 +290,9 @@ function setActiveScenario(card, cards) {
   document.getElementById("replayOutcome").textContent = renderBlock(scenario.outcome);
 
   const launch = document.getElementById("replayLaunch");
-  launch.href = `incident?nexus_incident_id=${encodeURIComponent(scenario.incidentId)}`;
-  launch.textContent = scenario.launchLabel;
+  const incidentUrl = `incident?nexus_incident_id=${encodeURIComponent(scenarioIncidentId(scenario))}`;
+  launch.href = window.NexusNavigation?.withReturnTo(incidentUrl) || incidentUrl;
+  launch.textContent = scenarioLaunchLabel(scenario);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -311,7 +320,8 @@ window.addEventListener("DOMContentLoaded", () => {
         const response = await postAuthedJson(`/api/v1/replay/scenarios/${encodeURIComponent(ACTIVE_SCENARIO_ID)}/launch`, {});
         const launch = document.getElementById("replayLaunch");
         if (launch) {
-          launch.href = `incident?nexus_incident_id=${encodeURIComponent(response.nexus_incident_id)}`;
+          const incidentUrl = `incident?nexus_incident_id=${encodeURIComponent(response.nexus_incident_id)}`;
+          launch.href = window.NexusNavigation?.withReturnTo(incidentUrl) || incidentUrl;
           launch.textContent = `Open ${response.nexus_incident_id} console`;
         }
         if (status) {

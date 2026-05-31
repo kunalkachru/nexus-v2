@@ -16,7 +16,7 @@
             }
         })();
     </script>
-    <title>NEXUS v2 | Queue</title>
+    <title>NEXUS v2 | Command Center</title>
     <link rel="stylesheet" href="static/dashboard.css">
 </head>
 <body>
@@ -24,144 +24,162 @@
         <header class="app-shell">
             <div>
                 <div class="brand">NEXUS v2</div>
-                <div class="brand-copy">Incident queue</div>
+                <div class="brand-copy">Autonomous incident command center</div>
             </div>
             <nav class="app-nav" aria-label="Primary">
-                <a class="nav-link active" href="queue" aria-current="page">Queue</a>
-                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident</a>
-                <a class="nav-link" href="inputs">Input Channels</a>
-                <a class="nav-link" href="history">History</a>
-                <a class="nav-link" href="replay">Replay</a>
-                <a class="nav-link" href="training">Training</a>
-                <a class="nav-link" href="settings">Settings</a>
+                <a class="nav-link active" href="queue" aria-current="page">Command Center</a>
+                <a class="nav-link" href="incident?nexus_incident_id=INC001">Incident Detail</a>
+                <a class="nav-link" href="training">Learning &amp; Controls</a>
             </nav>
         </header>
 
         <section class="hero">
             <div class="hero-panel">
-                <div class="eyebrow">Incident Queue</div>
-                <h1>Live incident queue.</h1>
+                <div class="eyebrow">Command Center</div>
+                <h1>Autonomous agents are already working the incident.</h1>
                 <p class="hero-copy">
-                    Queue is the landing screen. It shows what is active now, who needs attention next, and which incident to open in the console.
+                    Keep one live incident in focus while the AI crew classifies, diagnoses, proposes, and governs the response together.
                 </p>
-                <div class="journey-path" aria-label="Product flow">
-                    <span class="journey-path-item active"><strong>Queue</strong></span>
-                    <span class="journey-path-item">Inputs</span>
-                    <span class="journey-path-item">Incident</span>
-                    <span class="journey-path-item">History</span>
-                    <span class="journey-path-item">Replay</span>
-                    <span class="journey-path-item">Training</span>
-                    <span class="journey-path-item">Settings</span>
+                <div class="hero-stats hero-stats-tight" id="queueSummary">
+                    <div class="stat">
+                        <div class="stat-label">Active incident</div>
+                        <div class="stat-value" id="queueOpenConsole">INC001</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Current stage</div>
+                        <div class="stat-value" id="queueCurrentStage">Evidence retrieved</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Urgency</div>
+                        <div class="stat-value" id="queueHighestSeverity">P1</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Response clock</div>
+                        <div class="stat-value" id="queueSlaTimer">11 min remaining</div>
+                    </div>
                 </div>
-                <div class="hero-stats" id="queueSummary">
-                    <div class="stat">
-                        <div class="stat-label">Open incidents</div>
-                        <div class="stat-value" id="queueOpenIncidents">5</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">SLA at risk</div>
-                        <div class="stat-value" id="queueSlaAtRisk">2</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Primary source</div>
-                        <div class="stat-value" id="queuePrimarySource">Webhook</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Last update</div>
-                        <div class="stat-value" id="queueLastUpdate">2 min ago</div>
-                    </div>
+                <div class="command-context-links">
+                    <a class="nav-link channel-cta" id="queueOpenConsoleLink" href="incident?nexus_incident_id=INC001" data-preserve-return>Open incident detail</a>
+                    <a class="nav-link channel-ghost" href="history" data-preserve-return>Open archive</a>
+                    <a class="nav-link channel-ghost" href="replay" data-preserve-return>View replay set</a>
                 </div>
             </div>
             <div class="hero-panel controls">
-                <div class="eyebrow">Queue Snapshot</div>
-                <p class="hero-copy">Each card opens a focused incident console. No agent panels, no training charts, no unrelated clutter.</p>
-                <div class="flow-callout">
-                    <div class="label">How to read this screen</div>
-                    <div class="value">Start here, then move into Inputs or Incident. The queue is the traffic controller for the rest of the product.</div>
+                <div class="eyebrow">Agent Crew</div>
+                <p class="hero-copy">Each bot shows its role, current task, and next handoff so the crew reads like autonomous workers, not static cards.</p>
+                <div class="agent-crew-strip" id="crewStrip">
+                    <article class="crew-bot crew-active" data-tone="sentinel">
+                        <div class="crew-bot-top">
+                            <span class="crew-bot-name">SENTINEL</span>
+                            <span class="crew-bot-state" id="crewSentinelState">Analyzing</span>
+                        </div>
+                        <p class="crew-bot-role">Classification bot</p>
+                        <p class="crew-bot-task" id="crewSentinelTask">Sorting raw evidence into a confident incident shape.</p>
+                        <p class="crew-bot-handoff" id="crewSentinelHandoff">Next: PRISM receives the evidence bundle.</p>
+                    </article>
+                    <article class="crew-bot" data-tone="prism">
+                        <div class="crew-bot-top">
+                            <span class="crew-bot-name">PRISM</span>
+                            <span class="crew-bot-state" id="crewPrismState">Waiting</span>
+                        </div>
+                        <p class="crew-bot-role">Diagnosis bot</p>
+                        <p class="crew-bot-task" id="crewPrismTask">Preparing to test the top failure hypothesis.</p>
+                        <p class="crew-bot-handoff" id="crewPrismHandoff">Next: FORGE receives the diagnosis packet.</p>
+                    </article>
+                    <article class="crew-bot" data-tone="forge">
+                        <div class="crew-bot-top">
+                            <span class="crew-bot-name">FORGE</span>
+                            <span class="crew-bot-state" id="crewForgeState">Waiting</span>
+                        </div>
+                        <p class="crew-bot-role">Remediation bot</p>
+                        <p class="crew-bot-task" id="crewForgeTask">Standing by to produce the safest runbook.</p>
+                        <p class="crew-bot-handoff" id="crewForgeHandoff">Next: GUARDIAN reviews the runbook.</p>
+                    </article>
+                    <article class="crew-bot" data-tone="guardian">
+                        <div class="crew-bot-top">
+                            <span class="crew-bot-name">GUARDIAN</span>
+                            <span class="crew-bot-state" id="crewGuardianState">Governance hold</span>
+                        </div>
+                        <p class="crew-bot-role">Governance bot</p>
+                        <p class="crew-bot-task" id="crewGuardianTask">Keeping execution gated until the fix is provably safe.</p>
+                        <p class="crew-bot-handoff" id="crewGuardianHandoff">Outcome: execution or block decision.</p>
+                    </article>
                 </div>
-                <div class="queue-status" id="queueStatus">
-                    <div class="badge">Live status</div>
-                    <div class="queue-activity-grid">
-                        <div class="queue-activity-card">
-                            <div class="label">Current stage</div>
-                            <div class="value" id="queueCurrentStage">Evidence retrieved</div>
-                        </div>
-                        <div class="queue-activity-card">
-                            <div class="label">Latest agent activity</div>
-                            <div class="value" id="queueLatestActivity">FORGE proposed a rollback-safe runbook</div>
-                        </div>
-                        <div class="queue-activity-card">
-                            <div class="label">SLA timer</div>
-                            <div class="value" id="queueSlaTimer">11 min remaining</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="queue-list">
-                    <a class="incident-btn" href="incident?nexus_incident_id=INC001">
-                        <div class="queue-row">
-                            <strong>INC001 · API timeout</strong>
-                            <span class="badge">P1</span>
-                        </div>
-                        <div class="queue-meta">Stage: evidence_retrieved · Source: webhook · Owner: API Platform</div>
-                    </a>
-                    <a class="incident-btn" href="incident?nexus_incident_id=INC002">
-                        <div class="queue-row">
-                            <strong>INC002 · DB pool exhaustion</strong>
-                            <span class="badge">P1</span>
-                        </div>
-                        <div class="queue-meta">Stage: sentinel_classified · Source: manual_form · Owner: Payments</div>
-                    </a>
-                    <a class="incident-btn" href="incident?nexus_incident_id=INC003">
-                        <div class="queue-row">
-                            <strong>INC003 · Memory leak</strong>
-                            <span class="badge">P2</span>
-                        </div>
-                        <div class="queue-meta">Stage: prism_diagnosed · Source: stream_anomaly · Owner: Worker Fleet</div>
-                    </a>
-                    <a class="incident-btn" href="incident?nexus_incident_id=INC004">
-                        <div class="queue-row">
-                            <strong>INC004 · Cache explosion</strong>
-                            <span class="badge">P2</span>
-                        </div>
-                        <div class="queue-meta">Stage: forge_proposed_runbook · Source: webhook · Owner: Redis Platform</div>
-                    </a>
-                    <a class="incident-btn" href="incident?nexus_incident_id=INC005">
-                        <div class="queue-row">
-                            <strong>INC005 · Queue backlog</strong>
-                            <span class="badge">P1</span>
-                        </div>
-                        <div class="queue-meta">Stage: guardian_reviewed_safety · Source: batch_import · Owner: Billing</div>
-                    </a>
+                <div class="flow-callout command-callout" id="queueStatus">
+                    <div class="label">Live collaboration</div>
+                    <div class="value" id="queueLatestActivity">FORGE proposed a rollback-safe runbook while GUARDIAN holds the final gate.</div>
                 </div>
             </div>
         </section>
 
         <section class="section">
             <div class="section-header">
-                <h2>Queue Controls</h2>
-                <div class="section-note">A focused landing page with just the information needed to choose the next incident.</div>
+                <h2>Compact queue rail</h2>
+                <div class="section-note">The crew works one focal incident while the rest of the queue stays visible but secondary.</div>
             </div>
-            <div class="kpi-grid" id="queueControls">
-                <div class="summary-card">
-                    <div class="label">Highest severity</div>
-                    <div class="value" id="queueHighestSeverity">P1</div>
-                </div>
-                <div class="summary-card">
-                    <div class="label">Most recent source</div>
-                    <div class="value" id="queueMostRecentSource">Webhook</div>
-                </div>
-                <div class="summary-card">
-                    <div class="label">Current bottleneck</div>
-                    <div class="value" id="queueCurrentBottleneck">API latency</div>
-                </div>
-                <div class="summary-card">
-                    <div class="label">Open console</div>
-                    <div class="value"><a class="inline-link" id="queueOpenConsole" href="incident?nexus_incident_id=INC001">INC001</a></div>
-                </div>
+            <div class="queue-list queue-list-compact">
+                <a class="incident-btn" href="incident?nexus_incident_id=INC001">
+                    <div class="queue-row">
+                        <strong>INC001 · API timeout</strong>
+                        <span class="badge">P1</span>
+                    </div>
+                    <div class="queue-meta">Stage: evidence_retrieved · Source: webhook · Owner: API Platform</div>
+                </a>
+                <a class="incident-btn" href="incident?nexus_incident_id=INC002">
+                    <div class="queue-row">
+                        <strong>INC002 · DB pool exhaustion</strong>
+                        <span class="badge">P1</span>
+                    </div>
+                    <div class="queue-meta">Stage: sentinel_classified · Source: manual_form · Owner: Payments</div>
+                </a>
+                <a class="incident-btn" href="incident?nexus_incident_id=INC003">
+                    <div class="queue-row">
+                        <strong>INC003 · Memory leak</strong>
+                        <span class="badge">P2</span>
+                    </div>
+                    <div class="queue-meta">Stage: prism_diagnosed · Source: stream_anomaly · Owner: Worker Fleet</div>
+                </a>
             </div>
         </section>
-        </div>
-        <script type="module" src="static/app-shell.js"></script>
-        <script type="module" src="static/queue.js"></script>
-    </body>
+
+        <details class="section section-collapsible">
+            <summary class="section-summary">
+                <div>
+                    <h2>Expand queue internals</h2>
+                    <div class="section-note">Deep queue evidence, source mix, and bottleneck metadata stay available without dominating the landing experience.</div>
+                </div>
+            </summary>
+            <div class="details-body">
+                <div class="kpi-grid" id="queueControls">
+                    <div class="summary-card">
+                        <div class="label">Open incidents</div>
+                        <div class="value" id="queueOpenIncidents">5</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="label">SLA at risk</div>
+                        <div class="value" id="queueSlaAtRisk">2</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="label">Primary source</div>
+                        <div class="value" id="queuePrimarySource">Webhook</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="label">Last update</div>
+                        <div class="value" id="queueLastUpdate">2 min ago</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="label">Most recent source</div>
+                        <div class="value" id="queueMostRecentSource">Webhook</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="label">Current bottleneck</div>
+                        <div class="value" id="queueCurrentBottleneck">API latency</div>
+                    </div>
+                </div>
+            </div>
+        </details>
+    </div>
+    <script type="module" src="static/app-shell.js"></script>
+    <script type="module" src="static/queue.js"></script>
+</body>
 </html>
