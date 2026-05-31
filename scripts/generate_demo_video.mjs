@@ -9,6 +9,20 @@ const PLAN_PATH = process.env.DEMO_SCENE_PLAN || path.join(OUTPUT_DIR, "scene_pl
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+async function focusLocator(locator, block = "center", waitMs = 900) {
+  const count = await locator.count();
+  if (!count) {
+    return 0;
+  }
+  const first = locator.first();
+  await first.waitFor({ state: "visible", timeout: 8000 }).catch(() => {});
+  await first.evaluate((node, blockArg) => {
+    node.scrollIntoView({ behavior: "instant", block: blockArg, inline: "nearest" });
+  }, block);
+  await wait(waitMs);
+  return waitMs;
+}
+
 async function pulse(locator, ms = 1800) {
   const count = await locator.count();
   if (!count) {
@@ -87,12 +101,19 @@ async function recordDemo() {
   await page.waitForLoadState("networkidle");
   consumed += 2200;
   await wait(2200);
+  consumed += await focusLocator(page.locator(".hero"), "start", 900);
   consumed += await pulse(page.locator("#incidentTitle"), 2200);
   consumed += await pulse(page.locator("#threadSentinelCopy"), 1800);
   consumed += await pulse(page.locator("#threadPrismCopy"), 1800);
   consumed += await pulse(page.locator("#threadForgeCopy"), 1800);
   consumed += await pulse(page.locator("#threadGuardianCopy"), 1800);
+  consumed += await focusLocator(page.locator(".byo-key-card"), "center", 1200);
+  consumed += await pulse(page.locator(".byo-key-card"), 2200);
+  consumed += await pulse(page.locator("#liveReasoningState"), 1600);
+  consumed += await pulse(page.locator("#liveReasoningToggle"), 1800);
+  consumed += await pulse(page.locator("#openaiApiKeyInput"), 2200);
   consumed += await pulse(page.locator("#openaiKeyStatus"), 2200);
+  consumed += await focusLocator(page.locator(".guardian-gate-card"), "center", 1000);
   consumed += await pulse(page.getByRole("button", { name: "Approve runbook" }), 1800);
   await page.getByRole("button", { name: "Approve runbook" }).click();
   consumed += 2600;
