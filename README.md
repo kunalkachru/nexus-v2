@@ -184,10 +184,16 @@ The broader production hardening target, which is still only partially complete,
 ### Local product mode
 
 ```bash
-docker compose up --build
+./scripts/docker_fresh.sh
 ```
 
-This starts one FastAPI container that serves both the static frontend pages and the backend API together.
+This stops any existing Compose service on `7860`, rebuilds the container, and starts a fresh FastAPI app that serves both the static frontend pages and the backend API together.
+
+If you just want to start without a reset, use:
+
+```bash
+docker compose up --build
+```
 
 Open:
 - `http://127.0.0.1:7860/`

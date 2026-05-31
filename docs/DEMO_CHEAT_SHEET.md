@@ -16,10 +16,12 @@ This is the one-page live demo reference. Use the full walkthrough for first-tim
 1. From the repo root, start the app:
 
 ```bash
-docker compose up --build
+./scripts/docker_fresh.sh
 ```
 
-This runs the single app container, which serves the browser UI and the API together on port `7860`.
+This stops any existing Compose service on `7860`, rebuilds the app container, and starts a fresh browser UI + API service together on port `7860`.
+
+If you do not need a reset, `docker compose up --build` is the lighter option.
 
 2. Open the app:
 
