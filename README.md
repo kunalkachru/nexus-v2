@@ -187,6 +187,8 @@ The broader production hardening target, which is still only partially complete,
 docker compose up --build
 ```
 
+This starts one FastAPI container that serves both the static frontend pages and the backend API together.
+
 Open:
 - `http://127.0.0.1:7860/`
 - `http://127.0.0.1:7860/queue`

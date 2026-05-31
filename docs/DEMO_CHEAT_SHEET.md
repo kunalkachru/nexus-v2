@@ -19,6 +19,8 @@ This is the one-page live demo reference. Use the full walkthrough for first-tim
 docker compose up --build
 ```
 
+This runs the single app container, which serves the browser UI and the API together on port `7860`.
+
 2. Open the app:
 
 - `http://127.0.0.1:7860/`

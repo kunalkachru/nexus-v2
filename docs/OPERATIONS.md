@@ -26,6 +26,7 @@ The raw-log intake path uses the same live reasoning mode when OpenAI is enabled
 ## Start Up
 
 - Local product smoke test: `docker compose up --build`
+- This launches one container that serves both the frontend pages and the backend API on port `7860`.
 - Direct runtime entrypoint: `uvicorn server.app:app --host 0.0.0.0 --port 7860`
 - Kubernetes deployment: apply `ops/kubernetes/configmap.yaml` and then `ops/kubernetes/deployment.yaml`
 
