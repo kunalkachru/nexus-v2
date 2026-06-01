@@ -48,15 +48,23 @@ function syncOpenAIKeyUI(message) {
   }
   const status = hasUserOpenAIKey()
     ? `User key attached: ${maskUserOpenAIKey()}. ${message || "Live reasoning will use this key only for the current browser session."}`
-    : (message || "No user key attached. The app is in deterministic demo mode.");
+    : `No user key attached. ${message || "The app is in deterministic demo mode."}`;
   setText("openaiKeyStatus", status);
 }
 
 function renderThread(data) {
+  const memoryHits = data.memory_hits || {};
+  const memoryCount = (memoryHits.similar_incidents || []).length + (memoryHits.unresolved_items || []).length;
   setText("threadSentinelCopy", data.classification.reasoning);
-  setText("threadPrismCopy", data.diagnosis.correlation_analysis || data.diagnosis.reasoning);
+  setText(
+    "threadPrismCopy",
+    `${data.diagnosis.correlation_analysis || data.diagnosis.reasoning}${memoryCount ? ` PRISM also grounded the diagnosis with ${memoryCount} memory hit(s).` : ""}`
+  );
   setText("threadForgeCopy", data.runbook.selection_logic || data.runbook.reasoning);
-  setText("threadGuardianCopy", data.guardian.reasoning);
+  setText(
+    "threadGuardianCopy",
+    `${data.guardian.reasoning}${data.guardian.risk_class ? ` Risk class: ${String(data.guardian.risk_class).toUpperCase()}.` : ""}`
+  );
 }
 
 function renderCrew(data) {
@@ -77,7 +85,12 @@ function renderCrew(data) {
 
   setText("guardianFlowMeta", String(data.guardian.decision || "pending").toUpperCase());
   setText("guardianReasoning", data.guardian.reasoning);
-  setText("guardianFlowTransfer", "GUARDIAN is holding the execution gate.");
+  setText(
+    "guardianFlowTransfer",
+    data.guardian.required_approval_level
+      ? `GUARDIAN requires ${data.guardian.required_approval_level} approval before execution.`
+      : "GUARDIAN is holding the execution gate."
+  );
 }
 
 function renderSummary(data) {
@@ -113,6 +126,89 @@ function renderSummary(data) {
           <div class="summary-card">
             <div class="label">${label}</div>
             <div class="value">${value}</div>
+          </div>
+        `
+      )
+      .join("");
+  }
+}
+
+function renderEnterprise(data) {
+  const orchestration = data.orchestration || {};
+  const tasks = data.task_board?.tasks || [];
+  const memoryHits = data.memory_hits || {};
+  const metrics = data.agent_metrics || {};
+  const fallbackSummary = data.fallback_summary || [];
+
+  setText(
+    "orchestrationState",
+    orchestration.active_story || `State: ${String(orchestration.state || "waiting").replace(/_/g, " ")}`
+  );
+  setText(
+    "memorySummary",
+    `Loaded ${(memoryHits.similar_incidents || []).length} similar incidents, ${(memoryHits.runbooks || []).length} runbook memories, and ${(memoryHits.unresolved_items || []).length} unresolved follow-ups.`
+  );
+  setText(
+    "fallbackSummaryNote",
+    fallbackSummary.length
+      ? "One branch used a bounded fallback, but the orchestrator kept the incident moving with partial evidence."
+      : "All branches completed without fallback for this incident."
+  );
+
+  const taskBoard = document.getElementById("taskBoard");
+  if (taskBoard) {
+    taskBoard.innerHTML = tasks
+      .map(
+        (task, index) => `
+          <article class="workflow-step ${index === tasks.length - 1 ? "final" : ""}">
+            <div class="workflow-step-index">${String(index + 1).padStart(2, "0")}</div>
+            <div class="workflow-step-body">
+              <div class="workflow-step-top">
+                <div>
+                  <div class="workflow-step-label">${task.owner} · ${task.title}</div>
+                  <div class="workflow-step-meta">${task.handoff_to ? `handoff -> ${task.handoff_to}` : "terminal stage"}</div>
+                </div>
+                <div class="badge workflow-status">${task.status}</div>
+              </div>
+              <p class="hero-copy">${task.summary}</p>
+            </div>
+          </article>
+        `
+      )
+      .join("");
+  }
+
+  renderList(
+    "memorySimilarIncidents",
+    memoryHits.similar_incidents || [],
+    (item) => `<li><strong>${item.incident_id}</strong><br>${item.summary}<br><span class="section-note">Similarity ${percent(item.similarity || 0)}</span></li>`
+  );
+  renderList(
+    "memoryRunbooks",
+    memoryHits.runbooks || [],
+    (item) => `<li><strong>${item.runbook_summary}</strong><br><span class="section-note">${item.source || "memory"} · ${percent(item.success_rate || 0)}</span></li>`
+  );
+  renderList(
+    "memoryUnresolvedItems",
+    memoryHits.unresolved_items || [],
+    (item) => `<li><strong>${item.incident_id}</strong><br>${item.title || item.summary}<br><span class="section-note">${item.status || "open"} · ${item.severity || "-"}</span></li>`
+  );
+  renderList(
+    "fallbackSummary",
+    fallbackSummary.length ? fallbackSummary : [{ stage: "none", reason: "No bounded fallback was required.", resolution: "All orchestration branches completed normally." }],
+    (item) => `<li><strong>${item.stage}</strong><br>${item.reason}<br><span class="section-note">${item.resolution}</span></li>`
+  );
+
+  const agentMetrics = document.getElementById("agentMetrics");
+  if (agentMetrics) {
+    const metricItems = Object.values(metrics);
+    agentMetrics.innerHTML = metricItems
+      .map(
+        (metric) => `
+          <div class="summary-card">
+            <div class="label">${metric.agent}</div>
+            <div class="value">${percent(metric.confidence || 0)}</div>
+            <div class="section-note">${metric.fallback_used ? "fallback used" : `${Math.round(Number(metric.duration_ms || 0))}ms`}</div>
           </div>
         `
       )
@@ -262,10 +358,14 @@ async function loadAndRenderIncident(incidentId) {
   renderSummary(data);
   renderThread(data);
   renderCrew(data);
+  renderEnterprise(data);
   renderSourcePayload(data.incident);
   renderEvidence(data);
   renderAudit(status, auditLogs, data);
-  setText("guardianGateState", data.guardian.reasoning);
+  setText(
+    "guardianGateState",
+    `${data.guardian.reasoning}${data.guardian.required_approval_level ? ` Approval level: ${data.guardian.required_approval_level}.` : ""}${data.guardian.rollback_readiness ? ` Rollback: ${data.guardian.rollback_readiness}.` : ""}`
+  );
   setText("executionResult", data.execution_result === "executed" ? "Execution completed after Guardian approval." : "Execution is waiting on a clear governance decision.");
   setText("resultBanner", `${formatIncidentHandle(data.incident.id)} · ${String(data.guardian.decision).toUpperCase()} · ${data.execution_time_ms}ms`);
   return data;

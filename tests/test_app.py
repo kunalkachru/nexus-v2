@@ -45,6 +45,8 @@ def test_dashboard_routes_are_served() -> None:
     assert "GUARDIAN" in queue.text
     assert "Incident Detail" in incident.text
     assert "Agent Handoff Thread" in incident.text
+    assert "Enterprise Task Board" in incident.text
+    assert "Memory-grounded context" in incident.text
     assert "SENTINEL handed evidence to PRISM" in incident.text
     assert "Governance Bot" in incident.text
     assert "Working memory" in incident.text
@@ -55,6 +57,7 @@ def test_dashboard_routes_are_served() -> None:
     assert "Replay validation." in replay.text
     assert "certificate expiry" in replay.text.lower()
     assert "Learning & Controls" in training.text
+    assert "Enterprise runtime summary" in training.text
     assert "Learning tab" in training.text
     assert "Governance tab" in training.text
     assert "Advanced Artifacts" in training.text
@@ -159,3 +162,7 @@ def test_run_incident_returns_realistic_incident_context() -> None:
     assert payload["runbook"]["candidate_fixes"][0]["success_rate"] >= 0.9
     assert payload["guardian"]["safety_checks"]
     assert len(payload["workflow"]) == 9
+    assert payload["orchestration"]["state"] == "completed"
+    assert payload["task_board"]["tasks"]
+    assert payload["memory_hits"]["similar_incidents"]
+    assert payload["agent_metrics"]["prism"]["handoff_to"] == "FORGE"

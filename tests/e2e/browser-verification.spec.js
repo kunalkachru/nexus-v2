@@ -47,9 +47,12 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByText("Autonomous crew")).toBeVisible();
     await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(4);
     await expect(page.getByRole("heading", { name: "Agent Handoff Thread" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Enterprise Task Board" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "SENTINEL handed evidence to PRISM" })).toBeVisible();
     await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
     await expect(page.locator(".byo-key-card .badge")).toHaveText("Bring your own OpenAI key");
+    await expect(page.getByText("Memory-grounded context")).toBeVisible();
+    await expect(page.locator("#taskBoard .workflow-step")).toHaveCount(6);
     await expect(page.locator(".section-collapsible")).not.toHaveAttribute("open", "");
     await expect(page.locator("#liveReasoningState")).toContainText("OFF");
     await expect(page.locator("#incidentHeroId")).toContainText(/INC(?:-|)\w+/);
@@ -91,6 +94,7 @@ test.describe("NEXUS browser verification", () => {
 
     await expect(page).toHaveTitle(/Learning & Controls/);
     await expect(page.getByRole("heading", { name: "Learning stays visible. Dense artifacts stay quiet." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Enterprise runtime summary" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Learning summary" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Governance summary" })).toBeVisible();
     await expect(page.locator("#rewardCurve > div")).toHaveCount(30);

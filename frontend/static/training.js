@@ -69,6 +69,10 @@ function renderGovernance(platform) {
   setText("learningContracts", platform.learning_contracts);
   setText("liveAuditEvents", platform.audit_events);
   setText("platformIntegrations", platform.integrations);
+  setText("orchestrationSuccessRate", percent(platform.orchestration_success_rate));
+  setText("fallbackRate", percent(platform.fallback_rate));
+  setText("branchCompletionRate", percent(platform.branch_completion_rate));
+  setText("guardedExecutionRate", percent(platform.guarded_execution_rate));
 }
 
 function renderAdvanced(data) {

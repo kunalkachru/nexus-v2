@@ -15,6 +15,7 @@ from server.services.observability import ObservabilityService
 from server.services.result_contracts import build_structured_result
 from server.services.surface_payloads import build_incident_response
 from server.services.priority import priority_snapshot, shift_priority_label
+from server.services.enterprise_runtime import build_training_enterprise_summary
 from training.runner import TrainingForgeClient
 
 
@@ -126,6 +127,11 @@ async def build_demo_payload(
         "policy_id": episode.guardian_output.policy_id,
         "policy_name": episode.guardian_output.policy_name,
         "policy_basis": episode.guardian_output.policy_basis,
+        "risk_class": episode.guardian_output.risk_class or ("high" if priority["rank"] <= 2 else "medium"),
+        "required_approval_level": episode.guardian_output.required_approval_level or ("incident_manager" if priority["rank"] <= 2 else "operator"),
+        "blocked_controls": episode.guardian_output.blocked_controls,
+        "rollback_readiness": episode.guardian_output.rollback_readiness or "ready",
+        "simulation_readiness": episode.guardian_output.simulation_readiness or "ready",
     }
     payload["execution_result"] = "executed" if episode.executed else episode.status
     payload["reward"] = episode.reward.composite if episode.reward else base["reward"]
@@ -158,5 +164,17 @@ async def build_demo_payload(
         user_key_provided=bool(openai_api_key),
         server_key_available=bool(server_key),
         live_reasoning_active=use_live_llm,
+    )
+    payload.update(episode.enterprise_state)
+    payload["enterprise_summary"] = build_training_enterprise_summary(
+        {
+            "summary": {"trained_reward": payload["reward"]},
+            "agent_accuracy": {
+                "sentinel": episode.sentinel_output.confidence,
+                "prism": episode.prism_output.confidence,
+                "forge": max((item.get("success_rate", 0.0) for item in payload["runbook"]["candidate_fixes"]), default=0.0),
+                "guardian": episode.guardian_output.safety_score,
+            },
+        }
     )
     return payload

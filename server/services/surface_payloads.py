@@ -9,6 +9,7 @@ from server.artifacts import get_artifact_summary
 from server.services.observability import ObservabilityService
 from server.services.result_contracts import build_structured_result
 from server.services.priority import normalize_priority_label, priority_snapshot
+from server.services.enterprise_runtime import build_training_enterprise_summary
 
 
 METRICS_PATH = Path(__file__).resolve().parents[2] / "frontend" / "metrics.json"
@@ -339,11 +340,13 @@ def build_training_summary(payload: dict[str, object]) -> dict[str, object]:
         "agent_accuracy": payload.get("agent_accuracy", {}),
         "final_difficulty": payload.get("final_difficulty"),
         "artifact_summary": artifact_summary,
+        "enterprise_summary": build_training_enterprise_summary(payload),
     }
 
 
 def build_platform_status(payload: dict[str, object]) -> dict[str, object]:
     artifact_summary = get_artifact_summary()
+    enterprise_summary = build_training_enterprise_summary(payload)
     return {
         "mode": "Product",
         "webhook_auth": "Configured",
@@ -360,6 +363,10 @@ def build_platform_status(payload: dict[str, object]) -> dict[str, object]:
         "learning_contracts": artifact_summary["learning_contracts"],
         "audit_events": artifact_summary.get("audit_events", 0),
         "guardian_reviews": artifact_summary.get("guardian_reviews", 0),
+        "orchestration_success_rate": enterprise_summary["orchestration_success_rate"],
+        "fallback_rate": enterprise_summary["fallback_rate"],
+        "branch_completion_rate": enterprise_summary["branch_completion_rate"],
+        "guarded_execution_rate": enterprise_summary["guarded_execution_rate"],
     }
 
 

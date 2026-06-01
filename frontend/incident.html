@@ -142,6 +142,41 @@
             </div>
         </section>
 
+        <section class="section">
+            <div class="section-header">
+                <h2>Enterprise Task Board</h2>
+                <div class="section-note">Complex incidents split into explicit workstreams so operators can see how evidence, change analysis, and memory retrieval converge on one solution.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Task board</div>
+                    <div class="section-note" id="orchestrationState">Loading orchestration state.</div>
+                    <div class="workflow-timeline" id="taskBoard"></div>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Memory-grounded context</div>
+                    <p class="hero-copy" id="memorySummary">Loading prior incidents, runbook history, and unresolved work.</p>
+                    <h3>Similar incidents</h3>
+                    <ul class="simple-list" id="memorySimilarIncidents"></ul>
+                    <h3>Runbook history</h3>
+                    <ul class="simple-list" id="memoryRunbooks"></ul>
+                    <h3>Open follow-ups</h3>
+                    <ul class="simple-list" id="memoryUnresolvedItems"></ul>
+                </div>
+            </div>
+            <div class="story-grid" style="margin-top: 14px;">
+                <div class="detail-card">
+                    <div class="badge">Reliability posture</div>
+                    <div class="kpi-grid" id="agentMetrics"></div>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Fallback and retries</div>
+                    <p class="hero-copy" id="fallbackSummaryNote">The runtime stays deterministic and bounded even when one branch needs a fallback.</p>
+                    <ul class="simple-list" id="fallbackSummary"></ul>
+                </div>
+            </div>
+        </section>
+
         <details class="section section-collapsible">
             <summary class="section-summary">
                 <div>

@@ -44,6 +44,13 @@ from server.services.governance import GovernanceService
 from server.services.priority import normalize_priority_label, priority_rank, priority_snapshot, shift_priority_label
 from server.services.observability import ObservabilityService
 from server.services.result_contracts import build_structured_result
+from server.services.enterprise_runtime import (
+    EnterpriseNexusRuntime,
+    IncidentKnowledgeService,
+    build_training_enterprise_summary,
+    runbook_score_from_candidates,
+)
+from training.runner import TrainingForgeClient
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +70,14 @@ class IncidentService:
         self._observability = observability
         self._governance = GovernanceService()
         self._raw_parser = RawIncidentParser()
+        self._enterprise_runtime = EnterpriseNexusRuntime(
+            observability=observability,
+            sentinel=SentinelAgent(),
+            prism=PrismAgent(observability=observability),
+            forge=ForgeAgent(client=TrainingForgeClient()),
+            guardian=GuardianAgent(),
+            knowledge_service=IncidentKnowledgeService(session=session),
+        )
 
     def _display_severity(self, severity: str) -> str:
         return normalize_priority_label(severity)
@@ -75,6 +90,37 @@ class IncidentService:
 
     def _guardian_policy(self, decision: str) -> dict[str, str]:
         return self._governance.guardian_policy_for_decision(decision)
+
+    async def _build_enterprise_overlay(
+        self,
+        *,
+        incident_id: str,
+        incident_name: str,
+        service: str,
+        severity: str,
+        source_channel: str,
+        classification: dict[str, object],
+        diagnosis: dict[str, object],
+        runbook: dict[str, object],
+        guardian: dict[str, object],
+        observability: dict[str, object],
+        workflow: list[dict[str, object]],
+        tenant_id: str = "tenant-system",
+    ) -> dict[str, object]:
+        return await self._enterprise_runtime.build_overlay_from_snapshot(
+            incident_id=incident_id,
+            incident_name=incident_name,
+            service=service,
+            severity=severity,
+            source_channel=source_channel,
+            classification=classification,
+            diagnosis=diagnosis,
+            runbook=runbook,
+            guardian=guardian,
+            observability=observability,
+            workflow=workflow,
+            tenant_id=tenant_id,
+        )
 
     async def create_incident_from_webhook(
         self,
@@ -553,6 +599,11 @@ class IncidentService:
             )
         guardian = self._guardian_context(incident)
         guardian_decision = guardian["decision"]
+        guardian["risk_class"] = "high" if priority["rank"] <= 2 else "medium"
+        guardian["required_approval_level"] = "incident_manager" if priority["rank"] <= 2 else "operator"
+        guardian["blocked_controls"] = guardian.get("policy_violations", [])
+        guardian["rollback_readiness"] = "ready" if guardian_decision != "reject" else "needs_review"
+        guardian["simulation_readiness"] = "ready" if guardian_decision != "reject" else "manual_review"
         if incident.status == "resolved":
             execution_result = "executed"
         elif incident.status == "blocked_by_guardian":
@@ -567,7 +618,7 @@ class IncidentService:
             execution_result = "needs_modification"
         else:
             execution_result = "pending"
-        return {
+        payload = {
             "incident": {
                 "id": incident.nexus_incident_id,
                 "name": incident.title,
@@ -616,6 +667,34 @@ class IncidentService:
                 live_reasoning_active=False,
             ),
         }
+        payload.update(
+            await self._build_enterprise_overlay(
+                incident_id=incident.nexus_incident_id,
+                incident_name=incident.title,
+                service=raw_service or incident.service or incident.nexus_incident_id,
+                severity=incident.severity,
+                source_channel=self._queue_source_channel(incident.source),
+                classification=classification,
+                diagnosis=diagnosis,
+                runbook=runbook,
+                guardian=guardian,
+                observability=observability,
+                workflow=workflow,
+                tenant_id=tenant_id or incident.tenant_id,
+            )
+        )
+        payload["enterprise_summary"] = build_training_enterprise_summary(
+            {
+                "summary": {"trained_reward": payload["reward"]},
+                "agent_accuracy": {
+                    "sentinel": classification["confidence"],
+                    "prism": diagnosis["confidence"],
+                    "forge": runbook_score_from_candidates(runbook),
+                    "guardian": guardian.get("confidence", 0.0),
+                },
+            }
+        )
+        return payload
 
     async def record_guardian_decision(
         self,
@@ -811,7 +890,7 @@ class IncidentService:
             ],
         }
 
-        return {
+        payload = {
             "incident": {
                 "id": incident.nexus_incident_id,
                 "name": incident.title,
@@ -872,6 +951,11 @@ class IncidentService:
                 "policy_id": guardian_output.policy_id,
                 "policy_name": guardian_output.policy_name,
                 "policy_basis": guardian_output.policy_basis,
+                "risk_class": guardian_output.risk_class or ("high" if priority["rank"] <= 2 else "medium"),
+                "required_approval_level": guardian_output.required_approval_level or ("incident_manager" if priority["rank"] <= 2 else "operator"),
+                "blocked_controls": guardian_output.blocked_controls,
+                "rollback_readiness": guardian_output.rollback_readiness or "ready",
+                "simulation_readiness": guardian_output.simulation_readiness or "ready",
             },
             "structured_result": build_structured_result(
                 incident_id=incident.nexus_incident_id,
@@ -921,6 +1005,34 @@ class IncidentService:
                 },
             },
         }
+        payload.update(
+            await self._build_enterprise_overlay(
+                incident_id=incident.nexus_incident_id,
+                incident_name=incident.title,
+                service=raw_service,
+                severity=incident.severity,
+                source_channel="raw_text",
+                classification=payload["classification"],
+                diagnosis=payload["diagnosis"],
+                runbook=payload["runbook"],
+                guardian=payload["guardian"],
+                observability=live_observability,
+                workflow=workflow,
+                tenant_id=incident.tenant_id,
+            )
+        )
+        payload["enterprise_summary"] = build_training_enterprise_summary(
+            {
+                "summary": {"trained_reward": reward},
+                "agent_accuracy": {
+                    "sentinel": sentinel_output.confidence,
+                    "prism": prism_output.confidence,
+                    "forge": max((item.get("success_rate", 0.0) for item in payload["runbook"]["candidate_fixes"]), default=0.0),
+                    "guardian": guardian_output.safety_score,
+                },
+            }
+        )
+        return payload
 
     async def execute_incident(
         self,
@@ -1369,12 +1481,14 @@ class IncidentService:
         ]
         summary["replay_readiness"] = "Ready"
         summary["training_signal"] = "Derived from live incidents and persisted audit events"
+        summary["enterprise_summary"] = build_training_enterprise_summary(payload)
         await record_training_snapshot(
             {
                 "tenant_id": tenant_id,
                 "summary": summary.get("summary", {}),
                 "episode_records": len(summary.get("episode_records", [])),
                 "live_incidents": len(summary.get("live_incidents", [])),
+                "enterprise_summary": summary["enterprise_summary"],
             }
         )
         if summary.get("rl_episode_contract"):
@@ -1493,4 +1607,5 @@ class IncidentService:
             "final_difficulty": payload.get("final_difficulty"),
             "reward_evaluation": payload.get("reward_evaluation", {}),
             "rl_episode_contract": payload.get("rl_episode_contract", {}),
+            "enterprise_summary": build_training_enterprise_summary(payload),
         }

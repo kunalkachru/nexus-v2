@@ -611,6 +611,10 @@ def test_incident_context_defaults_to_deterministic_without_user_key(client: Tes
     assert payload["llm_access"]["mode"] == "deterministic"
     assert payload["llm_access"]["user_key_provided"] is False
     assert "Add your OpenAI key" in payload["llm_access"]["message"]
+    assert payload["task_board"]["tasks"]
+    assert payload["memory_hits"]["runbooks"] is not None
+    assert payload["agent_metrics"]["guardian"]["risk_class"]
+    assert payload["fallback_summary"] is not None
 
 
 def test_incident_context_rejects_invalid_user_key_header(client: TestClient, auth_headers) -> None:
@@ -682,3 +686,6 @@ def test_incident_context_accepts_request_scoped_user_key(client: TestClient, au
     assert payload["classification"]["reasoning"] == "SENTINEL classified the alert with the request-scoped key."
     assert payload["diagnosis"]["root_cause"] == "Connection pool exhaustion"
     assert payload["runbook"]["summary"] == "Scale the pool and recycle saturated workers."
+    assert payload["task_board"]["tasks"]
+    assert payload["memory_hits"]["similar_incidents"] is not None
+    assert payload["agent_metrics"]["forge"]["handoff_to"] == "GUARDIAN"

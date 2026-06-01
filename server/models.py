@@ -219,6 +219,11 @@ class GuardianReviewResult(BaseModel):
     policy_id: str = ""
     policy_name: str = ""
     policy_basis: str = ""
+    risk_class: str = ""
+    required_approval_level: str = ""
+    blocked_controls: list[str] = Field(default_factory=list)
+    rollback_readiness: str = ""
+    simulation_readiness: str = ""
 
 
 class SandboxValidationResult(BaseModel):
@@ -299,3 +304,4 @@ class Episode(BaseModel):
     steps: list[str] = Field(default_factory=list)
     reward: EpisodeReward | None = None
     learning_contract: EpisodeLearningContract | None = None
+    enterprise_state: dict[str, object] = Field(default_factory=dict)
