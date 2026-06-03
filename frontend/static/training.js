@@ -257,13 +257,18 @@ function renderSessionTriage(trainingData) {
 
   const summary = document.getElementById("sessionTriageSummary");
   if (summary) {
+    const requested = Boolean(sessionSummary.live_reasoning_requested);
+    const active = Boolean(sessionSummary.live_reasoning);
+    const liveReasoningLabel = requested === active
+      ? (active ? "ON" : "OFF")
+      : `requested ${requested ? "ON" : "OFF"} · active ${active ? "ON" : "OFF"}`;
     const incidentHref = `incident?nexus_incident_id=${encodeURIComponent(sessionSummary.incident_id || "INC001")}`;
     summary.innerHTML = `
       <div class="badge">Latest live run</div>
       <div class="summary-card"><div class="label">Incident</div><div class="value">${sessionSummary.incident_id || "-"}</div></div>
       <div class="summary-card"><div class="label">Guardian</div><div class="value">${String(sessionSummary.guardian_decision || "-").toUpperCase()}</div></div>
       <div class="summary-card"><div class="label">Execution</div><div class="value">${String(sessionSummary.execution_result || "-").toUpperCase()}</div></div>
-      <div class="summary-card"><div class="label">Live reasoning</div><div class="value">${sessionSummary.live_reasoning ? "ON" : "OFF"}</div></div>
+      <div class="summary-card"><div class="label">Live reasoning</div><div class="value">${liveReasoningLabel}</div></div>
       <p class="hero-copy"><strong>${sessionSummary.incident_title || sessionSummary.incident_id || "Latest incident"}</strong> is the most recent live triage completed in this browser. The crew completed ${sessionSummary.task_count || 0} visible handoffs, Guardian required ${titleCase(sessionSummary.required_approval_level || "operator")} approval, and the run ended in ${titleCase(sessionSummary.execution_result || "pending")}.</p>
       <p class="section-note">${sessionSummary.runbook_summary ? `Runbook reviewed: ${sessionSummary.runbook_summary}.` : ""} ${sessionSummary.runbook_reasoning ? `Selection basis: ${sessionSummary.runbook_reasoning}` : ""}</p>
       <a class="inline-link" href="${window.NexusNavigation?.withReturnTo(incidentHref) || incidentHref}">Open the same incident again</a>

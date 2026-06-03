@@ -212,6 +212,8 @@ function persistLastTriageSummary(data) {
     execution_result: data.execution_result,
     required_approval_level: data.guardian?.required_approval_level,
     live_reasoning: Boolean(data.live_reasoning),
+    live_reasoning_requested: getLiveReasoningPreference(),
+    live_reasoning_mode: String(data.llm_access?.mode || (data.live_reasoning ? "live" : "deterministic")),
     task_count: data.task_board?.tasks?.length || 0,
     memory_similar_count: data.memory_hits?.similar_incidents?.length || 0,
     memory_runbook_count: data.memory_hits?.runbooks?.length || 0,
@@ -244,11 +246,17 @@ function setText(id, value) {
 
 function syncLiveReasoningToggle() {
   const enabled = getLiveReasoningPreference();
-  setText("liveReasoningState", `Live reasoning: ${enabled ? "ON" : "OFF"}`);
+  setText("liveReasoningState", `Live reasoning: requested ${enabled ? "ON" : "OFF"} · active OFF`);
   const button = document.getElementById("liveReasoningToggle");
   if (button) {
     button.textContent = enabled ? "Turn live reasoning off" : "Turn live reasoning on";
   }
+}
+
+function syncLiveReasoningState(data) {
+  const requested = getLiveReasoningPreference();
+  const active = Boolean(data.live_reasoning);
+  setText("liveReasoningState", `Live reasoning: requested ${requested ? "ON" : "OFF"} · active ${active ? "ON" : "OFF"}`);
 }
 
 function syncOpenAIKeyUI(message) {
@@ -334,6 +342,7 @@ function renderSummary(data) {
       data.live_reasoning ? "Live LLM reasoning is active for this incident." : "Deterministic fallback is active for this incident."
     )
   );
+  syncLiveReasoningState(data);
   syncOpenAIKeyUI(data.llm_access?.message);
   updateGuardianPrompt(data);
 
