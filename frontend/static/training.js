@@ -1,5 +1,9 @@
 import { fetchAuthedJson, loadMetrics } from "./api.js";
 
+const LAST_TRIAGE_SUMMARY_KEY = "nexus.last_triage_summary";
+const TRAINING_NAV_IDS = ["learningSection", "governanceSection", "advancedSection"];
+let manualTrainingNavUntil = 0;
+
 function percent(value) {
   return `${Math.round(Number(value || 0) * 100)}%`;
 }
@@ -17,6 +21,88 @@ function setText(id, value) {
   if (element && value !== undefined && value !== null) {
     element.textContent = String(value);
   }
+}
+
+function titleCase(value) {
+  return String(value || "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function loadLastTriageSummary() {
+  try {
+    return JSON.parse(window.localStorage.getItem(LAST_TRIAGE_SUMMARY_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function scrollToTrainingSection(sectionId) {
+  const advanced = document.getElementById("advancedSection");
+  if (sectionId === "advancedSection" && advanced && !advanced.open) {
+    advanced.open = true;
+  }
+  const target = document.getElementById(sectionId);
+  if (!target) {
+    return;
+  }
+  const top = target.getBoundingClientRect().top + window.scrollY - 88;
+  window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+}
+
+function setActiveTrainingNav(sectionId) {
+  document.querySelectorAll(".tab-pill[data-target]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.target === sectionId);
+    button.setAttribute("aria-pressed", button.dataset.target === sectionId ? "true" : "false");
+  });
+}
+
+function wireTrainingNavigation() {
+  document.querySelectorAll(".tab-pill[data-target]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const { target } = button.dataset;
+      if (!target) {
+        return;
+      }
+      manualTrainingNavUntil = Date.now() + 1600;
+      setActiveTrainingNav(target);
+      scrollToTrainingSection(target);
+    });
+  });
+
+  const advanced = document.getElementById("advancedSection");
+  if (advanced) {
+    advanced.addEventListener("toggle", () => {
+      if (advanced.open) {
+        setActiveTrainingNav("advancedSection");
+      } else if (document.getElementById("governanceSection")) {
+        setActiveTrainingNav("governanceSection");
+      }
+    });
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) {
+        return;
+      }
+      if (Date.now() < manualTrainingNavUntil) {
+        return;
+      }
+      setActiveTrainingNav(visible.target.id);
+    },
+    { rootMargin: "-20% 0px -55% 0px", threshold: [0.2, 0.45, 0.7] }
+  );
+
+  TRAINING_NAV_IDS.forEach((id) => {
+    const section = document.getElementById(id);
+    if (section) {
+      observer.observe(section);
+    }
+  });
 }
 
 function renderSummary(data) {
@@ -155,12 +241,65 @@ function renderAdvanced(data) {
   }
 }
 
+function renderSessionTriage(trainingData) {
+  const sessionSummary = loadLastTriageSummary();
+  if (!sessionSummary) {
+    setText(
+      "trainingPageLead",
+      "Start with the broader runtime and learning baseline. Run a live triage in this browser when you want this page to anchor itself to one specific incident."
+    );
+    setText(
+      "sessionTrainingBridge",
+      "No live incident has been mapped in this browser yet. Once you run a fresh triage, this page will first show that incident's operational outcome and then place it against the broader runtime and learning baseline."
+    );
+    return;
+  }
+
+  const summary = document.getElementById("sessionTriageSummary");
+  if (summary) {
+    const incidentHref = `incident?nexus_incident_id=${encodeURIComponent(sessionSummary.incident_id || "INC001")}`;
+    summary.innerHTML = `
+      <div class="badge">Latest live run</div>
+      <div class="summary-card"><div class="label">Incident</div><div class="value">${sessionSummary.incident_id || "-"}</div></div>
+      <div class="summary-card"><div class="label">Guardian</div><div class="value">${String(sessionSummary.guardian_decision || "-").toUpperCase()}</div></div>
+      <div class="summary-card"><div class="label">Execution</div><div class="value">${String(sessionSummary.execution_result || "-").toUpperCase()}</div></div>
+      <div class="summary-card"><div class="label">Live reasoning</div><div class="value">${sessionSummary.live_reasoning ? "ON" : "OFF"}</div></div>
+      <p class="hero-copy"><strong>${sessionSummary.incident_title || sessionSummary.incident_id || "Latest incident"}</strong> is the most recent live triage completed in this browser. The crew completed ${sessionSummary.task_count || 0} visible handoffs, Guardian required ${titleCase(sessionSummary.required_approval_level || "operator")} approval, and the run ended in ${titleCase(sessionSummary.execution_result || "pending")}.</p>
+      <p class="section-note">${sessionSummary.runbook_summary ? `Runbook reviewed: ${sessionSummary.runbook_summary}.` : ""} ${sessionSummary.runbook_reasoning ? `Selection basis: ${sessionSummary.runbook_reasoning}` : ""}</p>
+      <a class="inline-link" href="${window.NexusNavigation?.withReturnTo(incidentHref) || incidentHref}">Open the same incident again</a>
+    `;
+  }
+
+  const impact = document.getElementById("sessionTriageImpact");
+  if (impact) {
+    const latestEpisode = trainingData.latest_episode || {};
+    impact.innerHTML = [
+      `Read the enterprise runtime summary next. It is the operational health view for this triage style: orchestration success, fallback use, branch completion, and governed execution.`,
+      `For this incident, the crew referenced ${sessionSummary.memory_similar_count || 0} similar incidents and ${sessionSummary.memory_runbook_count || 0} prior runbook memories before choosing an action plan.`,
+      `Branch completion for this run landed at ${percent(sessionSummary.branch_completion_rate || 0)}. The learning summary below remains the broader seeded baseline${latestEpisode.incident_id ? `, whose latest stored episode is ${latestEpisode.incident_id}.` : "."}`,
+    ]
+      .map((line) => `<div class="episode-step">${line}</div>`)
+      .join("");
+  }
+
+  setText(
+    "sessionTrainingBridge",
+    `Use this page in three passes: first review the incident you just ran, then read enterprise runtime summary for operational health, then read learning summary for the broader baseline and trend.`
+  );
+  setText(
+    "trainingPageLead",
+    `This page is anchored to ${sessionSummary.incident_id || "your latest incident"} first: incident outcome at the top, runtime health next, learning trend after that, and deep artifacts only on demand.`
+  );
+}
+
 window.addEventListener("load", async () => {
+  wireTrainingNavigation();
   const [trainingData, platformData] = await Promise.all([
     fetchAuthedJson("/api/v1/training/summary").catch(() => loadMetrics()),
     fetchAuthedJson("/api/v1/platform/status").catch(() => loadMetrics()),
   ]);
 
+  renderSessionTriage(trainingData);
   renderSummary(trainingData);
   renderCurves(trainingData);
   renderGovernance(platformData.platform_status || platformData);

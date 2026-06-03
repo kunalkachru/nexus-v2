@@ -47,15 +47,15 @@
                 </div>
             </div>
             <div class="hero-panel">
-                <div class="eyebrow">Tabbed focus</div>
+                <div class="eyebrow">Navigation focus</div>
                 <div class="tab-strip" aria-label="Learning surface tabs">
-                    <button class="tab-pill active" type="button">Learning tab</button>
-                    <button class="tab-pill" type="button">Governance tab</button>
-                    <button class="tab-pill" type="button">Advanced Artifacts</button>
+                    <button class="tab-pill active" id="navLearning" data-target="learningSection" type="button">Learning summary</button>
+                    <button class="tab-pill" id="navGovernance" data-target="governanceSection" type="button">Governance summary</button>
+                    <button class="tab-pill" id="navAdvanced" data-target="advancedSection" type="button">Advanced artifacts</button>
                 </div>
                 <div class="flow-callout">
                     <div class="label">Primary story</div>
-                    <div class="value">The agents improve over time, but Guardian and policy posture stay visible so learning never feels ungoverned.</div>
+                    <div class="value" id="trainingPageLead">Start with the latest live triage, then read runtime health, then learning progress, and open advanced artifacts only when you need the raw trail.</div>
                 </div>
                 <div class="command-context-links">
                     <a class="nav-link channel-ghost" href="settings" data-preserve-return>Open settings route</a>
@@ -64,7 +64,30 @@
             </div>
         </section>
 
-        <section class="section">
+        <section class="section" id="latestTriageSection">
+            <div class="section-header">
+                <h2>Last live triage in this browser</h2>
+                <div class="section-note">This section connects the most recent incident you ran in this browser to the runtime and learning signals shown below.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card episode-detail" id="sessionTriageSummary">
+                    <div class="badge">Latest live run</div>
+                    <p class="hero-copy">Run a fresh triage to bring one specific incident, its Guardian decision, and its execution outcome into this page.</p>
+                </div>
+                <div class="detail-card">
+                <div class="badge">How to interpret it</div>
+                    <div class="episode-step-list" id="sessionTriageImpact">
+                        <div class="episode-step">No recent live triage has been recorded in this browser session yet.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-card compact-note" style="margin-top: 14px;">
+                <div class="badge">How to read the rest of this page</div>
+                <p class="hero-copy" id="sessionTrainingBridge">After a live triage, this page should tell you what incident just ran, what Guardian decided, and how that run maps to the orchestration and learning summaries below.</p>
+            </div>
+        </section>
+
+        <section class="section" id="runtimeSection">
             <div class="section-header">
                 <h2>Enterprise runtime summary</h2>
                 <div class="section-note">Show that orchestration, fallback handling, branch completion, and governed execution improve alongside reward.</div>
@@ -77,7 +100,7 @@
             </div>
         </section>
 
-        <section class="section">
+        <section class="section" id="learningSection">
             <div class="section-header">
                 <h2>Learning summary</h2>
                 <div class="section-note">One compact reward story and one compact view of how each bot contributes.</div>
@@ -100,7 +123,7 @@
             </div>
         </section>
 
-        <section class="section">
+        <section class="section" id="governanceSection">
             <div class="section-header">
                 <h2>Governance summary</h2>
                 <div class="section-note">Guardian posture and operational controls stay visible without becoming a wall of settings data.</div>
@@ -128,7 +151,7 @@
             </div>
         </section>
 
-        <details class="section section-collapsible training-artifact-shell">
+        <details class="section section-collapsible training-artifact-shell" id="advancedSection">
             <summary class="section-summary">
                 <div>
                     <h2>Advanced Artifacts</h2>

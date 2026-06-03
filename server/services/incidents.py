@@ -1544,7 +1544,7 @@ class IncidentService:
             "memory_leak_after_deploy": ("INC003", ["stream_anomaly", "worker-fleet", "P2", "deploy"]),
             "queue_backlog_worker_stall": ("INC005", ["batch_import", "billing", "P1", "queue"]),
             "bad_deployment_regression": ("INC004", ["webhook", "api-gateway", "P1", "rollback"]),
-            "certificate_expiry": ("INC005", ["webhook", "edge-gateway", "P1", "expiry"]),
+            "certificate_expiry": ("INC006", ["webhook", "edge-gateway", "P0", "expiry"]),
             "cache_explosion": ("INC004", ["webhook", "redis", "P2", "eviction"]),
         }
         scenarios: list[dict[str, object]] = []

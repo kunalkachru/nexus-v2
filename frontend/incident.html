@@ -53,6 +53,8 @@
                     <div class="badge">Working memory</div>
                     <p class="hero-copy" id="incidentOverviewNote">Waiting for incident selection.</p>
                     <p class="section-note" id="liveReasoningDetail">Live reasoning mode will be shown here after the incident loads.</p>
+                    <p class="section-note" id="operatorNextStep">Next operator action will appear here once the incident loads.</p>
+                    <p class="section-note">SENTINEL handed evidence to PRISM, PRISM synthesized the diagnosis, FORGE prepared the runbook, and GUARDIAN now controls the final safety gate.</p>
                 </div>
             </div>
             <div class="hero-panel controls">
@@ -61,7 +63,31 @@
                 <div class="shell-actions">
                     <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
                     <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
+                    <button class="nav-link channel-ghost" id="replayRelayBtn" type="button">Replay handoff</button>
                 </div>
+                <div class="relay-banner" id="relayStageBanner">Waiting for the orchestration relay to start.</div>
+                <div class="orchestration-rail" aria-label="Agent relay">
+                    <article class="relay-node" id="relaySentinel">
+                        <div class="relay-node-name">SENTINEL</div>
+                        <div class="relay-node-state" id="relaySentinelState">Waiting</div>
+                    </article>
+                    <div class="relay-link"></div>
+                    <article class="relay-node" id="relayPrism">
+                        <div class="relay-node-name">PRISM</div>
+                        <div class="relay-node-state" id="relayPrismState">Waiting</div>
+                    </article>
+                    <div class="relay-link"></div>
+                    <article class="relay-node" id="relayForge">
+                        <div class="relay-node-name">FORGE</div>
+                        <div class="relay-node-state" id="relayForgeState">Waiting</div>
+                    </article>
+                    <div class="relay-link"></div>
+                    <article class="relay-node" id="relayGuardian">
+                        <div class="relay-node-name">GUARDIAN</div>
+                        <div class="relay-node-state" id="relayGuardianState">Waiting</div>
+                    </article>
+                </div>
+                <p class="section-note" id="relayLoopNote">LangGraph orchestrates the crew, so the diagnosis can loop back to earlier evidence if a later branch changes the confidence story.</p>
                 <div class="detail-card compact-note byo-key-card">
                     <div class="badge">Bring your own OpenAI key</div>
                     <p class="hero-copy">Default mode stays deterministic. Add your own key only when you want live FORGE reasoning for this session.</p>
@@ -100,8 +126,14 @@
                     </article>
                 </div>
                 <div class="detail-card compact-note guardian-gate-card">
+                    <div class="relay-callout" id="guardianRelayPrompt">Guardian will become the active decision point once the crew finishes its handoff.</div>
                     <div class="badge">Governance Bot</div>
                     <p class="hero-copy">Guardian is the explicit safety gate. Execution stays subordinate to bot collaboration until this check is clear.</p>
+                    <div class="runbook-explainer">
+                        <div class="runbook-explainer-title">What Guardian is reviewing</div>
+                        <p class="hero-copy" id="runbookExplainer">The runbook summary will appear here so the operator understands what approval would actually execute.</p>
+                        <p class="section-note" id="runbookImpact">Execution impact and rollback posture will appear here once the incident loads.</p>
+                    </div>
                     <div class="shell-actions guardian-gate-actions">
                         <button class="nav-link channel-cta" id="guardianApproveBtn" type="button">Approve runbook</button>
                         <button class="nav-link channel-cta" id="guardianBlockBtn" type="button">Block runbook</button>
@@ -115,28 +147,43 @@
         <section class="section">
             <div class="section-header">
                 <h2>Agent Handoff Thread</h2>
-                <div class="section-note">The incident moves through four autonomous workers. One active handoff stays emphasized at a time.</div>
+                <div class="section-note">Read this section like an operator handoff: who looked at what, what they concluded, and why the next agent picked it up.</div>
+            </div>
+            <div class="collaboration-strip">
+                <article class="collaboration-card collaboration-card-lead">
+                    <div class="badge">Current control</div>
+                    <h3 id="collaborationLead">Loading active collaboration state.</h3>
+                    <p class="hero-copy" id="collaborationNarrative">The current incident story will appear here once the workspace loads.</p>
+                </article>
+                <article class="collaboration-card">
+                    <div class="badge">Why the crew trusts this path</div>
+                    <p class="hero-copy" id="collaborationConfidence">Waiting for evidence, prior incidents, and policy checks.</p>
+                </article>
+                <article class="collaboration-card">
+                    <div class="badge">Operator next step</div>
+                    <p class="hero-copy" id="collaborationOutcome">Waiting for the crew to reach a governed decision.</p>
+                </article>
             </div>
             <div class="incident-summary" id="incidentSummary"></div>
             <div class="handoff-thread" id="handoffThread">
                 <article class="handoff-entry handoff-entry-active" id="handoffSentinel">
                     <div class="handoff-entry-top"><span class="badge">SENTINEL</span><span class="section-note">Classification bot</span></div>
-                    <h3>SENTINEL handed evidence to PRISM</h3>
+                    <h3>SENTINEL framed the incident for the rest of the crew</h3>
                     <p class="hero-copy" id="threadSentinelCopy">Waiting for incident context.</p>
                 </article>
                 <article class="handoff-entry" id="handoffPrism">
                     <div class="handoff-entry-top"><span class="badge">PRISM</span><span class="section-note">Diagnosis bot</span></div>
-                    <h3>PRISM is building the root-cause story</h3>
+                    <h3>PRISM split the issue into smaller investigations</h3>
                     <p class="hero-copy" id="threadPrismCopy">Waiting for correlated evidence.</p>
                 </article>
                 <article class="handoff-entry" id="handoffForge">
                     <div class="handoff-entry-top"><span class="badge">FORGE</span><span class="section-note">Remediation bot</span></div>
-                    <h3>FORGE is shaping the safest runbook</h3>
+                    <h3>FORGE turned the diagnosis into an actionable plan</h3>
                     <p class="hero-copy" id="threadForgeCopy">Waiting to produce a rollback-ready proposal.</p>
                 </article>
                 <article class="handoff-entry" id="handoffGuardian">
                     <div class="handoff-entry-top"><span class="badge">GUARDIAN</span><span class="section-note">Governance Bot</span></div>
-                    <h3>GUARDIAN is holding the execution gate</h3>
+                    <h3>GUARDIAN decided whether the plan was safe to execute</h3>
                     <p class="hero-copy" id="threadGuardianCopy">Waiting for the runbook to clear safety review.</p>
                 </article>
             </div>
@@ -156,12 +203,22 @@
                 <div class="detail-card">
                     <div class="badge">Memory-grounded context</div>
                     <p class="hero-copy" id="memorySummary">Loading prior incidents, runbook history, and unresolved work.</p>
-                    <h3>Similar incidents</h3>
-                    <ul class="simple-list" id="memorySimilarIncidents"></ul>
-                    <h3>Runbook history</h3>
-                    <ul class="simple-list" id="memoryRunbooks"></ul>
-                    <h3>Open follow-ups</h3>
-                    <ul class="simple-list" id="memoryUnresolvedItems"></ul>
+                    <div class="memory-grid">
+                        <div>
+                            <h3>Similar incidents</h3>
+                            <ul class="simple-list" id="memorySimilarIncidents"></ul>
+                        </div>
+                        <div>
+                            <h3>Runbook history</h3>
+                            <ul class="simple-list" id="memoryRunbooks"></ul>
+                        </div>
+                    </div>
+                    <details class="agent-details">
+                        <summary>Show unresolved follow-ups</summary>
+                        <div class="agent-details-body">
+                            <ul class="simple-list" id="memoryUnresolvedItems"></ul>
+                        </div>
+                    </details>
                 </div>
             </div>
             <div class="story-grid" style="margin-top: 14px;">

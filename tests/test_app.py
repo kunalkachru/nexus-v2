@@ -58,9 +58,9 @@ def test_dashboard_routes_are_served() -> None:
     assert "certificate expiry" in replay.text.lower()
     assert "Learning & Controls" in training.text
     assert "Enterprise runtime summary" in training.text
-    assert "Learning tab" in training.text
-    assert "Governance tab" in training.text
-    assert "Advanced Artifacts" in training.text
+    assert "Learning summary" in training.text
+    assert "Governance summary" in training.text
+    assert "Advanced artifacts" in training.text
     assert "Operational controls." in settings.text
     assert 'href="queue"' in incident.text
 

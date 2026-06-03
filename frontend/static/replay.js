@@ -190,12 +190,12 @@ const SCENARIOS = {
   certificate_expiry: {
     title: "Certificate expiry",
     summary: "Validates alerting, safety review, and operator escalation.",
-    pills: ["webhook", "security", "P1", "expiry"],
+    pills: ["webhook", "security", "P0", "expiry"],
     payload: [
       "Source payload",
       "Webhook alert",
       "Service: edge-gateway",
-      "Severity: P1",
+      "Severity: P0",
       "Symptoms: certificate expiry, TLS handshake failures, connection errors",
     ],
     evidence: [
@@ -215,7 +215,7 @@ const SCENARIOS = {
       "Final result",
       "Certificate replacement path approved",
     ],
-    incidentId: "INC005",
+    incidentId: "INC006",
     launchLabel: "Open certificate console",
   },
   cache_explosion: {

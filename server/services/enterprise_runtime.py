@@ -105,20 +105,42 @@ class IncidentKnowledgeService:
             details = get_incident_details(candidate_id)
             summary = str(details.get("summary", "")).strip()
             candidate_root = str(details.get("prism", {}).get("reasoning", "")).strip()
-            score = self._similarity_score(query, " ".join([candidate_id, summary, candidate_root]).lower())
-            if score <= 0.0:
+            candidate_related_services = [str(item).strip().lower() for item in details.get("related_services", []) if str(item).strip()]
+            candidate_service = " ".join(str(item) for item in details.get("related_services", [])[:2])
+            candidate_severity = str(details.get("severity", severity))
+            service_overlap = bool(service and service.lower() in candidate_related_services)
+            root_overlap = len(
+                self._token_set(root_cause) & self._token_set(candidate_root or summary)
+            )
+            score = self._similarity_score(
+                query,
+                " ".join([candidate_id, summary, candidate_root, candidate_service, candidate_severity]).lower(),
+            )
+            if score <= 0.08 and not service_overlap and root_overlap < 2:
                 continue
             similar.append(
                 {
                     "incident_id": candidate_id,
                     "summary": summary,
                     "root_cause_hint": candidate_root,
+                    "service_match": service_overlap,
+                    "severity_match": normalize_priority_label(candidate_severity) == normalize_priority_label(severity),
+                    "root_overlap": root_overlap,
                     "success_rate": round(0.74 + (score * 0.22), 2),
                     "similarity": round(score, 2),
                     "source": "incident_history",
                 }
             )
-        similar.sort(key=lambda item: (item["similarity"], item["success_rate"]), reverse=True)
+        similar.sort(
+            key=lambda item: (
+                item["service_match"],
+                item["severity_match"],
+                item["root_overlap"],
+                item["similarity"],
+                item["success_rate"],
+            ),
+            reverse=True,
+        )
         return similar[:3]
 
     async def _find_unresolved_items(
@@ -171,8 +193,9 @@ class IncidentKnowledgeService:
         recent: list[dict[str, object]] = []
         for review in reversed(reviews[-6:]):
             incident_id = str(review.get("incident_id", "")).strip()
-            if service and service not in str(review.get("guardian_reasoning", "")).lower() and incident_id:
-                pass
+            reasoning = str(review.get("guardian_reasoning", "")).lower()
+            if service and service.lower() not in reasoning and incident_id:
+                continue
             recent.append(
                 {
                     "incident_id": incident_id,
@@ -191,11 +214,15 @@ class IncidentKnowledgeService:
     ) -> list[dict[str, object]]:
         runbooks: list[dict[str, object]] = []
         for item in similar_incidents:
+            details = get_incident_details(str(item["incident_id"]))
+            recommended = details.get("recommended_runbooks", [])
+            primary = recommended[0] if isinstance(recommended, list) and recommended else {}
             runbooks.append(
                 {
                     "incident_id": item["incident_id"],
-                    "runbook_summary": f"Prior mitigation pattern for {item['incident_id']}",
-                    "success_rate": item["success_rate"],
+                    "runbook_summary": str(primary.get("name") or f"Prior mitigation pattern for {item['incident_id']}"),
+                    "success_rate": float(primary.get("success_rate", item["success_rate"])),
+                    "historical_reason": str(details.get("forge", {}).get("selection_logic", "")).strip(),
                     "source": "historical_runbook",
                 }
             )
@@ -206,18 +233,22 @@ class IncidentKnowledgeService:
                         "incident_id": item["incident_id"],
                         "runbook_summary": f"Guardian-approved execution for {item['incident_id']}",
                         "success_rate": 0.81,
+                        "historical_reason": f"Previously cleared by {item.get('policy_id') or 'GUARDIAN policy'}.",
                         "source": "guardian_history",
                     }
                 )
         return runbooks[:4]
 
     def _similarity_score(self, left: str, right: str) -> float:
-        left_tokens = set(part for part in left.split() if part)
-        right_tokens = set(part for part in right.split() if part)
+        left_tokens = self._token_set(left)
+        right_tokens = self._token_set(right)
         if not left_tokens or not right_tokens:
             return 0.0
         overlap = len(left_tokens & right_tokens)
         return min(1.0, overlap / max(1, len(left_tokens)))
+
+    def _token_set(self, value: str) -> set[str]:
+        return {part for part in value.lower().replace("/", " ").replace("-", " ").split() if part}
 
 
 class EnterpriseNexusRuntime:
@@ -420,7 +451,7 @@ class EnterpriseNexusRuntime:
         context = state["context"]
         decomposition = (
             f"PRISM split {context.incident.id} into evidence correlation, change analysis, and incident-memory retrieval "
-            "so the diagnosis can be synthesized from three explicit workstreams."
+            "so the diagnosis can be synthesized from three explicit workstreams and loop back if one branch changes the confidence story."
         )
         for task_id in ("prism-evidence", "prism-deployment", "prism-history"):
             self._set_task_status(state["task_board"], task_id, "active", "Workstream opened by PRISM planning.")
@@ -448,10 +479,15 @@ class EnterpriseNexusRuntime:
 
     async def _prism_evidence_node(self, state: RuntimeState) -> dict[str, object]:
         signals = state["context"].signals
+        top_logs = list(signals.get("logs", [])[:2])
+        top_metrics = list(signals.get("metrics", [])[:2])
         evidence = {
             "status": "completed",
-            "summary": f"Correlated {len(signals.get('logs', []))} logs and {len(signals.get('metrics', []))} metrics into one evidence pack.",
-            "evidence": list(signals.get("logs", [])[:2]) + list(signals.get("metrics", [])[:1]),
+            "summary": (
+                f"Correlated {len(signals.get('logs', []))} logs and {len(signals.get('metrics', []))} metrics into one evidence pack. "
+                f"Anchors: {top_logs[0] if top_logs else 'No primary log anchor'}, {top_metrics[0] if top_metrics else 'No primary metric anchor'}."
+            ),
+            "evidence": top_logs + list(signals.get("metrics", [])[:1]),
         }
         self._set_task_status(state["task_board"], "prism-evidence", "completed", evidence["summary"])
         branch_results = dict(state["branch_results"])
@@ -467,10 +503,12 @@ class EnterpriseNexusRuntime:
 
     async def _prism_deployment_node(self, state: RuntimeState) -> dict[str, object]:
         deployment_signals = state["context"].signals.get("deployment", [])
+        top_change = deployment_signals[0] if deployment_signals else "No recent deployment correlation was available."
         summary = (
-            f"Reviewed {len(deployment_signals)} deployment and change signals for rollback or change-correlation risk."
+            f"Reviewed {len(deployment_signals)} deployment and change signals for rollback or change-correlation risk. "
+            f"Most suspicious change: {top_change}."
             if deployment_signals
-            else "No explicit deployment signals were available, so the branch used deterministic release heuristics."
+            else "No explicit deployment signals were available, so the branch used deterministic release heuristics and left rollback confidence lower."
         )
         self._set_task_status(state["task_board"], "prism-deployment", "completed", summary)
         branch_results = dict(state["branch_results"])
@@ -503,9 +541,11 @@ class EnterpriseNexusRuntime:
         branch_results = dict(state["branch_results"])
         fallback_summary = list(state["fallback_summary"])
         if memory_hits["similar_incidents"]:
+            top_match = memory_hits["similar_incidents"][0]
             summary = (
                 f"Retrieved {len(memory_hits['similar_incidents'])} similar incidents, "
-                f"{len(memory_hits['runbooks'])} runbook memories, and {len(memory_hits['unresolved_items'])} unresolved follow-ups."
+                f"{len(memory_hits['runbooks'])} runbook memories, and {len(memory_hits['unresolved_items'])} unresolved follow-ups. "
+                f"Closest analog: {top_match['incident_id']} at {top_match['similarity']:.0%} similarity."
             )
             task_status = "completed"
             fallback_used = False
@@ -558,6 +598,12 @@ class EnterpriseNexusRuntime:
         evidence_summary = branch_results.get("evidence", {}).get("summary", "")
         deployment_summary = branch_results.get("deployment", {}).get("summary", "")
         history_summary = branch_results.get("history", {}).get("summary", "")
+        top_runbook = memory_hits.get("runbooks", [{}])[0] if memory_hits.get("runbooks") else {}
+        synthesis_note = (
+            f"Loopback note: deployment analysis and history retrieval both support a rollback-safe path via {top_runbook.get('runbook_summary', 'the top runbook pattern')}."
+            if branch_results.get("deployment") and memory_hits.get("runbooks")
+            else "Loopback note: no branch contradiction required PRISM to re-open an earlier workstream."
+        )
         synthesis_reasoning = " ".join(
             part
             for part in [
@@ -565,6 +611,7 @@ class EnterpriseNexusRuntime:
                 evidence_summary,
                 deployment_summary,
                 history_summary,
+                synthesis_note,
             ]
             if part
         )
@@ -574,7 +621,7 @@ class EnterpriseNexusRuntime:
                 "queried_sources": sorted(
                     set(prism_output.queried_sources + ["logs", "metrics", "deployments", "memory"])
                 ),
-                "evidence": list(dict.fromkeys(prism_output.evidence + [item["summary"] for item in memory_hits["similar_incidents"][:2]])),
+                "evidence": list(dict.fromkeys(prism_output.evidence)),
             }
         )
         return {
@@ -607,9 +654,14 @@ class EnterpriseNexusRuntime:
             prism_output=state["prism_output"],
             system_context=context.system_context,
         )
+        top_runbook = memory_hits["runbooks"][0] if memory_hits["runbooks"] else {}
+        runner_up = memory_hits["runbooks"][1] if len(memory_hits["runbooks"]) > 1 else {}
         reasoning = (
             f"{forge_output.reasoning} Referenced {len(memory_hits['runbooks'])} runbook memories and "
-            f"{len(memory_hits['unresolved_items'])} unresolved service items."
+            f"{len(memory_hits['unresolved_items'])} unresolved service items. "
+            f"Primary historical fit: {top_runbook.get('runbook_summary', 'none')}."
+            f"{' Runner-up: ' + str(runner_up.get('runbook_summary')) + '.' if runner_up else ''} "
+            "FORGE kept the plan biased toward reversible, lower-blast-radius actions first."
         )
         forge_output = forge_output.model_copy(update={"reasoning": reasoning})
         self._set_task_status(state["task_board"], "forge-plan", "completed", reasoning)
@@ -656,6 +708,11 @@ class EnterpriseNexusRuntime:
                 "blocked_controls": blocked_controls,
                 "rollback_readiness": rollback_readiness,
                 "simulation_readiness": simulation_readiness,
+                "reasoning": (
+                    f"{guardian_output.reasoning} "
+                    f"Risk class {risk_class.upper()} requires {approval_level.replace('_', ' ')} approval. "
+                    f"Rollback readiness is {rollback_readiness} and simulation readiness is {simulation_readiness}."
+                ).strip(),
             }
         )
         self._set_task_status(

@@ -6,6 +6,7 @@ const RAW_LOG_EXAMPLE = `2026-05-30T10:14:22Z checkout-api ERROR timeout waiting
 service=checkout-api severity=P1`;
 
 const WEBHOOK_SECRET = "nexus-demo-webhook-secret";
+const FRESH_TRIAGE_STORAGE_KEY = "nexus.fresh_triage_incident_id";
 
 const CHANNELS = {
   raw_text: {
@@ -425,6 +426,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
       if (result) {
         result.textContent = `Created ${response.nexus_incident_id} with status ${response.status}. Opening the incident console...`;
+      }
+      try {
+        window.sessionStorage.setItem(FRESH_TRIAGE_STORAGE_KEY, response.nexus_incident_id);
+      } catch {
+        // Ignore storage failures; the incident console still opens normally.
       }
       if (launch) {
         const liveReasoning = getLiveReasoningPreference() ? "1" : "0";

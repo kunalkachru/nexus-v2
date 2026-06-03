@@ -152,7 +152,7 @@ def test_versioned_queue_contract_returns_current_incidents(client: TestClient, 
     first = payload["items"][0]
     assert first["nexus_incident_id"]
     assert first["title"]
-    assert first["severity"] in {"P1", "P2", "P3", "P4"}
+    assert first["severity"] in {"P0", "P1", "P2", "P3", "P4"}
     assert first["status"] == "investigating"
     assert first["source_channel"] in {"webhook", "raw_text", "manual_form", "slack_command", "stream_anomaly", "batch_import"}
     assert first["current_stage"]

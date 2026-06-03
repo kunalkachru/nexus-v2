@@ -20,6 +20,11 @@ def run_demo(*, incident_id: str = "INC001", print_output: bool = False) -> dict
     })
 
     if print_output:
+        orchestration = result.get("orchestration", {})
+        task_board = (result.get("task_board") or {}).get("tasks", [])
+        memory_hits = result.get("memory_hits", {})
+        agent_metrics = result.get("agent_metrics", {})
+        fallback_summary = result.get("fallback_summary", [])
         print("NEXUS v2 Judge Demo")
         print(f"Incident: {result['incident']['id']} - {result['incident']['name']}")
         print(f"Checkpoint: {result['checkpoint_path']}")
@@ -27,6 +32,29 @@ def run_demo(*, incident_id: str = "INC001", print_output: bool = False) -> dict
         print(f"Diagnosis: {result['diagnosis']}")
         print(f"Runbook: {result['runbook']}")
         print(f"Guardian: {result['guardian']}")
+        print(f"Orchestration Story: {orchestration.get('active_story')}")
+        print("Task Board:")
+        for task in task_board:
+            print(f"  - {task['owner']}: {task['title']} [{task['status']}] -> {task.get('handoff_to', '-')}")
+            print(f"    {task['summary']}")
+        print("Memory Hits:")
+        print(
+            "  "
+            f"Similar incidents={len(memory_hits.get('similar_incidents', []))}, "
+            f"Runbooks={len(memory_hits.get('runbooks', []))}, "
+            f"Unresolved items={len(memory_hits.get('unresolved_items', []))}"
+        )
+        for item in memory_hits.get("similar_incidents", [])[:3]:
+            print(f"    similar: {item['incident_id']} -> {item['summary']}")
+        for item in memory_hits.get("unresolved_items", [])[:2]:
+            print(f"    unresolved: {item['incident_id']} -> {item.get('title') or item.get('summary')}")
+        print("Agent Metrics:")
+        for name, metric in agent_metrics.items():
+            print(
+                f"  - {name}: confidence={metric.get('confidence')} "
+                f"handoff={metric.get('handoff_to')} fallback={metric.get('fallback_used')}"
+            )
+        print(f"Fallback Summary: {fallback_summary or 'No fallback required'}")
         print(f"Execution Result: {result['execution_result']}")
         print(f"Final Reward: {result['final_reward']}")
         print(f"Execution Time Seconds: {result['execution_time_seconds']}")
