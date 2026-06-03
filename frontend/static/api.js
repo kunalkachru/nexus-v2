@@ -350,8 +350,8 @@ function synthesizeIncidentFromStatus(status) {
     };
   }
 
-export async function loadIncident(incidentId) {
-  const liveReasoning = getLiveReasoningPreference() ? "1" : "0";
+export async function loadIncident(incidentId, options = {}) {
+  const liveReasoning = options.liveReasoningOverride ?? (getLiveReasoningPreference() ? "1" : "0");
   try {
     return await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/context?live_reasoning=${liveReasoning}`, {
       includeOpenAIKey: true,

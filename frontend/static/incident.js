@@ -635,9 +635,9 @@ function settleRelayState(data) {
   setRelayStep(3);
 }
 
-async function loadAndRenderIncident(incidentId) {
+async function loadAndRenderIncident(incidentId, options = {}) {
   const [data, status, auditLogs] = await Promise.all([
-    loadIncident(incidentId),
+    loadIncident(incidentId, options),
     fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/status`),
     fetchAuthedJson(`/api/v1/audit-logs/${encodeURIComponent(incidentId)}`),
   ]);
@@ -687,6 +687,11 @@ function getIncidentId() {
   return params.get("incident_id") || params.get("nexus_incident_id") || "INC001";
 }
 
+function isHistoryReviewMode() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("history_view") === "1";
+}
+
 function setGuardianButtonsDisabled(disabled) {
   ["guardianApproveBtn", "guardianBlockBtn", "guardianModifyBtn"].forEach((id) => {
     const button = document.getElementById(id);
@@ -698,6 +703,7 @@ function setGuardianButtonsDisabled(disabled) {
 
 window.addEventListener("load", async () => {
   const incidentId = getIncidentId();
+  const historyReviewMode = isHistoryReviewMode();
   syncLiveReasoningToggle();
   syncOpenAIKeyUI();
 
@@ -768,7 +774,16 @@ window.addEventListener("load", async () => {
   });
 
   try {
-    const data = await loadAndRenderIncident(incidentId);
+    const data = await loadAndRenderIncident(incidentId, {
+      liveReasoningOverride: historyReviewMode ? "0" : undefined,
+    });
+    if (historyReviewMode) {
+      setText(
+        "liveReasoningDetail",
+        "History view opens in deterministic review mode for faster loading. Turn live reasoning on again only when you want to re-run this incident with your key."
+      );
+      syncLiveReasoningState({ ...data, live_reasoning: false });
+    }
     await maybePlayInitialRelay(incidentId, data);
   } catch (error) {
     setText("incidentTitle", "Incident unavailable");
