@@ -1,9 +1,13 @@
 # NEXUS v2 Technical Roadmap
 
-Current as of 2026-05-31.
+Current as of 2026-06-05.
 
 This roadmap describes the most practical next steps for the shipped NEXUS v2 codebase over the next few weeks.
 It is intentionally short-horizon and engineering-focused.
+
+For the broader support-triage product direction, flagship outage demo, and the implementation plan for memory, reproduction, and debugging agents, use:
+
+- [SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md)
 
 ## Goal
 
@@ -18,13 +22,13 @@ to:
 - more production-shaped
 - more measurable
 
-incident-response system without breaking the current demo flow.
+support-triage and investigation system without breaking the current demo flow.
 
 ## Guiding Principles
 
 - keep the public demo safe by default
 - preserve the current 4-agent mental model
-- improve real backend behavior without regressing the UI story
+- improve real backend behavior without regressing the support-triage UI story
 - prefer additive hardening over risky rewrites
 - keep verification and demo reproducibility strong
 
@@ -98,6 +102,7 @@ incident-response system without breaking the current demo flow.
 - incident detail pages feel more evidence-grounded
 - raw-log flows produce better parsed context
 - Guardian decisions remain visible and understandable
+- the flagship checkout outage reads more like a support case than a seeded demo fixture
 
 ## Week 3: Safe Live Reasoning And Operator Controls
 
@@ -189,4 +194,4 @@ At the end of the next few weeks, the codebase should show:
 - better incident reasoning quality
 - safer and clearer live reasoning behavior
 - stronger test and browser regression coverage
-- a cleaner path from public demo to real product hardening
+- a cleaner path from public demo to support-triage product hardening

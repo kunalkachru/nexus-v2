@@ -1,9 +1,30 @@
 # Operations
 
-Current as of 2026-05-31.
+Current as of 2026-06-05.
 
-This document is the runtime guide for the shipped NEXUS v2 product.
-It focuses on what is actually runnable now.
+This document is the runtime guide for the shipped NEXUS v2 product and the current support-triage demo flow.
+
+It focuses on what is runnable now while staying aligned with the broader product direction.
+
+## Runtime Posture
+
+Today’s shipped product is:
+
+- deterministic by default
+- safe for public demo
+- able to use request-scoped BYO-key live reasoning when a user explicitly opts in
+- built around the visible four-agent flow:
+  - `SENTINEL`
+  - `PRISM`
+  - `FORGE`
+  - `GUARDIAN`
+
+The broader product direction adds:
+
+- `REPLICA` for reproduction
+- `TRACE` for debugging
+
+Those are not required for current runtime operation.
 
 ## Deployment Modes
 
@@ -12,7 +33,8 @@ It focuses on what is actually runnable now.
 Used for:
 
 - Hugging Face Spaces
-- public judging/demo link
+- public product review
+- live walkthroughs
 
 Characteristics:
 
@@ -25,9 +47,10 @@ Characteristics:
 
 Used for:
 
-- development
+- feature work
 - browser validation
 - regression checks
+- end-to-end flagship use case review
 
 Characteristics:
 
@@ -43,18 +66,23 @@ Characteristics:
 ./scripts/docker_fresh.sh
 ```
 
-This is the preferred local reset path.
-
 ### Direct server run
 
 ```bash
 uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
-## Public Space
+## Public Spaces
+
+### Production
 
 - Space page: [https://huggingface.co/spaces/kunalkachru23/nexus](https://huggingface.co/spaces/kunalkachru23/nexus)
 - Public app: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
+
+### Staging
+
+- Space page: [https://huggingface.co/spaces/kunalkachru23/nexus-staging](https://huggingface.co/spaces/kunalkachru23/nexus-staging)
+- Public app: [https://kunalkachru23-nexus-staging.hf.space](https://kunalkachru23-nexus-staging.hf.space)
 
 ## Key Runtime Rules
 
@@ -62,6 +90,7 @@ uvicorn server.app:app --host 0.0.0.0 --port 7860
 - `OPENAI_API_KEY` is not required for the public app
 - a user can optionally attach their own key in `Incident Detail`
 - user keys are request-scoped and masked in the UI
+- history and archive review should stay deterministic by default
 
 ## Health Check
 
@@ -74,6 +103,16 @@ Expected:
 ```json
 {"status":"ok"}
 ```
+
+## Primary Manual Checks
+
+Use the flagship support-triage story while validating:
+
+1. `/inputs` can create a fresh `nxs_...` incident from raw logs
+2. the created incident reads like a prepared support case
+3. `GUARDIAN` approval visibly changes the execution state
+4. `/training` maps the latest live triage into the broader runtime summary
+5. `/history` opens archived incidents quickly in deterministic review mode
 
 ## Local Verification Commands
 
@@ -95,14 +134,6 @@ npm run browser:verify
 python demo.py
 ```
 
-## Main Manual Checks
-
-1. `/queue` loads
-2. a queue incident opens a populated incident page
-3. `/inputs` can create a fresh `nxs_...` incident
-4. `Approve runbook` updates Guardian and execution state
-5. `/training` shows reward improvement and learning summary
-
 ## If The UI Looks Stale Locally
 
 1. run `./scripts/docker_fresh.sh`
@@ -111,19 +142,19 @@ python demo.py
 
 ## If The Public HF Space Feels Slow
 
-Some extra latency is expected versus local Docker.
-Roughly sub-second to low-single-second page transitions are acceptable on Hugging Face Spaces.
+The product should behave like a review and triage surface, not a hidden re-analysis path.
 
 If a warm page is repeatedly taking several seconds:
 
 1. reload once
 2. retry the route
 3. compare with local Docker
-4. check whether it is a Space-side cold/warm latency issue
+4. check whether the route is hitting a Space-side cold/warm latency issue
+5. confirm the flow is not accidentally re-triggering expensive live reasoning on review screens
 
-## Related Docs
+## Source Of Truth Docs
 
-- [docs/FINAL_SUBMISSION_GUIDE.md](FINAL_SUBMISSION_GUIDE.md)
-- [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md)
-- [docs/BROWSER_VERIFICATION_CHECKLIST.md](BROWSER_VERIFICATION_CHECKLIST.md)
-- [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](VERIFICATION_PASS_FAIL_CHECKLIST.md)
+- [README.md](/Users/kunalkachru/Documents/nexus-v3/README.md)
+- [PRODUCT_STRATEGY_AND_GTM.md](/Users/kunalkachru/Documents/nexus-v3/docs/PRODUCT_STRATEGY_AND_GTM.md)
+- [SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md)
+- [FINAL_SUBMISSION_GUIDE.md](/Users/kunalkachru/Documents/nexus-v3/docs/FINAL_SUBMISSION_GUIDE.md)

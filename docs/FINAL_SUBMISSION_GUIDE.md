@@ -1,29 +1,21 @@
 # NEXUS v2 Final Submission Guide
 
-Current as of 2026-05-31.
+Current as of 2026-06-05.
 
-This is the primary operating guide for the final NEXUS v2 submission.
-Use it when you want the exact runbook for validating, presenting, and explaining the shipped product.
+This is the primary operating guide for presenting and validating the shipped NEXUS product with the current narrative baseline.
 
 ## Submission Summary
 
-NEXUS v2 is a public-safe, multi-agent incident response product built around four visible specialists:
+NEXUS v2 is a public-safe support triage and incident investigation product built around four visible specialists:
 
-1. `SENTINEL` classifies the incident.
-2. `PRISM` diagnoses the likely root cause.
-3. `FORGE` proposes the runbook or remediation.
-4. `GUARDIAN` acts as the safety and approval gate.
+1. `SENTINEL` frames the case
+2. `PRISM` investigates likely cause and prior context
+3. `FORGE` prepares the remediation path
+4. `GUARDIAN` governs the final human review point
 
-The submission is designed to prove one clear idea:
+The submission is designed to prove one idea:
 
-- incidents can move through a visible multi-agent workflow
-- operators can understand the evidence and reasoning
-- the system can learn from episodes over time
-- deployment can be public and safe by default
-
-For the product pitch and first impression, start with [README.md](../README.md).
-
-For forward-looking product, GTM, and RL positioning context, see [docs/PRODUCT_STRATEGY_AND_GTM.md](PRODUCT_STRATEGY_AND_GTM.md).
+**noisy production evidence can be turned into one triaged, investigated, remediation-ready case before final human review.**
 
 ## What Is Actually Shipped
 
@@ -31,99 +23,121 @@ The shipped repo includes:
 
 - a FastAPI backend
 - a multi-page frontend
-- a static training metrics dashboard
-- a deterministic-by-default incident workflow
+- deterministic-by-default incident reasoning
 - optional request-scoped live reasoning using a user-supplied OpenAI key
+- visible queue, incident, history, replay, and training surfaces
+- memory overlays for similar incidents, runbooks, and unresolved work
 - Docker packaging for Hugging Face Spaces
-- automated tests and browser validation
+- automated tests and browser verification
 
-## Why Judges Should Care
+## What The Product Is Claiming Today
 
-This project is stronger than a generic AI demo for three reasons:
+The current product claims:
 
-- it solves a real operational trust problem, not just a model-integration problem
-- it turns autonomous reasoning into a visible product workflow
-- it keeps public deployment safe without removing the live AI extension path
+- support-triage workflow compression
+- visible evidence-backed investigation
+- memory-backed incident review
+- one governed human review point
+
+The current product does not claim to have fully shipped:
+
+- arbitrary VM-based reproduction
+- universal code debugging
+- autonomous production healing
+
+Those are the next product layers represented by `REPLICA` and `TRACE`.
+
+## Why Reviewers Should Care
+
+This is stronger than a generic AI demo because:
+
+- it solves a real support-triage overhead problem
+- it makes the workflow visible instead of hiding it in one opaque answer
+- it is safe to deploy publicly
+- it has a believable expansion path into reproduction and debugging support
+
+## Product Narrative
+
+The strongest way to present NEXUS is:
+
+- support engineers and triage responders waste too much time relaying logs and evidence manually
+- NEXUS turns that into one prepared case
+- the operator reviews a structured incident, not raw chaos
+
+The strongest flagship scenario is:
+
+**customer-facing checkout outage caused by timeout and retry amplification after dependency degradation and recent deploy ambiguity**
 
 ## Public URLs
+
+### Production
 
 - Hugging Face Space: [https://huggingface.co/spaces/kunalkachru23/nexus](https://huggingface.co/spaces/kunalkachru23/nexus)
 - Public app URL: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
 
-## Default Runtime Posture
+### Staging
+
+- Hugging Face Space: [https://huggingface.co/spaces/kunalkachru23/nexus-staging](https://huggingface.co/spaces/kunalkachru23/nexus-staging)
+- Public app URL: [https://kunalkachru23-nexus-staging.hf.space](https://kunalkachru23-nexus-staging.hf.space)
+
+## Runtime Posture
 
 The public deployment is intentionally safe by default:
 
-- the app opens in deterministic demo mode
-- no server-side `OPENAI_API_KEY` is required
-- no public user can spend the project owner's OpenAI credits
-- a user may optionally attach their own OpenAI key from the incident detail screen
-
-When a user attaches their own key:
-
-- the key is stored only in browser session storage
-- the key is masked in the UI
-- the key is sent only on requests that need it
-- the app does not persist the key to disk
-- the key is not required for the main demo flow
+- deterministic by default
+- no server-side `OPENAI_API_KEY` required
+- optional user-supplied key only
+- user key stored only in browser session
+- user key masked in UI
+- user key sent only on the requests that need it
 
 ## Core Product Surfaces
 
-### 1. Command Center
+### Inputs
 
-Route:
-- `/`
+Purpose:
+
+- accept messy production evidence quickly
+- turn raw logs into a structured case
+
+### Incident Detail
+
+Purpose:
+
+- show the support-triage handoff
+- show how a messy case becomes a prepared action packet
+- keep Guardian as the final review surface
+
+### Training
+
+Purpose:
+
+- connect the latest live triage to broader runtime quality and learning posture
+
+### Supporting Surfaces
+
 - `/queue`
-
-Purpose:
-- show one active incident
-- show the four agents as active workers
-- keep queue context visible but secondary
-
-### 2. Incident Detail
-
-Route:
-- `/incident?nexus_incident_id=INC001`
-
-Purpose:
-- show the `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff
-- show incident reasoning and governance clearly
-- keep deeper technical evidence behind disclosure
-
-### 3. Learning & Controls
-
-Route:
-- `/training`
-
-Purpose:
-- show reward improvement
-- show episode progress
-- show governance posture
-- keep dense training artifacts collapsed by default
-
-### Secondary Routes
-
-These remain available directly but are not primary navigation items:
-
-- `/inputs`
 - `/history`
 - `/replay`
 - `/settings`
 
 ## Fastest Demo Path
 
-If you need the shortest good demo:
-
 1. Open `/inputs`
 2. Click `Load example logs`
 3. Click `Submit raw logs`
-4. Let the app redirect into the created incident
-5. Show the agent crew and handoff thread
-6. Show `GUARDIAN` as the safety gate
-7. Click `Approve runbook`
-8. Show that execution moves to approved/executed
-9. Open `/training`
-10. Show the reward curve and learning summary
+4. Let the app redirect to the created incident
+5. Explain the support-triage handoff:
+   - `SENTINEL`
+   - `PRISM`
+   - `FORGE`
+   - `GUARDIAN`
+6. Explain how the system reduced manual relay work
+7. Show `GUARDIAN` as the final review point
+8. Click `Approve runbook`
+9. Show the outcome
+10. Open `/training`
+11. Show the latest run and the broader runtime story
 
 ## Expected Demo Outcomes
 
@@ -132,33 +146,31 @@ If you need the shortest good demo:
 Expected:
 
 - a new `nxs_...` incident is created
-- the browser redirects into the incident console
-- title, reasoning, and Guardian state are populated
+- the browser redirects to a populated incident
+- title, reasoning, and Guardian posture are visible
 
-### Queue to Incident
+### Incident Review
 
 Expected:
 
-- clicking a queue incident opens a populated incident detail page
-- incident title is visible
-- agent reasoning is visible
-- the result banner is visible
+- the incident page feels like a triage and investigation workspace
+- likely issue and likely next action are understandable
+- Guardian is visibly in control of the final step
 
 ### Guardian Action
 
 Expected:
 
-- `Approve runbook` changes the Guardian state to approve
+- `Approve runbook` changes Guardian to approved
 - execution changes to executed
-- the incident banner updates accordingly
+- the result area updates visibly
 
 ### Training
 
 Expected:
 
-- the reward curve shows 30 episodes
-- the baseline is around `0.28`
-- the trained curve reaches `0.65+`
+- the latest live triage is visible when one exists
+- runtime and learning summaries remain understandable
 
 ## Local Run Instructions
 
@@ -178,264 +190,36 @@ Then open:
 uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
-### Judge Demo Script
-
-```bash
-python demo.py
-```
-
-Expected:
-
-- runs in under 5 seconds
-- prints classification, diagnosis, runbook, execution result, and reward
-
-## Verification Commands
-
-### Full Python Test Suite
-
-```bash
-pytest tests/ -v
-```
-
-### Browser Verification
-
-```bash
-npm run browser:verify
-```
-
 ### Demo Script
 
 ```bash
 python demo.py
 ```
 
-### Local Docker Rebuild
+## Verification Commands
 
 ```bash
+pytest tests/ -v
+npm run browser:verify
+python demo.py
 ./scripts/docker_fresh.sh
 ```
 
-## Manual Execution Steps
-
-Use this section as the exact runbook during submission.
-
-### Option A: Public Hugging Face URL
-
-Use this if you want to validate or present the hosted app:
-
-1. Open [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
-2. Wait for the Command Center to load
-3. Confirm the primary nav shows:
-   - `Command Center`
-   - `Incident Detail`
-   - `Learning & Controls`
-4. Confirm the page shows all 4 agents:
-   - `SENTINEL`
-   - `PRISM`
-   - `FORGE`
-   - `GUARDIAN`
-5. Click the first incident in the queue
-6. Confirm the incident page shows:
-   - populated incident title
-   - populated SENTINEL reasoning
-   - populated GUARDIAN state
-   - `Live reasoning: OFF`
-7. Confirm `Bring your own OpenAI key` is visible
-8. Open `/inputs`
-9. Click `Load example logs`
-10. Click `Submit raw logs`
-11. Wait for redirect to `/incident?nexus_incident_id=nxs_...`
-12. Confirm the created incident shows:
-   - populated incident title
-   - populated agent reasoning
-   - populated Guardian state
-13. Click `Approve runbook`
-14. Confirm:
-   - Guardian changes to approved
-   - execution changes to executed
-15. Open `/training`
-16. Confirm the reward curve is visible and shows 30 episodes
-
-### Option B: Local Docker Execution
-
-Use this if you want the most stable local run:
-
-1. From repo root, run:
-
-```bash
-./scripts/docker_fresh.sh
-```
-
-2. Wait for:
-
-```text
-Fresh container is ready.
-```
-
-3. Open [http://127.0.0.1:7860](http://127.0.0.1:7860)
-4. Open [http://127.0.0.1:7860/queue](http://127.0.0.1:7860/queue)
-5. Click the first incident
-6. Confirm:
-   - incident title is populated
-   - result banner is populated
-   - agent reasoning is populated
-7. Open [http://127.0.0.1:7860/inputs](http://127.0.0.1:7860/inputs)
-8. Click `Load example logs`
-9. Click `Submit raw logs`
-10. Wait for redirect into `/incident?nexus_incident_id=nxs_...`
-11. Confirm the new incident is populated
-12. Click `Approve runbook`
-13. Confirm Guardian and execution update correctly
-14. Open [http://127.0.0.1:7860/training](http://127.0.0.1:7860/training)
-15. Confirm the reward curve and learning summary are visible
-
-## Browser Execution Steps
-
-This is the exact browser path I recommend following in order.
-
-### 1. Command Center
-
-Open:
-
-- `/queue`
-
-Check:
-
-- page title reads `Command Center`
-- one active incident is the focal point
-- all 4 agents are visible above the fold
-- queue is visible but secondary
-
-Expected result:
-
-- the page immediately reads like autonomous bots are already working
-
-### 2. Incident Detail From Queue
-
-Action:
-
-- click the first queue incident
-
-Check:
-
-- incident title is populated
-- `Agent Handoff Thread` is visible
-- `SENTINEL handed evidence to PRISM` is visible
-- `Governance Bot` is visible
-- `Live reasoning: OFF` is visible by default
-
-Expected result:
-
-- the incident console feels populated and active, not empty
-
-### 3. BYO Key Panel
-
-Check:
-
-- `Bring your own OpenAI key` is visible
-- no key is shown in plain text by default
-- default message indicates deterministic mode
-
-Optional action:
-
-- paste a valid-looking OpenAI key
-- click `Use this key`
-
-Expected result:
-
-- the key is masked in the UI
-- the full secret is never displayed
-
-### 4. Inputs Flow
-
-Open:
-
-- `/inputs`
-
-Action:
-
-- click `Load example logs`
-- click `Submit raw logs`
-
-Check:
-
-- redirect lands on `/incident?nexus_incident_id=nxs_...`
-- incident title is populated
-- SENTINEL reasoning is populated
-- GUARDIAN state is populated
-
-Expected result:
-
-- raw logs become a real incident, not a dead-end input form
-
-### 5. Guardian Approval
-
-Action:
-
-- click `Approve runbook`
-
-Check:
-
-- Guardian changes to approve
-- execution changes to executed
-- incident banner updates
-
-Expected result:
-
-- the governance gate visibly controls the execution state
-
-### 6. Learning & Controls
-
-Open:
-
-- `/training`
-
-Check:
-
-- page title reads `Learning & Controls`
-- reward curve is visible
-- 30 episodes are visible
-- governance summary is visible
-- advanced artifacts are collapsed by default
-
-Expected result:
-
-- the learning story is visible without opening dense detail
-
-## Browser Validation Checklist
-
-Before submission, verify these flows:
-
-1. `/queue` loads and shows the Command Center
-2. clicking the first queue incident opens a populated incident page
-3. `/inputs` creates a new incident and redirects correctly
-4. `Approve runbook` changes Guardian and execution state
-5. `/training` shows the reward curve and learning summary
-6. `Bring your own OpenAI key` is visible in Incident Detail
-7. the default live-reasoning state is `OFF`
-
-Detailed checklists:
-
-- [docs/BROWSER_VERIFICATION_CHECKLIST.md](BROWSER_VERIFICATION_CHECKLIST.md)
-- [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](VERIFICATION_PASS_FAIL_CHECKLIST.md)
-
-## Source Of Truth
-
-Use these files as the current implementation source of truth:
-
-- [README.md](../README.md)
-- [docs/FINAL_SUBMISSION_GUIDE.md](FINAL_SUBMISSION_GUIDE.md)
-- [docs/TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md)
-- [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](VISUAL_ARCHITECTURE_AND_FLOWS.md)
-- [docs/DEMO_CHEAT_SHEET.md](DEMO_CHEAT_SHEET.md)
-- [docs/OPERATIONS.md](OPERATIONS.md)
-
-## Design Docs Note
-
-The latest branch intentionally removes the older long-form planning and enterprise vision documents from the visible repo surface.
-
-Use:
-
-- [design-docs/README.md](../design-docs/README.md)
-
-for the current note on that cleanup.
+## Manual Runbook
+
+Use this sequence for manual verification:
+
+1. open `/inputs`
+2. create a fresh incident from raw logs
+3. inspect the incident
+4. approve the runbook
+5. open `/training`
+6. open `/history`
+7. optionally review `/replay`
+
+## Source Of Truth Docs
+
+- [README.md](/Users/kunalkachru/Documents/nexus-v3/README.md)
+- [PRODUCT_STRATEGY_AND_GTM.md](/Users/kunalkachru/Documents/nexus-v3/docs/PRODUCT_STRATEGY_AND_GTM.md)
+- [SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md)
+- [VISUAL_ARCHITECTURE_AND_FLOWS.md](/Users/kunalkachru/Documents/nexus-v3/docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)

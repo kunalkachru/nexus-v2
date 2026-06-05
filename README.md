@@ -1,66 +1,189 @@
 # NEXUS v2
 
-NEXUS v2 is a multi-agent incident response product that makes autonomous operations understandable, governable, and demo-safe from the first screen.
+NEXUS v2 is an AI-assisted support triage and incident investigation product designed to remove the repetitive relay work between support engineers, triage teams, and production responders.
 
-Instead of hiding AI behind a generic chatbot or a noisy dashboard, NEXUS shows a visible team of specialist agents:
+The product vision is simple:
+
+- noisy logs and incident evidence go in
+- the system classifies, investigates, and prepares a likely remediation path
+- one human reviewer steps in only when the case is already structured and action-ready
+
+Today, the shipped product demonstrates that flow with a visible multi-agent system:
 
 `SENTINEL -> PRISM -> FORGE -> GUARDIAN`
 
-Each one has a job, a handoff, and an explicit place in the incident lifecycle.
+The broader product direction expands that into a triage, reproduction, debugging, and governed-remediation workflow.
 
-## Why This Product Gets Attention
+Primary narrative and build documents:
 
-Most AI incident tools promise faster remediation, but they still fail in the same place: operators cannot clearly see what the system inferred, why it chose a response, or whether it is safe to trust in production.
-
-NEXUS v2 is compelling because it does not just automate. It makes the automation legible.
-
-- `SENTINEL` classifies the incident and severity.
-- `PRISM` explains the likely root cause.
-- `FORGE` proposes the remediation path.
-- `GUARDIAN` acts as the explicit approval and safety gate.
-
-That makes NEXUS feel less like a black box and more like a real product for modern operations teams.
+- [Product strategy and GTM](/Users/kunalkachru/Documents/nexus-v3/docs/PRODUCT_STRATEGY_AND_GTM.md)
+- [Support-triage product execution plan](/Users/kunalkachru/Documents/nexus-v3/docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md)
+- [Final submission guide](/Users/kunalkachru/Documents/nexus-v3/docs/FINAL_SUBMISSION_GUIDE.md)
 
 ## Problem
 
-Incident response is still fragmented across alerts, logs, dashboards, runbooks, and human escalation. In practice that creates three persistent failures:
+Production support and triage teams still spend too much time doing repetitive manual work before a confident action plan exists.
 
-- operators lose time reconstructing context instead of resolving the issue
-- remediation is hard to trust because reasoning is scattered or invisible
-- engineering leaders cannot confidently explain how automation is controlled
+In a typical incident:
 
-The result is slower triage, weaker auditability, and lower trust in AI-assisted operations.
+- one engineer receives logs or error output
+- another engineer searches for known signatures
+- someone else checks dashboards and recent deploys
+- evidence is pasted across team boundaries
+- the issue is escalated again for reproduction or debugging
+- only then does a likely remediation path emerge
 
-This problem is experienced most directly by SRE, platform, DevOps, and engineering teams responsible for uptime, but it also affects engineering leadership who need confidence that automation is controlled, explainable, and safe.
+That manual relay chain is slow, inconsistent, and expensive. It burns support engineering time on evidence handling instead of resolution.
 
 ## Solution
 
-NEXUS v2 turns raw logs and queue incidents into one visible incident workflow with four distinct agents and one clear governance checkpoint.
+NEXUS turns that relay chain into one governed investigation workflow.
 
-The product promise is simple:
+Its job is to:
 
-- turn unstructured incident input into structured operational context
-- show the reasoning chain from classification to diagnosis to remediation
-- keep execution behind an explicit governance decision
-- make learning visible without making the product feel unsafe
+- normalize raw incident evidence into a shared case
+- classify the likely severity and ownership domain
+- investigate likely causes with memory of prior incidents and runbooks
+- prepare a remediation plan before the human reviewer is pulled in
+- keep the final execution decision behind an explicit safety and approval gate
 
-This is what allows the system to be both impressive in a demo and credible as a product direction.
+The long-term product is not “AI for incidents” in the abstract.
 
-## Before And After NEXUS
+It is:
 
-Before NEXUS:
+**a support triage and investigation system that reduces manual escalation work before final human review.**
 
-- incidents arrive as fragmented logs, alerts, and context spread across tools
-- triage depends on manual reconstruction and tribal knowledge
-- remediation recommendations feel opaque
-- automation trust is low because approval and safety are not clearly visible
+## What Kind Of Problems NEXUS Solves
 
-After NEXUS:
+NEXUS is best suited for high-volume, high-friction support and production incidents where the first 60-80% of the work is evidence collection, issue routing, and repeated investigation.
 
-- raw input is normalized into one incident object
-- reasoning is visible from classification to diagnosis to runbook selection
-- governance is explicit through `GUARDIAN`
-- execution and learning both stay inspectable, auditable, and safer to trust
+Examples:
+
+- checkout timeout cascades
+- bad deployment regressions
+- database pool exhaustion
+- queue backlog and worker degradation
+- certificate expiry or edge access failures
+- repeated auth or dependency failures
+
+These are strong fits because they require:
+
+- noisy evidence handling
+- likely issue matching against known history
+- reproduction or environment validation
+- safe remediation review before execution
+
+## Product Vision
+
+The end-state product combines four layers of work that today are often split across multiple engineers:
+
+### 1. Triage
+
+- identify likely severity
+- identify likely impacted service or owner
+- convert raw evidence into a structured incident
+
+### 2. Investigation
+
+- correlate logs, metrics, deployment changes, and prior incidents
+- retrieve similar issues, known fixes, and unresolved follow-ups
+- reproduce issues in production-like environments when needed
+- debug likely code paths when the problem is not obvious from symptoms alone
+
+### 3. Action Preparation
+
+- propose the safest runbook or remediation path
+- explain why that path was selected
+- attach rollback and risk context
+
+### 4. Governance
+
+- require one clear human approval point
+- keep execution auditable
+- preserve operator trust and policy control
+
+## Current Shipped Workflow
+
+Today, the product visibly demonstrates the first version of that vision with four shipped agents:
+
+- `SENTINEL` classifies the incident and frames the case
+- `PRISM` investigates likely root cause from evidence and history
+- `FORGE` prepares the runbook or remediation path
+- `GUARDIAN` acts as the approval and safety gate
+
+## Target Product Workflow
+
+The fuller product direction expands the current workflow into:
+
+```mermaid
+flowchart LR
+    A["Logs, alerts, tickets, raw evidence"] --> B["SENTINEL triage"]
+    B --> C["PRISM investigation"]
+    C --> D["REPLICA reproduction"]
+    D --> E["TRACE debugging"]
+    E --> F["FORGE remediation plan"]
+    F --> G["GUARDIAN approval"]
+    G --> H["Execution or escalation"]
+    H --> I["Learning and incident memory"]
+```
+
+Meaning:
+
+- `SENTINEL` decides what kind of case this is
+- `PRISM` identifies the most likely issue and known patterns
+- `REPLICA` reproduces the failure in a production-like environment when reproduction is needed
+- `TRACE` investigates the likely code path and debugging state when the issue needs code-level analysis
+- `FORGE` prepares the safest action plan
+- `GUARDIAN` keeps one final human control point
+
+`REPLICA` and `TRACE` are product-direction agents, not fully shipped agents yet.
+
+## Why This Product Matters
+
+The main value is not “more AI.”
+
+The main value is:
+
+- fewer manual handoffs
+- less repetitive log pasting and issue matching
+- faster time to confident triage
+- fewer unnecessary escalations
+- better reuse of prior incident knowledge
+- safer remediation decisions
+
+For enterprises, this means support engineers and incident responders spend less time assembling the case and more time resolving it.
+
+## Who Buys This
+
+NEXUS is aimed at organizations that operate support engineering, triage, NOC, SRE, or platform response teams.
+
+The strongest buyers are teams that already have:
+
+- repeated production incidents
+- expensive multi-level escalation workflows
+- too much manual evidence gathering
+- poor reuse of known issue history
+- a need for safe human approval before remediation
+
+## How The Product Should Be Demonstrated
+
+The strongest demo is not “AI agents talking.”
+
+It is:
+
+1. raw logs arrive from a real production-style issue
+2. the system turns them into a structured case
+3. the likely issue and prior history are surfaced
+4. a remediation plan is prepared
+5. one human reviews and approves the action
+
+The best flagship use case is a customer-facing outage such as:
+
+- checkout timeout cascade after dependency degradation and retry amplification
+- deployment regression causing 500s
+- queue backlog after worker failure
+
+That shows the product solving a painful, buyable workflow.
 
 ## Live Demo Links
 
@@ -68,216 +191,92 @@ After NEXUS:
 - Hugging Face Space: [https://huggingface.co/spaces/kunalkachru23/nexus](https://huggingface.co/spaces/kunalkachru23/nexus)
 - Submission walkthrough video: [artifacts/demo-video/nexus-v2-submission-walkthrough.mp4](artifacts/demo-video/nexus-v2-submission-walkthrough.mp4)
 - Product demo video: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
-- Final submission guide: [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
-- Visual architecture and flows: [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
 
-## Product Overview
+## Product Surfaces
 
-NEXUS v2 is intentionally organized around three primary surfaces:
+### Command Center
 
-### 1. Command Center
+The Command Center keeps one live case in focus while showing the active queue and crew state.
 
-The Command Center keeps one live incident in focus while showing the active queue and the four-agent crew. It is designed to feel like an operational control room, not a KPI wall.
+### Incident Detail
 
-### 2. Incident Detail
+Incident Detail is the main product surface. It shows the handoff from triage to investigation to runbook to governance.
 
-Incident Detail is the core product surface. This is where the operator sees the handoff thread:
+### Learning & Controls
 
-- what `SENTINEL` classified
-- what `PRISM` diagnosed
-- what `FORGE` proposed
-- what `GUARDIAN` approved, blocked, or modified
+Learning & Controls explains how the system measures runtime quality, remembers prior incidents, and improves over time.
 
-### 3. Learning & Controls
+## Why This Is Different
 
-Learning & Controls explains how the system improves over time. It shows reward progression, agent accuracy, and governance posture together so the learning story never becomes disconnected from operational safety.
+Most AI incident products stop at:
 
-## How It Works
+- summarizing logs
+- proposing a generic answer
+- leaving humans to manually investigate the rest
 
-```mermaid
-flowchart LR
-    A["Queue incident or raw logs"] --> B["Incident normalization"]
-    B --> C["SENTINEL classification"]
-    C --> D["PRISM diagnosis"]
-    D --> E["FORGE remediation plan"]
-    E --> F["GUARDIAN governance review"]
-    F --> G["Execution outcome"]
-    G --> H["Learning and reward tracking"]
-```
+NEXUS is different because it is built around the support triage relay chain itself.
 
-### Fastest Demo Flow
+The product is designed to collapse repetitive manual steps:
 
-1. Open `/inputs`
-2. Load example logs
-3. Submit raw logs
-4. Land in `Incident Detail`
-5. Show the visible `SENTINEL -> PRISM -> FORGE -> GUARDIAN` handoff
-6. Approve the runbook through Guardian
-7. Open `/training`
-8. Show the learning curve and governance posture
+- evidence gathering
+- issue matching
+- reproduction setup
+- debugging context preparation
+- remediation drafting
 
-## Why This Is Valuable To Real Teams
+into one coordinated workflow before human approval.
 
-NEXUS v2 is interesting as a hackathon project because it is not only technically complete; it also models a believable product category.
-
-For operators:
-- faster triage through normalized context and visible reasoning
-- less guesswork around why a remediation was selected
-
-For engineering leaders:
-- clearer governance and auditability around AI-assisted actions
-- a more understandable story around operational safety
-
-For organizations adopting AI:
-- deterministic default mode for safe public usage
-- optional live reasoning without exposing house API keys
-- a product surface that treats trust as a core feature, not post-demo cleanup
-
-## Target Users And Workflow Impact
-
-NEXUS is built primarily for SREs, platform engineers, incident commanders, and engineering managers running production systems.
-
-Their pain points are consistent:
-
-- too much time spent reconstructing context from alerts, logs, and dashboards
-- inconsistent triage and unclear ownership
-- low trust in AI-generated remediation suggestions
-- weak auditability around approval and execution decisions
-
-NEXUS improves that workflow by normalizing incident input into one visible agent-driven flow, making the reasoning chain explicit, keeping execution behind `GUARDIAN`, and creating a cleaner operational record that can improve over time through learning.
-
-## Why This Is Different From A Generic AI Copilot
-
-Most AI copilots collapse triage, diagnosis, and remediation into one assistant answer.
-
-NEXUS does the opposite:
-
-- it separates responsibilities across visible specialists
-- it shows the handoff between reasoning stages
-- it keeps governance as a first-class product feature
-- it supports public-safe deployment with deterministic fallback and optional BYO-key live reasoning
-
-That makes the system easier to understand, easier to trust, and easier to present as a serious operations product.
-
-## Architecture And Technical Credibility
+## Architecture And Technical Direction
 
 ```mermaid
 flowchart TD
     A["Frontend experience layer"] --> B["FastAPI orchestration layer"]
-    B --> C["Incident and governance services"]
-    C --> D["Persistence and audit layer"]
+    B --> C["Triage and investigation services"]
+    C --> D["Incident persistence and audit"]
     C --> E["Deterministic reasoning path"]
     C --> F["Optional BYO-key live reasoning path"]
-    D --> G["Incident history and training artifacts"]
+    D --> G["Incident memory and learning artifacts"]
+    C --> H["Future reproduction and debugging sandboxes"]
 ```
 
-NEXUS v2 uses a deliberately simple architecture so the product remains easy to deploy, easy to explain, and safe to demonstrate publicly.
+Current architecture priorities:
 
-- FastAPI provides a compact backend that can serve both the product shell and the API surface cleanly.
-- The multi-page frontend keeps the product experience crisp without introducing SPA complexity that would add risk to the demo.
-- Deterministic-by-default reasoning makes the public product reliable and safe.
-- The request-scoped BYO-key path enables live OpenAI-backed behavior only when a user explicitly opts in.
-- Incident persistence, audit state, and learning artifacts support replayability and operational credibility.
+- safe public deployment
+- deterministic fallback
+- request-scoped BYO-key live reasoning
+- visible handoff between stages
+- auditability and replayability
 
-For the deeper technical architecture and screenshots, see [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md).
+Target architecture additions:
+
+- reproduction environments for issue recreation
+- debugging sandboxes for code-path tracing
+- richer memory and RAG across incident history
+- tool access into observability, deployment, and ticketing systems
 
 ## Codex And OpenAI Usage
 
-This project is also a strong demonstration of AI-assisted product building.
+Codex helped across:
 
-### What Codex enabled
+- product shell design and refactoring
+- backend orchestration and validation
+- browser-based test coverage
+- docs, demo packaging, and deploy hardening
 
-- the agent-first product shell and UI refactor
-- backend integration and deployment hardening
-- browser-based regression validation
-- demo-video automation and repo cleanup
-- the final submission docs, diagrams, and validation guides
+OpenAI usage is intentionally safe:
 
-### How OpenAI is used responsibly
+- the public deployment defaults to deterministic mode
+- no server-side project key is required for the public demo
+- users can optionally attach their own key for live reasoning
+- keys stay request-scoped and browser-session local
 
-The public deployment is intentionally safe by default:
-
-- no server-side project `OPENAI_API_KEY` is required for the public demo
-- the product opens in deterministic demo mode
-- a user may optionally attach their own key for live reasoning
-- user keys stay in browser session storage and are sent request-scoped only when needed
-
-That makes the public app safe to share without leaking or spending the project owner's API credits.
-
-### What OpenAI powers
-
-- optional live reasoning for users who bring their own key
-- an extensibility path beyond the deterministic demo baseline
-- a stronger proof point that the product can stay safe in public while still supporting real model-backed behavior
-
-## Future Product Vision
-
-NEXUS is designed to grow from a demo-safe incident copilot into an autonomous incident operations platform.
-
-- today: visible triage, diagnosis, remediation, and governance
-- next: deeper integrations, richer evidence, stronger policy control, and replay-backed learning
-- long term: measurable operational improvement from governed AI actions taken across real incidents
-
-The key idea is not just to assist with incidents, but to create a system that gets better at handling them while remaining understandable and controllable.
-
-## Go-To-Market And Who Buys This
-
-NEXUS should be positioned as `governed multi-agent incident response`, not generic AI ops.
-
-- engineering managers want faster triage and clearer escalation paths
-- platform and SRE teams want safer remediation with visible approvals
-- leadership wants stronger auditability, operational trust, and a credible AI adoption story
-
-This positioning matters because the product is not selling raw model access. It is selling trust, workflow clarity, and safer operational automation.
-
-## Why RL Matters
-
-The RL layer matters because it turns NEXUS into a learning system, not just a static prompt-driven assistant.
-
-- it can learn which interventions actually work
-- it can improve prioritization and runbook choice over time
-- it can adapt to incident difficulty and outcome quality
-- it gives the product a measurable path to getting better from real operational feedback
-
-That makes the training surface strategically important, not just visually interesting.
-
-## What Comes Next
-
-The next phases after the demo are straightforward:
-
-- stronger integrations into observability and ticketing systems
-- richer evidence retrieval and correlation
-- a production-grade policy engine around Guardian
-- closed-loop RL from real execution outcomes
-- team workflows, approvals, and incident memory
-- enterprise packaging, security posture, and deployment controls
-
-## Submission Resource Index
-
-### Start here
-
-1. [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
-2. [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
-3. [docs/PRODUCT_STRATEGY_AND_GTM.md](docs/PRODUCT_STRATEGY_AND_GTM.md)
-4. [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
-5. [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
-
-### Core submission docs
+## Product Strategy Docs
 
 - [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
 - [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
 - [docs/PRODUCT_STRATEGY_AND_GTM.md](docs/PRODUCT_STRATEGY_AND_GTM.md)
 - [docs/PRESENTATION_PACK.md](docs/PRESENTATION_PACK.md)
 - [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md)
-
-### Supporting demo and validation docs
-
-- [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
-- [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md)
-- [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md)
-- [docs/BROWSER_VERIFICATION_CHECKLIST.md](docs/BROWSER_VERIFICATION_CHECKLIST.md)
-- [docs/VERIFICATION_PASS_FAIL_CHECKLIST.md](docs/VERIFICATION_PASS_FAIL_CHECKLIST.md)
-- [docs/OPERATIONS.md](docs/OPERATIONS.md)
 
 ## Validation
 
@@ -297,17 +296,9 @@ npm run browser:verify
 python demo.py
 ```
 
-## Hackathon Submission Assets
+## Notes
 
-- Live product/demo link: [https://kunalkachru23-nexus.hf.space](https://kunalkachru23-nexus.hf.space)
-- Video walkthrough: [artifacts/demo-video/nexus-v2-submission-walkthrough.mp4](artifacts/demo-video/nexus-v2-submission-walkthrough.mp4)
-- Product demo video: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
-- LinkedIn/X announcement: `Add final public URL before submission`
-- Architecture and technical docs: [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
-- Codex/OpenAI usage and validation story: [docs/FINAL_SUBMISSION_GUIDE.md](docs/FINAL_SUBMISSION_GUIDE.md)
-
-## Notes For Reviewers
-
-- GitHub `master` is the canonical submission branch.
-- The Hugging Face deployment is intentionally lighter than GitHub so non-runtime assets do not bloat the public demo environment.
-- The product is designed to be impressive in a live demo without sacrificing safety or clarity.
+- GitHub `master` remains the canonical submission branch.
+- The Hugging Face deployment stays lighter than GitHub so runtime artifacts do not bloat the public demo environment.
+- The current shipped demo proves the triage -> investigation -> remediation -> governance loop.
+- Reproduction and debugging agents are the next major product expansion, not a shipped claim today.

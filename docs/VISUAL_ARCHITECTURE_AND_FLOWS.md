@@ -1,271 +1,248 @@
 # NEXUS v2 Visual Architecture And Flows
 
-Current as of 2026-05-31.
+Current as of 2026-06-05.
 
-This document is the technical and visual companion to the root README. It is meant to do three things well:
-
-- show what the product looks like
-- explain how the product works
-- explain why the architecture is credible for a public AI demo
+This document explains what the product looks like, how the current shipped workflow works, and how the architecture expands into reproduction and debugging.
 
 ## Product Screenshots
 
 ### Command Center
 
-![Command Center](assets/screenshots/command-center.png)
+![Command Center](/Users/kunalkachru/Documents/nexus-v3/docs/assets/screenshots/command-center.png)
 
 ### Incident Detail
 
-![Incident Detail](assets/screenshots/incident-detail.png)
+![Incident Detail](/Users/kunalkachru/Documents/nexus-v3/docs/assets/screenshots/incident-detail.png)
 
 ### Raw Log To Incident Flow
 
-![Raw Log Flow](assets/screenshots/raw-log-incident-flow.png)
+![Raw Log Flow](/Users/kunalkachru/Documents/nexus-v3/docs/assets/screenshots/raw-log-incident-flow.png)
 
 ### Learning & Controls
 
-![Learning and Controls](assets/screenshots/learning-controls.png)
+![Learning and Controls](/Users/kunalkachru/Documents/nexus-v3/docs/assets/screenshots/learning-controls.png)
 
 ## What The Product Is Designed To Show
 
-NEXUS v2 is not a generic “AI for incidents” demo. It is specifically designed to show visible multi-agent reasoning with governance.
+NEXUS is not a generic AI-for-incidents surface.
 
-The product experience answers four questions on screen:
+It is a support triage and incident investigation product designed to reduce manual relay work before one final human review point.
 
-1. What happened?
-2. What does the system think is wrong?
-3. What should happen next?
-4. Who authorizes execution?
+The product should answer these questions on screen:
 
-That is why the product is structured around `SENTINEL`, `PRISM`, `FORGE`, and `GUARDIAN` rather than one monolithic assistant.
+1. what is most likely happening?
+2. who likely owns the issue?
+3. what prior cases matter?
+4. what should happen next?
+5. who approves it?
 
-## Product Flow
+## Current Shipped Product Flow
 
 ```mermaid
 flowchart LR
-    A["Queue incident or raw logs"] --> B["Normalize incident context"]
-    B --> C["SENTINEL classifies"]
-    C --> D["PRISM diagnoses"]
-    D --> E["FORGE proposes remediation"]
-    E --> F["GUARDIAN reviews and decides"]
+    A["Raw logs or queue incident"] --> B["Normalize incident context"]
+    B --> C["SENTINEL triage"]
+    C --> D["PRISM investigation"]
+    D --> E["FORGE action preparation"]
+    E --> F["GUARDIAN final review"]
     F --> G["Execution outcome"]
-    G --> H["Learning and metrics update"]
+    G --> H["Learning and memory update"]
 ```
 
 ### Why this flow matters
 
-- intake becomes structured context instead of staying opaque
-- reasoning is visible stage by stage
-- governance is explicit instead of hidden behind automation
-- learning is tied back to the same operational workflow
+- intake becomes one structured case
+- investigation becomes visible
+- action preparation becomes explicit
+- governance becomes a product feature rather than a hidden rule
 
-## User Journey
+## Target Product Flow
 
 ```mermaid
-flowchart TD
-    A["Open Command Center"] --> B["Choose queue incident"]
-    A --> C["Open Inputs"]
-    C --> D["Paste or load raw logs"]
-    D --> E["Submit incident"]
-    E --> F["Redirect to Incident Detail"]
-    B --> F
-    F --> G["Inspect agent handoff"]
-    F --> H["Review BYO-key or deterministic mode"]
-    F --> I["Approve through Guardian"]
-    I --> J["View execution outcome"]
-    J --> K["Open Learning & Controls"]
+flowchart LR
+    A["Raw logs, alerts, tickets"] --> B["SENTINEL triage"]
+    B --> C["PRISM investigation and memory"]
+    C --> D["REPLICA reproduction"]
+    D --> E["TRACE debugging"]
+    E --> F["FORGE remediation packet"]
+    F --> G["GUARDIAN approval"]
+    G --> H["Execution or escalation"]
+    H --> I["Learning and retrieval update"]
 ```
+
+This is the full product direction:
+
+- triage
+- investigation
+- reproduction
+- debugging
+- remediation
+- governance
 
 ## Why The Architecture Is Shaped This Way
 
-NEXUS v2 uses a deliberately conservative architecture for a good reason: the product has to be impressive in public and stable under live demo conditions.
-
 ### Why FastAPI
 
-- it keeps the backend compact and predictable
-- it cleanly serves both HTML surfaces and JSON contracts
-- it reduces operational overhead for a single-container public deployment
+- compact backend
+- serves both HTML and JSON contracts
+- easy single-container public deployment
 
 ### Why a multi-page frontend
 
-- the product is easier to reason about screen by screen
-- direct route links help manual demo and judging flows
-- it avoids SPA complexity that would add failure points without improving the submission
+- easier to reason about screen by screen
+- easier to demo and validate route by route
+- lower failure surface than a full SPA rewrite
 
-### Why deterministic-by-default runtime
+### Why deterministic-by-default
 
-- public users should not be able to burn the project owner’s API credits
-- the main demo should remain reproducible
-- the product needs a stable fallback even without live model access
+- safe public demo
+- reproducible judging flow
+- live reasoning remains optional, not required
 
-### Why BYO-key live reasoning
+### Why visible agent roles
 
-- it preserves a live OpenAI-backed path for users who want it
-- it keeps the public app safe by default
-- it turns API-key handling into an explicit product choice rather than a hidden infrastructure detail
+- the product needs to show work, not just answer
+- support organizations care about traceability and trust
 
 ## System Architecture
 
 ```mermaid
 flowchart TD
     A["Frontend experience layer"] --> B["FastAPI orchestration layer"]
-    B --> C["Incident services"]
-    B --> D["Training and platform services"]
-    C --> E["Incident persistence"]
-    C --> F["Audit and artifact storage"]
-    C --> G["Deterministic reasoning path"]
-    C --> H["Optional BYO-key live reasoning path"]
-    D --> I["Reward summary and platform status"]
+    B --> C["Triage and investigation services"]
+    B --> D["Training and learning surfaces"]
+    C --> E["Incident persistence and audit"]
+    C --> F["Deterministic reasoning path"]
+    C --> G["Optional BYO-key live reasoning path"]
+    C --> H["Incident memory and retrieval"]
+    C --> I["Future reproduction sandboxes"]
+    C --> J["Future debugging and source analysis"]
 ```
 
 ## Architecture Layers
 
-### 1. Frontend experience layer
+### Frontend experience layer
 
-This is the product shell users interact with:
+The user-facing surfaces:
 
 - `Command Center`
-- `Incident Detail`
 - `Inputs`
-- `Learning & Controls`
+- `Incident Detail`
+- `Training`
+- `History`
+- `Replay`
 
-Its job is to present the system as a coherent operational product, not as raw backend output.
+Their job is to present one coherent support-triage product, not backend fragments.
 
-### 2. Orchestration and API layer
+### Orchestration layer
 
 This layer:
 
 - receives normalized incident requests
-- serves queue and incident surfaces
+- serves the queue and incident surfaces
+- coordinates the visible agent flow
 - handles Guardian review actions
-- exposes training and platform status
 
-Its job is to keep the incident workflow explicit and testable.
-
-### 3. Incident persistence and audit layer
+### Persistence and audit layer
 
 This layer stores:
 
 - incident records
 - audit history
 - execution outcomes
-- learning and replay artifacts
+- retrieval and learning artifacts
 
-Its job is to make the workflow replayable, inspectable, and more production-shaped.
+### Memory layer
 
-### 4. Optional live reasoning path
+This layer is already visible in the product through:
 
-This path is only used when a user explicitly supplies their own OpenAI key. It exists to show extensibility without making the public demo unsafe.
+- similar incidents
+- runbook memories
+- unresolved follow-ups
+
+It becomes even more important as the product moves toward support-triage specialization.
+
+### Future reproduction layer
+
+This is the `REPLICA` direction.
+
+Its job is to:
+
+- recreate likely failure conditions
+- validate or reject hypotheses
+- test likely mitigations in a controlled environment
+
+### Future debugging layer
+
+This is the `TRACE` direction.
+
+Its job is to:
+
+- narrow likely code paths
+- identify state or control-flow anomalies
+- prepare developer-ready debugging context
 
 ## End-To-End Data Flow
 
 ```mermaid
 sequenceDiagram
-    participant U as Operator or source
+    participant U as Support engineer or operator
     participant I as Inputs or Queue
     participant S as SENTINEL
     participant P as PRISM
     participant F as FORGE
     participant G as GUARDIAN
-    participant L as Learning surface
+    participant L as Learning and memory
 
-    U->>I: provide queue incident or raw logs
+    U->>I: provide raw logs or open a case
     I->>S: normalized incident context
-    S->>P: classification and severity
-    P->>F: diagnosis and evidence
-    F->>G: remediation proposal
-    G-->>I: approve, reject, or modify
-    G-->>U: visible governance decision
-    I-->>L: reward, trajectory, and metrics
+    S->>P: severity, ownership, issue family
+    P->>F: investigation packet and memory
+    F->>G: prepared action packet
+    G-->>U: approve, reject, or request modification
+    G-->>L: persist outcome for future retrieval
 ```
-
-## Request Lifecycle
-
-In concrete terms, one incident moves through the system like this:
-
-1. input arrives from queue selection or raw logs
-2. the backend normalizes it into one incident context
-3. `SENTINEL` classifies severity and category
-4. `PRISM` explains the likely cause from available evidence
-5. `FORGE` proposes the runbook or remediation path
-6. `GUARDIAN` authorizes, blocks, or modifies execution
-7. the result is persisted for auditability, replay, and learning
-
-This lifecycle matters because it makes the AI behavior explicit at every step rather than compressing everything into one opaque answer.
 
 ## Agent Design
 
-The four-agent split is a product decision as much as an architecture decision.
-
 ### SENTINEL
 
-- job: classify incident type and severity
-- input: normalized incident context
-- output: incident label, priority, confidence, reasoning
-- why it matters: it gives the workflow a clear first interpretation step
+- job: triage the incident and frame the case
+- output: severity, likely service, likely team, issue family, confidence
 
 ### PRISM
 
-- job: diagnose likely root cause
-- input: classified incident plus evidence bundle
-- output: diagnosis, supporting evidence, correlation narrative
-- why it matters: it separates interpretation from remediation
+- job: investigate likely cause and historical context
+- output: root-cause hypothesis, evidence summary, deploy analysis, memory hits
 
 ### FORGE
 
-- job: propose the remediation or runbook
-- input: diagnosis and operational context
-- output: runbook proposal, candidate action, rationale
-- why it matters: it makes the “what should we do” step explicit
+- job: prepare the remediation path
+- output: proposed action, alternatives, rollback context, rationale
 
 ### GUARDIAN
 
-- job: govern execution
-- input: runbook proposal plus policy posture
-- output: approve, reject, or request modification
-- why it matters: it turns safety into a visible product feature
+- job: govern the final review point
+- output: approve, reject, or request modification with policy posture
+
+### REPLICA
+
+- product-direction job: reproduce the issue in a production-like environment
+- output: reproduction result, validation notes, confidence shift
+
+### TRACE
+
+- product-direction job: narrow likely code path and debugging state
+- output: suspected modules, divergence summary, debugging notes
 
 ## What Makes This Production-Shaped
 
-Even as a hackathon demo, NEXUS v2 includes several traits that make it feel closer to a real product than a mockup:
+Even in its current shipped form, NEXUS already has:
 
-- explicit governance gate before execution
-- deterministic fallback for stable public use
-- replayability through consistent incident artifacts
-- auditability through visible status and review flows
-- public-safe deployment posture through BYO-key live reasoning
+- explicit human review before action
+- deterministic fallback for public stability
+- visible memory and history
+- auditable decisions
+- a credible path from triage into deeper investigation
 
-## Failure Containment And Fallback
-
-NEXUS is intentionally designed so that demo quality does not depend on always-available live model access.
-
-- deterministic reasoning remains the default runtime path
-- the public product does not require a server-side `OPENAI_API_KEY`
-- live behavior is additive and opt-in, not a dependency for the main experience
-- governance remains visible even when live reasoning is not enabled
-
-This is important for both reliability and trust: the product still works, still explains itself, and still feels coherent even when live model access is absent.
-
-## Runtime Safety Design
-
-```mermaid
-flowchart TD
-    A["Public HF Space"] --> B["Deterministic mode by default"]
-    B --> C["No project OpenAI key required"]
-    C --> D["Safe public demo"]
-    A --> E["Optional BYO-key live reasoning"]
-    E --> F["Stored in browser session only"]
-    F --> G["Sent request-scoped to backend"]
-    G --> H["Live behavior only when user opts in"]
-```
-
-## Why This Technical Story Matters
-
-This architecture supports the core pitch of NEXUS v2:
-
-- visible AI reasoning
-- explicit governance
-- credible operational workflow
-- safe public deployment
-
-That combination is what makes the project feel stronger than a UI demo or a model wrapper. It behaves like a product with a clear point of view.
+That is what makes it feel closer to a real product than a generic model wrapper.
