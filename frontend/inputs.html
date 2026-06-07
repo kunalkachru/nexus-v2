@@ -22,10 +22,10 @@
 <body>
     <div class="container">
         <header class="app-shell">
-            <div>
-                <div class="brand">NEXUS v2</div>
-                <div class="brand-copy">Intake pipeline</div>
-            </div>
+                <div>
+                    <div class="brand">NEXUS v2</div>
+                    <div class="brand-copy">Production evidence intake and case shaping</div>
+                </div>
             <nav class="app-nav" aria-label="Primary">
                 <a class="nav-link" href="queue">Command Center</a>
                 <a class="nav-link active" href="incident?nexus_incident_id=INC001" aria-current="page">Incident Detail</a>
@@ -41,9 +41,9 @@
         <section class="hero">
             <div class="hero-panel">
                 <div class="eyebrow">Input Channels</div>
-                <h1>Raw logs first.</h1>
+                <h1>Start with the mess. Shape the case before people start relaying it.</h1>
                 <p class="hero-copy">
-                    Start with pasted incident text, see it normalized in the browser, and open the incident console with one clear path.
+                    Paste raw logs, stack traces, or incident text, watch the evidence get structured, and move into one coordinated triage workflow without the usual handoff overhead.
                 </p>
                 <div class="hero-stats">
                     <div class="stat"><div class="stat-label">Supported channels</div><div class="stat-value">6</div></div>
@@ -56,7 +56,7 @@
                 <div class="eyebrow">Demo path</div>
                 <div class="flow-callout">
                     <div class="label">How to read this screen</div>
-                    <div class="value">Paste raw logs, inspect the parsed evidence, then jump into the incident console for the decision step.</div>
+                    <div class="value">Bring in noisy evidence, inspect the shaped case, then jump straight into the incident workspace where the crew prepares the final review packet.</div>
                 </div>
                 <div class="detail-card compact-note">
                     <div class="badge">1. Paste raw logs</div>
@@ -68,7 +68,7 @@
                 </div>
                 <div class="detail-card compact-note">
                     <div class="badge">3. Open the console</div>
-                    <p class="hero-copy">Jump directly into the incident view and make the Guardian decision there.</p>
+                    <p class="hero-copy">Jump directly into the incident view where the system turns the shaped evidence into a prepared remediation path for Guardian review.</p>
                     <div class="shell-actions">
                         <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
                         <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
@@ -80,7 +80,7 @@
         <section class="section input-channel-shell">
             <div class="section-header">
                 <h2>Primary Intake Sources</h2>
-                <div class="section-note">Raw logs are the primary demo path. The other channels stay available when you need them.</div>
+                <div class="section-note">Raw logs are the main proof path. The other sources stay available to show the product can meet teams where incidents actually arrive.</div>
             </div>
             <div class="input-flow" id="channelCards">
                 <button class="input-channel-card active" type="button" data-channel="raw_text" data-incident-id="INC001" data-summary="Paste raw logs, stack traces, or incident text." data-auth="Operator paste or copied incident transcript." data-next="Raw text is parsed into structured evidence, then routed into the same reasoning workflow as other channels." data-payload="2026-05-30T10:14:22Z checkout-api ERROR timeout waiting for payment service\n2026-05-30T10:14:23Z checkout-api WARN retry budget exhausted\n2026-05-30T10:14:25Z payments-worker ERROR queue depth exceeded threshold\nservice=checkout-api severity=P1">
@@ -123,7 +123,7 @@
         <section class="section">
             <div class="section-header">
                 <h2>Raw Incident Intake Preview</h2>
-                <div class="section-note">Paste logs now, normalize them in the browser, and hand the structured evidence to the reasoning flow.</div>
+                <div class="section-note">This is the moment where unstructured evidence stops being support toil and becomes a case the crew can actually work.</div>
             </div>
             <div class="story-grid">
                 <div class="detail-card">

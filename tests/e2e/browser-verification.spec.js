@@ -24,7 +24,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByRole("navigation", { name: "Primary" })).not.toContainText("Replay");
     await expect(page.getByRole("navigation", { name: "Primary" })).not.toContainText("Settings");
 
-    await expect(page.getByRole("heading", { name: "Autonomous agents are already working the incident." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Turn support chaos into one focused operating room." })).toBeVisible();
     await expect(page.getByText("Agent Crew")).toBeVisible();
     await expect(page.locator(".agent-crew-strip .crew-bot")).toHaveCount(4);
     await expect(page.locator(".crew-bot-name")).toHaveText(["SENTINEL", "PRISM", "FORGE", "GUARDIAN"]);
@@ -93,7 +93,7 @@ test.describe("NEXUS browser verification", () => {
     await page.waitForLoadState("networkidle");
 
     await expect(page).toHaveTitle(/Learning & Controls/);
-    await expect(page.getByRole("heading", { name: "Learning stays visible. Dense artifacts stay quiet." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Make the last triage legible. Keep the rest of the learning stack in reserve." })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Enterprise runtime summary" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Learning summary" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Governance summary" })).toBeVisible();
