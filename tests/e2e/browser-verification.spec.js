@@ -44,7 +44,7 @@ test.describe("NEXUS browser verification", () => {
 
     await expect(page).toHaveTitle(/Incident Detail/);
     await expect(page.getByRole("heading", { name: /INC001/ })).toBeVisible();
-    await expect(page.getByText("Autonomous crew")).toBeVisible();
+    await expect(page.getByText("Specialist crew")).toBeVisible();
     await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(4);
     await expect(page.getByRole("heading", { name: "Agent Handoff Thread" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Enterprise Task Board" })).toBeVisible();
@@ -120,7 +120,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page).toHaveURL(/\/inputs(?:\?|$)/);
     await expect(page.getByRole("link", { name: "Back to Incident Detail" })).toBeVisible();
 
-    await page.getByRole("link", { name: /Open reasoning console/i }).click();
+    await page.getByRole("link", { name: /Open incident workspace/i }).click();
     await page.waitForLoadState("networkidle");
     await expect(page).toHaveURL(/\/incident\?[^#]*nexus_incident_id=INC001[^#]*return_to=/);
     await expect(page.getByRole("link", { name: "Back to Input Channels" })).toBeVisible();

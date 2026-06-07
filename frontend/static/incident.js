@@ -495,7 +495,7 @@ function renderSourcePayload(incident) {
   setText("rawDetectedService", normalized.service || incident.related_services?.[0] || "-");
   setText("rawDetectedSeverity", normalized.severity || incident.severity || "-");
   setText("rawDetectedSignature", normalized.signature || "General incident");
-  setText("rawDetectedAction", rawText ? "Open reasoning console" : "Waiting for raw input");
+  setText("rawDetectedAction", rawText ? "Open incident workspace" : "Waiting for raw input");
 
   const evidenceItems = [];
   if (normalized.source_hint) evidenceItems.push(["Source hint", normalized.source_hint]);

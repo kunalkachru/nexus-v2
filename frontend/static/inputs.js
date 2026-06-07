@@ -13,7 +13,7 @@ const CHANNELS = {
     label: "Paste Raw Logs",
     summary: "Paste raw incident text, stack traces, or error output.",
     auth: "Operator paste or copied incident transcript.",
-    next: "Raw text is parsed into structured evidence, then routed into the same reasoning workflow as other channels.",
+    next: "Raw text is parsed into structured evidence, then routed into the same triage workflow as other channels.",
     payload: "",
     previewPayload: RAW_LOG_EXAMPLE,
     incidentId: "INC001",
@@ -21,7 +21,7 @@ const CHANNELS = {
     severity: "P1",
     overview: "Paste logs, stack traces, or incident notes.",
     symptoms: "timeout waiting for payment service, retry budget exhausted, queue depth exceeded",
-    launchLabel: "Open reasoning console",
+    launchLabel: "Open incident workspace",
   },
   webhook: {
     label: "Webhook",
@@ -34,7 +34,7 @@ const CHANNELS = {
     severity: "P1",
     overview: "Checkout latency spike detected by webhook.",
     symptoms: "HTTP 500s, elevated queue depth, and increased checkout latency.",
-    launchLabel: "Open webhook incident console",
+    launchLabel: "Open webhook incident workspace",
   },
   manual_form: {
     label: "Manual Form",
@@ -47,7 +47,7 @@ const CHANNELS = {
     severity: "P2",
     overview: "Operator-reported checkout degradation.",
     symptoms: "Checkout latency increase with timeout spikes and elevated retries.",
-    launchLabel: "Open manual incident console",
+    launchLabel: "Open manual incident workspace",
   },
   slack_command: {
     label: "Slack Command",
@@ -60,7 +60,7 @@ const CHANNELS = {
     severity: "P2",
     overview: "Slack report from the on-call channel.",
     symptoms: "Indexing delay and delayed search results after a traffic spike.",
-    launchLabel: "Open slack incident console",
+    launchLabel: "Open slack incident workspace",
   },
   stream_anomaly: {
     label: "Stream Anomaly",
@@ -73,7 +73,7 @@ const CHANNELS = {
     severity: "P1",
     overview: "Telemetry anomaly from the worker fleet.",
     symptoms: "RSS growth, CPU pressure, and rising memory alerts across the stream.",
-    launchLabel: "Open anomaly incident console",
+    launchLabel: "Open anomaly incident workspace",
   },
   batch_import: {
     label: "Batch Import",
@@ -86,7 +86,7 @@ const CHANNELS = {
     severity: "P1",
     overview: "Replay-ready import for historical incidents.",
     symptoms: "Backfill of closed incidents, payloads, and evidence packs.",
-    launchLabel: "Open batch incident console",
+    launchLabel: "Open batch incident workspace",
   },
 };
 
@@ -150,7 +150,7 @@ function parseRawLogText(rawText) {
     service: serviceMatch?.[1] || "checkout-api",
     severity: severityMatch?.[1]?.toUpperCase() || "P2",
     signature,
-    action: "Open reasoning console",
+    action: "Open incident workspace",
     summary: lines[0] || "Paste raw incident text to preview the parsed evidence.",
   };
 }
@@ -425,7 +425,7 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
       if (result) {
-        result.textContent = `Created ${response.nexus_incident_id} with status ${response.status}. Opening the incident console...`;
+        result.textContent = `Created ${response.nexus_incident_id} with status ${response.status}. Opening the incident workspace...`;
       }
       try {
         window.sessionStorage.setItem(FRESH_TRIAGE_STORAGE_KEY, response.nexus_incident_id);
@@ -436,7 +436,7 @@ window.addEventListener("DOMContentLoaded", () => {
         const liveReasoning = getLiveReasoningPreference() ? "1" : "0";
         launch.href = incidentHref(response.nexus_incident_id, liveReasoning);
         launch.dataset.incidentId = response.nexus_incident_id;
-        launch.textContent = `Open ${response.nexus_incident_id} incident console`;
+        launch.textContent = `Open ${response.nexus_incident_id} incident workspace`;
       }
       syncChannelLaunchLiveReasoning();
       const targetHref = launch?.href;
