@@ -9,7 +9,7 @@ from server.artifacts import get_artifact_summary
 from server.services.observability import ObservabilityService
 from server.services.result_contracts import build_structured_result
 from server.services.priority import normalize_priority_label, priority_snapshot
-from server.services.enterprise_runtime import build_training_enterprise_summary
+from server.services.enterprise_runtime import build_training_enterprise_summary, build_triage_summary
 
 
 METRICS_PATH = Path(__file__).resolve().parents[2] / "frontend" / "metrics.json"
@@ -79,6 +79,15 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
             "policy_violations": details["guardian"]["policy_violations"],
             "reasoning": details["guardian"]["reasoning"],
         },
+        "triage_summary": details.get("triage")
+        or build_triage_summary(
+            incident_name=incident.name,
+            service=incident.system_context.service,
+            severity=_display_severity(incident.severity),
+            root_cause=incident.root_cause,
+            source_channel=source_channel,
+            detected_signals=details["recent_logs"],
+        ),
         "structured_result": {
             **build_structured_result(
                 incident_id=incident.id,

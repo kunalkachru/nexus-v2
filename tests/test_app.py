@@ -53,15 +53,15 @@ def test_dashboard_routes_are_served() -> None:
     assert "Expand technical detail" in incident.text
     assert "Input Channels" in inputs.text
     assert "Paste Raw Logs" in inputs.text
-    assert "Incident archive." in history.text
-    assert "Replay validation." in replay.text
+    assert "Incident archive" in history.text
+    assert "Scenario validation and triage rehearsal" in replay.text
     assert "certificate expiry" in replay.text.lower()
     assert "Learning & Controls" in training.text
     assert "Enterprise runtime summary" in training.text
     assert "Learning summary" in training.text
     assert "Governance summary" in training.text
     assert "Advanced artifacts" in training.text
-    assert "Operational controls." in settings.text
+    assert "Trust posture, contracts, and deployment controls" in settings.text
     assert 'href="queue"' in incident.text
 
 
@@ -166,3 +166,5 @@ def test_run_incident_returns_realistic_incident_context() -> None:
     assert payload["task_board"]["tasks"]
     assert payload["memory_hits"]["similar_incidents"]
     assert payload["agent_metrics"]["prism"]["handoff_to"] == "FORGE"
+    assert payload["triage_summary"]["issue_family"]
+    assert payload["memory_hits"]["similar_incidents"][0]["match_reason"]

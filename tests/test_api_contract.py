@@ -375,6 +375,8 @@ def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth
     assert context_payload["observability"]["evidence_sources"][0]["source"] == "raw input"
     assert context_payload["observability"]["recent_logs"][0].startswith("Raw input normalized")
     assert context_payload["guardian"]["policy_id"]
+    assert context_payload["triage_summary"]["issue_family"]
+    assert context_payload["triage_summary"]["manual_relay_removed"]
     assert context_payload["structured_result"]["proposed_fix"]
     assert context_payload["structured_result"]["raw_priority_label"] == "P4"
     assert context_payload["structured_result"]["normalized_priority_rank"] == 4
@@ -447,6 +449,8 @@ def test_live_incident_context_contract_returns_backend_evidence(client: TestCli
     assert payload["diagnosis"]["correlation_analysis"]
     assert payload["runbook"]["candidate_fixes"]
     assert payload["guardian"]["safety_checks"]
+    assert payload["triage_summary"]["likely_owner_team"]
+    assert payload["triage_summary"]["support_queue"]
     assert len(payload["workflow"]) >= 1
     assert payload["execution_result"] in {"executed", "blocked", "approved", "pending", "needs_modification"}
 
@@ -615,6 +619,8 @@ def test_incident_context_defaults_to_deterministic_without_user_key(client: Tes
     assert payload["memory_hits"]["runbooks"] is not None
     assert payload["agent_metrics"]["guardian"]["risk_class"]
     assert payload["fallback_summary"] is not None
+    assert payload["triage_summary"]["impacted_customer_path"]
+    assert payload["memory_hits"]["similar_incidents"][0]["prior_action"]
 
 
 def test_incident_context_rejects_invalid_user_key_header(client: TestClient, auth_headers) -> None:
@@ -689,3 +695,4 @@ def test_incident_context_accepts_request_scoped_user_key(client: TestClient, au
     assert payload["task_board"]["tasks"]
     assert payload["memory_hits"]["similar_incidents"] is not None
     assert payload["agent_metrics"]["forge"]["handoff_to"] == "GUARDIAN"
+    assert payload["triage_summary"]["issue_family"]

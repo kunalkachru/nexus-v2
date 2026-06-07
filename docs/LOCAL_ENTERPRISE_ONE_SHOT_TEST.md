@@ -7,6 +7,7 @@ This file is for local validation only. It is not intended for the judged GitHub
 The local build now includes a stronger enterprise incident experience across four areas:
 
 - flagship incident UX
+- support-triage packet clarity
 - memory-grounded agent reasoning
 - training/runtime interpretation
 - a harder replayable enterprise scenario
@@ -29,10 +30,19 @@ The local build now includes a stronger enterprise incident experience across fo
   - blocked controls
   - rollback readiness
   - simulation readiness
+- Additive triage packet now includes:
+  - likely owner team
+  - likely owner service
+  - issue family
+  - impacted customer path
+  - responder team
+  - support queue
+  - blast radius and approval focus
 
 ### UI changes
 
 - Incident Detail now shows:
+  - a support-triage packet instead of only a workflow view
   - a stable seeded incident state on refresh
   - one-time relay playback for fresh incidents
   - explicit `Replay handoff`
@@ -65,6 +75,8 @@ These have already been executed locally against the current code:
 
 - `pytest tests/test_app.py tests/test_api_contract.py tests/test_catalogue.py -q`
   - result: `30 passed`
+- `pytest tests/ -q`
+  - result: `113 passed`
 - `npm run browser:verify`
   - result: `6 passed`
 - `python demo.py`
@@ -128,6 +140,11 @@ http://127.0.0.1:7860/incident?nexus_incident_id=INC001
 Expected:
 
 - incident header loads for `INC001`
+- summary cards show:
+  - likely owner
+  - issue family
+  - customer path
+  - approval level
 - the page does **not** replay the whole handoff every time you refresh
 - the relay banner lands directly on the settled Guardian/execution state
 - `Replay handoff` is available if you want to watch the relay again deliberately
@@ -138,12 +155,17 @@ Expected:
 - `Memory-grounded context` is visible
 - at least one similar incident is shown
 - at least one prior runbook memory is shown
+- the top similar incident explains:
+  - why it matched
+  - what prior action worked
+  - what residual risk remained
 - `Reliability posture` is visible
 - `Fallback and retries` is visible
 
 What this demonstrates:
 
 - stable incident state is separate from live playback
+- the likely owner, issue family, and customer path are obvious without narration
 - agents are coordinating on a complex issue
 - diagnosis is grounded in memory, not only current logs
 - orchestration state is visible to the operator
@@ -171,6 +193,11 @@ Expected:
   - `GUARDIAN`
 - Guardian becomes the obvious control point
 - the runbook explainer is populated
+- the incident summary should make the following obvious:
+  - likely owner team
+  - issue family
+  - customer-facing path
+  - why the current approval is the final human step
 - after one load, a manual refresh should show the settled state instead of replaying again
 
 What this demonstrates:
@@ -187,6 +214,10 @@ Expected:
 - GUARDIAN section is visible
 - GUARDIAN reasoning is populated
 - execution gate text mentions approval requirements
+- runbook impact text mentions:
+  - approval focus
+  - blast radius
+  - rollback posture
 - Guardian metadata reflects policy posture such as:
   - approval level
   - rollback readiness

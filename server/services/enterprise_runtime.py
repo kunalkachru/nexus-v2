@@ -105,10 +105,12 @@ class IncidentKnowledgeService:
             details = get_incident_details(candidate_id)
             summary = str(details.get("summary", "")).strip()
             candidate_root = str(details.get("prism", {}).get("reasoning", "")).strip()
+            candidate_triage = details.get("triage", {}) if isinstance(details.get("triage"), dict) else {}
             candidate_related_services = [str(item).strip().lower() for item in details.get("related_services", []) if str(item).strip()]
             candidate_service = " ".join(str(item) for item in details.get("related_services", [])[:2])
             candidate_severity = str(details.get("severity", severity))
             service_overlap = bool(service and service.lower() in candidate_related_services)
+            severity_match = normalize_priority_label(candidate_severity) == normalize_priority_label(severity)
             root_overlap = len(
                 self._token_set(root_cause) & self._token_set(candidate_root or summary)
             )
@@ -123,11 +125,20 @@ class IncidentKnowledgeService:
                     "incident_id": candidate_id,
                     "summary": summary,
                     "root_cause_hint": candidate_root,
+                    "issue_family": str(candidate_triage.get("issue_family") or infer_issue_family(candidate_root or summary, summary)),
                     "service_match": service_overlap,
-                    "severity_match": normalize_priority_label(candidate_severity) == normalize_priority_label(severity),
+                    "severity_match": severity_match,
                     "root_overlap": root_overlap,
                     "success_rate": round(0.74 + (score * 0.22), 2),
                     "similarity": round(score, 2),
+                    "match_reason": self._build_match_reason(
+                        service_match=service_overlap,
+                        severity_match=severity_match,
+                        root_overlap=root_overlap,
+                        issue_family=str(candidate_triage.get("issue_family") or ""),
+                    ),
+                    "prior_action": self._prior_action(details),
+                    "remaining_risk": str(details.get("guardian", {}).get("reasoning", "")).strip(),
                     "source": "incident_history",
                 }
             )
@@ -166,6 +177,7 @@ class IncidentKnowledgeService:
                         "title": record.title,
                         "status": record.status,
                         "severity": record.severity,
+                        "follow_up_reason": "Open incident on the same service boundary still needs closure or post-incident work.",
                         "source": record.source or "intake",
                     }
                 )
@@ -182,6 +194,7 @@ class IncidentKnowledgeService:
                     "title": details.get("summary", candidate_id),
                     "status": "investigating",
                     "severity": normalize_priority_label(details.get("severity", "P2")),
+                    "follow_up_reason": "Seeded unresolved follow-up still maps to the same service or issue class.",
                     "source": "seeded_queue",
                 }
             )
@@ -223,6 +236,8 @@ class IncidentKnowledgeService:
                     "runbook_summary": str(primary.get("name") or f"Prior mitigation pattern for {item['incident_id']}"),
                     "success_rate": float(primary.get("success_rate", item["success_rate"])),
                     "historical_reason": str(details.get("forge", {}).get("selection_logic", "")).strip(),
+                    "why_now_fit": str(details.get("triage", {}).get("approval_focus", "")).strip()
+                    or "Historical mitigation favored reversible recovery before broad rollback.",
                     "source": "historical_runbook",
                 }
             )
@@ -234,10 +249,42 @@ class IncidentKnowledgeService:
                         "runbook_summary": f"Guardian-approved execution for {item['incident_id']}",
                         "success_rate": 0.81,
                         "historical_reason": f"Previously cleared by {item.get('policy_id') or 'GUARDIAN policy'}.",
+                        "why_now_fit": "This pattern already cleared governance for a closely related production incident.",
                         "source": "guardian_history",
                     }
                 )
         return runbooks[:4]
+
+    def _build_match_reason(
+        self,
+        *,
+        service_match: bool,
+        severity_match: bool,
+        root_overlap: int,
+        issue_family: str,
+    ) -> str:
+        reasons: list[str] = []
+        if issue_family:
+            reasons.append(f"Same issue family: {issue_family}.")
+        if service_match:
+            reasons.append("Touches the same primary service boundary.")
+        if severity_match:
+            reasons.append("Carries the same severity tier.")
+        if root_overlap >= 2:
+            reasons.append(f"Shares {root_overlap} root-cause tokens with the current hypothesis.")
+        return " ".join(reasons) or "Matched on lexical overlap with the current incident narrative."
+
+    def _prior_action(self, details: dict[str, object]) -> str:
+        forge = details.get("forge", {}) if isinstance(details.get("forge"), dict) else {}
+        fixes = forge.get("candidate_fixes", [])
+        if isinstance(fixes, list) and fixes and isinstance(fixes[0], dict):
+            action = str(fixes[0].get("action", "")).strip()
+            if action:
+                return action
+        runbooks = details.get("recommended_runbooks", [])
+        if isinstance(runbooks, list) and runbooks and isinstance(runbooks[0], dict):
+            return str(runbooks[0].get("name", "")).strip()
+        return "Historical remediation path unavailable."
 
     def _similarity_score(self, left: str, right: str) -> float:
         left_tokens = self._token_set(left)
@@ -350,6 +397,14 @@ class EnterpriseNexusRuntime:
                 "timeline": workflow,
                 "active_story": f"{incident_name} was split into evidence, change, and history workstreams before the remediation path was synthesized.",
             },
+            "triage_summary": build_triage_summary(
+                incident_name=incident_name,
+                service=service,
+                severity=severity,
+                root_cause=str(diagnosis.get("root_cause", incident_name)),
+                source_channel=source_channel,
+                detected_signals=observability.get("recent_logs", []),
+            ),
             "task_board": {"tasks": task_board},
             "memory_hits": memory_hits,
             "agent_metrics": {
@@ -406,6 +461,14 @@ class EnterpriseNexusRuntime:
                 "signals": context.signals,
                 "provenance": signal_provenance,
             },
+            "triage_summary": build_triage_summary(
+                incident_name=context.incident.name,
+                service=context.system_context.service,
+                severity=alert.severity,
+                root_cause=context.incident.root_cause,
+                source_channel="webhook",
+                detected_signals=context.raw_symptoms,
+            ),
             "orchestration": {
                 **state["orchestration"],
                 "state": "context_loaded",
@@ -545,7 +608,8 @@ class EnterpriseNexusRuntime:
             summary = (
                 f"Retrieved {len(memory_hits['similar_incidents'])} similar incidents, "
                 f"{len(memory_hits['runbooks'])} runbook memories, and {len(memory_hits['unresolved_items'])} unresolved follow-ups. "
-                f"Closest analog: {top_match['incident_id']} at {top_match['similarity']:.0%} similarity."
+                f"Closest analog: {top_match['incident_id']} at {top_match['similarity']:.0%} similarity. "
+                f"Why it matched: {top_match.get('match_reason', 'Shared operational pattern.')}"
             )
             task_status = "completed"
             fallback_used = False
@@ -660,6 +724,7 @@ class EnterpriseNexusRuntime:
             f"{forge_output.reasoning} Referenced {len(memory_hits['runbooks'])} runbook memories and "
             f"{len(memory_hits['unresolved_items'])} unresolved service items. "
             f"Primary historical fit: {top_runbook.get('runbook_summary', 'none')}."
+            f"{' Why now: ' + str(top_runbook.get('why_now_fit')) + '.' if top_runbook.get('why_now_fit') else ''}"
             f"{' Runner-up: ' + str(runner_up.get('runbook_summary')) + '.' if runner_up else ''} "
             "FORGE kept the plan biased toward reversible, lower-blast-radius actions first."
         )
@@ -770,6 +835,14 @@ class EnterpriseNexusRuntime:
             customer_impact_minutes=5.0 if verification_passed else 20.0,
             steps=["sentinel", "prism.plan", "prism.evidence", "prism.deployment", "prism.history", "prism.synthesize", "forge", "guardian", "verify"],
             enterprise_state={
+                "triage_summary": build_triage_summary(
+                    incident_name=context.incident.name,
+                    service=context.system_context.service,
+                    severity=state["sentinel_output"].severity,
+                    root_cause=state["prism_output"].root_cause,
+                    source_channel="webhook",
+                    detected_signals=context.raw_symptoms,
+                ),
                 "orchestration": {
                     **state["orchestration"],
                     "state": "completed",
@@ -923,3 +996,73 @@ def _duration_for_incident(incident: IncidentDefinition, *, executed: bool) -> f
         "Nightmare": 22.0,
     }[incident.difficulty]
     return base_duration if executed else base_duration + 8.0
+
+
+def infer_issue_family(root_cause: str, incident_name: str) -> str:
+    text = f"{root_cause} {incident_name}".lower()
+    if "retry" in text and "timeout" in text:
+        return "Timeout cascade / retry amplification"
+    if "pool" in text or "session leak" in text or "connection" in text:
+        return "Database pool exhaustion / session leak"
+    if "certificate" in text or "tls" in text or "handshake" in text:
+        return "Certificate expiry / trust boundary outage"
+    if "memory leak" in text or "heap" in text:
+        return "Memory leak / runtime degradation"
+    return "Production incident investigation"
+
+
+def build_triage_summary(
+    *,
+    incident_name: str,
+    service: str,
+    severity: str,
+    root_cause: str,
+    source_channel: str,
+    detected_signals: list[object] | None = None,
+) -> dict[str, object]:
+    issue_family = infer_issue_family(root_cause, incident_name)
+    service_key = service.lower()
+    impacted_customer_path = "Core customer journey"
+    likely_owner_service = service
+    likely_owner_team = "Platform Operations"
+    responder_team = "Platform Operations on-call"
+    support_queue = "Production escalation"
+    blast_radius = "Customer-facing requests are degraded while the incident remains under investigation."
+    approval_focus = "Prefer reversible mitigation before any broader change."
+
+    if any(token in service_key for token in ("checkout", "payment", "order", "gateway", "auth")) or "checkout" in incident_name.lower():
+        impacted_customer_path = "Checkout and payment authorization"
+        likely_owner_service = "auth-svc" if "retry" in issue_family.lower() else service
+        likely_owner_team = "Identity Platform" if "retry" in issue_family.lower() else "Checkout Platform"
+        responder_team = "API Platform incident command with Identity Platform on-call" if "retry" in issue_family.lower() else "Checkout Platform with Database Operations on-call"
+        support_queue = "Customer checkout escalation"
+        if "retry" in issue_family.lower():
+            blast_radius = "Checkout requests time out at the edge while payment authorization backs up behind retry storms."
+            approval_focus = "Cap retries and restore circuit breaking before a full rollback."
+        elif "database" in issue_family.lower() or "pool" in issue_family.lower():
+            blast_radius = "Checkout write traffic stalls while database connections remain saturated."
+            approval_focus = "Recover connection capacity first, then remove the leaking build."
+    elif "certificate" in issue_family.lower():
+        impacted_customer_path = "Public API and browser entrypoint"
+        likely_owner_team = "Edge Reliability"
+        responder_team = "Edge Reliability with Security Operations"
+        support_queue = "Public edge outage escalation"
+        blast_radius = "Customer traffic cannot establish trust with the public endpoint."
+        approval_focus = "Restore trust boundaries without widening certificate or DNS risk."
+
+    signal_count = len(detected_signals or [])
+    return {
+        "issue_family": issue_family,
+        "impacted_customer_path": impacted_customer_path,
+        "likely_owner_service": likely_owner_service,
+        "likely_owner_team": likely_owner_team,
+        "responder_team": responder_team,
+        "support_queue": support_queue,
+        "source_channel": source_channel,
+        "severity": severity,
+        "blast_radius": blast_radius,
+        "approval_focus": approval_focus,
+        "manual_relay_removed": (
+            f"NEXUS condensed {signal_count or 'multiple'} evidence signals, deploy context, and prior incident memory into one prepared support packet."
+        ),
+    }

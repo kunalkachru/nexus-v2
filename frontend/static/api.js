@@ -156,6 +156,21 @@ function synthesizeIncidentFromStatus(status) {
   const source = status.source || "webhook";
   const service = status.external_id || status.title || "service";
   const timeline = status.timeline || [];
+  const lowerTitle = String(status.title || "").toLowerCase();
+  const issueFamily = lowerTitle.includes("checkout") ? "Timeout cascade / retry amplification" : "Production incident investigation";
+  const triageSummary = {
+    issue_family: issueFamily,
+    impacted_customer_path: lowerTitle.includes("checkout") ? "Checkout and payment authorization" : "Core customer journey",
+    likely_owner_service: service,
+    likely_owner_team: lowerTitle.includes("checkout") ? "Checkout Platform" : "Platform Operations",
+    responder_team: lowerTitle.includes("checkout") ? "Checkout Platform on-call" : "Platform Operations on-call",
+    support_queue: lowerTitle.includes("checkout") ? "Customer checkout escalation" : "Production escalation",
+    source_channel: source,
+    severity: status.severity,
+    blast_radius: "Live status synthesis is keeping the incident readable while deeper context is unavailable.",
+    approval_focus: "Prefer reversible mitigation before any broader change.",
+    manual_relay_removed: "NEXUS is still presenting a prepared incident packet rather than raw status-only data.",
+  };
   const recordedGuardianDecision = ["approve", "reject", "request_modification"].includes(String(status.guardian_decision))
     ? status.guardian_decision
     : null;
@@ -277,6 +292,7 @@ function synthesizeIncidentFromStatus(status) {
             ? "Guardian review is pending. Choose approve or block to make the gate explicit."
             : "The versioned status view is visible and no unsafe operation is being auto-executed."),
     },
+    triage_summary: triageSummary,
     structured_result: {
       incident_id: status.nexus_incident_id,
       root_cause: "Live incident path awaiting deeper backend enrichment.",

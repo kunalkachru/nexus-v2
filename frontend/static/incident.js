@@ -273,14 +273,18 @@ function syncOpenAIKeyUI(message) {
 function renderThread(data) {
   const memoryHits = data.memory_hits || {};
   const memoryCount = (memoryHits.similar_incidents || []).length + (memoryHits.unresolved_items || []).length;
-  setText("threadSentinelCopy", `${data.classification.reasoning} SENTINEL turned noisy signals into one shared incident frame.`);
+  const triage = data.triage_summary || {};
+  setText(
+    "threadSentinelCopy",
+    `${data.classification.reasoning} SENTINEL turned noisy signals into one shared incident frame for ${triage.impacted_customer_path || "the affected customer path"} and routed it toward ${triage.likely_owner_team || triage.likely_owner_service || "the likely owner"}.`
+  );
   setText(
     "threadPrismCopy",
-    `${data.diagnosis.correlation_analysis || data.diagnosis.reasoning}${memoryCount ? ` PRISM used ${memoryCount} memory references to check whether this matched a known failure pattern.` : ""}`
+    `${data.diagnosis.correlation_analysis || data.diagnosis.reasoning}${memoryCount ? ` PRISM used ${memoryCount} memory references to check whether this matched the ${triage.issue_family || "known failure"} pattern.` : ""}`
   );
   setText(
     "threadForgeCopy",
-    `${data.runbook.selection_logic || data.runbook.reasoning} FORGE focused on the option that looked fastest to recover and easiest to roll back.`
+    `${data.runbook.selection_logic || data.runbook.reasoning} FORGE focused on the option that looked fastest to recover, safest to review, and easiest to roll back.`
   );
   setText(
     "threadGuardianCopy",
@@ -289,20 +293,24 @@ function renderThread(data) {
 }
 
 function renderCrew(data) {
+  const triage = data.triage_summary || {};
   setText("sentinelFlowMeta", `${percent(data.classification.confidence)} confidence`);
   setText("sentinelReasoning", data.classification.reasoning);
-  setText("sentinelFlowTransfer", "SENTINEL gave PRISM a clean incident frame and severity call.");
+  setText(
+    "sentinelFlowTransfer",
+    `SENTINEL handed PRISM a triage frame for ${triage.likely_owner_team || triage.likely_owner_service || "the likely owner"} and the ${triage.issue_family || "active issue family"}.`
+  );
 
   setText("prismFlowMeta", `${percent(data.diagnosis.confidence)} confidence`);
   setText("prismReasoning", data.diagnosis.correlation_analysis || data.diagnosis.reasoning);
-  setText("prismFlowTransfer", "PRISM broke the issue into smaller investigations and merged them into one diagnosis.");
+  setText("prismFlowTransfer", "PRISM broke the issue into evidence, change, and history branches before merging one diagnosis packet.");
 
   const forgeConfidence = data.runbook.candidate_fixes?.length
     ? Math.max(...data.runbook.candidate_fixes.map((item) => item.success_rate))
     : 0;
   setText("forgeFlowMeta", `${percent(forgeConfidence)} confidence`);
   setText("forgeReasoning", data.runbook.selection_logic || data.runbook.reasoning);
-  setText("forgeFlowTransfer", "FORGE chose the recovery path that best fit the evidence and recent history.");
+  setText("forgeFlowTransfer", "FORGE chose the recovery path that best fit the evidence, memory, and rollback posture.");
 
   setText("guardianFlowMeta", String(data.guardian.decision || "pending").toUpperCase());
   setText("guardianReasoning", data.guardian.reasoning);
@@ -316,6 +324,7 @@ function renderCrew(data) {
 
 function renderSummary(data) {
   const incident = data.incident;
+  const triage = data.triage_summary || {};
   const decision = String(data.guardian.decision || "").toLowerCase();
   const nextStep =
     data.execution_result === "executed"
@@ -333,9 +342,9 @@ function renderSummary(data) {
   setText("incidentHeroExecution", String(data.execution_result || "").toUpperCase());
   setText(
     "incidentOverviewNote",
-    `Detected ${incident.detected_at} via ${incident.source_channel || "webhook"} and active for ${incident.duration_minutes} minutes.`
+    `Detected ${incident.detected_at} via ${incident.source_channel || "webhook"} and active for ${incident.duration_minutes} minutes. Likely owner: ${triage.likely_owner_team || triage.likely_owner_service || "Platform Operations"}. Support queue: ${triage.support_queue || "Production escalation"}.`
   );
-  setText("operatorNextStep", nextStep);
+  setText("operatorNextStep", `${nextStep} ${triage.manual_relay_removed || ""}`);
   setText(
     "liveReasoningDetail",
     data.llm_access?.message || (
@@ -349,8 +358,11 @@ function renderSummary(data) {
   const summary = document.getElementById("incidentSummary");
   if (summary) {
     summary.innerHTML = [
+      ["Likely owner", triage.likely_owner_team || triage.likely_owner_service || "-"],
+      ["Issue family", triage.issue_family || "-"],
+      ["Customer path", triage.impacted_customer_path || "-"],
+      ["Approval", titleCase(data.guardian.required_approval_level || "operator")],
       ["Proposed fix", data.structured_result?.proposed_fix || data.runbook.recommended_runbook],
-      ["Priority", data.structured_result?.raw_priority_label || incident.severity],
       ["Safety", data.guardian.decision.toUpperCase()],
       ["Policy", data.structured_result?.guardian_policy_id || data.guardian.policy_id || "-"],
     ]
@@ -370,7 +382,7 @@ function renderSummary(data) {
   );
   setText(
     "runbookImpact",
-    `${data.runbook.selection_logic || data.runbook.reasoning || "Waiting for runbook reasoning."} ${data.guardian.rollback_readiness ? `Rollback posture: ${titleCase(data.guardian.rollback_readiness)}.` : ""}`
+    `${data.runbook.selection_logic || data.runbook.reasoning || "Waiting for runbook reasoning."} ${triage.approval_focus ? `${triage.approval_focus} ` : ""}${triage.blast_radius ? `Blast radius: ${triage.blast_radius} ` : ""}${data.guardian.rollback_readiness ? `Rollback posture: ${titleCase(data.guardian.rollback_readiness)}.` : ""}`
   );
 }
 
@@ -382,6 +394,7 @@ function renderEnterprise(data) {
   const fallbackSummary = data.fallback_summary || [];
   const decision = String(data.guardian.decision || "").toLowerCase();
   const topMemory = (memoryHits.similar_incidents || [])[0];
+  const triage = data.triage_summary || {};
 
   setText(
     "orchestrationState",
@@ -389,7 +402,7 @@ function renderEnterprise(data) {
   );
   setText(
     "memorySummary",
-    `The crew checked ${(memoryHits.similar_incidents || []).length} similar incidents and ${(memoryHits.runbooks || []).length} runbook memories before converging on a fix.`
+    `The crew checked ${(memoryHits.similar_incidents || []).length} similar incidents and ${(memoryHits.runbooks || []).length} runbook memories before converging on a ${triage.issue_family || "production"} fix.`
   );
   setText(
     "fallbackSummaryNote",
@@ -407,7 +420,7 @@ function renderEnterprise(data) {
   );
   setText(
     "collaborationNarrative",
-    `${orchestration.active_story || "The crew is assembling a shared incident story."} SENTINEL scoped the incident, PRISM investigated it in parallel branches, FORGE selected a reversible response path, and GUARDIAN decided whether the plan was safe enough to execute.`
+    `${orchestration.active_story || "The crew is assembling a shared incident story."} SENTINEL scoped the incident, PRISM investigated it in parallel branches, FORGE selected a reversible response path, and GUARDIAN decided whether the plan was safe enough to execute for ${triage.impacted_customer_path || "the affected customer path"}.`
   );
   setText(
     "collaborationConfidence",
@@ -451,17 +464,17 @@ function renderEnterprise(data) {
   renderList(
     "memorySimilarIncidents",
     memoryHits.similar_incidents || [],
-    (item) => `<li><strong>${item.incident_id}</strong><br>${item.summary}<br><span class="section-note">Matched at ${percent(item.similarity || 0)}</span></li>`
+    (item) => `<li><strong>${item.incident_id}</strong><br>${item.summary}<br><span class="section-note">Matched at ${percent(item.similarity || 0)} · ${item.issue_family || "Historical analog"}</span>${item.match_reason ? `<br><span class="section-note">${item.match_reason}</span>` : ""}${item.prior_action ? `<br><span class="section-note">Prior action: ${item.prior_action}</span>` : ""}${item.remaining_risk ? `<br><span class="section-note">Residual risk: ${item.remaining_risk}</span>` : ""}</li>`
   );
   renderList(
     "memoryRunbooks",
     memoryHits.runbooks || [],
-    (item) => `<li><strong>${item.runbook_summary}</strong><br><span class="section-note">${titleCase(item.source || "memory")} · ${percent(item.success_rate || 0)} historical success</span>${item.historical_reason ? `<br><span class="section-note">${item.historical_reason}</span>` : ""}</li>`
+    (item) => `<li><strong>${item.runbook_summary}</strong><br><span class="section-note">${titleCase(item.source || "memory")} · ${percent(item.success_rate || 0)} historical success</span>${item.historical_reason ? `<br><span class="section-note">${item.historical_reason}</span>` : ""}${item.why_now_fit ? `<br><span class="section-note">${item.why_now_fit}</span>` : ""}</li>`
   );
   renderList(
     "memoryUnresolvedItems",
     memoryHits.unresolved_items || [],
-    (item) => `<li><strong>${item.incident_id}</strong><br>${item.title || item.summary}<br><span class="section-note">${titleCase(item.status || "open")} · ${item.severity || "-"}</span></li>`
+    (item) => `<li><strong>${item.incident_id}</strong><br>${item.title || item.summary}<br><span class="section-note">${titleCase(item.status || "open")} · ${item.severity || "-"}</span>${item.follow_up_reason ? `<br><span class="section-note">${item.follow_up_reason}</span>` : ""}</li>`
   );
   renderList(
     "fallbackSummary",

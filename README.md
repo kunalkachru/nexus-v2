@@ -192,6 +192,14 @@ That shows the product solving a painful, buyable workflow.
 - Submission walkthrough video: [artifacts/demo-video/nexus-v2-submission-walkthrough.mp4](artifacts/demo-video/nexus-v2-submission-walkthrough.mp4)
 - Product demo video: [artifacts/demo-video/nexus-v2-demo.mp4](artifacts/demo-video/nexus-v2-demo.mp4)
 
+## Live Reasoning And Keys
+
+NEXUS stays deterministic by default.
+
+- local or hosted users can optionally provide `OPENAI_API_KEY`-backed live reasoning through the request-scoped BYO-key flow
+- if no key is attached, the product remains fully usable in deterministic mode
+- the public contract does not require a server-side key to keep the product operable
+
 ## Product Surfaces
 
 ### Command Center
