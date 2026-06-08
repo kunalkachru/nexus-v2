@@ -63,6 +63,9 @@ def test_replica_runner_inspects_pack_scaffold_assets() -> None:
     assert result.replay_ready is True
     assert result.mitigation_hooks_ready is True
     assert result.missing_assets == ()
+    assert result.compose_config_valid is True
+    assert "checkout" in result.services_seen
+    assert "postgres" in result.services_seen
 
 
 def test_trace_targets_follow_selected_pack_source_map() -> None:
