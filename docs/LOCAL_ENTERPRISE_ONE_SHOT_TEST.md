@@ -68,6 +68,9 @@ Incident context now includes additive enterprise fields:
 - `agent_metrics`
 - `fallback_summary`
 - `enterprise_summary`
+- `triage_summary`
+- `replica_summary`
+- `trace_summary`
 
 ## Automated Validation Already Run
 
@@ -154,6 +157,16 @@ Expected:
 - PRISM appears as multiple workstreams, not just one linear note
 - `REPLICA` appears as a reproduction stage
 - `TRACE` appears as a debugging stage
+- `Investigation depth · REPLICA` is visible and shows:
+  - reproduction pack
+  - reproduction status
+  - tested mitigations
+  - confidence delta
+- `Investigation depth · TRACE` is visible and shows:
+  - trace status
+  - likely modules/functions
+  - observed divergence
+  - state anomalies
 - `Memory-grounded context` is visible
 - at least one similar incident is shown
 - at least one prior runbook memory is shown
@@ -171,6 +184,7 @@ What this demonstrates:
 - agents are coordinating on a complex issue
 - diagnosis is grounded in memory, not only current logs
 - orchestration state is visible to the operator
+- reproduction and debugging findings are visible before the final action is approved
 
 ### Test Case 2: Fresh incident replays once and lands on Guardian
 
@@ -200,6 +214,9 @@ Expected:
   - issue family
   - customer-facing path
   - why the current approval is the final human step
+- the investigation cards should populate with plausible findings, even for a fresh `nxs_...` incident:
+  - REPLICA should show whether the failure could be recreated
+  - TRACE should show where engineering should inspect first
 - after one load, a manual refresh should show the settled state instead of replaying again
 
 What this demonstrates:
@@ -219,6 +236,9 @@ Expected:
 - Guardian reasoning distinguishes:
   - validated signals
   - inferred signals
+- validated signals should explicitly reference:
+  - REPLICA reproduction state
+  - TRACE narrowing state
 - runbook impact text mentions:
   - approval focus
   - blast radius

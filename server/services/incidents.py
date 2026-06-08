@@ -634,12 +634,16 @@ class IncidentService:
             triage_summary=triage_summary,
             root_cause=diagnosis["root_cause"],
             recent_logs=observability["recent_logs"],
+            recent_deployments=recent_deployments,
+            candidate_fixes=runbook["candidate_fixes"],
         )
         trace_summary = build_trace_summary(
             incident_id=incident.nexus_incident_id,
             triage_summary=triage_summary,
             replica_summary=replica_summary,
             root_cause=diagnosis["root_cause"],
+            recent_deployments=recent_deployments,
+            recent_logs=observability["recent_logs"],
         )
 
         payload = {
@@ -925,17 +929,24 @@ class IncidentService:
             source_channel="raw_text",
             detected_signals=live_observability["recent_logs"],
         )
+        live_candidate_fixes = [
+            {"action": forge_output.runbook.summary, "success_rate": max(0.0, min(0.99, guardian_output.safety_score))},
+        ]
         replica_summary = build_replica_summary(
             incident_id=incident.nexus_incident_id,
             triage_summary=triage_summary,
             root_cause=prism_output.root_cause,
             recent_logs=live_observability["recent_logs"],
+            recent_deployments=recent_deployments,
+            candidate_fixes=live_candidate_fixes,
         )
         trace_summary = build_trace_summary(
             incident_id=incident.nexus_incident_id,
             triage_summary=triage_summary,
             replica_summary=replica_summary,
             root_cause=prism_output.root_cause,
+            recent_deployments=recent_deployments,
+            recent_logs=live_observability["recent_logs"],
         )
 
         payload = {
@@ -979,9 +990,7 @@ class IncidentService:
                 "language": forge_output.runbook.language,
                 "summary": forge_output.runbook.summary,
                 "selection_logic": "LLM-generated remediation path grounded in raw incident text and safety review.",
-                "candidate_fixes": [
-                    {"action": forge_output.runbook.summary, "success_rate": max(0.0, min(0.99, guardian_output.safety_score))},
-                ],
+                "candidate_fixes": live_candidate_fixes,
                 "recommended_runbook": forge_output.runbook.summary,
                 "reasoning": forge_output.reasoning,
                 "cost_usd": round(forge_output.estimated_cost_usd, 2),

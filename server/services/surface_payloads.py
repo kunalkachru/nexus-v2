@@ -44,12 +44,16 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
         triage_summary=triage_summary,
         root_cause=incident.root_cause,
         recent_logs=details["recent_logs"],
+        recent_deployments=details["recent_deployments"],
+        candidate_fixes=details["forge"]["candidate_fixes"],
     )
     trace_summary = build_trace_summary(
         incident_id=incident.id,
         triage_summary=triage_summary,
         replica_summary=replica_summary,
         root_cause=incident.root_cause,
+        recent_deployments=details["recent_deployments"],
+        recent_logs=details["recent_logs"],
     )
 
     return {

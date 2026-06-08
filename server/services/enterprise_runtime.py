@@ -396,12 +396,16 @@ class EnterpriseNexusRuntime:
             triage_summary=triage_summary,
             root_cause=str(diagnosis.get("root_cause", incident_name)),
             recent_logs=observability.get("recent_logs", []),
+            recent_deployments=incident_deployments_from_observability(observability),
+            candidate_fixes=runbook.get("candidate_fixes", []),
         )
         trace_summary = build_trace_summary(
             incident_id=incident_id,
             triage_summary=triage_summary,
             replica_summary=replica_summary,
             root_cause=str(diagnosis.get("root_cause", incident_name)),
+            recent_deployments=incident_deployments_from_observability(observability),
+            recent_logs=observability.get("recent_logs", []),
         )
         task_board = [
             self._task("sentinel-classify", "SENTINEL", "completed", "Classify severity and pattern", str(classification.get("reasoning", "")), "PRISM"),
@@ -746,21 +750,31 @@ class EnterpriseNexusRuntime:
         context = state["context"]
         memory_hits = state["memory_hits"]
         triage_summary = state["triage_summary"]
+        forge_output = await self.forge.generate_runbook(
+            prism_output=state["prism_output"],
+            system_context=context.system_context,
+        )
+        candidate_fixes = [
+            {
+                "action": forge_output.runbook.summary,
+                "success_rate": max((item.get("success_rate", 0.0) for item in memory_hits["runbooks"]), default=0.84),
+            }
+        ]
         replica_summary = build_replica_summary(
             incident_id=context.incident.id,
             triage_summary=triage_summary,
             root_cause=state["prism_output"].root_cause,
             recent_logs=context.signals.get("logs", []),
+            recent_deployments=context.signals.get("deployment", []),
+            candidate_fixes=candidate_fixes,
         )
         trace_summary = build_trace_summary(
             incident_id=context.incident.id,
             triage_summary=triage_summary,
             replica_summary=replica_summary,
             root_cause=state["prism_output"].root_cause,
-        )
-        forge_output = await self.forge.generate_runbook(
-            prism_output=state["prism_output"],
-            system_context=context.system_context,
+            recent_deployments=context.signals.get("deployment", []),
+            recent_logs=context.signals.get("logs", []),
         )
         top_runbook = memory_hits["runbooks"][0] if memory_hits["runbooks"] else {}
         runner_up = memory_hits["runbooks"][1] if len(memory_hits["runbooks"]) > 1 else {}
@@ -830,12 +844,16 @@ class EnterpriseNexusRuntime:
             triage_summary=state["triage_summary"],
             root_cause=state["prism_output"].root_cause,
             recent_logs=state["context"].signals.get("logs", []),
+            recent_deployments=state["context"].signals.get("deployment", []),
+            candidate_fixes=[{"action": state["forge_output"].runbook.summary, "success_rate": 0.84}],
         )
         trace_summary = build_trace_summary(
             incident_id=state["context"].incident.id,
             triage_summary=state["triage_summary"],
             replica_summary=replica_summary,
             root_cause=state["prism_output"].root_cause,
+            recent_deployments=state["context"].signals.get("deployment", []),
+            recent_logs=state["context"].signals.get("logs", []),
         )
         guardian_output = await self.guardian.review(
             forge_output=state["forge_output"],
@@ -933,6 +951,8 @@ class EnterpriseNexusRuntime:
                     triage_summary=state["triage_summary"],
                     root_cause=state["prism_output"].root_cause,
                     recent_logs=context.signals.get("logs", []),
+                    recent_deployments=context.signals.get("deployment", []),
+                    candidate_fixes=[{"action": forge_output.runbook.summary, "success_rate": 0.84}],
                 ),
                 "trace_summary": build_trace_summary(
                     incident_id=context.incident.id,
@@ -942,8 +962,12 @@ class EnterpriseNexusRuntime:
                         triage_summary=state["triage_summary"],
                         root_cause=state["prism_output"].root_cause,
                         recent_logs=context.signals.get("logs", []),
+                        recent_deployments=context.signals.get("deployment", []),
+                        candidate_fixes=[{"action": forge_output.runbook.summary, "success_rate": 0.84}],
                     ),
                     root_cause=state["prism_output"].root_cause,
+                    recent_deployments=context.signals.get("deployment", []),
+                    recent_logs=context.signals.get("logs", []),
                 ),
                 "orchestration": {
                     **state["orchestration"],
@@ -1170,72 +1194,192 @@ def build_triage_summary(
     }
 
 
+def extract_reproduced_symptoms(recent_logs: list[object]) -> list[str]:
+    symptom_map = (
+        ("timeout", "Customer-facing timeouts reproduced in the sandbox request path."),
+        ("worker pool saturation", "Worker pool saturation reappeared under replayed load."),
+        ("retry", "Retry amplification reappeared once the failing dependency slowed down."),
+        ("circuit breaker", "Circuit breaker remained closed while upstream latency climbed."),
+        ("5xx", "The replayed path produced elevated 5xx responses."),
+        ("queuepool", "Connection pool exhaustion reproduced in the sandbox."),
+        ("leaked session", "Session leakage reappeared across repeated checkout retries."),
+        ("max_connections", "Database connection ceiling was reached under the replay."),
+        ("certificate", "Public certificate validation failed in the active listener path."),
+        ("tls", "TLS trust failure was reproduced at the edge entrypoint."),
+    )
+    text = " ".join(str(item).lower() for item in recent_logs)
+    symptoms = [description for needle, description in symptom_map if needle in text]
+    return symptoms[:4]
+
+
+def default_reproduced_symptoms(issue_family: str, recent_logs: list[object]) -> list[str]:
+    if "retry amplification" in issue_family:
+        return [
+            "Customer-facing checkout requests stall after repeated upstream auth retries.",
+            "Gateway workers remain occupied until the timeout budget is exhausted.",
+        ]
+    if "pool exhaustion" in issue_family or "session leak" in issue_family:
+        return [
+            "Checkout writes stall once the shared database pool reaches saturation.",
+            "Retry traffic keeps leaked sessions open long enough to block new writes.",
+        ]
+    if "certificate expiry" in issue_family:
+        return [
+            "Public clients fail TLS handshakes against the active edge listener.",
+            "The active certificate chain remains stale after rotation should have occurred.",
+        ]
+    if "memory leak" in issue_family:
+        return [
+            "Worker memory keeps climbing across repeated task replay cycles.",
+            "Garbage-collection pauses stretch as retained buffers accumulate.",
+        ]
+    return extract_reproduced_symptoms(recent_logs) or ["REPLICA did not find a reusable reproduction signature yet."]
+
+
+def build_mitigation_checks(
+    candidate_actions: list[str],
+    *,
+    fallback_checks: list[tuple[str, str, float]],
+) -> list[dict[str, object]]:
+    checks: list[dict[str, object]] = []
+    for action, result, confidence_delta in fallback_checks:
+        if candidate_actions and not any(action.lower() in candidate.lower() or candidate.lower() in action.lower() for candidate in candidate_actions):
+            continue
+        checks.append(
+            {
+                "action": action,
+                "result": result,
+                "confidence_delta": confidence_delta,
+            }
+        )
+    if checks:
+        return checks
+    return [
+        {"action": action, "result": result, "confidence_delta": confidence_delta}
+        for action, result, confidence_delta in fallback_checks
+    ]
+
+
+def _deployment_signal_summary(recent_deployments: list[object] | None) -> tuple[str, list[str]]:
+    if not recent_deployments:
+        return "", []
+    text = " ".join(str(item).lower() for item in recent_deployments)
+    supporting_conditions: list[str] = []
+    if "retry" in text:
+        supporting_conditions.append("recent retry-related deployment matches the reproduced failure path")
+    if "middleware" in text:
+        supporting_conditions.append("middleware change is present in the same incident window")
+    if "telemetry" in text:
+        supporting_conditions.append("telemetry-only change appears adjacent but not causal")
+    if "certificate" in text or "rotation" in text:
+        supporting_conditions.append("certificate rotation or listener deployment is part of the affected edge path")
+    return text, supporting_conditions
+
+
 def build_replica_summary(
     *,
     incident_id: str,
     triage_summary: dict[str, object],
     root_cause: str,
     recent_logs: list[object] | None = None,
+    recent_deployments: list[object] | None = None,
+    candidate_fixes: list[object] | None = None,
 ) -> dict[str, object]:
     issue_family = str(triage_summary.get("issue_family", "")).lower()
     logs_text = " ".join(str(item) for item in (recent_logs or [])).lower()
     service = str(triage_summary.get("likely_owner_service") or "")
+    deployment_text, deployment_conditions = _deployment_signal_summary(recent_deployments)
+    reproduced_symptoms = extract_reproduced_symptoms(recent_logs or [])
+    candidate_actions = [str(item.get("action", "")).strip() for item in (candidate_fixes or []) if isinstance(item, dict)]
 
     environment_pack_id = "generic-support-triage-pack-v1"
     reproduction_status = "not_run"
-    reproduced_symptoms: list[str] = []
     hypothesis_supported = False
     confidence_delta = 0.0
     tested_mitigations: list[dict[str, object]] = []
     reasoning = "REPLICA has not run for this incident class yet."
+    supporting_conditions: list[str] = []
 
     if "retry amplification" in issue_family or ("retry" in logs_text and "timeout" in logs_text):
         environment_pack_id = "checkout-python-fastapi-auth-redis-v1"
         reproduction_status = "reproduced"
-        reproduced_symptoms = [
-            "gateway timeout spike",
-            "retry budget exceeded",
-            "worker saturation under downstream auth latency",
-        ]
+        supporting_conditions = [
+            "downstream auth latency above 5s",
+            "retry middleware enabled",
+            "gateway worker pool near saturation",
+        ] + deployment_conditions
         hypothesis_supported = True
-        confidence_delta = 0.12
-        tested_mitigations = [
-            {"action": "Cap retries to 1", "result": "latency improved and worker pressure eased", "confidence_delta": 0.08},
-            {"action": "Open auth circuit breaker", "result": "timeout cascade stopped spreading", "confidence_delta": 0.04},
-        ]
+        confidence_delta = 0.14 if "middleware" in deployment_text else 0.12
+        tested_mitigations = build_mitigation_checks(
+            candidate_actions,
+            fallback_checks=[
+                ("Enable auth-svc circuit breaker and cap retries to 1", "latency improved and worker pressure eased once retries were capped at the auth boundary", 0.08),
+                ("Roll back auth-svc retry middleware", "the timeout cascade no longer persisted after the retry refactor was removed", 0.06),
+                ("Drain hot gateway pods and scale replicas +2", "worker pressure eased but the root retry pattern still remained visible", 0.03),
+            ],
+        )
         reasoning = (
-            "The failure pattern reproduced only when the retry-heavy middleware path remained enabled under downstream auth degradation."
+            "The failure pattern reproduced only when the retry-heavy middleware path remained enabled under downstream auth degradation. "
+            "The sandbox required both the retry middleware change and elevated downstream auth latency to sustain the timeout cascade."
         )
     elif "pool exhaustion" in issue_family or "session leak" in issue_family or "queuepool" in logs_text:
         environment_pack_id = "checkout-python-fastapi-postgres-v1"
         reproduction_status = "reproduced"
-        reproduced_symptoms = [
-            "connection pool saturation",
-            "queue pool checkout failures",
-            "checkout write latency spike",
-        ]
+        supporting_conditions = [
+            "checkout retry patch enabled",
+            "primary pool capped at production threshold",
+            "session cleanup path disabled under retry failure",
+        ] + deployment_conditions
         hypothesis_supported = True
-        confidence_delta = 0.1
-        tested_mitigations = [
-            {"action": "Recycle leaked sessions", "result": "pool capacity recovered", "confidence_delta": 0.06},
-            {"action": "Roll back retry patch", "result": "session growth stopped", "confidence_delta": 0.04},
-        ]
+        confidence_delta = 0.11 if "retry" in deployment_text else 0.1
+        tested_mitigations = build_mitigation_checks(
+            candidate_actions,
+            fallback_checks=[
+                ("Terminate orphaned sessions and restart checkout pods", "pool capacity recovered quickly and new checkout writes resumed", 0.06),
+                ("Roll back checkout retry patch", "session growth stopped once the retry patch was removed from the write path", 0.05),
+                ("Increase pool size temporarily to 650", "capacity improved briefly but the leak signature remained active", 0.01),
+            ],
+        )
         reasoning = (
-            "The failure reproduced when the patched retry path leaked sessions long enough to exhaust the primary pool."
+            "The failure reproduced when the patched retry path leaked sessions long enough to exhaust the primary pool. "
+            "Pool exhaustion did not persist once the retry patch was removed from the sandbox."
         )
     elif "certificate expiry" in issue_family or "tls" in root_cause.lower():
         environment_pack_id = "edge-nginx-acme-v1"
         reproduction_status = "reproduced"
-        reproduced_symptoms = [
-            "TLS handshake failure",
-            "public endpoint trust error",
-        ]
+        supporting_conditions = [
+            "expired public certificate chain attached",
+            "edge listener still serving stale cert",
+        ] + deployment_conditions
         hypothesis_supported = True
         confidence_delta = 0.09
-        tested_mitigations = [
-            {"action": "Rotate the expired certificate", "result": "public trust restored", "confidence_delta": 0.09},
-        ]
+        tested_mitigations = build_mitigation_checks(
+            candidate_actions,
+            fallback_checks=[
+                ("Rotate the expired certificate", "public trust restored", 0.09),
+            ],
+        )
         reasoning = "The failure reproduced when the edge listener served an expired public certificate chain."
+    elif "memory leak" in issue_family or "heap" in logs_text:
+        environment_pack_id = "worker-python-image-gc-v1"
+        reproduction_status = "reproduced"
+        supporting_conditions = [
+            "retained frame buffers stay live after task completion",
+            "gc pause time increases as replay batches accumulate",
+        ] + deployment_conditions
+        hypothesis_supported = True
+        confidence_delta = 0.08
+        tested_mitigations = build_mitigation_checks(
+            candidate_actions,
+            fallback_checks=[
+                ("Recycle leaking worker pods", "memory pressure dropped but the retained-object pattern returned under load", 0.03),
+                ("Disable the new frame-cache path", "heap growth stopped once the suspected buffer path was disabled", 0.05),
+            ],
+        )
+        reasoning = "The failure reproduced when repeated image transform batches retained frame buffers beyond the expected cleanup path."
+
+    if not reproduced_symptoms:
+        reproduced_symptoms = default_reproduced_symptoms(issue_family, recent_logs or [])
 
     return {
         "incident_id": incident_id,
@@ -1245,6 +1389,7 @@ def build_replica_summary(
         "reproduced_symptoms": reproduced_symptoms,
         "hypothesis_supported": hypothesis_supported,
         "confidence_delta": confidence_delta,
+        "supporting_conditions": supporting_conditions,
         "tested_mitigations": tested_mitigations,
         "reasoning": reasoning,
     }
@@ -1256,9 +1401,14 @@ def build_trace_summary(
     triage_summary: dict[str, object],
     replica_summary: dict[str, object],
     root_cause: str,
+    recent_deployments: list[object] | None = None,
+    recent_logs: list[object] | None = None,
 ) -> dict[str, object]:
     issue_family = str(triage_summary.get("issue_family", "")).lower()
     service = str(triage_summary.get("likely_owner_service") or "")
+    deployment_text = " ".join(str(item) for item in (recent_deployments or [])).lower()
+    logs_text = " ".join(str(item).lower() for item in (recent_logs or []))
+    mitigation_actions = [str(item.get("action", "")).strip() for item in replica_summary.get("tested_mitigations", []) if isinstance(item, dict)]
 
     suspected_modules: list[str] = []
     suspected_functions: list[str] = []
@@ -1277,7 +1427,13 @@ def build_trace_summary(
             expected_flow = "Auth retries should cap quickly and release gateway workers when upstream latency rises."
             observed_divergence = "Retry middleware continues scheduling upstream attempts after the timeout budget is exhausted."
             state_anomalies = ["retry_count exceeds policy cap", "worker pool stays occupied during downstream timeout wait"]
-            confidence = 0.69
+            if "middleware" in deployment_text:
+                state_anomalies.append("recent retry middleware refactor aligns with the divergence point")
+            if any("circuit breaker" in action.lower() for action in mitigation_actions):
+                state_anomalies.append("circuit-breaker mitigation relieves the same failing path in REPLICA")
+            if "event-loop starvation" in logs_text or "worker saturation" in logs_text:
+                state_anomalies.append("runtime starvation confirms the retry path is blocking gateway capacity, not just auth latency")
+            confidence = 0.74 if "middleware" in deployment_text else 0.69
             reasoning = "TRACE narrowed the issue to the retry middleware path that keeps auth retries alive after the timeout budget is already exhausted."
         elif "pool exhaustion" in issue_family or "session leak" in issue_family:
             suspected_modules = ["checkout.db.session", "checkout.retry_patch", "checkout.transaction_flow"]
@@ -1285,7 +1441,13 @@ def build_trace_summary(
             expected_flow = "Checkout retries should release DB sessions before re-entering the write path."
             observed_divergence = "Retry path retains a session handle long enough to exhaust the shared pool."
             state_anomalies = ["session count grows between retries", "pool checkout waits continue after request cancellation"]
-            confidence = 0.72
+            if "retry" in deployment_text:
+                state_anomalies.append("recent retry patch aligns with the session lifecycle divergence")
+            if any("roll back" in action.lower() for action in mitigation_actions):
+                state_anomalies.append("rollback mitigation targets the same leaking retry path")
+            if "idle in transaction" in logs_text or "leaked session" in logs_text:
+                state_anomalies.append("runtime logs confirm sessions remain open after request cancellation")
+            confidence = 0.76 if "retry" in deployment_text else 0.72
             reasoning = "TRACE narrowed the issue to the checkout retry patch where the session lifecycle no longer closes cleanly after failure."
         elif "certificate expiry" in issue_family:
             suspected_modules = ["edge.cert_loader", "edge.listener_config", "acme.rotation_job"]
@@ -1295,6 +1457,16 @@ def build_trace_summary(
             state_anomalies = ["active cert serial differs from latest staged cert", "rotation timestamp exceeded renewal window"]
             confidence = 0.63
             reasoning = "TRACE narrowed the issue to the certificate loader and rotation path that failed to refresh the active listener."
+        elif "memory leak" in issue_family:
+            suspected_modules = ["image_worker.frame_cache", "image_worker.transform_pipeline", "image_worker.release_hooks"]
+            suspected_functions = ["store_frame_buffer", "run_transform_batch", "release_decoded_frames"]
+            expected_flow = "Completed image transform batches should release decoded frame buffers before the next queue pull."
+            observed_divergence = "Decoded frame buffers remain strongly referenced after batch completion, so heap pressure compounds across replay cycles."
+            state_anomalies = ["retained frame_buffer objects dominate the heap snapshot", "gc pauses grow as replayed batches accumulate"]
+            if "release hook missing" in logs_text:
+                state_anomalies.append("runtime logs already point at a missing release hook after transform completion")
+            confidence = 0.67
+            reasoning = "TRACE narrowed the issue to the frame-cache release path where completed transform batches retain decoded buffers."
 
     return {
         "incident_id": incident_id,
