@@ -150,8 +150,10 @@ Expected:
 - `Replay handoff` is available if you want to watch the relay again deliberately
 - `Agent Handoff Thread` is visible
 - `Enterprise Task Board` is visible
-- exactly 6 collaboration stages are visible in the task board
+- exactly 8 collaboration stages are visible in the task board
 - PRISM appears as multiple workstreams, not just one linear note
+- `REPLICA` appears as a reproduction stage
+- `TRACE` appears as a debugging stage
 - `Memory-grounded context` is visible
 - at least one similar incident is shown
 - at least one prior runbook memory is shown
@@ -214,6 +216,9 @@ Expected:
 - GUARDIAN section is visible
 - GUARDIAN reasoning is populated
 - execution gate text mentions approval requirements
+- Guardian reasoning distinguishes:
+  - validated signals
+  - inferred signals
 - runbook impact text mentions:
   - approval focus
   - blast radius

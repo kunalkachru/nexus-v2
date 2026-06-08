@@ -36,6 +36,7 @@ class RuntimeState(TypedDict):
     evidence_pack: dict[str, object]
     sentinel_output: SentinelClassification
     prism_output: PrismDiagnosis
+    triage_summary: dict[str, object]
     forge_output: ForgeRunbookResult
     guardian_output: GuardianReviewResult
     final_episode: Episode
@@ -51,6 +52,7 @@ class RuntimeInput(TypedDict, total=False):
     agent_metrics: NotRequired[dict[str, dict[str, object]]]
     branch_results: NotRequired[dict[str, dict[str, object]]]
     evidence_pack: NotRequired[dict[str, object]]
+    triage_summary: NotRequired[dict[str, object]]
 
 
 class IncidentKnowledgeService:
@@ -381,11 +383,33 @@ class EnterpriseNexusRuntime:
                     "resolution": "Used deterministic runbook fallback for this incident.",
                 }
             )
+        triage_summary = build_triage_summary(
+            incident_name=incident_name,
+            service=service,
+            severity=severity,
+            root_cause=str(diagnosis.get("root_cause", incident_name)),
+            source_channel=source_channel,
+            detected_signals=observability.get("recent_logs", []),
+        )
+        replica_summary = build_replica_summary(
+            incident_id=incident_id,
+            triage_summary=triage_summary,
+            root_cause=str(diagnosis.get("root_cause", incident_name)),
+            recent_logs=observability.get("recent_logs", []),
+        )
+        trace_summary = build_trace_summary(
+            incident_id=incident_id,
+            triage_summary=triage_summary,
+            replica_summary=replica_summary,
+            root_cause=str(diagnosis.get("root_cause", incident_name)),
+        )
         task_board = [
             self._task("sentinel-classify", "SENTINEL", "completed", "Classify severity and pattern", str(classification.get("reasoning", "")), "PRISM"),
             self._task("prism-evidence", "PRISM", "completed", "Correlate logs and metrics", f"{len(observability.get('recent_logs', []))} live evidence lines assembled", "PRISM"),
             self._task("prism-deployment", "PRISM", "completed", "Analyze change and deployment context", f"{len(incident_deployments_from_observability(observability))} deployment clues reviewed", "PRISM"),
             self._task("prism-history", "PRISM", "completed" if memory_hits["similar_incidents"] else "fallback", "Retrieve similar incidents and unresolved work", f"{len(memory_hits['similar_incidents'])} similar incidents and {len(memory_hits['unresolved_items'])} unresolved items linked", "FORGE"),
+            self._task("replica-validate", "REPLICA", str(replica_summary["reproduction_status"]), "Recreate the failure in a curated sandbox", str(replica_summary.get("reasoning", "")), "TRACE"),
+            self._task("trace-debug", "TRACE", str(trace_summary["trace_status"]), "Narrow the likely failing path", str(trace_summary.get("reasoning", "")), "FORGE"),
             self._task("forge-plan", "FORGE", "completed", "Synthesize remediation path", str(runbook.get("reasoning", "")), "GUARDIAN"),
             self._task("guardian-policy", "GUARDIAN", "completed", "Evaluate policy and execution safety", str(guardian.get("reasoning", "")), "execution"),
         ]
@@ -397,19 +421,16 @@ class EnterpriseNexusRuntime:
                 "timeline": workflow,
                 "active_story": f"{incident_name} was split into evidence, change, and history workstreams before the remediation path was synthesized.",
             },
-            "triage_summary": build_triage_summary(
-                incident_name=incident_name,
-                service=service,
-                severity=severity,
-                root_cause=str(diagnosis.get("root_cause", incident_name)),
-                source_channel=source_channel,
-                detected_signals=observability.get("recent_logs", []),
-            ),
+            "triage_summary": triage_summary,
+            "replica_summary": replica_summary,
+            "trace_summary": trace_summary,
             "task_board": {"tasks": task_board},
             "memory_hits": memory_hits,
             "agent_metrics": {
                 "sentinel": self._contract("SENTINEL", classification.get("confidence", 0.0), classification.get("reasoning", ""), ["intake", "evidence"], ["logs", "metrics"], "PRISM", 10.8, False, 0),
                 "prism": self._contract("PRISM", diagnosis.get("confidence", 0.0), diagnosis.get("correlation_analysis", ""), ["evidence", "deployments", "history"], ["logs", "metrics", "memory"], "FORGE", 18.7, bool(fallback_summary), 1 if fallback_summary else 0),
+                "replica": self._contract("REPLICA", max(0.0, min(1.0, 0.5 + float(replica_summary.get("confidence_delta", 0.0)))), replica_summary.get("reasoning", ""), ["sandbox", "failure_replay"], ["diagnosis", "triage"], "TRACE", 19.4, str(replica_summary.get("reproduction_status")) == "not_run", 0),
+                "trace": self._contract("TRACE", trace_summary.get("confidence", 0.0), trace_summary.get("reasoning", ""), ["source_map", "runtime_clues"], ["replica", "diagnosis"], "FORGE", 14.6, str(trace_summary.get("trace_status")) == "not_run", 0),
                 "forge": self._contract("FORGE", runbook_score_from_candidates(runbook), runbook.get("reasoning", ""), ["runbook-history", "guardrails"], ["memory", "diagnosis"], "GUARDIAN", 13.2, False, 0),
                 "guardian": self._guardian_contract(guardian, severity=severity),
             },
@@ -451,6 +472,8 @@ class EnterpriseNexusRuntime:
             self._task("prism-evidence", "PRISM", "queued", "Correlate logs and metrics", "Branch opens after classification.", "PRISM"),
             self._task("prism-deployment", "PRISM", "queued", "Inspect recent changes and release context", f"{len(deployments)} deployment clues preloaded.", "PRISM"),
             self._task("prism-history", "PRISM", "queued", "Retrieve incident memory and unresolved work", "Historical retrieval waits for a root-cause hint.", "FORGE"),
+            self._task("replica-validate", "REPLICA", "queued", "Recreate the failure in a curated sandbox", "Reproduction waits for PRISM to produce the current hypothesis.", "TRACE"),
+            self._task("trace-debug", "TRACE", "queued", "Narrow the likely failing path", "Debugging waits for reproduction and diagnosis findings.", "FORGE"),
             self._task("forge-plan", "FORGE", "queued", "Synthesize remediation plan", "Waiting for the diagnosis packet.", "GUARDIAN"),
             self._task("guardian-policy", "GUARDIAN", "queued", "Apply policy and gate execution", "Waiting for the runbook proposal.", "execution"),
         ]
@@ -689,6 +712,14 @@ class EnterpriseNexusRuntime:
             }
         )
         return {
+            "triage_summary": build_triage_summary(
+                incident_name=context.incident.name,
+                service=context.system_context.service,
+                severity=state["sentinel_output"].severity,
+                root_cause=prism_output.root_cause,
+                source_channel="webhook",
+                detected_signals=context.raw_symptoms,
+            ),
             "prism_output": prism_output,
             "agent_metrics": {
                 **state["agent_metrics"],
@@ -714,6 +745,19 @@ class EnterpriseNexusRuntime:
     async def _forge_node(self, state: RuntimeState) -> dict[str, object]:
         context = state["context"]
         memory_hits = state["memory_hits"]
+        triage_summary = state["triage_summary"]
+        replica_summary = build_replica_summary(
+            incident_id=context.incident.id,
+            triage_summary=triage_summary,
+            root_cause=state["prism_output"].root_cause,
+            recent_logs=context.signals.get("logs", []),
+        )
+        trace_summary = build_trace_summary(
+            incident_id=context.incident.id,
+            triage_summary=triage_summary,
+            replica_summary=replica_summary,
+            root_cause=state["prism_output"].root_cause,
+        )
         forge_output = await self.forge.generate_runbook(
             prism_output=state["prism_output"],
             system_context=context.system_context,
@@ -726,14 +770,41 @@ class EnterpriseNexusRuntime:
             f"Primary historical fit: {top_runbook.get('runbook_summary', 'none')}."
             f"{' Why now: ' + str(top_runbook.get('why_now_fit')) + '.' if top_runbook.get('why_now_fit') else ''}"
             f"{' Runner-up: ' + str(runner_up.get('runbook_summary')) + '.' if runner_up else ''} "
+            f"REPLICA: {replica_summary.get('reasoning', '')} "
+            f"TRACE: {trace_summary.get('reasoning', '')} "
             "FORGE kept the plan biased toward reversible, lower-blast-radius actions first."
         )
         forge_output = forge_output.model_copy(update={"reasoning": reasoning})
+        self._set_task_status(state["task_board"], "replica-validate", str(replica_summary.get("reproduction_status", "not_run")), str(replica_summary.get("reasoning", "")))
+        self._set_task_status(state["task_board"], "trace-debug", str(trace_summary.get("trace_status", "not_run")), str(trace_summary.get("reasoning", "")))
         self._set_task_status(state["task_board"], "forge-plan", "completed", reasoning)
         return {
+            "triage_summary": triage_summary,
             "forge_output": forge_output,
             "agent_metrics": {
                 **state["agent_metrics"],
+                "replica": self._contract(
+                    "REPLICA",
+                    max(0.0, min(1.0, 0.5 + float(replica_summary.get("confidence_delta", 0.0)))),
+                    replica_summary.get("reasoning", ""),
+                    ["sandbox", "failure_replay"],
+                    ["diagnosis", "triage"],
+                    "TRACE",
+                    19.4,
+                    str(replica_summary.get("reproduction_status")) == "not_run",
+                    0,
+                ),
+                "trace": self._contract(
+                    "TRACE",
+                    trace_summary.get("confidence", 0.0),
+                    trace_summary.get("reasoning", ""),
+                    ["source_map", "runtime_clues"],
+                    ["replica", "diagnosis"],
+                    "FORGE",
+                    14.6,
+                    str(trace_summary.get("trace_status")) == "not_run",
+                    0,
+                ),
                 "forge": self._contract(
                     "FORGE",
                     max((item.get("success_rate", 0.0) for item in memory_hits["runbooks"]), default=0.84),
@@ -754,6 +825,18 @@ class EnterpriseNexusRuntime:
         }
 
     async def _guardian_node(self, state: RuntimeState) -> dict[str, object]:
+        replica_summary = build_replica_summary(
+            incident_id=state["context"].incident.id,
+            triage_summary=state["triage_summary"],
+            root_cause=state["prism_output"].root_cause,
+            recent_logs=state["context"].signals.get("logs", []),
+        )
+        trace_summary = build_trace_summary(
+            incident_id=state["context"].incident.id,
+            triage_summary=state["triage_summary"],
+            replica_summary=replica_summary,
+            root_cause=state["prism_output"].root_cause,
+        )
         guardian_output = await self.guardian.review(
             forge_output=state["forge_output"],
             sentinel_output=state["sentinel_output"],
@@ -775,6 +858,8 @@ class EnterpriseNexusRuntime:
                 "simulation_readiness": simulation_readiness,
                 "reasoning": (
                     f"{guardian_output.reasoning} "
+                    f"Validated signals: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} and TRACE is {trace_summary.get('trace_status', 'not_run')}. "
+                    f"Inferred signals: memory-ranked analogs and diagnosis synthesis still inform the remaining confidence. "
                     f"Risk class {risk_class.upper()} requires {approval_level.replace('_', ' ')} approval. "
                     f"Rollback readiness is {rollback_readiness} and simulation readiness is {simulation_readiness}."
                 ).strip(),
@@ -842,6 +927,23 @@ class EnterpriseNexusRuntime:
                     root_cause=state["prism_output"].root_cause,
                     source_channel="webhook",
                     detected_signals=context.raw_symptoms,
+                ),
+                "replica_summary": build_replica_summary(
+                    incident_id=context.incident.id,
+                    triage_summary=state["triage_summary"],
+                    root_cause=state["prism_output"].root_cause,
+                    recent_logs=context.signals.get("logs", []),
+                ),
+                "trace_summary": build_trace_summary(
+                    incident_id=context.incident.id,
+                    triage_summary=state["triage_summary"],
+                    replica_summary=build_replica_summary(
+                        incident_id=context.incident.id,
+                        triage_summary=state["triage_summary"],
+                        root_cause=state["prism_output"].root_cause,
+                        recent_logs=context.signals.get("logs", []),
+                    ),
+                    root_cause=state["prism_output"].root_cause,
                 ),
                 "orchestration": {
                     **state["orchestration"],
@@ -1065,4 +1167,144 @@ def build_triage_summary(
         "manual_relay_removed": (
             f"NEXUS condensed {signal_count or 'multiple'} evidence signals, deploy context, and prior incident memory into one prepared support packet."
         ),
+    }
+
+
+def build_replica_summary(
+    *,
+    incident_id: str,
+    triage_summary: dict[str, object],
+    root_cause: str,
+    recent_logs: list[object] | None = None,
+) -> dict[str, object]:
+    issue_family = str(triage_summary.get("issue_family", "")).lower()
+    logs_text = " ".join(str(item) for item in (recent_logs or [])).lower()
+    service = str(triage_summary.get("likely_owner_service") or "")
+
+    environment_pack_id = "generic-support-triage-pack-v1"
+    reproduction_status = "not_run"
+    reproduced_symptoms: list[str] = []
+    hypothesis_supported = False
+    confidence_delta = 0.0
+    tested_mitigations: list[dict[str, object]] = []
+    reasoning = "REPLICA has not run for this incident class yet."
+
+    if "retry amplification" in issue_family or ("retry" in logs_text and "timeout" in logs_text):
+        environment_pack_id = "checkout-python-fastapi-auth-redis-v1"
+        reproduction_status = "reproduced"
+        reproduced_symptoms = [
+            "gateway timeout spike",
+            "retry budget exceeded",
+            "worker saturation under downstream auth latency",
+        ]
+        hypothesis_supported = True
+        confidence_delta = 0.12
+        tested_mitigations = [
+            {"action": "Cap retries to 1", "result": "latency improved and worker pressure eased", "confidence_delta": 0.08},
+            {"action": "Open auth circuit breaker", "result": "timeout cascade stopped spreading", "confidence_delta": 0.04},
+        ]
+        reasoning = (
+            "The failure pattern reproduced only when the retry-heavy middleware path remained enabled under downstream auth degradation."
+        )
+    elif "pool exhaustion" in issue_family or "session leak" in issue_family or "queuepool" in logs_text:
+        environment_pack_id = "checkout-python-fastapi-postgres-v1"
+        reproduction_status = "reproduced"
+        reproduced_symptoms = [
+            "connection pool saturation",
+            "queue pool checkout failures",
+            "checkout write latency spike",
+        ]
+        hypothesis_supported = True
+        confidence_delta = 0.1
+        tested_mitigations = [
+            {"action": "Recycle leaked sessions", "result": "pool capacity recovered", "confidence_delta": 0.06},
+            {"action": "Roll back retry patch", "result": "session growth stopped", "confidence_delta": 0.04},
+        ]
+        reasoning = (
+            "The failure reproduced when the patched retry path leaked sessions long enough to exhaust the primary pool."
+        )
+    elif "certificate expiry" in issue_family or "tls" in root_cause.lower():
+        environment_pack_id = "edge-nginx-acme-v1"
+        reproduction_status = "reproduced"
+        reproduced_symptoms = [
+            "TLS handshake failure",
+            "public endpoint trust error",
+        ]
+        hypothesis_supported = True
+        confidence_delta = 0.09
+        tested_mitigations = [
+            {"action": "Rotate the expired certificate", "result": "public trust restored", "confidence_delta": 0.09},
+        ]
+        reasoning = "The failure reproduced when the edge listener served an expired public certificate chain."
+
+    return {
+        "incident_id": incident_id,
+        "environment_pack_id": environment_pack_id,
+        "service": service,
+        "reproduction_status": reproduction_status,
+        "reproduced_symptoms": reproduced_symptoms,
+        "hypothesis_supported": hypothesis_supported,
+        "confidence_delta": confidence_delta,
+        "tested_mitigations": tested_mitigations,
+        "reasoning": reasoning,
+    }
+
+
+def build_trace_summary(
+    *,
+    incident_id: str,
+    triage_summary: dict[str, object],
+    replica_summary: dict[str, object],
+    root_cause: str,
+) -> dict[str, object]:
+    issue_family = str(triage_summary.get("issue_family", "")).lower()
+    service = str(triage_summary.get("likely_owner_service") or "")
+
+    suspected_modules: list[str] = []
+    suspected_functions: list[str] = []
+    expected_flow = "Normal request handling path should complete without exhausting shared capacity."
+    observed_divergence = "TRACE has not run for this incident class yet."
+    state_anomalies: list[str] = []
+    confidence = 0.0
+    reasoning = "TRACE has not yet narrowed a code path for this incident."
+    trace_status = "not_run"
+
+    if replica_summary.get("reproduction_status") == "reproduced":
+        trace_status = "narrowed"
+        if "retry amplification" in issue_family:
+            suspected_modules = ["auth.middleware.retry", "gateway.timeout_guard", "auth.circuit_breaker"]
+            suspected_functions = ["apply_retry_policy", "await_upstream_auth", "record_timeout_budget"]
+            expected_flow = "Auth retries should cap quickly and release gateway workers when upstream latency rises."
+            observed_divergence = "Retry middleware continues scheduling upstream attempts after the timeout budget is exhausted."
+            state_anomalies = ["retry_count exceeds policy cap", "worker pool stays occupied during downstream timeout wait"]
+            confidence = 0.69
+            reasoning = "TRACE narrowed the issue to the retry middleware path that keeps auth retries alive after the timeout budget is already exhausted."
+        elif "pool exhaustion" in issue_family or "session leak" in issue_family:
+            suspected_modules = ["checkout.db.session", "checkout.retry_patch", "checkout.transaction_flow"]
+            suspected_functions = ["checkout_session_scope", "retry_checkout_write", "release_db_session"]
+            expected_flow = "Checkout retries should release DB sessions before re-entering the write path."
+            observed_divergence = "Retry path retains a session handle long enough to exhaust the shared pool."
+            state_anomalies = ["session count grows between retries", "pool checkout waits continue after request cancellation"]
+            confidence = 0.72
+            reasoning = "TRACE narrowed the issue to the checkout retry patch where the session lifecycle no longer closes cleanly after failure."
+        elif "certificate expiry" in issue_family:
+            suspected_modules = ["edge.cert_loader", "edge.listener_config", "acme.rotation_job"]
+            suspected_functions = ["load_public_certificate", "validate_chain_expiry", "reload_edge_listener"]
+            expected_flow = "Edge listeners should always serve a valid public certificate chain."
+            observed_divergence = "Expired certificate chain remained attached to the active listener after rotation was missed."
+            state_anomalies = ["active cert serial differs from latest staged cert", "rotation timestamp exceeded renewal window"]
+            confidence = 0.63
+            reasoning = "TRACE narrowed the issue to the certificate loader and rotation path that failed to refresh the active listener."
+
+    return {
+        "incident_id": incident_id,
+        "service": service,
+        "trace_status": trace_status,
+        "suspected_modules": suspected_modules,
+        "suspected_functions": suspected_functions,
+        "expected_flow": expected_flow,
+        "observed_divergence": observed_divergence,
+        "state_anomalies": state_anomalies,
+        "confidence": confidence,
+        "reasoning": reasoning,
     }

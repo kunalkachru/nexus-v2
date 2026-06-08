@@ -9,7 +9,12 @@ from server.artifacts import get_artifact_summary
 from server.services.observability import ObservabilityService
 from server.services.result_contracts import build_structured_result
 from server.services.priority import normalize_priority_label, priority_snapshot
-from server.services.enterprise_runtime import build_training_enterprise_summary, build_triage_summary
+from server.services.enterprise_runtime import (
+    build_replica_summary,
+    build_trace_summary,
+    build_training_enterprise_summary,
+    build_triage_summary,
+)
 
 
 METRICS_PATH = Path(__file__).resolve().parents[2] / "frontend" / "metrics.json"
@@ -25,6 +30,27 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
     details = get_incident_details(incident_id)
     source_channel = incident_source_channel(incident_id)
     priority = priority_snapshot(incident.severity)
+
+    triage_summary = details.get("triage") or build_triage_summary(
+        incident_name=incident.name,
+        service=incident.system_context.service,
+        severity=_display_severity(incident.severity),
+        root_cause=incident.root_cause,
+        source_channel=source_channel,
+        detected_signals=details["recent_logs"],
+    )
+    replica_summary = build_replica_summary(
+        incident_id=incident.id,
+        triage_summary=triage_summary,
+        root_cause=incident.root_cause,
+        recent_logs=details["recent_logs"],
+    )
+    trace_summary = build_trace_summary(
+        incident_id=incident.id,
+        triage_summary=triage_summary,
+        replica_summary=replica_summary,
+        root_cause=incident.root_cause,
+    )
 
     return {
         "incident": {
@@ -79,15 +105,9 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
             "policy_violations": details["guardian"]["policy_violations"],
             "reasoning": details["guardian"]["reasoning"],
         },
-        "triage_summary": details.get("triage")
-        or build_triage_summary(
-            incident_name=incident.name,
-            service=incident.system_context.service,
-            severity=_display_severity(incident.severity),
-            root_cause=incident.root_cause,
-            source_channel=source_channel,
-            detected_signals=details["recent_logs"],
-        ),
+        "triage_summary": triage_summary,
+        "replica_summary": replica_summary,
+        "trace_summary": trace_summary,
         "structured_result": {
             **build_structured_result(
                 incident_id=incident.id,

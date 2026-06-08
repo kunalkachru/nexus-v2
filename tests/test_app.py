@@ -47,6 +47,8 @@ def test_dashboard_routes_are_served() -> None:
     assert "Agent Handoff Thread" in incident.text
     assert "Enterprise Task Board" in incident.text
     assert "Memory-grounded context" in incident.text
+    assert "Investigation depth · REPLICA" in incident.text
+    assert "Investigation depth · TRACE" in incident.text
     assert "SENTINEL handed evidence to PRISM" in incident.text
     assert "Governance Bot" in incident.text
     assert "Working memory" in incident.text
@@ -168,3 +170,5 @@ def test_run_incident_returns_realistic_incident_context() -> None:
     assert payload["agent_metrics"]["prism"]["handoff_to"] == "FORGE"
     assert payload["triage_summary"]["issue_family"]
     assert payload["memory_hits"]["similar_incidents"][0]["match_reason"]
+    assert payload["replica_summary"]["environment_pack_id"]
+    assert payload["trace_summary"]["trace_status"]

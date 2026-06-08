@@ -47,6 +47,8 @@ from server.services.result_contracts import build_structured_result
 from server.services.enterprise_runtime import (
     EnterpriseNexusRuntime,
     IncidentKnowledgeService,
+    build_replica_summary,
+    build_trace_summary,
     build_triage_summary,
     build_training_enterprise_summary,
     runbook_score_from_candidates,
@@ -619,6 +621,27 @@ class IncidentService:
             execution_result = "needs_modification"
         else:
             execution_result = "pending"
+        triage_summary = build_triage_summary(
+            incident_name=incident.title,
+            service=raw_service or incident.service or incident.nexus_incident_id,
+            severity=incident.severity,
+            root_cause=diagnosis["root_cause"],
+            source_channel=self._queue_source_channel(incident.source),
+            detected_signals=observability["recent_logs"],
+        )
+        replica_summary = build_replica_summary(
+            incident_id=incident.nexus_incident_id,
+            triage_summary=triage_summary,
+            root_cause=diagnosis["root_cause"],
+            recent_logs=observability["recent_logs"],
+        )
+        trace_summary = build_trace_summary(
+            incident_id=incident.nexus_incident_id,
+            triage_summary=triage_summary,
+            replica_summary=replica_summary,
+            root_cause=diagnosis["root_cause"],
+        )
+
         payload = {
             "incident": {
                 "id": incident.nexus_incident_id,
@@ -639,14 +662,9 @@ class IncidentService:
             "diagnosis": diagnosis,
             "runbook": runbook,
             "guardian": guardian,
-            "triage_summary": build_triage_summary(
-                incident_name=incident.title,
-                service=raw_service or incident.service or incident.nexus_incident_id,
-                severity=incident.severity,
-                root_cause=diagnosis["root_cause"],
-                source_channel=self._queue_source_channel(incident.source),
-                detected_signals=observability["recent_logs"],
-            ),
+            "triage_summary": triage_summary,
+            "replica_summary": replica_summary,
+            "trace_summary": trace_summary,
             "structured_result": build_structured_result(
                 incident_id=incident.nexus_incident_id,
                 root_cause=diagnosis["root_cause"],
@@ -899,6 +917,27 @@ class IncidentService:
             ],
         }
 
+        triage_summary = build_triage_summary(
+            incident_name=incident.title,
+            service=raw_service,
+            severity=incident.severity,
+            root_cause=prism_output.root_cause,
+            source_channel="raw_text",
+            detected_signals=live_observability["recent_logs"],
+        )
+        replica_summary = build_replica_summary(
+            incident_id=incident.nexus_incident_id,
+            triage_summary=triage_summary,
+            root_cause=prism_output.root_cause,
+            recent_logs=live_observability["recent_logs"],
+        )
+        trace_summary = build_trace_summary(
+            incident_id=incident.nexus_incident_id,
+            triage_summary=triage_summary,
+            replica_summary=replica_summary,
+            root_cause=prism_output.root_cause,
+        )
+
         payload = {
             "incident": {
                 "id": incident.nexus_incident_id,
@@ -966,14 +1005,9 @@ class IncidentService:
                 "rollback_readiness": guardian_output.rollback_readiness or "ready",
                 "simulation_readiness": guardian_output.simulation_readiness or "ready",
             },
-            "triage_summary": build_triage_summary(
-                incident_name=incident.title,
-                service=raw_service,
-                severity=incident.severity,
-                root_cause=prism_output.root_cause,
-                source_channel="raw_text",
-                detected_signals=live_observability["recent_logs"],
-            ),
+            "triage_summary": triage_summary,
+            "replica_summary": replica_summary,
+            "trace_summary": trace_summary,
             "structured_result": build_structured_result(
                 incident_id=incident.nexus_incident_id,
                 root_cause=prism_output.root_cause,

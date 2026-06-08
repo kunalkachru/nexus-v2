@@ -226,6 +226,36 @@ class GuardianReviewResult(BaseModel):
     simulation_readiness: str = ""
 
 
+class ReplicaMitigationCheck(BaseModel):
+    action: str
+    result: str
+    confidence_delta: float = 0.0
+
+
+class ReplicaInvestigationResult(BaseModel):
+    incident_id: str
+    environment_pack_id: str
+    reproduction_status: Literal["reproduced", "not_reproduced", "not_run", "pending"]
+    reproduced_symptoms: list[str] = Field(default_factory=list)
+    hypothesis_supported: bool = False
+    confidence_delta: float = 0.0
+    tested_mitigations: list[ReplicaMitigationCheck] = Field(default_factory=list)
+    reasoning: str = ""
+
+
+class TraceInvestigationResult(BaseModel):
+    incident_id: str
+    service: str
+    trace_status: Literal["narrowed", "not_run", "pending"]
+    suspected_modules: list[str] = Field(default_factory=list)
+    suspected_functions: list[str] = Field(default_factory=list)
+    expected_flow: str = ""
+    observed_divergence: str = ""
+    state_anomalies: list[str] = Field(default_factory=list)
+    confidence: float = Field(ge=0.0, le=1.0, default=0.0)
+    reasoning: str = ""
+
+
 class SandboxValidationResult(BaseModel):
     syntax_valid: bool
     execution_allowed: bool

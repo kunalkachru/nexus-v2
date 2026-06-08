@@ -171,6 +171,29 @@ function synthesizeIncidentFromStatus(status) {
     approval_focus: "Prefer reversible mitigation before any broader change.",
     manual_relay_removed: "NEXUS is still presenting a prepared incident packet rather than raw status-only data.",
   };
+  const replicaSummary = {
+    incident_id: status.nexus_incident_id,
+    environment_pack_id: "status-contract-placeholder-v1",
+    service,
+    reproduction_status: "not_run",
+    reproduced_symptoms: [],
+    hypothesis_supported: false,
+    confidence_delta: 0,
+    tested_mitigations: [],
+    reasoning: "REPLICA findings are not available from the status-only fallback path.",
+  };
+  const traceSummary = {
+    incident_id: status.nexus_incident_id,
+    service,
+    trace_status: "not_run",
+    suspected_modules: [],
+    suspected_functions: [],
+    expected_flow: "Fallback path has not loaded code-aware debugging context.",
+    observed_divergence: "TRACE findings are unavailable on the status-only fallback path.",
+    state_anomalies: [],
+    confidence: 0,
+    reasoning: "TRACE findings are not available from the status-only fallback path.",
+  };
   const recordedGuardianDecision = ["approve", "reject", "request_modification"].includes(String(status.guardian_decision))
     ? status.guardian_decision
     : null;
@@ -293,6 +316,8 @@ function synthesizeIncidentFromStatus(status) {
             : "The versioned status view is visible and no unsafe operation is being auto-executed."),
     },
     triage_summary: triageSummary,
+    replica_summary: replicaSummary,
+    trace_summary: traceSummary,
     structured_result: {
       incident_id: status.nexus_incident_id,
       root_cause: "Live incident path awaiting deeper backend enrichment.",
