@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from collections.abc import Awaitable, Callable
 from statistics import mean
@@ -1285,6 +1286,7 @@ def build_replica_summary(
     recent_logs: list[object] | None = None,
     recent_deployments: list[object] | None = None,
     candidate_fixes: list[object] | None = None,
+    execute_runtime: bool | None = None,
 ) -> dict[str, object]:
     issue_family = str(triage_summary.get("issue_family", "")).lower()
     logs_text = " ".join(str(item) for item in (recent_logs or [])).lower()
@@ -1299,6 +1301,12 @@ def build_replica_summary(
         recent_deployments=recent_deployments,
     )
     runner_result = ReplicaRunner().inspect_plan(plan) if plan else None
+    execute_runtime = (
+        os.environ.get("NEXUS_ENABLE_REPLICA_RUNTIME", "0") == "1"
+        if execute_runtime is None
+        else execute_runtime
+    )
+    runtime_result = ReplicaRunner().execute_scaffold(plan) if plan and execute_runtime and runner_result and runner_result.compose_config_valid and not runner_result.missing_assets else None
 
     environment_pack_id = "generic-support-triage-pack-v1"
     reproduction_status = "not_run"
@@ -1312,6 +1320,12 @@ def build_replica_summary(
         environment_pack_id = plan.pack.pack_id
         if runner_result and not runner_result.missing_assets:
             supporting_conditions.append("pack scaffold is present on disk for the bounded runtime-backed replay path")
+        if runner_result and runner_result.compose_config_valid and runner_result.services_seen:
+            supporting_conditions.append(
+                f"compose plan validates with services: {', '.join(runner_result.services_seen)}"
+            )
+        if runtime_result and runtime_result.replay_output:
+            supporting_conditions.append("runtime scaffold executed a replay hook successfully")
 
     if "retry amplification" in issue_family or ("retry" in logs_text and "timeout" in logs_text):
         reproduction_status = "reproduced"
@@ -1400,9 +1414,18 @@ def build_replica_summary(
         "reproduced_symptoms": reproduced_symptoms,
         "hypothesis_supported": hypothesis_supported,
         "confidence_delta": confidence_delta,
+        "scaffold_ready": bool(runner_result and runner_result.compose_config_valid and not runner_result.missing_assets),
+        "runtime_mode": "runtime_scaffold" if runtime_result else ("pack_scaffold" if runner_result and runner_result.compose_config_valid else "inferred"),
+        "runtime_executed": bool(runtime_result),
+        "services_seen": list(runner_result.services_seen) if runner_result else [],
+        "replay_output": runtime_result.replay_output if runtime_result else "",
+        "mitigation_outputs": list(runtime_result.mitigation_outputs) if runtime_result else [],
         "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
         "tested_mitigations": tested_mitigations,
-        "reasoning": reasoning,
+        "reasoning": (
+            f"{reasoning} "
+            f"{'The bounded runtime scaffold was executed for this run.' if runtime_result else ('The bounded runtime scaffold is validated and ready for replay execution.' if runner_result and runner_result.compose_config_valid and not runner_result.missing_assets else 'The bounded runtime scaffold is not fully ready yet.')}"
+        ).strip(),
     }
 
 

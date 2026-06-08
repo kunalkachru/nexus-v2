@@ -128,6 +128,22 @@ Expected result:
 - Guardian policy details print
 - execution result prints
 
+### Optional Step 4: Enable bounded REPLICA runtime execution locally
+
+If you want REPLICA to actually boot the curated pack scaffold, run the demo or app with:
+
+```bash
+NEXUS_ENABLE_REPLICA_RUNTIME=1 python demo.py
+```
+
+Or start the local app with the same env var before opening the incident page.
+
+Expected result:
+
+- REPLICA still uses the same flagged outage pack
+- the runtime mode becomes runtime-backed for the local run
+- replay and mitigation hook output are available in the `replica_summary` payload
+
 ## Manual Browser Test Cases
 
 Use these in order. They are designed to explain the change set clearly.

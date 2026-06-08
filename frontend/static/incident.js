@@ -506,6 +506,9 @@ function renderEnterprise(data) {
   setText("replicaStatus", titleCase(replica.reproduction_status || "not_run"));
   setText("replicaHypothesis", replica.hypothesis_supported ? "Supported" : "Not yet proven");
   setText("replicaDelta", `${replica.confidence_delta ? `${Math.round(Number(replica.confidence_delta) * 100)} pts` : "0 pts"}`);
+  if (replica.scaffold_ready && (replica.services_seen || []).length) {
+    setText("replicaPack", `${replica.environment_pack_id || "-"} · ${replica.services_seen.join(", ")}`);
+  }
   renderList(
     "replicaMitigations",
     (replica.tested_mitigations || []).length

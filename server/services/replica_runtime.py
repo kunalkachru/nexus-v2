@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -37,6 +39,10 @@ class ReplicaExecutionResult:
     replay_ready: bool
     mitigation_hooks_ready: bool
     missing_assets: tuple[str, ...]
+    compose_config_valid: bool = False
+    services_seen: tuple[str, ...] = ()
+    replay_output: str = ""
+    mitigation_outputs: tuple[str, ...] = ()
     mode: str = "scaffold"
 
 
@@ -146,8 +152,9 @@ def trace_targets_for_plan(plan: ReplicaExecutionPlan | None) -> list[tuple[str,
 class ReplicaRunner:
     """Bounded execution contract for curated reproduction packs.
 
-    This does not yet run Docker Compose. It verifies that the pack has enough
-    on-disk structure for the next runtime slice to launch it safely.
+    This runner is intentionally bounded to curated packs. It can validate the
+    compose file, boot the pack, run the replay hook, optionally run mitigation
+    hooks, and tear everything down again.
     """
 
     def inspect_plan(self, plan: ReplicaExecutionPlan) -> ReplicaExecutionResult:
@@ -165,10 +172,90 @@ class ReplicaRunner:
             if not hook_path.exists():
                 missing_assets.append(str(hook_path))
 
+        compose_config_valid = False
+        services_seen: tuple[str, ...] = ()
+        if plan.pack.compose_file.exists():
+            compose_config_valid, services_seen = self._compose_config(plan)
+
         return ReplicaExecutionResult(
             pack_id=plan.pack.pack_id,
             compose_ready=plan.pack.compose_file.exists(),
             replay_ready=replay_script.exists(),
             mitigation_hooks_ready=all((hooks_root / f"{hook_name}.sh").exists() for hook_name in plan.mitigation_sequence),
             missing_assets=tuple(missing_assets),
+            compose_config_valid=compose_config_valid,
+            services_seen=services_seen,
         )
+
+    def execute_scaffold(self, plan: ReplicaExecutionPlan, *, mitigation_limit: int = 1) -> ReplicaExecutionResult:
+        inspected = self.inspect_plan(plan)
+        if inspected.missing_assets or not inspected.compose_config_valid:
+            return inspected
+
+        replay_output = ""
+        mitigation_outputs: list[str] = []
+        try:
+            self._compose_up(plan)
+            replay_output = self._run_script(plan.pack.compose_file.parent / plan.replay_entrypoint)
+            hooks_root = plan.pack.compose_file.parent / "hooks"
+            for hook_name in plan.mitigation_sequence[:mitigation_limit]:
+                mitigation_outputs.append(self._run_script(hooks_root / f"{hook_name}.sh"))
+        finally:
+            self._compose_down(plan)
+
+        return ReplicaExecutionResult(
+            pack_id=inspected.pack_id,
+            compose_ready=inspected.compose_ready,
+            replay_ready=inspected.replay_ready,
+            mitigation_hooks_ready=inspected.mitigation_hooks_ready,
+            missing_assets=inspected.missing_assets,
+            compose_config_valid=inspected.compose_config_valid,
+            services_seen=inspected.services_seen,
+            replay_output=replay_output.strip(),
+            mitigation_outputs=tuple(output.strip() for output in mitigation_outputs),
+            mode="runtime_scaffold",
+        )
+
+    def _compose_config(self, plan: ReplicaExecutionPlan) -> tuple[bool, tuple[str, ...]]:
+        result = subprocess.run(
+            ["docker", "compose", "-f", str(plan.pack.compose_file), "config", "--format", "json"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return False, ()
+        try:
+            payload = json.loads(result.stdout or "{}")
+        except json.JSONDecodeError:
+            return False, ()
+        services = tuple(sorted((payload.get("services") or {}).keys()))
+        return True, services
+
+    def _compose_up(self, plan: ReplicaExecutionPlan) -> None:
+        subprocess.run(
+            ["docker", "compose", "-f", str(plan.pack.compose_file), "up", "-d"],
+            cwd=str(plan.pack.compose_file.parent),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+    def _compose_down(self, plan: ReplicaExecutionPlan) -> None:
+        subprocess.run(
+            ["docker", "compose", "-f", str(plan.pack.compose_file), "down", "-v"],
+            cwd=str(plan.pack.compose_file.parent),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def _run_script(self, script_path: Path) -> str:
+        result = subprocess.run(
+            ["bash", str(script_path)],
+            cwd=str(script_path.parent.parent),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout

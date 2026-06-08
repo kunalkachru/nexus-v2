@@ -239,6 +239,12 @@ class ReplicaInvestigationResult(BaseModel):
     reproduced_symptoms: list[str] = Field(default_factory=list)
     hypothesis_supported: bool = False
     confidence_delta: float = 0.0
+    scaffold_ready: bool = False
+    runtime_mode: str = "inferred"
+    runtime_executed: bool = False
+    services_seen: list[str] = Field(default_factory=list)
+    replay_output: str = ""
+    mitigation_outputs: list[str] = Field(default_factory=list)
     tested_mitigations: list[ReplicaMitigationCheck] = Field(default_factory=list)
     reasoning: str = ""
 
