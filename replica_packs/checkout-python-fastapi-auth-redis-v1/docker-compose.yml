@@ -1,0 +1,26 @@
+services:
+  gateway:
+    image: python:3.13-slim
+    command: ["sh", "-c", "echo gateway pack scaffold ready && sleep infinity"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('ok')"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  auth:
+    image: python:3.13-slim
+    command: ["sh", "-c", "echo auth pack scaffold ready && sleep infinity"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('ok')"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

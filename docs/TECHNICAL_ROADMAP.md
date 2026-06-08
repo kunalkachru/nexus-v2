@@ -8,6 +8,7 @@ It is intentionally short-horizon and engineering-focused.
 For the broader support-triage product direction, flagship outage demo, and the implementation plan for memory, reproduction, and debugging agents, use:
 
 - [SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md)
+- [STRICT_RUNTIME_AGENT_IMPLEMENTATION_BACKLOG.md](/Users/kunalkachru/Documents/nexus-v3/docs/STRICT_RUNTIME_AGENT_IMPLEMENTATION_BACKLOG.md)
 
 ## Goal
 

@@ -1,0 +1,21 @@
+services:
+  checkout:
+    image: python:3.13-slim
+    command: ["sh", "-c", "echo checkout pack scaffold ready && sleep infinity"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('ok')"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: nexus
+      POSTGRES_USER: nexus
+      POSTGRES_DB: checkout
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus -d checkout"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

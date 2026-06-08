@@ -22,6 +22,7 @@ from server.models import (
     SystemContext,
 )
 from server.services.priority import normalize_priority_label, priority_rank
+from server.services.replica_runtime import ReplicaRunner, build_execution_plan, trace_targets_for_plan
 
 
 class RuntimeState(TypedDict):
@@ -1291,6 +1292,13 @@ def build_replica_summary(
     deployment_text, deployment_conditions = _deployment_signal_summary(recent_deployments)
     reproduced_symptoms = extract_reproduced_symptoms(recent_logs or [])
     candidate_actions = [str(item.get("action", "")).strip() for item in (candidate_fixes or []) if isinstance(item, dict)]
+    plan = build_execution_plan(
+        issue_family=str(triage_summary.get("issue_family", "")),
+        service=service,
+        recent_logs=recent_logs,
+        recent_deployments=recent_deployments,
+    )
+    runner_result = ReplicaRunner().inspect_plan(plan) if plan else None
 
     environment_pack_id = "generic-support-triage-pack-v1"
     reproduction_status = "not_run"
@@ -1300,8 +1308,12 @@ def build_replica_summary(
     reasoning = "REPLICA has not run for this incident class yet."
     supporting_conditions: list[str] = []
 
+    if plan is not None:
+        environment_pack_id = plan.pack.pack_id
+        if runner_result and not runner_result.missing_assets:
+            supporting_conditions.append("pack scaffold is present on disk for the bounded runtime-backed replay path")
+
     if "retry amplification" in issue_family or ("retry" in logs_text and "timeout" in logs_text):
-        environment_pack_id = "checkout-python-fastapi-auth-redis-v1"
         reproduction_status = "reproduced"
         supporting_conditions = [
             "downstream auth latency above 5s",
@@ -1323,7 +1335,6 @@ def build_replica_summary(
             "The sandbox required both the retry middleware change and elevated downstream auth latency to sustain the timeout cascade."
         )
     elif "pool exhaustion" in issue_family or "session leak" in issue_family or "queuepool" in logs_text:
-        environment_pack_id = "checkout-python-fastapi-postgres-v1"
         reproduction_status = "reproduced"
         supporting_conditions = [
             "checkout retry patch enabled",
@@ -1389,7 +1400,7 @@ def build_replica_summary(
         "reproduced_symptoms": reproduced_symptoms,
         "hypothesis_supported": hypothesis_supported,
         "confidence_delta": confidence_delta,
-        "supporting_conditions": supporting_conditions,
+        "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
         "tested_mitigations": tested_mitigations,
         "reasoning": reasoning,
     }
@@ -1409,6 +1420,13 @@ def build_trace_summary(
     deployment_text = " ".join(str(item) for item in (recent_deployments or [])).lower()
     logs_text = " ".join(str(item).lower() for item in (recent_logs or []))
     mitigation_actions = [str(item.get("action", "")).strip() for item in replica_summary.get("tested_mitigations", []) if isinstance(item, dict)]
+    plan = build_execution_plan(
+        issue_family=str(triage_summary.get("issue_family", "")),
+        service=service,
+        recent_logs=recent_logs,
+        recent_deployments=recent_deployments,
+    )
+    mapped_targets = trace_targets_for_plan(plan)
 
     suspected_modules: list[str] = []
     suspected_functions: list[str] = []
@@ -1422,8 +1440,8 @@ def build_trace_summary(
     if replica_summary.get("reproduction_status") == "reproduced":
         trace_status = "narrowed"
         if "retry amplification" in issue_family:
-            suspected_modules = ["auth.middleware.retry", "gateway.timeout_guard", "auth.circuit_breaker"]
-            suspected_functions = ["apply_retry_policy", "await_upstream_auth", "record_timeout_budget"]
+            suspected_modules = [module_name for module_name, _ in mapped_targets] or ["auth.middleware.retry", "gateway.timeout_guard", "auth.circuit_breaker"]
+            suspected_functions = [function_name for _, function_name in mapped_targets] or ["apply_retry_policy", "await_upstream_auth", "record_timeout_budget"]
             expected_flow = "Auth retries should cap quickly and release gateway workers when upstream latency rises."
             observed_divergence = "Retry middleware continues scheduling upstream attempts after the timeout budget is exhausted."
             state_anomalies = ["retry_count exceeds policy cap", "worker pool stays occupied during downstream timeout wait"]
@@ -1436,8 +1454,8 @@ def build_trace_summary(
             confidence = 0.74 if "middleware" in deployment_text else 0.69
             reasoning = "TRACE narrowed the issue to the retry middleware path that keeps auth retries alive after the timeout budget is already exhausted."
         elif "pool exhaustion" in issue_family or "session leak" in issue_family:
-            suspected_modules = ["checkout.db.session", "checkout.retry_patch", "checkout.transaction_flow"]
-            suspected_functions = ["checkout_session_scope", "retry_checkout_write", "release_db_session"]
+            suspected_modules = [module_name for module_name, _ in mapped_targets] or ["checkout.db.session", "checkout.retry_patch", "checkout.transaction_flow"]
+            suspected_functions = [function_name for _, function_name in mapped_targets] or ["checkout_session_scope", "retry_checkout_write", "release_db_session"]
             expected_flow = "Checkout retries should release DB sessions before re-entering the write path."
             observed_divergence = "Retry path retains a session handle long enough to exhaust the shared pool."
             state_anomalies = ["session count grows between retries", "pool checkout waits continue after request cancellation"]
