@@ -244,7 +244,10 @@ class ReplicaInvestigationResult(BaseModel):
     runtime_executed: bool = False
     services_seen: list[str] = Field(default_factory=list)
     replay_output: str = ""
+    replay_status_code: int | None = None
+    replay_duration_ms: int | None = None
     mitigation_outputs: list[str] = Field(default_factory=list)
+    mitigation_status_codes: list[int | None] = Field(default_factory=list)
     tested_mitigations: list[ReplicaMitigationCheck] = Field(default_factory=list)
     reasoning: str = ""
 

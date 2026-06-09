@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import subprocess
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.request import urlopen
 
 
 REPLICA_PACKS_ROOT = Path(__file__).resolve().parents[2] / "replica_packs"
@@ -42,7 +44,10 @@ class ReplicaExecutionResult:
     compose_config_valid: bool = False
     services_seen: tuple[str, ...] = ()
     replay_output: str = ""
+    replay_status_code: int | None = None
+    replay_duration_ms: int | None = None
     mitigation_outputs: tuple[str, ...] = ()
+    mitigation_status_codes: tuple[int | None, ...] = ()
     mode: str = "scaffold"
 
 
@@ -193,13 +198,23 @@ class ReplicaRunner:
             return inspected
 
         replay_output = ""
+        replay_status_code: int | None = None
+        replay_duration_ms: int | None = None
         mitigation_outputs: list[str] = []
+        mitigation_status_codes: list[int | None] = []
         try:
+            self._reset_runtime_state(plan)
             self._compose_up(plan)
+            self._wait_for_runtime(plan)
             replay_output = self._run_script(plan.pack.compose_file.parent / plan.replay_entrypoint)
+            replay_status_code, replay_duration_ms = self._extract_replay_signal(replay_output)
             hooks_root = plan.pack.compose_file.parent / "hooks"
             for hook_name in plan.mitigation_sequence[:mitigation_limit]:
                 mitigation_outputs.append(self._run_script(hooks_root / f"{hook_name}.sh"))
+                rerun_output = self._run_script(plan.pack.compose_file.parent / plan.replay_entrypoint)
+                mitigation_outputs.append(rerun_output)
+                rerun_status_code, _ = self._extract_replay_signal(rerun_output)
+                mitigation_status_codes.append(rerun_status_code)
         finally:
             self._compose_down(plan)
 
@@ -212,7 +227,10 @@ class ReplicaRunner:
             compose_config_valid=inspected.compose_config_valid,
             services_seen=inspected.services_seen,
             replay_output=replay_output.strip(),
+            replay_status_code=replay_status_code,
+            replay_duration_ms=replay_duration_ms,
             mitigation_outputs=tuple(output.strip() for output in mitigation_outputs),
+            mitigation_status_codes=tuple(mitigation_status_codes),
             mode="runtime_scaffold",
         )
 
@@ -259,3 +277,51 @@ class ReplicaRunner:
             check=True,
         )
         return result.stdout
+
+    def _extract_replay_signal(self, output: str) -> tuple[int | None, int | None]:
+        for line in output.splitlines():
+            line = line.strip()
+            if not line or not line.startswith("{"):
+                continue
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            status = payload.get("status_code")
+            duration = payload.get("duration_ms")
+            return (int(status) if isinstance(status, (int, float)) else None, int(duration) if isinstance(duration, (int, float)) else None)
+        return None, None
+
+    def _reset_runtime_state(self, plan: ReplicaExecutionPlan) -> None:
+        runtime_dir = plan.pack.compose_file.parent / "runtime"
+        runtime_dir.mkdir(exist_ok=True)
+        defaults: dict[str, str] = {}
+        if plan.pack.pack_id == "checkout-python-fastapi-auth-redis-v1":
+            defaults = {
+                "auth_delay_ms.txt": "1200\n",
+                "auth_timeout_ms.txt": "400\n",
+                "retries.txt": "4\n",
+                "retry_middleware_enabled.txt": "1\n",
+                "circuit_breaker.txt": "closed\n",
+            }
+        elif plan.pack.pack_id == "checkout-python-fastapi-postgres-v1":
+            defaults = {
+                "pool_limit.txt": "500\n",
+                "session_leak_enabled.txt": "1\n",
+            }
+        for name, value in defaults.items():
+            (runtime_dir / name).write_text(value)
+
+    def _wait_for_runtime(self, plan: ReplicaExecutionPlan) -> None:
+        health_urls: list[str] = []
+        if plan.pack.pack_id == "checkout-python-fastapi-auth-redis-v1":
+            health_urls = ["http://127.0.0.1:18080/health", "http://127.0.0.1:18081/health"]
+        deadline = time.time() + plan.startup_timeout_seconds
+        while time.time() < deadline:
+            try:
+                if all(urlopen(url, timeout=1).status == 200 for url in health_urls):
+                    return
+            except Exception:
+                time.sleep(0.5)
+                continue
+        raise RuntimeError(f"Timed out waiting for runtime health for {plan.pack.pack_id}")

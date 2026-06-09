@@ -1419,14 +1419,52 @@ def build_replica_summary(
         "runtime_executed": bool(runtime_result),
         "services_seen": list(runner_result.services_seen) if runner_result else [],
         "replay_output": runtime_result.replay_output if runtime_result else "",
+        "replay_status_code": runtime_result.replay_status_code if runtime_result else None,
+        "replay_duration_ms": runtime_result.replay_duration_ms if runtime_result else None,
         "mitigation_outputs": list(runtime_result.mitigation_outputs) if runtime_result else [],
+        "mitigation_status_codes": list(runtime_result.mitigation_status_codes) if runtime_result else [],
         "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
-        "tested_mitigations": tested_mitigations,
+        "tested_mitigations": _runtime_override_mitigations(
+            runtime_result=runtime_result,
+            default_checks=tested_mitigations,
+        ),
         "reasoning": (
             f"{reasoning} "
             f"{'The bounded runtime scaffold was executed for this run.' if runtime_result else ('The bounded runtime scaffold is validated and ready for replay execution.' if runner_result and runner_result.compose_config_valid and not runner_result.missing_assets else 'The bounded runtime scaffold is not fully ready yet.')}"
         ).strip(),
     }
+
+
+def _runtime_override_mitigations(
+    *,
+    runtime_result: object,
+    default_checks: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    if not runtime_result:
+        return default_checks
+    outputs = list(getattr(runtime_result, "mitigation_outputs", ()) or ())
+    statuses = list(getattr(runtime_result, "mitigation_status_codes", ()) or ())
+    if not outputs:
+        return default_checks
+    rewritten: list[dict[str, object]] = []
+    default_iter = iter(default_checks)
+    for index in range(0, len(outputs), 2):
+        default = next(default_iter, {"action": f"Mitigation {index // 2 + 1}", "confidence_delta": 0.0})
+        hook_output = outputs[index]
+        replay_output = outputs[index + 1] if index + 1 < len(outputs) else ""
+        status = statuses[index // 2] if index // 2 < len(statuses) else None
+        rewritten.append(
+            {
+                "action": default.get("action", f"Mitigation {index // 2 + 1}"),
+                "result": (
+                    f"{str(hook_output).splitlines()[0] if hook_output else 'Hook executed'}"
+                    f"{f' -> replay status {status}' if status is not None else ''}"
+                    f"{f' | {str(replay_output).splitlines()[-1]}' if replay_output else ''}"
+                ),
+                "confidence_delta": default.get("confidence_delta", 0.0),
+            }
+        )
+    return rewritten or default_checks
 
 
 def build_trace_summary(
@@ -1443,6 +1481,8 @@ def build_trace_summary(
     deployment_text = " ".join(str(item) for item in (recent_deployments or [])).lower()
     logs_text = " ".join(str(item).lower() for item in (recent_logs or []))
     mitigation_actions = [str(item.get("action", "")).strip() for item in replica_summary.get("tested_mitigations", []) if isinstance(item, dict)]
+    replay_status_code = replica_summary.get("replay_status_code")
+    replay_duration_ms = replica_summary.get("replay_duration_ms")
     plan = build_execution_plan(
         issue_family=str(triage_summary.get("issue_family", "")),
         service=service,
@@ -1474,6 +1514,8 @@ def build_trace_summary(
                 state_anomalies.append("circuit-breaker mitigation relieves the same failing path in REPLICA")
             if "event-loop starvation" in logs_text or "worker saturation" in logs_text:
                 state_anomalies.append("runtime starvation confirms the retry path is blocking gateway capacity, not just auth latency")
+            if replay_status_code == 504 and replay_duration_ms:
+                state_anomalies.append(f"runtime replay reproduced a 504 after {replay_duration_ms}ms before mitigation")
             confidence = 0.74 if "middleware" in deployment_text else 0.69
             reasoning = "TRACE narrowed the issue to the retry middleware path that keeps auth retries alive after the timeout budget is already exhausted."
         elif "pool exhaustion" in issue_family or "session leak" in issue_family:
@@ -1488,6 +1530,8 @@ def build_trace_summary(
                 state_anomalies.append("rollback mitigation targets the same leaking retry path")
             if "idle in transaction" in logs_text or "leaked session" in logs_text:
                 state_anomalies.append("runtime logs confirm sessions remain open after request cancellation")
+            if replay_status_code and replay_duration_ms:
+                state_anomalies.append(f"runtime replay returned status {replay_status_code} after {replay_duration_ms}ms under the bounded pool")
             confidence = 0.76 if "retry" in deployment_text else 0.72
             reasoning = "TRACE narrowed the issue to the checkout retry patch where the session lifecycle no longer closes cleanly after failure."
         elif "certificate expiry" in issue_family:
