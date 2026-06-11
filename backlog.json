@@ -67,7 +67,7 @@
     "id": 12,
     "title": "Runtime comparison UI refinement",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "The frontend currently shows runtime comparison as a prose sentence in #replicaComparison (incident.html line 251, incident.js line 524). The operator cannot quickly compare baseline vs mitigated at a glance. Add a structured two-row block: baseline row (status, duration) vs best-mitigation row (status, duration, outcome label). Use these existing replica_summary fields: replay_status_code, replay_duration_ms, best_mitigation_status_code, best_mitigation_duration_ms, best_mitigation_outcome_class, best_mitigation_action. The four DOM IDs needed by the new Playwright tests are: #runtimeComparisonBlock, #runtimeBaselineRow, #runtimeMitigatedRow, #runtimeOutcomeLabel. These do not exist yet. Add them inside the existing REPLICA card in incident.html, below #replicaComparison. Populate them in incident.js after the replicaComparison setText call. For scaffold/inferred mode (no real status codes), show the outcome_class label from best_mitigation_outcome_class and the action from best_mitigation_action as the mitigated row. Frontend is vanilla JS — no React, no build step.",
     "done_when": [
       "#runtimeComparisonBlock, #runtimeBaselineRow, #runtimeMitigatedRow, #runtimeOutcomeLabel exist in incident.html",

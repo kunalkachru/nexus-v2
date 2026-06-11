@@ -522,6 +522,31 @@ function renderEnterprise(data) {
   setText("replicaOutcome", titleCase(String(replica.best_mitigation_outcome_class || replica.baseline_outcome_class || "not_run").replace(/_/g, " ")));
   setText("replicaRuntimeHint", replica.runtime_enablement_hint || "Runtime mode details are not available for this incident yet.");
   setText("replicaComparison", replica.runtime_comparison_summary || "Runtime comparison details are not available for this incident yet.");
+
+  // Populate runtime comparison block
+  if (replica.best_mitigation_outcome_class || replica.baseline_outcome_class) {
+    const block = document.getElementById("runtimeComparisonBlock");
+    const baselineRow = document.getElementById("runtimeBaselineRow");
+    const mitigatedRow = document.getElementById("runtimeMitigatedRow");
+    const outcomeLabel = document.getElementById("runtimeOutcomeLabel");
+
+    // Baseline row
+    const baselineStatus = replica.replay_status_code ? `HTTP ${replica.replay_status_code}` : `Status: ${titleCase(replica.baseline_outcome_class || "not_run")}`;
+    const baselineDuration = replica.replay_duration_ms ? ` · ${replica.replay_duration_ms}ms` : "";
+    baselineRow.innerHTML = `<strong>Baseline:</strong> ${baselineStatus}${baselineDuration}`;
+
+    // Mitigated row
+    const mitigatedStatus = replica.best_mitigation_status_code ? `HTTP ${replica.best_mitigation_status_code}` : titleCase(replica.best_mitigation_outcome_class || "not_run");
+    const mitigatedDuration = replica.best_mitigation_duration_ms ? ` · ${replica.best_mitigation_duration_ms}ms` : "";
+    const mitigatedAction = replica.best_mitigation_action ? ` · ${replica.best_mitigation_action}` : "";
+    mitigatedRow.innerHTML = `<strong>Mitigated:</strong> ${mitigatedStatus}${mitigatedDuration}${mitigatedAction}`;
+
+    // Outcome label
+    outcomeLabel.textContent = titleCase((replica.best_mitigation_outcome_class || "not_run").replace(/_/g, " "));
+
+    block.style.display = "block";
+  }
+
   if (replica.scaffold_ready && (replica.services_seen || []).length) {
     setText("replicaPack", `${replica.environment_pack_id || "-"} · ${replica.services_seen.join(", ")}`);
   }
