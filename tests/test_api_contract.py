@@ -15,6 +15,7 @@ from server.config import AppConfig
 from server.db import create_session_factory
 from server.db import DatabaseSession, get_db
 from server.models import IncidentRecord
+from server.services.replica_runtime import ReplicaExecutionResult
 
 
 def _webhook_signature(body: str) -> str:
@@ -339,6 +340,106 @@ def test_guardian_request_modification_contract_pauses_execution(client: TestCli
     assert execute_payload["status"] == "needs_modification"
     assert execute_payload["guardian_decision"] == "request_modification"
     assert execute_payload["guardian_policy_id"].endswith(":request_modification")
+
+
+def test_seeded_incident_replica_replay_reports_host_unavailable(
+    client: TestClient,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("server.services.replica_runtime.shutil.which", lambda _: None)
+
+    response = client.post("/api/v1/incidents/INC001/replica-replay", headers=auth_headers())
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "host_unavailable"
+    assert payload["runtime_capability"]["state"] == "host_unavailable"
+    assert payload["replica_summary"]["runtime_capability"]["state"] == "host_unavailable"
+    assert "cannot execute Docker-backed replay" in payload["message"]
+
+
+def test_seeded_incident_replica_replay_reports_success_with_stubbed_runtime(
+    client: TestClient,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    inspect_result = ReplicaExecutionResult(
+        pack_id="checkout-python-fastapi-auth-redis-v1",
+        compose_ready=True,
+        replay_ready=True,
+        mitigation_hooks_ready=True,
+        missing_assets=(),
+        docker_available=True,
+        compose_config_valid=True,
+        services_seen=("gateway", "auth", "redis"),
+    )
+    execute_result = ReplicaExecutionResult(
+        pack_id="checkout-python-fastapi-auth-redis-v1",
+        compose_ready=True,
+        replay_ready=True,
+        mitigation_hooks_ready=True,
+        missing_assets=(),
+        docker_available=True,
+        compose_config_valid=True,
+        services_seen=("gateway", "auth", "redis"),
+        replay_output="status_code=504 duration_ms=1800",
+        replay_status_code=504,
+        replay_duration_ms=1800,
+        mitigation_outputs=(
+            "cap retries",
+            "status_code=200 duration_ms=320",
+            "rollback middleware",
+            "status_code=504 duration_ms=900",
+        ),
+        mitigation_status_codes=(200, 504),
+        mitigation_duration_ms=(320, 900),
+        mode="runtime_scaffold",
+    )
+    monkeypatch.setattr("server.services.enterprise_runtime.ReplicaRunner.inspect_plan", lambda self, plan: inspect_result)
+    monkeypatch.setattr("server.services.enterprise_runtime.ReplicaRunner.execute_scaffold", lambda self, plan: execute_result)
+
+    response = client.post("/api/v1/incidents/INC001/replica-replay", headers=auth_headers())
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "replay_executed"
+    assert payload["runtime_capability"]["state"] == "replay_executed"
+    assert payload["replica_summary"]["runtime_executed"] is True
+    assert payload["replica_summary"]["replay_status_code"] == 504
+    assert payload["replica_summary"]["best_mitigation_status_code"] == 200
+    assert payload["replica_summary"]["mitigation_comparison"]["winner"]["action"] == "Enable auth-svc circuit breaker and cap retries to 1"
+    assert payload["replica_summary"]["mitigation_comparison"]["runner_up"]["action"] == "Roll back auth-svc retry middleware"
+
+
+def test_live_incident_replica_replay_reports_unsupported_when_no_pack_matches(
+    client: TestClient,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    create_response = client.post(
+        "/api/v1/incidents/manual-report",
+        headers=auth_headers(),
+        json={
+            "affected_service": "billing-api",
+            "symptoms": ["operator cannot classify this yet", "manual triage requested"],
+            "severity": "P2",
+            "reported_by": "operator",
+            "team": "platform",
+            "additional_context": "General incident with no bounded runtime pack.",
+        },
+    )
+    assert create_response.status_code == 202
+    incident_id = create_response.json()["nexus_incident_id"]
+
+    monkeypatch.setattr("server.services.replica_runtime.select_environment_pack", lambda **kwargs: None)
+
+    replay_response = client.post(f"/api/v1/incidents/{incident_id}/replica-replay", headers=auth_headers())
+
+    assert replay_response.status_code == 200
+    payload = replay_response.json()
+    assert payload["status"] == "unsupported"
+    assert payload["runtime_capability"]["state"] == "no_pack"
 
 
 def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth_headers) -> None:

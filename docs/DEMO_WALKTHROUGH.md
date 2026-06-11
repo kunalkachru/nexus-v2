@@ -145,6 +145,7 @@ The runtime evidence narrative connects three stages, but only part of it is mea
 1. **REPLICA** maps the incident to a bounded sandbox and, when runtime replay is enabled, reproduces the failure and tests mitigations. It produces:
    - `best_mitigation_outcome_class`: `resolved` / `improved` when replay ran, `inferred_only` otherwise
    - `runtime_comparison_summary`: measured baseline-vs-mitigation text when replay ran, scaffold-only ranking text otherwise
+   - `mitigation_comparison`: explicit baseline, selected mitigation, and runner-up mitigation packet for the incident UI and downstream reasoning
 
 2. **FORGE** uses the outcome class to weight runbook selection:
    - reasoning cites the mitigation outcome: "resolved," "improved," or "inferred"
@@ -159,6 +160,7 @@ The runtime evidence narrative connects three stages, but only part of it is mea
 
 - the diagnosis hypothesis maps cleanly into one bounded reproduction path
 - when runtime replay is enabled, the proposed mitigation can be measured against the failure signature
+- the selected mitigation can be explained against a visible runner-up instead of feeling arbitrary
 - escalation to a human reviewer includes evidence-backed confidence in the action
 
 ### What to validate

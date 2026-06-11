@@ -55,6 +55,7 @@ from server.services.enterprise_runtime import (
     runtime_aligned_candidate_fixes,
     runbook_score_from_candidates,
 )
+from server.services.replica_runtime import ReplicaExecutionResult
 from training.runner import TrainingForgeClient
 
 logger = logging.getLogger(__name__)
@@ -1189,6 +1190,72 @@ class IncidentService:
             "guardian_policy_basis": lifecycle.get("guardian_policy_basis") or policy["policy_basis"],
         }
         return payload
+
+    async def trigger_replica_replay(
+        self,
+        nexus_incident_id: str,
+        *,
+        tenant_id: str | None = None,
+    ) -> dict[str, object]:
+        context = await self.get_incident_context_v1(
+            nexus_incident_id,
+            tenant_id=tenant_id,
+            live_reasoning=False,
+            openai_api_key=None,
+        )
+        triage_summary = dict(context.get("triage_summary") or {})
+        diagnosis = dict(context.get("diagnosis") or {})
+        observability = dict(context.get("observability") or {})
+        incident = dict(context.get("incident") or {})
+        runbook = dict(context.get("runbook") or {})
+
+        replica_summary = build_replica_summary(
+            incident_id=nexus_incident_id,
+            triage_summary=triage_summary,
+            root_cause=str(diagnosis.get("root_cause") or ""),
+            recent_logs=list(observability.get("recent_logs") or []),
+            recent_deployments=list(incident.get("recent_deployments") or []),
+            candidate_fixes=list(runbook.get("candidate_fixes") or []),
+            execute_runtime=True,
+        )
+        trace_summary = build_trace_summary(
+            incident_id=nexus_incident_id,
+            triage_summary=triage_summary,
+            replica_summary=replica_summary,
+            root_cause=str(diagnosis.get("root_cause") or ""),
+            recent_deployments=list(incident.get("recent_deployments") or []),
+            recent_logs=list(observability.get("recent_logs") or []),
+        )
+        runtime_capability = dict(replica_summary.get("runtime_capability") or {})
+        capability_state = str(runtime_capability.get("state") or "no_pack")
+        status = {
+            "replay_executed": "replay_executed",
+            "host_unavailable": "host_unavailable",
+            "pack_validation_required": "host_unavailable",
+            "replay_available": "replay_available",
+            "no_pack": "unsupported",
+        }.get(capability_state, "unsupported")
+
+        if status == "replay_executed":
+            await record_replay_launch(
+                {
+                    "scenario_id": "bounded_runtime_replay",
+                    "nexus_incident_id": nexus_incident_id,
+                    "tenant_id": tenant_id or incident.get("tenant_id") or "tenant-system",
+                    "source_channel": incident.get("source_channel") or incident.get("source") or "incident_console",
+                    "title": incident.get("name") or nexus_incident_id,
+                    "launch_label": "Replica replay",
+                }
+            )
+
+        return {
+            "incident_id": nexus_incident_id,
+            "status": status,
+            "message": runtime_capability.get("message") or replica_summary.get("runtime_enablement_hint") or "Replay state unavailable.",
+            "runtime_capability": runtime_capability,
+            "replica_summary": replica_summary,
+            "trace_summary": trace_summary,
+        }
 
     async def get_audit_logs(
         self,

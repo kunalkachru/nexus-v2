@@ -272,6 +272,7 @@ class ReplicaInvestigationResult(BaseModel):
     best_mitigation_status_code: int | None = None
     best_mitigation_duration_ms: int | None = None
     best_mitigation_summary: str = ""
+    mitigation_comparison: dict[str, object] = Field(default_factory=dict)
     runtime_enablement_hint: str = ""
     runtime_capability: RuntimeHostCapability = Field(default_factory=RuntimeHostCapability)
     tested_mitigations: list[ReplicaMitigationCheck] = Field(default_factory=list)

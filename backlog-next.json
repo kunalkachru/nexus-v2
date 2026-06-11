@@ -31,7 +31,7 @@
     "id": 16,
     "title": "App-triggered replay endpoint for Docker-capable hosts",
     "priority": "highest",
-    "status": "pending",
+    "status": "done",
     "description": "Add an explicit packaged-app replay trigger for bounded incidents so NEXUS can request Docker-backed replay on a Docker-capable host instead of only describing how replay would work. Keep scope intentionally narrow: only the bounded Python/FastAPI flagship packs, only the current replay substrate, and only an operator-triggered execution path. The endpoint should fail closed when the host is not replay-capable, and the incident UI should reflect that state clearly.",
     "done_when": [
       "there is an authenticated app endpoint to trigger bounded replay for supported incidents",
@@ -62,7 +62,7 @@
     "id": 17,
     "title": "Fresh nxs incident parity with flagship runtime story",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Fresh `nxs_...` incidents created from `/inputs` should read like a bounded support investigation product, not a fallback-only status seam. Strengthen the live and client fallback paths so fresh incidents inherit the same issue-family mapping, memory posture, runtime capability state, and trace handoff quality as the seeded flagship incidents, while remaining honest about what is inferred versus measured.",
     "done_when": [
       "a fresh nxs incident shows bounded runtime capability state, non-generic trace guidance, and memory-backed mitigation language",
@@ -91,7 +91,7 @@
     "id": 18,
     "title": "Multi-mitigation REPLICA comparison and decision packet",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "REPLICA currently compresses its result into one winning mitigation. Deepen this into a visible comparison packet that shows baseline, primary mitigation, and runner-up mitigation outcomes when available. Feed that comparison into FORGE, GUARDIAN, and the incident UI so the operator can see why one mitigation won and why another remained only partial or inferior.",
     "done_when": [
       "replica_summary returns a stable multi-mitigation comparison structure",
@@ -121,7 +121,7 @@
     "id": 19,
     "title": "TRACE developer packet v3 and runtime-host demo closure",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Turn TRACE into a stronger bounded developer handoff for the flagship outages by adding more explicit file-level, owner-level, and suspected divergence cues, then close the loop in demo and docs so the runtime-host model is demonstrated clearly. This slice should leave the repo with one coherent story: seeded incidents, fresh incidents, runtime capability states, replay trigger path, and developer handoff all align.",
     "done_when": [
       "TRACE output for INC001 and INC002 contains explicit inspect-here-first guidance with file-level cues",

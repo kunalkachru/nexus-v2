@@ -525,25 +525,60 @@ function renderEnterprise(data) {
   setText("replicaCapabilityHost", runtimeCapability.host_label || "Unknown");
   setText("replicaRuntimeHint", replica.runtime_enablement_hint || "Runtime mode details are not available for this incident yet.");
   setText("replicaCapabilityMessage", runtimeCapability.message || "Replay capability details are not available for this incident yet.");
+  setText(
+    "replicaReplayStatus",
+    replica.runtime_executed
+      ? "Docker-backed replay executed for this page view."
+      : runtimeCapability.can_execute_replay
+        ? "This host can run bounded replay on demand."
+        : (runtimeCapability.message || "Replay is not available for this incident on the current host.")
+  );
   setText("replicaComparison", replica.runtime_comparison_summary || "Runtime comparison details are not available for this incident yet.");
+
+  const replayButton = document.getElementById("replicaReplayBtn");
+  if (replayButton) {
+    replayButton.disabled = !runtimeCapability.can_execute_replay;
+    replayButton.textContent = replica.runtime_executed ? "Run bounded replay again" : "Run bounded replay";
+  }
 
   // Populate runtime comparison block
   if (replica.best_mitigation_outcome_class || replica.baseline_outcome_class) {
     const block = document.getElementById("runtimeComparisonBlock");
     const baselineRow = document.getElementById("runtimeBaselineRow");
     const mitigatedRow = document.getElementById("runtimeMitigatedRow");
+    const runnerUpRow = document.getElementById("runtimeRunnerUpRow");
     const outcomeLabel = document.getElementById("runtimeOutcomeLabel");
+    const comparison = replica.mitigation_comparison || {};
+    const baseline = comparison.baseline || {};
+    const winner = comparison.winner || {};
+    const runnerUp = comparison.runner_up || {};
 
     // Baseline row
-    const baselineStatus = replica.replay_status_code ? `HTTP ${replica.replay_status_code}` : `Status: ${titleCase(replica.baseline_outcome_class || "not_run")}`;
-    const baselineDuration = replica.replay_duration_ms ? ` · ${replica.replay_duration_ms}ms` : "";
+    const baselineStatusCode = baseline.status_code ?? replica.replay_status_code;
+    const baselineStatus = baselineStatusCode ? `HTTP ${baselineStatusCode}` : `Status: ${titleCase(replica.baseline_outcome_class || baseline.outcome_class || "not_run")}`;
+    const baselineDurationValue = baseline.duration_ms ?? replica.replay_duration_ms;
+    const baselineDuration = baselineDurationValue ? ` · ${baselineDurationValue}ms` : "";
     baselineRow.innerHTML = `<strong>Baseline:</strong> ${baselineStatus}${baselineDuration}`;
 
-    // Mitigated row
-    const mitigatedStatus = replica.best_mitigation_status_code ? `HTTP ${replica.best_mitigation_status_code}` : titleCase(replica.best_mitigation_outcome_class || "not_run");
-    const mitigatedDuration = replica.best_mitigation_duration_ms ? ` · ${replica.best_mitigation_duration_ms}ms` : "";
-    const mitigatedAction = replica.best_mitigation_action ? ` · ${replica.best_mitigation_action}` : "";
-    mitigatedRow.innerHTML = `<strong>Mitigated:</strong> ${mitigatedStatus}${mitigatedDuration}${mitigatedAction}`;
+    // Winner row
+    const mitigatedStatusCode = winner.status_code ?? replica.best_mitigation_status_code;
+    const mitigatedStatus = mitigatedStatusCode ? `HTTP ${mitigatedStatusCode}` : titleCase(replica.best_mitigation_outcome_class || winner.outcome_class || "not_run");
+    const mitigatedDurationValue = winner.duration_ms ?? replica.best_mitigation_duration_ms;
+    const mitigatedDuration = mitigatedDurationValue ? ` · ${mitigatedDurationValue}ms` : "";
+    const mitigatedAction = (winner.action || replica.best_mitigation_action) ? ` · ${winner.action || replica.best_mitigation_action}` : "";
+    mitigatedRow.innerHTML = `<strong>Selected:</strong> ${mitigatedStatus}${mitigatedDuration}${mitigatedAction}`;
+
+    if (runnerUpRow) {
+      if (runnerUp.action) {
+        const runnerUpStatus = runnerUp.status_code ? `HTTP ${runnerUp.status_code}` : titleCase(runnerUp.outcome_class || "not_run");
+        const runnerUpDuration = runnerUp.duration_ms ? ` · ${runnerUp.duration_ms}ms` : "";
+        runnerUpRow.innerHTML = `<strong>Runner-up:</strong> ${runnerUpStatus}${runnerUpDuration} · ${runnerUp.action}`;
+        runnerUpRow.style.display = "block";
+      } else {
+        runnerUpRow.innerHTML = "";
+        runnerUpRow.style.display = "none";
+      }
+    }
 
     // Outcome label
     outcomeLabel.textContent = titleCase((replica.best_mitigation_outcome_class || "not_run").replace(/_/g, " "));
@@ -813,8 +848,14 @@ function setGuardianButtonsDisabled(disabled) {
 window.addEventListener("load", async () => {
   const incidentId = getIncidentId();
   const historyReviewMode = isHistoryReviewMode();
+  let currentIncidentData = null;
   syncLiveReasoningToggle();
   syncOpenAIKeyUI();
+
+  async function refreshIncident(options = {}) {
+    currentIncidentData = await loadAndRenderIncident(incidentId, options);
+    return currentIncidentData;
+  }
 
   async function applyGuardianDecision(decision) {
     setGuardianButtonsDisabled(true);
@@ -826,7 +867,7 @@ window.addEventListener("load", async () => {
       if (decision === "approve") {
         await postAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/execute`, {});
       }
-      const refreshed = await loadAndRenderIncident(incidentId);
+      const refreshed = await refreshIncident();
       markRelaySeen(incidentId);
       showResolvedGuardianState(refreshed);
       document.querySelector(".guardian-gate-card")?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -840,7 +881,7 @@ window.addEventListener("load", async () => {
   document.getElementById("liveReasoningToggle")?.addEventListener("click", async () => {
     setLiveReasoningPreference(!getLiveReasoningPreference());
     syncLiveReasoningToggle();
-    await loadAndRenderIncident(incidentId);
+    await refreshIncident();
   });
 
   document.getElementById("saveOpenAIKeyBtn")?.addEventListener("click", async () => {
@@ -855,13 +896,13 @@ window.addEventListener("load", async () => {
       setLiveReasoningPreference(true);
       syncLiveReasoningToggle();
     }
-    await loadAndRenderIncident(incidentId);
+    await refreshIncident();
   });
 
   document.getElementById("clearOpenAIKeyBtn")?.addEventListener("click", async () => {
     clearUserOpenAIKey();
     syncOpenAIKeyUI("User key cleared. The app is back in deterministic demo mode.");
-    await loadAndRenderIncident(incidentId);
+    await refreshIncident();
   });
 
   document.getElementById("guardianApproveBtn")?.addEventListener("click", async () => applyGuardianDecision("approve"));
@@ -873,7 +914,7 @@ window.addEventListener("load", async () => {
       button.disabled = true;
     }
     try {
-      const current = await loadAndRenderIncident(incidentId);
+      const current = await refreshIncident();
       await replayRelayForIncident(incidentId, current);
     } finally {
       if (button) {
@@ -882,8 +923,39 @@ window.addEventListener("load", async () => {
     }
   });
 
+  document.getElementById("replicaReplayBtn")?.addEventListener("click", async () => {
+    const button = document.getElementById("replicaReplayBtn");
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Running bounded replay...";
+    }
+    setText("replicaReplayStatus", "Requesting bounded replay from the current host...");
+    try {
+      const response = await postAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/replica-replay`, {});
+      if (!currentIncidentData) {
+        currentIncidentData = await refreshIncident();
+      }
+      currentIncidentData = {
+        ...currentIncidentData,
+        replica_summary: response.replica_summary || currentIncidentData.replica_summary,
+        trace_summary: response.trace_summary || currentIncidentData.trace_summary,
+      };
+      renderSummary(currentIncidentData);
+      renderEnterprise(currentIncidentData);
+      setText("replicaReplayStatus", response.message || "Replay request completed.");
+    } catch (error) {
+      setText("replicaReplayStatus", `Replay request failed: ${error.message}`);
+    } finally {
+      const replayCapability = currentIncidentData?.replica_summary?.runtime_capability || {};
+      if (button) {
+        button.disabled = !replayCapability.can_execute_replay;
+        button.textContent = currentIncidentData?.replica_summary?.runtime_executed ? "Run bounded replay again" : "Run bounded replay";
+      }
+    }
+  });
+
   try {
-    const data = await loadAndRenderIncident(incidentId, {
+    const data = await refreshIncident({
       liveReasoningOverride: historyReviewMode ? "0" : undefined,
     });
     if (historyReviewMode) {

@@ -145,6 +145,8 @@ def test_replica_summary_keeps_pack_scaffold_when_docker_unavailable(monkeypatch
     assert summary["runtime_mode"] == "pack_scaffold"
     assert summary["scaffold_ready"] is True
     assert summary["best_mitigation_outcome_class"] == "inferred_only"
+    assert summary["mitigation_comparison"]["winner"]["action"] == "Enable auth-svc circuit breaker and cap retries to 1"
+    assert summary["mitigation_comparison"]["runner_up"]["action"] == "Roll back auth-svc retry middleware"
     assert summary["runtime_capability"]["state"] == "host_unavailable"
     assert summary["runtime_capability"]["can_execute_replay"] is False
     assert "cannot execute Docker-backed replay" in summary["runtime_enablement_hint"]

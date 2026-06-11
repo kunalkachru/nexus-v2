@@ -242,6 +242,7 @@ async def get_platform_status(
         "/api/v1/audit-logs/{incident_id}",
         "/api/v1/incidents/{incident_id}/guardian-review",
         "/api/v1/incidents/{incident_id}/execute",
+        "/api/v1/incidents/{incident_id}/replica-replay",
     ]
     await write_audit_log(
         "platform.status.read",
@@ -363,6 +364,24 @@ async def execute_incident_v1(
     response = await service.execute_incident(nexus_incident_id, tenant_id=auth.tenant_id)
     await write_audit_log(
         "incident.execute_v1.requested",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, **response},
+    )
+    return response
+
+
+@app.post("/api/v1/incidents/{nexus_incident_id}/replica-replay")
+async def replay_incident_v1(
+    nexus_incident_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_replica_replay")
+    require_role(auth, "operator", "guardian", "incident_manager")
+    response = await service.trigger_replica_replay(nexus_incident_id, tenant_id=auth.tenant_id)
+    await write_audit_log(
+        "incident.replica_replay_v1.requested",
         auth.tenant_id,
         {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, **response},
     )

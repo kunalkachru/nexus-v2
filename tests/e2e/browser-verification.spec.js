@@ -51,6 +51,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByText("Investigation depth · REPLICA")).toBeVisible();
     await expect(page.getByText("Investigation depth · TRACE")).toBeVisible();
     await expect(page.getByText("Best mitigation")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Run bounded replay/i })).toBeVisible();
     await expect(page.locator("#traceInspectionPoint")).not.toContainText("TRACE has not narrowed");
     await expect(page.getByRole("heading", { name: "SENTINEL framed the incident for the rest of the crew" })).toBeVisible();
     await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
@@ -165,6 +166,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#runtimeComparisonBlock")).toBeVisible();
     await expect(page.locator("#runtimeBaselineRow")).toBeVisible();
     await expect(page.locator("#runtimeMitigatedRow")).toBeVisible();
+    await expect(page.locator("#runtimeRunnerUpRow")).toBeVisible();
     await expect(page.locator("#runtimeOutcomeLabel")).toBeVisible();
 
     const outcomeText = await page.locator("#runtimeOutcomeLabel").textContent();
@@ -180,6 +182,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#runtimeComparisonBlock")).toBeVisible();
     await expect(page.locator("#runtimeBaselineRow")).toBeVisible();
     await expect(page.locator("#runtimeMitigatedRow")).toBeVisible();
+    await expect(page.locator("#runtimeRunnerUpRow")).toBeVisible();
     await expect(page.locator("#runtimeOutcomeLabel")).toBeVisible();
 
     const outcomeText = await page.locator("#runtimeOutcomeLabel").textContent();

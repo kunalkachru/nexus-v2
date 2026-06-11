@@ -1275,20 +1275,21 @@ def build_mitigation_checks(
     *,
     fallback_checks: list[tuple[str, str, float]],
 ) -> list[dict[str, object]]:
-    checks: list[dict[str, object]] = []
+    matched_checks: list[dict[str, object]] = []
+    fallback_only_checks: list[dict[str, object]] = []
     for action, result, confidence_delta in fallback_checks:
+        check = {
+            "action": action,
+            "result": result,
+            "confidence_delta": confidence_delta,
+            "outcome_class": "inferred_only",
+        }
         if candidate_actions and not any(action.lower() in candidate.lower() or candidate.lower() in action.lower() for candidate in candidate_actions):
+            fallback_only_checks.append(check)
             continue
-        checks.append(
-            {
-                "action": action,
-                "result": result,
-                "confidence_delta": confidence_delta,
-                "outcome_class": "inferred_only",
-            }
-        )
-    if checks:
-        return checks
+        matched_checks.append(check)
+    if matched_checks:
+        return matched_checks + fallback_only_checks
     return [
         {
             "action": action,
@@ -1365,6 +1366,116 @@ def _runtime_delta_ms(baseline_duration: int | None, mitigation_duration: int | 
     if baseline_duration is None or mitigation_duration is None:
         return None
     return baseline_duration - mitigation_duration
+
+
+def _runtime_mitigation_sort_key(
+    item: dict[str, object],
+    *,
+    baseline_duration: int | None,
+) -> tuple[float, float]:
+    duration = item.get("duration_ms")
+    return (
+        _runtime_outcome_score(
+            str(item.get("outcome_class") or ""),
+            baseline_duration=baseline_duration,
+            mitigation_duration=duration if isinstance(duration, int) else None,
+        ),
+        float(item.get("confidence_delta", 0.0) or 0.0),
+    )
+
+
+def _rank_runtime_mitigations(
+    runtime_mitigations: list[dict[str, object]] | None,
+    *,
+    baseline_duration: int | None,
+) -> list[dict[str, object]]:
+    return sorted(
+        [item for item in (runtime_mitigations or []) if isinstance(item, dict)],
+        key=lambda item: _runtime_mitigation_sort_key(item, baseline_duration=baseline_duration),
+        reverse=True,
+    )
+
+
+def _mitigation_comparison_row(
+    item: dict[str, object] | None,
+    *,
+    baseline_status: int | None,
+    baseline_duration: int | None,
+) -> dict[str, object] | None:
+    if not isinstance(item, dict):
+        return None
+    status_code = item.get("status_code")
+    duration_ms = item.get("duration_ms")
+    delta_ms = item.get("delta_ms")
+    if delta_ms is None and isinstance(duration_ms, int):
+        delta_ms = _runtime_delta_ms(baseline_duration, duration_ms)
+    outcome_class = str(item.get("outcome_class") or "")
+    summary = (
+        f"{item.get('action', 'Mitigation')} returned "
+        f"{status_code if status_code is not None else 'no status'}"
+        f"{f' at {duration_ms}ms' if duration_ms is not None else ''}"
+        f" ({outcome_class.replace('_', ' ') if outcome_class else 'not classified'})."
+    )
+    if isinstance(delta_ms, int):
+        if delta_ms > 0:
+            summary = f"{summary} It improved runtime by {delta_ms}ms versus the baseline."
+        elif delta_ms < 0:
+            summary = f"{summary} It regressed runtime by {abs(delta_ms)}ms versus the baseline."
+    return {
+        "action": str(item.get("action") or ""),
+        "status_code": int(status_code) if isinstance(status_code, (int, float)) else None,
+        "duration_ms": int(duration_ms) if isinstance(duration_ms, (int, float)) else None,
+        "delta_ms": int(delta_ms) if isinstance(delta_ms, (int, float)) else None,
+        "outcome_class": outcome_class,
+        "confidence_delta": float(item.get("confidence_delta", 0.0) or 0.0),
+        "won": bool(item.get("won")),
+        "summary": summary,
+        "baseline_status_code": baseline_status,
+        "baseline_duration_ms": baseline_duration,
+    }
+
+
+def _build_mitigation_comparison(
+    runtime_result: object | None,
+    runtime_mitigations: list[dict[str, object]] | None,
+    *,
+    baseline_outcome_class: str,
+) -> dict[str, object]:
+    baseline_status = getattr(runtime_result, "replay_status_code", None) if runtime_result else None
+    baseline_duration = getattr(runtime_result, "replay_duration_ms", None) if runtime_result else None
+    ranked = _rank_runtime_mitigations(runtime_mitigations, baseline_duration=baseline_duration)
+    winner = _mitigation_comparison_row(
+        ranked[0] if ranked else None,
+        baseline_status=baseline_status,
+        baseline_duration=baseline_duration,
+    )
+    runner_up = _mitigation_comparison_row(
+        ranked[1] if len(ranked) > 1 else None,
+        baseline_status=baseline_status,
+        baseline_duration=baseline_duration,
+    )
+    verdict = ""
+    if winner and runner_up:
+        verdict = (
+            f"{winner['action']} outranked {runner_up['action']} because it finished as "
+            f"{str(winner.get('outcome_class') or 'not classified').replace('_', ' ')} while the runner-up remained "
+            f"{str(runner_up.get('outcome_class') or 'not classified').replace('_', ' ')}."
+        )
+    elif winner:
+        verdict = (
+            f"{winner['action']} is the leading mitigation because it produced the strongest "
+            f"{str(winner.get('outcome_class') or 'runtime').replace('_', ' ')} signal."
+        )
+    return {
+        "baseline": {
+            "status_code": int(baseline_status) if isinstance(baseline_status, (int, float)) else None,
+            "duration_ms": int(baseline_duration) if isinstance(baseline_duration, (int, float)) else None,
+            "outcome_class": baseline_outcome_class,
+        },
+        "winner": winner,
+        "runner_up": runner_up,
+        "verdict": verdict,
+    }
 
 
 def runtime_aligned_candidate_fixes(issue_family: str, service: str) -> list[dict[str, object]]:
@@ -1643,6 +1754,12 @@ def build_replica_summary(
             else ("validated" if runtime_result and runtime_result.replay_status_code is not None else "not_run")
         )
     )
+    mitigation_comparison = _build_mitigation_comparison(
+        runtime_result,
+        runtime_mitigations,
+        baseline_outcome_class=baseline_outcome_class,
+    )
+    mitigation_verdict = str(mitigation_comparison.get("verdict") or "")
     runtime_mode = "runtime_scaffold" if runtime_result else ("pack_scaffold" if plan and runner_result and not runner_result.missing_assets else "inferred")
     scaffold_ready = bool(plan and runner_result and not runner_result.missing_assets)
     runtime_capability = _runtime_host_capability(
@@ -1687,6 +1804,7 @@ def build_replica_summary(
                 else "No runtime-backed mitigation comparison is available yet."
             )
         ),
+        "mitigation_comparison": mitigation_comparison,
         "runtime_enablement_hint": _runtime_enablement_hint(
             scaffold_ready=scaffold_ready,
             runtime_executed=bool(runtime_result),
@@ -1700,6 +1818,7 @@ def build_replica_summary(
         "reasoning": (
             f"{reasoning} "
             f"{'The bounded runtime scaffold was executed for this run.' if runtime_result else ('The bounded runtime scaffold is validated and ready for replay execution.' if runner_result and runner_result.compose_config_valid and not runner_result.missing_assets else ('The bounded runtime scaffold is mapped for this incident, but Docker-backed replay is unavailable in the current app environment.' if runner_result and not runner_result.missing_assets and not runner_result.docker_available else ('The bounded runtime scaffold is mapped for this incident, but the compose contract still needs validation.' if runner_result and not runner_result.missing_assets else 'The bounded runtime scaffold is not fully ready yet.')))}"
+            f"{f' {mitigation_verdict}' if mitigation_verdict else ''}"
         ).strip(),
     }
 
@@ -1751,42 +1870,39 @@ def _runtime_override_mitigations(
         )
     if not rewritten:
         return default_checks
-    winner = max(
-        rewritten,
-        key=lambda item: (
-            _runtime_outcome_score(
-                str(item.get("outcome_class") or ""),
-                baseline_duration=baseline_duration,
-                mitigation_duration=item.get("duration_ms") if isinstance(item.get("duration_ms"), int) else None,
-            ),
-            float(item.get("confidence_delta", 0.0) or 0.0),
-        ),
-    )
-    for item in rewritten:
+    ranked = _rank_runtime_mitigations(rewritten, baseline_duration=baseline_duration)
+    winner = ranked[0]
+    for item in ranked:
         item["won"] = item is winner
-    return rewritten
+    return ranked
 
 
 def _runtime_comparison_summary(
     runtime_result: object | None,
     runtime_mitigations: list[dict[str, object]] | None = None,
 ) -> str:
+    baseline_duration = getattr(runtime_result, "replay_duration_ms", None) if runtime_result else None
+    ranked = _rank_runtime_mitigations(runtime_mitigations, baseline_duration=baseline_duration)
     if not runtime_result:
-        if not runtime_mitigations:
+        if not ranked:
             return ""
-        winner = next((item for item in runtime_mitigations if item.get("won")), runtime_mitigations[0] if runtime_mitigations else None)
+        winner = ranked[0]
+        runner_up = ranked[1] if len(ranked) > 1 else None
         if isinstance(winner, dict):
             best_action = str(winner.get("action") or "Selected mitigation")
-            return (
+            summary = (
                 f"Scaffold-only mode ranked '{best_action}' as the leading mitigation candidate. "
                 "Runtime replay has not validated this mitigation yet."
             )
+            if runner_up:
+                summary += f" Runner-up: '{str(runner_up.get('action') or 'Unknown mitigation')}'."
+            return summary
         return ""
     baseline_status = getattr(runtime_result, "replay_status_code", None)
-    baseline_duration = getattr(runtime_result, "replay_duration_ms", None)
     if baseline_status is None:
         return ""
-    winner = next((item for item in (runtime_mitigations or []) if item.get("won")), (runtime_mitigations or [None])[0] if runtime_mitigations else None)
+    winner = ranked[0] if ranked else None
+    runner_up = ranked[1] if len(ranked) > 1 else None
     if isinstance(winner, dict):
         best_action = str(winner.get("action") or "Selected mitigation")
         best_status = winner.get("status_code")
@@ -1797,13 +1913,24 @@ def _runtime_comparison_summary(
             baseline_duration=baseline_duration,
             mitigation_duration=best_duration,
         ).replace("_", " ")
-        return (
+        summary = (
             f"Baseline replay returned {baseline_status}"
             f"{f' at {baseline_duration}ms' if baseline_duration is not None else ''}; "
             f"best mitigation {best_action} returned {best_status}"
             f"{f' at {best_duration}ms' if best_duration is not None else ''}"
             f" and the runtime outcome was {outcome}."
         )
+        if isinstance(runner_up, dict):
+            runner_action = str(runner_up.get("action") or "Runner-up mitigation")
+            runner_status = runner_up.get("status_code")
+            runner_duration = runner_up.get("duration_ms")
+            runner_outcome = str(runner_up.get("outcome_class") or "").replace("_", " ")
+            summary += (
+                f" Runner-up {runner_action} returned {runner_status}"
+                f"{f' at {runner_duration}ms' if runner_duration is not None else ''}"
+                f" and remained {runner_outcome or 'not classified'}."
+            )
+        return summary
     return f"Baseline replay returned {baseline_status}{f' at {baseline_duration}ms' if baseline_duration is not None else ''}."
 
 
@@ -1910,6 +2037,7 @@ def build_trace_summary(
     replay_status_code = replica_summary.get("replay_status_code")
     replay_duration_ms = replica_summary.get("replay_duration_ms")
     runtime_comparison = str(replica_summary.get("runtime_comparison_summary") or "")
+    comparison_verdict = str((replica_summary.get("mitigation_comparison") or {}).get("verdict") or "")
     plan = build_execution_plan(
         issue_family=str(triage_summary.get("issue_family", "")),
         service=service,
@@ -1961,11 +2089,14 @@ def build_trace_summary(
                 state_anomalies.append(f"runtime replay reproduced a 504 after {replay_duration_ms}ms before mitigation")
             if runtime_comparison:
                 state_anomalies.append(runtime_comparison)
+            if comparison_verdict:
+                state_anomalies.append(comparison_verdict)
             confidence = 0.74 if "middleware" in deployment_text else 0.69
             reasoning = "TRACE narrowed the issue to the retry middleware path that keeps auth retries alive after the timeout budget is already exhausted."
             developer_handoff_summary = (
                 f"Start with {suspected_files[0]} and hand this packet to {code_owner_team}. "
                 "The bounded replay shows the baseline request timing out until retries are capped or the circuit breaker is opened."
+                f"{f' {comparison_verdict}' if comparison_verdict else ''}"
             )
         elif "pool exhaustion" in issue_family or "session leak" in issue_family:
             suspected_modules = [module_name for module_name, _ in mapped_targets] or ["checkout.db.session", "checkout.retry_patch", "checkout.transaction_flow"]
@@ -1991,11 +2122,14 @@ def build_trace_summary(
                 state_anomalies.append(f"runtime replay returned status {replay_status_code} after {replay_duration_ms}ms under the bounded pool")
             if runtime_comparison:
                 state_anomalies.append(runtime_comparison)
+            if comparison_verdict:
+                state_anomalies.append(comparison_verdict)
             confidence = 0.76 if "retry" in deployment_text else 0.72
             reasoning = "TRACE narrowed the issue to the checkout retry patch where the session lifecycle no longer closes cleanly after failure."
             developer_handoff_summary = (
                 f"Start with {suspected_files[0]} and hand this packet to {code_owner_team}. "
                 "The bounded replay shows the pool recovering only after the leaking retry path is removed or orphaned sessions are terminated."
+                f"{f' {comparison_verdict}' if comparison_verdict else ''}"
             )
         elif "certificate expiry" in issue_family:
             suspected_modules = ["edge.cert_loader", "edge.listener_config", "acme.rotation_job"]

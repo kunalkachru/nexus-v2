@@ -149,9 +149,11 @@ Expected result:
 - REPLICA still uses the same flagged outage pack
 - the runtime mode becomes runtime-backed for the local run
 - replay and mitigation hook output are available in the `replica_summary` payload
+- the incident page exposes a `Run bounded replay` action when the host is capable
 - the runtime comparison becomes explicit:
   - baseline replay status and duration
-  - best mitigation replay status and duration
+  - selected mitigation replay status and duration
+  - runner-up mitigation replay status and duration when available
   - explicit runtime mode guidance in the incident UI
 - for `INC001`, the bounded retry pack should show a 504 baseline and a faster post-mitigation replay
 - for `INC002`, the bounded DB pack should show a 503 baseline and a successful post-mitigation replay
@@ -251,7 +253,10 @@ Expected:
   - why the current approval is the final human step
 - the investigation cards should populate with plausible findings, even for a fresh `nxs_...` incident:
   - REPLICA should show whether the failure could be recreated
+  - REPLICA should show a capability state even when replay cannot run on the current host
+  - REPLICA should still rank a selected mitigation and runner-up mitigation in scaffold-only mode
   - TRACE should show where engineering should inspect first
+  - TRACE should include file-level and code-owner cues instead of generic debugging prose
 - after one load, a manual refresh should show the settled state instead of replaying again
 
 What this demonstrates:
@@ -355,10 +360,15 @@ If you want to explain the value in one shot, use this narrative:
 6. Explain that FORGE is not acting in a vacuum; it uses runbook history and unresolved items
 7. Point at GUARDIAN and explain policy gating
 8. Create one fresh `nxs_...` incident from `Inputs`
-9. Approve the runbook and show the visible outcome
-10. Open `Training`
-11. Show latest live triage first, then `Enterprise runtime summary`
-12. Open `Replay` and show `INC006` as the harder P0 scenario
+9. Open the REPLICA card and point out:
+   - replay host capability
+   - baseline vs selected mitigation
+   - runner-up mitigation when present
+10. If runtime is enabled, click `Run bounded replay` and refresh the comparison
+11. Approve the runbook and show the visible outcome
+12. Open `Training`
+13. Show latest live triage first, then `Enterprise runtime summary`
+14. Open `Replay` and show `INC006` as the harder P0 scenario
 
 ## Local-Only Safety Note
 

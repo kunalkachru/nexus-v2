@@ -104,6 +104,7 @@ Both incidents show the complete investigation flow. Runtime replay is optional 
 - “This is the main operator workspace.”
 - “The product is reducing manual escalation work before a human reviewer is pulled in.”
 - “SENTINEL frames the case, PRISM investigates it, FORGE prepares the action, and GUARDIAN governs the final decision.”
+- “REPLICA now shows the baseline failure, the selected mitigation, and the runner-up mitigation so the operator can see why one action won.”
 
 ### Training
 
@@ -114,6 +115,7 @@ Both incidents show the complete investigation flow. Runtime replay is optional 
 
 - raw-log submission redirects into a populated `nxs_...` incident
 - the incident reads like a prepared support triage packet
+- the REPLICA card can truthfully show whether this host can run bounded replay and, when enabled, lets the operator trigger it from the incident page
 - Guardian approval visibly changes the execution state
 - Training shows the latest live triage and the broader runtime story together
 
