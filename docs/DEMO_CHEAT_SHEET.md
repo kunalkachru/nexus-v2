@@ -21,23 +21,26 @@ The story to prove in the demo is:
 
 ## Current Shipped Agent Flow
 
-`SENTINEL -> PRISM -> FORGE -> GUARDIAN`
+`SENTINEL -> PRISM -> REPLICA -> TRACE -> FORGE -> GUARDIAN`
 
 Meaning:
 
 - `SENTINEL` triages and frames the case
 - `PRISM` investigates likely cause and historical context
-- `FORGE` prepares the remediation path
-- `GUARDIAN` governs the final decision
+- `REPLICA` runs bounded sandbox runtime testing to validate diagnosis and mitigations
+- `TRACE` prepares investigation depth and developer handoff packet
+- `FORGE` prepares remediation with runtime-weighted candidate ranking
+- `GUARDIAN` governs the final decision, enriched by runtime validation
 
-## Product-Direction Expansion
+## Key Innovation: Runtime Evidence Weighting
 
-The next product layer adds:
+The runtime layer (REPLICA) feeds outcome classes back into FORGE and GUARDIAN:
 
-- `REPLICA` for reproduction and validation
-- `TRACE` for code-aware debugging support
+- `resolved` — mitigation fully cleared the failure in sandbox
+- `improved` — mitigation improved behavior but did not fully resolve
+- `inferred_only` — no runtime-backed evidence yet
 
-These are part of the product direction, not a shipped claim today.
+This outcome class shapes runbook selection priority and GUARDIAN's risk classification.
 
 ## Flagship Use Case
 
@@ -64,18 +67,30 @@ Why this is the best demo:
 - no project OpenAI key is exposed
 - live reasoning is optional through a user-supplied key
 
+## INC001 vs INC002: Runtime Evidence in Action
+
+| Aspect | INC001 (Timeout Cascade) | INC002 (Pool Exhaustion) |
+|--------|------------------------|------------------------|
+| **Diagnosis** | Runaway retry storm → worker exhaustion | Leaked sessions → pool starvation |
+| **REPLICA Status** | reproduced | reproduced |
+| **Best Mitigation** | Circuit breaker + cap retries to 1 | Terminate orphaned sessions + restart |
+| **Outcome Class** | resolved (confidence_delta 0.08) | resolved (confidence_delta 0.06) |
+| **FORGE Cites** | "resolved in the bounded runtime" | "resolved in the bounded runtime" |
+| **GUARDIAN Risk** | LOW (resolved→drops high→medium/low) | MEDIUM (improved/resolved keeps medium) |
+| **Approval** | Operator level | Operator level |
+| **Key Difference** | Retry path fully halted | Pool capacity restored |
+
+Both incidents show the complete runtime flow: REPLICA validates the hypothesis, FORGE weights by outcome, GUARDIAN adjusts risk and confidence accordingly.
+
 ## Fastest Demo Flow
 
-1. Open `/inputs`
-2. Click `Load example logs`
-3. Click `Submit raw logs`
-4. Open the created incident
-5. Explain the support-triage handoff
-6. Show memory-backed investigation
-7. Show `GUARDIAN` as the final human review point
-8. Click `Approve runbook`
-9. Open `/training`
-10. Show how the latest run maps into the broader runtime and learning story
+1. Open `/inputs` or use `/incident?nexus_incident_id=INC001`
+2. Explain each stage: SENTINEL (severity) → PRISM (root cause) → REPLICA (validated outcome)
+3. Show TRACE investigation depth and suggested modules
+4. Show FORGE reasoning citing runtime evidence
+5. Show GUARDIAN risk classification adjusted by runtime validation
+6. Click `Approve runbook`
+7. Show memory enrichment (why_now_fit for matching runbooks)
 
 ## What To Say On Each Screen
 

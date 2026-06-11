@@ -41,19 +41,16 @@ This is the strongest case because it has:
 
 ## What The Product Is Today
 
-NEXUS is currently a support triage and incident investigation product with four shipped visible agents:
+NEXUS is currently a support triage and incident investigation product with six shipped visible agents:
 
-- `SENTINEL`
-- `PRISM`
-- `FORGE`
-- `GUARDIAN`
+- `SENTINEL` — incident classification
+- `PRISM` — root cause diagnosis
+- `REPLICA` — runtime evidence generation
+- `TRACE` — investigation depth and developer handoff
+- `FORGE` — runbook selection with runtime evidence weighting
+- `GUARDIAN` — safety review with runtime-aware posture
 
-The broader product direction adds:
-
-- `REPLICA`
-- `TRACE`
-
-Those future agents are not required for the current walkthrough, but the walkthrough should make their eventual place feel natural.
+The six-agent flow forms a complete incident response pipeline from classification through remediation readiness.
 
 ## Local Setup
 
@@ -132,12 +129,37 @@ Open the created incident or use:
 - memory-grounded investigation
 - proposed action and Guardian posture
 
-### What the shipped four-agent flow should mean
+### What the six-agent flow should mean
 
 - `SENTINEL`: likely severity, likely service, likely issue family
 - `PRISM`: evidence correlation, recent change analysis, and prior issue retrieval
-- `FORGE`: action preparation and mitigation comparison
-- `GUARDIAN`: review posture, risk posture, and final approval or rejection
+- `REPLICA`: bounded runtime sandbox testing to validate the diagnosis and mitigation effectiveness
+- `TRACE`: investigation depth, suspected modules, and developer handoff packet
+- `FORGE`: action preparation, mitigation comparison weighted by runtime evidence
+- `GUARDIAN`: review posture, risk posture with runtime evidence validation, and final approval or rejection
+
+### Runtime Evidence Flow (REPLICA → FORGE → GUARDIAN)
+
+The runtime evidence narrative connects three stages:
+
+1. **REPLICA** executes a bounded sandbox to reproduce the failure and test mitigations, producing:
+   - `best_mitigation_outcome_class`: resolved / improved / inferred_only
+   - `runtime_comparison_summary`: prose comparison of baseline vs mitigation
+
+2. **FORGE** uses the outcome class to weight runbook selection:
+   - reasoning cites the mitigation outcome: "resolved," "improved," or "inferred"
+   - candidate fixes ranked by action overlap with the tested mitigation
+
+3. **GUARDIAN** enriches its safety posture with runtime validation:
+   - `validated_clause` prepended to reasoning based on outcome class
+   - risk classification adjusted: "resolved" lowers risk from high→medium
+   - approval confidence increases when runtime evidence validates the hypothesis
+
+### What the runtime flow validates
+
+- the diagnosis hypothesis holds under bounded reproduction
+- the proposed mitigation actually clears the failure signature
+- escalation to a human reviewer includes evidence-backed confidence in the action
 
 ### What to validate
 

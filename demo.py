@@ -1,6 +1,7 @@
 import asyncio
 
 from server.services.live_demo import build_demo_payload
+from server.services.surface_payloads import build_incident_response
 from training.reporting import CHECKPOINT_PATH, METRICS_PATH, ensure_metrics_payload, load_checkpoint
 
 
@@ -63,6 +64,67 @@ def run_demo(*, incident_id: str = "INC001", print_output: bool = False) -> dict
 
 
 def main() -> None:
+    print("\n" + "="*70)
+    print("NEXUS v3 End-to-End Demo: All 6 Workflow Stages")
+    print("="*70)
+
+    for incident_id in ["INC001", "INC002"]:
+        print(f"\n{'─'*70}")
+        print(f"Incident: {incident_id}")
+        print(f"{'─'*70}\n")
+
+        response = build_incident_response(incident_id)
+        incident = response["incident"]
+
+        print(f"[SENTINEL] Classification")
+        print(f"  ID: {incident['id']} — {incident['name']}")
+        print(f"  Severity: {incident['severity']}")
+        classification = response["classification"]
+        print(f"  Reasoning: {classification['reasoning'][:100]}...")
+
+        print(f"\n[PRISM] Diagnosis")
+        diagnosis = response["diagnosis"]
+        print(f"  Root cause: {diagnosis['root_cause']}")
+        print(f"  Confidence: {diagnosis['confidence']}")
+        print(f"  Reasoning: {diagnosis['reasoning'][:100]}...")
+
+        print(f"\n[REPLICA] Runtime Evidence")
+        replica = response["replica_summary"]
+        print(f"  Status: {replica['reproduction_status']}")
+        print(f"  Best mitigation: {replica['best_mitigation_action']}")
+        print(f"  Outcome: {replica['best_mitigation_outcome_class']}")
+        print(f"  Comparison: {replica['runtime_comparison_summary'][:100]}...")
+
+        print(f"\n[TRACE] Investigation Depth")
+        trace = response["trace_summary"]
+        print(f"  Inspection point: {trace.get('inspection_point', 'N/A')[:100]}...")
+        print(f"  Suspected modules: {trace.get('suspected_modules', [])}")
+        print(f"  Anomalies: {len(trace.get('state_anomalies', []))} found")
+
+        print(f"\n[FORGE] Runbook Selection")
+        runbook = response["runbook"]
+        print(f"  Proposed fix: {runbook['proposed_fix'][:60]}...")
+        print(f"  Reasoning: {runbook['reasoning'][:120]}...")
+
+        print(f"\n[GUARDIAN] Safety Posture")
+        guardian = response["guardian"]
+        print(f"  Decision: {guardian['decision'].upper()}")
+        print(f"  Confidence: {guardian['confidence']}")
+        print(f"  Reasoning: {guardian['reasoning'][:120]}...")
+
+        print(f"\n[MEMORY] Historical Context")
+        memory = response.get("memory_hits", {})
+        print(f"  Similar incidents: {len(memory.get('similar_incidents', []))}")
+        print(f"  Recommended runbooks: {len(memory.get('runbooks', []))}")
+        if memory.get("runbooks"):
+            for rb in memory.get("runbooks", [])[:1]:
+                print(f"    • {rb.get('name')}: success_rate={rb.get('success_rate')}")
+                if rb.get('why_now_fit'):
+                    print(f"      Why now: {rb.get('why_now_fit')[:80]}...")
+
+    print(f"\n{'─'*70}")
+    print("Live graph demo (full agent orchestration for INC001):")
+    print(f"{'─'*70}\n")
     run_demo(print_output=True)
 
 

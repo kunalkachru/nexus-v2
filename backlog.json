@@ -112,7 +112,7 @@
     "id": 14,
     "title": "End-to-end demo closure for INC001 and INC002",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Update demo.py to print all 6 stages (SENTINEL, PRISM, REPLICA, TRACE, FORGE, GUARDIAN) for both INC001 and INC002 using build_incident_response. Update docs/DEMO_WALKTHROUGH.md to cover the runtime evidence narrative. Update docs/DEMO_CHEAT_SHEET.md with an INC001 vs INC002 side-by-side. Extend local_enterprise_smoke.sh to verify memory_hits and the new forge/guardian runtime reasoning on the live Docker container.",
     "done_when": [
       "python demo.py exits 0 and output covers REPLICA, TRACE, FORGE, GUARDIAN for both incidents",
