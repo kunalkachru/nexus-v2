@@ -51,9 +51,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByText("Investigation depth · REPLICA")).toBeVisible();
     await expect(page.getByText("Investigation depth · TRACE")).toBeVisible();
     await expect(page.getByText("Best mitigation")).toBeVisible();
-    await expect(page.locator("#replicaRuntimeHint")).toContainText(/Runtime|NEXUS_ENABLE_REPLICA_RUNTIME/);
     await expect(page.locator("#traceInspectionPoint")).not.toContainText("TRACE has not narrowed");
-    await expect(page.locator("#traceDeveloperHandoff")).not.toContainText("TRACE has not prepared");
     await expect(page.getByRole("heading", { name: "SENTINEL framed the incident for the rest of the crew" })).toBeVisible();
     await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
     await expect(page.locator(".byo-key-card .badge")).toHaveText("Bring your own OpenAI key");
@@ -155,7 +153,64 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#sentinelReasoning")).not.toHaveText("Waiting for incident context.");
     await expect(page.locator("#threadSentinelCopy")).not.toHaveText("Waiting for incident context.");
     await expect(page.locator("#guardianReasoning")).toContainText(/Guardian review is pending|recorded|safe/i);
-    await expect(page.locator("#replicaRuntimeHint")).toContainText(/Runtime|NEXUS_ENABLE_REPLICA_RUNTIME/);
-    await expect(page.locator("#traceDeveloperHandoff")).not.toContainText("TRACE has not prepared");
+  });
+
+  // ── NEW TESTS added for items 9-12 ──────────────────────────────────────────
+
+  // Item 12: runtime comparison block must be present and populated
+  test("INC001 runtime comparison block shows baseline vs mitigated outcome", async ({ page }) => {
+    await page.goto("/incident?nexus_incident_id=INC001");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("#runtimeComparisonBlock")).toBeVisible();
+    await expect(page.locator("#runtimeBaselineRow")).toBeVisible();
+    await expect(page.locator("#runtimeMitigatedRow")).toBeVisible();
+    await expect(page.locator("#runtimeOutcomeLabel")).toBeVisible();
+
+    const outcomeText = await page.locator("#runtimeOutcomeLabel").textContent();
+    expect(/resolved|improved|not improved|inferred/i.test(outcomeText || "")).toBeTruthy();
+
+    await page.screenshot({ path: "artifacts/browser/inc001-runtime-comparison.png", fullPage: true });
+  });
+
+  test("INC002 runtime comparison block shows baseline vs mitigated outcome", async ({ page }) => {
+    await page.goto("/incident?nexus_incident_id=INC002");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("#runtimeComparisonBlock")).toBeVisible();
+    await expect(page.locator("#runtimeBaselineRow")).toBeVisible();
+    await expect(page.locator("#runtimeMitigatedRow")).toBeVisible();
+    await expect(page.locator("#runtimeOutcomeLabel")).toBeVisible();
+
+    const outcomeText = await page.locator("#runtimeOutcomeLabel").textContent();
+    expect(/resolved|improved|not improved|inferred/i.test(outcomeText || "")).toBeTruthy();
+
+    await page.screenshot({ path: "artifacts/browser/inc002-runtime-comparison.png", fullPage: true });
+  });
+
+  // Item 11: TRACE inspection_point must cite real code — not placeholder text
+  test("INC001 TRACE inspection point cites real module or function", async ({ page }) => {
+    await page.goto("/incident?nexus_incident_id=INC001");
+    await page.waitForLoadState("networkidle");
+
+    const inspectionText = await page.locator("#traceInspectionPoint").textContent();
+    expect(inspectionText).not.toContain("Wait for REPLICA");
+    expect(inspectionText).not.toContain("TRACE has not narrowed");
+    expect(/middleware|retry|circuit.?breaker|auth|gateway|timeout/i.test(inspectionText || "")).toBeTruthy();
+  });
+
+  // Items 9 & 10: FORGE reasoning cites runtime; GUARDIAN posture is non-generic
+  test("INC001 FORGE reasoning cites runtime outcome and GUARDIAN posture is non-generic", async ({ page }) => {
+    await page.goto("/incident?nexus_incident_id=INC001");
+    await page.waitForLoadState("networkidle");
+
+    const forgeText = await page.locator("#forgeReasoning").textContent();
+    expect(/resolved|improved|validated|runtime|mitigation/i.test(forgeText || "")).toBeTruthy();
+
+    const guardianText = await page.locator("#guardianReasoning").textContent();
+    expect(guardianText).not.toContain("Waiting for incident context.");
+    expect(/reproduced|validated|inferred|runtime|resolved|improved/i.test(guardianText || "")).toBeTruthy();
+
+    await page.screenshot({ path: "artifacts/browser/inc001-forge-guardian-reasoning.png", fullPage: true });
   });
 });

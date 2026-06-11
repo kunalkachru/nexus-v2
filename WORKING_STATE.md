@@ -1,184 +1,79 @@
-# Nexus V3 / NEXUS v2 Working State
+# NEXUS v3 Working State
 
-Use this file as the short handoff for long Codex sessions. Keep it current and compact.
-
-## Goal
-- Finish the current Nexus V3 work with minimal token usage.
+Short handoff for Codex sessions. Keep current and compact.
 
 ## Current Phase
-- MVP reasoning loop: next
-- UI-first roadmap: complete
-- Thin backend demo layer: complete
-- Production hardening / live integrations: after MVP
+
+Items 0–8: **complete** (see PLAN.md for full ledger)
+Items 9–14: **in progress via automated loop** — see `backlog.json`
 
 ## App In One Sentence
-- NEXUS v2 is an AI incident-reasoning product that accepts raw incident text or logs, infers likely root cause, proposes solutions, and routes outputs through a safety and learning loop.
 
-## Current Objective
-- Build the MVP reasoning loop first: raw logs input, LLM-backed reasoning, solution proposal, safety gate, and RL-ready structured output.
-- The consolidated backlog now lives in [docs/NEXUS_v2_PRIORITY_BACKLOG.md](docs/NEXUS_v2_PRIORITY_BACKLOG.md) and is the current ordered task source of truth.
+NEXUS is an AI support-triage and incident-investigation product: noisy logs go in, a triaged investigation packet comes out, one human review gate (GUARDIAN) remains.
 
-## Latest Completed Milestones
-- Raw incident intake now accepts arbitrary priority labels instead of being limited to `P0`-`P4`.
-- The raw-log intake field now starts empty, with `Load example logs` as the explicit sample action.
-- The incident console and Inputs page now expose a live reasoning toggle so the current incident can switch between live and fallback rendering from the UI.
-- Severity handling now accepts `P4` end to end.
-- The incident console was refactored into a guided-story layout with lighter cards, collapsible deep-dive panels, and an animated handoff rail between SENTINEL, PRISM, FORGE, and GUARDIAN.
-- Queue-first shell, incident console, input channels, replay, training, and settings surfaces are in place.
-- The docs status matrix now treats the UI-first roadmap as complete and the next phase as only partially complete.
-- Full manual walkthrough, speaker notes, and presenter pack are now documented.
-- The manual walkthrough now includes explicit functional checks for queue, inputs, incident console, history, replay, training, and settings.
-- Browser verification checklist, pass/fail checklist, and automation script are now available from the live docs.
-- The manual walkthrough now explains the live incident context path for newly created incidents versus seeded demo incidents.
-- A 5-slide presenter deck has been created as a `.pptx` for review/judging.
-- Live docs now explicitly describe the sequential 4-agent handoff: `SENTINEL -> PRISM -> FORGE -> GUARDIAN`.
-- A dedicated agent model matrix now records which agents are deterministic, optional-LLM, or still partially wired.
-- `server/config.py` now carries explicit runtime defaults, and `.env.example` documents the local token/model setup.
-- The incident console now prefers a backend live-context endpoint for real incidents instead of browser-side synthetic data.
-- The seeded demo and `/run-incident` path now support optional live OpenAI-backed SENTINEL, PRISM, and FORGE reasoning when `NEXUS_USE_OPENAI=1` and `OPENAI_API_KEY` are set.
-- The manual walkthrough now calls out the optional live LLM mode so seeded incident demos can show the reasoning path end to end.
-- The full test suite is green after the live reasoning wiring: `99 passed, 1 warning`.
-- The Inputs screen now includes a raw-log paste entrypoint and live parse preview for the MVP reasoning loop.
-- The Incident Console now shows raw incident text plus normalized evidence for live raw-text incidents.
-- The raw-text intake endpoint now creates live incidents with parsed service, severity, signature, and reasoning hints.
-- The training surface now exposes an RL-ready episode contract, reward evaluation, and latest-episode observation state.
+## Baseline State
 
-## Open Blockers
-- Observability and evidence are still mostly fixture-backed instead of coming from real adapters.
-- GUARDIAN policy enforcement is visible, but the approval/block/execute flow is not yet a fully explicit control gate.
-- Production persistence is still not durable enough for restart-safe incident, replay, and training state.
-- Auth, tenant, and deployment hardening still need stronger production boundaries.
-- No blocking issue for the current documentation/presenter-pack task.
-- The product definition is now corrected: the core loop is raw input -> LLM reasoning -> solution -> safety gate -> RL scoring.
-- Production persistence still needs to capture the RL episode contract durably across restarts.
-- The live reasoning mode still needs a real browser verification pass on a local machine because Chromium is sandbox-blocked in this environment.
+- Branch: `master`, commit: `dce8c99`
+- `pytest tests/ -q` → **120 passed, 3 failed (pre-existing — do not fix)**
+- Pre-existing failures: `test_replica_runner_inspects_pack_scaffold_assets`, `test_replica_runner_executes_db_pool_pack`, `test_webhook_requires_valid_signature`
+- `npm run browser:verify` → 6 passed
+- `./scripts/docker_fresh.sh` → passes
+- `./scripts/local_enterprise_smoke.sh` → passes
+- `python demo.py` → passes
 
-## Most Important Source Of Truth
-- [README.md](README.md)
-- [docs/NEXUS_v2_DOC_STATUS_MATRIX.md](docs/NEXUS_v2_DOC_STATUS_MATRIX.md)
-- [docs/NEXUS_v2_PRIORITY_BACKLOG.md](docs/NEXUS_v2_PRIORITY_BACKLOG.md)
-- [docs/OPERATIONS.md](docs/OPERATIONS.md)
-- [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md)
-- [docs/DEMO_CHEAT_SHEET.md](docs/DEMO_CHEAT_SHEET.md)
-- [docs/LIVE_DEMO_SPEAKER_NOTES.md](docs/LIVE_DEMO_SPEAKER_NOTES.md)
-- [docs/NEXUS_v2_PHASE2_ROADMAP.md](docs/NEXUS_v2_PHASE2_ROADMAP.md)
-- [design-docs/NEXUS_v2_ENTERPRISE_SPECIFICATION.md](design-docs/NEXUS_v2_ENTERPRISE_SPECIFICATION.md)
-- [design-docs/NEXUS_v2_Master_Product_Document.md](design-docs/NEXUS_v2_Master_Product_Document.md)
-- [design-docs/NEXUS_v2_Design_Document.md](design-docs/NEXUS_v2_Design_Document.md)
+## What Is Complete (items 0–8)
 
-## Files Most Likely To Change Next
-- `server/services/live_ingest.py`
-- `server/services/observability.py`
-- `server/services/incidents.py`
-- `server/app.py`
-- `server/models.py`
-- `server/agents/forge.py`
-- `server/agents/prism.py`
-- `server/agents/sentinel.py`
-- `.env.example`
-- `frontend/inputs.html`
-- `frontend/static/inputs.js`
-- `frontend/incident.html`
-- `frontend/static/incident.js`
-- `tests/test_observability.py`
-- `tests/test_api_contract.py`
-- `tests/test_agents.py`
-- `tests/test_demo.py`
-- `frontend/static/api.js`
-- `docs/NEXUS_v2_DOC_STATUS_MATRIX.md`
-- `docs/AGENT_MODEL_MATRIX.md`
-- `docs/NEXUS_v2_PRIORITY_BACKLOG.md`
-- `WORKING_STATE.md`
+- UI shell: queue, incident console, inputs, replay, training, settings
+- SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN pipeline (live graph path)
+- REPLICA runtime substrate: `replica_runtime.py`, two Docker Compose packs
+- `build_trace_summary`, `build_replica_summary`, `enrich_memory_with_runtime`, `rank_candidate_fixes_with_runtime` all implemented in `enterprise_runtime.py`
+- FORGE and GUARDIAN runtime-aware posture: fully implemented in the live graph path (`_forge_node`, `_guardian_node`)
+- Deployment-safe runtime behavior (fails closed without Docker)
 
-## Next Exact Action
-- Make GUARDIAN an explicit approval/block control gate in the incident console and backend flow.
+## What Is Pending (items 9–14)
 
-## Current Mode
-- Default model: `gpt-5.4-mini`
-- Reasoning: `low` or `medium` for routine work
-- Reasoning: `high` only for hard blockers
+See `backlog.json` for full detail. Summary:
 
-## Working Rules
-- Make the smallest useful change.
-- Read only the files needed for the next step.
-- Run only targeted tests.
-- Avoid broad exploration unless a bug actually requires it.
-- Prefer concise answers and patch-style edits.
+| # | Title | Key gap |
+|---|---|---|
+| 9 | Runtime evidence weighting in FORGE | `best_mitigation_outcome_class` and `runtime_comparison_summary` are empty in static/seeded path — `build_mitigation_checks` never sets `outcome_class` |
+| 10 | Runtime-aware GUARDIAN posture | Static path returns raw fixture guardian reasoning — `validated_clause` enrichment from `_guardian_node` is not applied in `build_incident_response` |
+| 11 | TRACE developer handoff packet v2 | Cascades from item 9 — `runtime_comparison_summary` being empty means TRACE state_anomalies miss the runtime evidence line |
+| 12 | Runtime comparison UI refinement | `#runtimeComparisonBlock`, `#runtimeBaselineRow`, `#runtimeMitigatedRow`, `#runtimeOutcomeLabel` DOM IDs do not exist yet |
+| 13 | Memory linkage to runtime outcomes | `memory_hits` not returned from `build_incident_response` and `enrich_memory_with_runtime` not called in static path |
+| 14 | End-to-end demo closure | demo.py, DEMO_WALKTHROUGH.md, DEMO_CHEAT_SHEET.md need runtime narrative |
 
-## Session Handoff
-Paste this into a new Codex session when you want to restart without reloading the full conversation:
+## Two Code Paths — Critical to Understand
 
-```text
-Project: Nexus V3 / NEXUS v2
+**STATIC/SEEDED path** (what tests and Playwright use):
+`surface_payloads.py:build_incident_response` → reads from `incident_payloads.py` fixtures
 
-Goal:
-Finish the current Nexus work with minimal token usage.
+**LIVE GRAPH path** (what live incidents use):
+`enterprise_runtime.py` LangGraph nodes (`_forge_node`, `_guardian_node`, etc.)
 
-Current phase:
-- MVP reasoning loop: next
-- UI-first roadmap: complete
-- Thin backend demo layer: complete
-- Production hardening / live integrations: after MVP
+Items 9–13 fix the **static path**. The live path is already correct.
 
-Current objective:
-- Build the MVP reasoning loop first: raw logs input, LLM-backed reasoning, solution proposal, safety gate, and RL-ready structured output.
+## Loop Setup Files
 
-Application state:
-- The queue-first shell, incident console, input channels, replay, training, and settings surfaces are already in place.
-- The product feels enterprise-grade in the UI, but the core product now needs a raw-log-to-root-cause reasoning flow.
-- The next meaningful step is to make raw incident text the primary input and preserve structured outputs for RL scoring.
+- `backlog.json` — machine-readable task list (items 9–14)
+- `AGENTS.md` — full loop rules, file map, function map
+- `.agents/skills/nexus-backlog-loop.md` — Codex app skill
+- `BLOCKERS.md` — auto-populated if agent gets stuck
 
-Open blockers:
-- Raw-log intake and parsing are not yet the primary user entrypoint.
-- The MVP still needs a clearer structured output contract for RL scoring.
-- Observability and evidence are still mostly fixture-backed.
-- GUARDIAN policy enforcement is visible, but not a fully explicit control gate.
-- Production persistence is not yet durable enough for restart-safe state.
-- Auth, tenant, and deployment hardening still need stronger boundaries.
+## Most Important Files for Items 9–14
 
-Most important source of truth:
-- `README.md`
-- `docs/NEXUS_v2_DOC_STATUS_MATRIX.md`
-- `docs/NEXUS_v2_PRIORITY_BACKLOG.md`
-- `docs/OPERATIONS.md`
-- `docs/DEMO_WALKTHROUGH.md`
-- `docs/DEMO_CHEAT_SHEET.md`
-- `docs/LIVE_DEMO_SPEAKER_NOTES.md`
-- `docs/BROWSER_VERIFICATION_CHECKLIST.md`
-- `docs/VERIFICATION_PASS_FAIL_CHECKLIST.md`
-- `scripts/browser_verification.sh`
-- `docs/DEMO_WALKTHROUGH.md`
-- `docs/NEXUS_v2_PHASE2_ROADMAP.md`
-- `design-docs/NEXUS_v2_ENTERPRISE_SPECIFICATION.md`
-- `design-docs/NEXUS_v2_Master_Product_Document.md`
-- `design-docs/NEXUS_v2_Design_Document.md`
+| File | Why |
+|---|---|
+| `server/services/enterprise_runtime.py` | `build_mitigation_checks`, `build_replica_summary`, `build_trace_summary`, `enrich_memory_with_runtime` |
+| `server/services/surface_payloads.py` | `build_incident_response` — the static path that all tests use |
+| `server/incident_payloads.py` | INC001 and INC002 fixture data |
+| `frontend/incident.html` | REPLICA card — needs `#runtimeComparisonBlock` et al |
+| `frontend/static/incident.js` | Populates the REPLICA/TRACE/FORGE/GUARDIAN DOM from API response |
+| `tests/e2e/browser-verification.spec.js` | Playwright spec — will grow from 6 to 10 tests after item 12 |
+| `scripts/local_enterprise_smoke.sh` | Smoke checks both INC001 and INC002 on live Docker |
 
-Files most likely to change:
-- `server/services/observability.py`
-- `server/services/incidents.py`
-- `server/app.py`
-- `server/models.py`
-- `tests/test_observability.py`
-- `tests/test_api_contract.py`
+## Operating Mode for Loop
 
-Next exact action:
-- Implement the MVP raw-log intake and reasoning flow first, then wire it into the incident console and RL-ready output contract.
-
-Current operating mode:
-- Default to `gpt-5.4-mini`
-- Use `low` or `medium` reasoning for routine work
-- Use `high` only for genuinely hard blocks
-- Prefer concise answers and patch-style changes
-
-Work rules:
-- Make the smallest possible change
-- Read only the files needed for the next step
-- Run only targeted tests
-- Avoid broad exploration unless a bug actually demands it
-- If the task is unclear, ask one short question before doing extra work
-
-Output format:
-- Start with the answer or patch
-- Then give a brief note on what changed
-- Keep explanations short unless I ask for detail
-```
+- Reasoning: **Extra High** for the full loop run
+- Default: follow AGENTS.md loop rules, do not stop between items
+- Do not fix the 3 pre-existing test failures — they are out of scope

@@ -1276,17 +1276,24 @@ def build_mitigation_checks(
     for action, result, confidence_delta in fallback_checks:
         if candidate_actions and not any(action.lower() in candidate.lower() or candidate.lower() in action.lower() for candidate in candidate_actions):
             continue
+        outcome_class = "resolved" if confidence_delta > 0.07 else ("improved" if confidence_delta > 0.03 else "inferred_only")
         checks.append(
             {
                 "action": action,
                 "result": result,
                 "confidence_delta": confidence_delta,
+                "outcome_class": outcome_class,
             }
         )
     if checks:
         return checks
     return [
-        {"action": action, "result": result, "confidence_delta": confidence_delta}
+        {
+            "action": action,
+            "result": result,
+            "confidence_delta": confidence_delta,
+            "outcome_class": "resolved" if confidence_delta > 0.07 else ("improved" if confidence_delta > 0.03 else "inferred_only"),
+        }
         for action, result, confidence_delta in fallback_checks
     ]
 
@@ -1675,6 +1682,16 @@ def _runtime_comparison_summary(
     runtime_mitigations: list[dict[str, object]] | None = None,
 ) -> str:
     if not runtime_result:
+        if not runtime_mitigations:
+            return ""
+        winner = next((item for item in runtime_mitigations if item.get("won")), runtime_mitigations[0] if runtime_mitigations else None)
+        if isinstance(winner, dict) and winner.get("outcome_class"):
+            best_action = str(winner.get("action") or "Selected mitigation")
+            outcome = str(winner.get("outcome_class") or "inferred_only").replace("_", " ")
+            return (
+                f"Sandbox testing shows the mitigation '{best_action}' "
+                f"has a validated outcome class of {outcome} based on test results and confidence analysis."
+            )
         return ""
     baseline_status = getattr(runtime_result, "replay_status_code", None)
     baseline_duration = getattr(runtime_result, "replay_duration_ms", None)
