@@ -14,6 +14,7 @@ from server.services.enterprise_runtime import (
     build_trace_summary,
     build_training_enterprise_summary,
     build_triage_summary,
+    rank_candidate_fixes_with_runtime,
 )
 
 
@@ -55,6 +56,7 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
         recent_deployments=details["recent_deployments"],
         recent_logs=details["recent_logs"],
     )
+    ranked_candidate_fixes = rank_candidate_fixes_with_runtime(details["forge"]["candidate_fixes"], replica_summary=replica_summary)
 
     return {
         "incident": {
@@ -96,10 +98,16 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
             "language": "bash",
             "summary": details["forge"]["recommended_runbook"],
             "proposed_fix": details["forge"]["recommended_runbook"],
-            "selection_logic": details["forge"]["selection_logic"],
-            "candidate_fixes": details["forge"]["candidate_fixes"],
+            "selection_logic": (
+                f"{details['forge']['selection_logic']} "
+                f"{replica_summary.get('best_mitigation_summary') or ''}"
+            ).strip(),
+            "candidate_fixes": ranked_candidate_fixes,
             "recommended_runbook": details["forge"]["recommended_runbook"],
-            "reasoning": details["forge"]["reasoning"],
+            "reasoning": (
+                f"{details['forge']['reasoning']} "
+                f"{replica_summary.get('runtime_comparison_summary') or ''}"
+            ).strip(),
             "cost_usd": 0.12,
         },
         "guardian": {

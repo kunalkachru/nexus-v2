@@ -183,12 +183,15 @@ Expected:
   - reproduction status
   - tested mitigations
   - confidence delta
+  - baseline replay versus best mitigation
+  - clear runtime outcome such as `improved` or `resolved`
   - if runtime mode is enabled locally, the pack/service footprint and replay comparison should be visible in the payload-backed wording
 - `Investigation depth · TRACE` is visible and shows:
   - trace status
   - likely modules/functions
   - observed divergence
   - state anomalies
+  - inspect-here-first guidance for engineering
   - runtime anomalies should include the bounded replay status/duration when runtime mode is enabled
 - `Memory-grounded context` is visible
 - at least one similar incident is shown

@@ -15,7 +15,7 @@ from server.services.observability import ObservabilityService
 from server.services.result_contracts import build_structured_result
 from server.services.surface_payloads import build_incident_response
 from server.services.priority import priority_snapshot, shift_priority_label
-from server.services.enterprise_runtime import build_training_enterprise_summary
+from server.services.enterprise_runtime import build_training_enterprise_summary, rank_candidate_fixes_with_runtime
 from training.runner import TrainingForgeClient
 
 
@@ -166,6 +166,20 @@ async def build_demo_payload(
         live_reasoning_active=use_live_llm,
     )
     payload.update(episode.enterprise_state)
+    payload["runbook"]["candidate_fixes"] = rank_candidate_fixes_with_runtime(
+        payload["runbook"].get("candidate_fixes", []),
+        replica_summary=payload.get("replica_summary", {}),
+    )
+    best_summary = str(payload.get("replica_summary", {}).get("best_mitigation_summary", "")).strip()
+    runtime_summary = str(payload.get("replica_summary", {}).get("runtime_comparison_summary", "")).strip()
+    if best_summary and best_summary not in str(payload["runbook"].get("selection_logic", "")):
+        payload["runbook"]["selection_logic"] = (
+            f"{payload['runbook'].get('selection_logic', '')} {best_summary}"
+        ).strip()
+    if runtime_summary and runtime_summary not in str(payload["runbook"].get("reasoning", "")):
+        payload["runbook"]["reasoning"] = (
+            f"{payload['runbook'].get('reasoning', '')} {runtime_summary}"
+        ).strip()
     payload["enterprise_summary"] = build_training_enterprise_summary(
         {
             "summary": {"trained_reward": payload["reward"]},

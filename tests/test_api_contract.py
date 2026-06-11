@@ -378,7 +378,9 @@ def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth
     assert context_payload["triage_summary"]["issue_family"]
     assert context_payload["triage_summary"]["manual_relay_removed"]
     assert context_payload["replica_summary"]["reproduction_status"]
+    assert context_payload["replica_summary"]["best_mitigation_outcome_class"] is not None
     assert context_payload["trace_summary"]["trace_status"]
+    assert context_payload["trace_summary"]["inspection_point"] is not None
     assert context_payload["structured_result"]["proposed_fix"]
     assert context_payload["structured_result"]["raw_priority_label"] == "P4"
     assert context_payload["structured_result"]["normalized_priority_rank"] == 4
@@ -454,7 +456,9 @@ def test_live_incident_context_contract_returns_backend_evidence(client: TestCli
     assert payload["triage_summary"]["likely_owner_team"]
     assert payload["triage_summary"]["support_queue"]
     assert payload["replica_summary"]["environment_pack_id"]
+    assert payload["replica_summary"]["runtime_comparison_summary"] is not None
     assert payload["trace_summary"]["service"]
+    assert payload["trace_summary"]["replay_evidence_summary"] is not None
     assert len(payload["workflow"]) >= 1
     assert payload["execution_result"] in {"executed", "blocked", "approved", "pending", "needs_modification"}
 
@@ -626,7 +630,9 @@ def test_incident_context_defaults_to_deterministic_without_user_key(client: Tes
     assert payload["triage_summary"]["impacted_customer_path"]
     assert payload["memory_hits"]["similar_incidents"][0]["prior_action"]
     assert payload["replica_summary"]["tested_mitigations"] is not None
+    assert payload["replica_summary"]["best_mitigation_summary"] is not None
     assert payload["trace_summary"]["suspected_modules"] is not None
+    assert payload["trace_summary"]["inspection_point"] is not None
 
 
 def test_incident_context_rejects_invalid_user_key_header(client: TestClient, auth_headers) -> None:
@@ -703,4 +709,6 @@ def test_incident_context_accepts_request_scoped_user_key(client: TestClient, au
     assert payload["agent_metrics"]["forge"]["handoff_to"] == "GUARDIAN"
     assert payload["triage_summary"]["issue_family"]
     assert payload["replica_summary"]["confidence_delta"] >= 0
+    assert payload["replica_summary"]["runtime_comparison_summary"] is not None
     assert payload["trace_summary"]["confidence"] >= 0
+    assert payload["trace_summary"]["replay_evidence_summary"] is not None

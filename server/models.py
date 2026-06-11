@@ -230,6 +230,11 @@ class ReplicaMitigationCheck(BaseModel):
     action: str
     result: str
     confidence_delta: float = 0.0
+    status_code: int | None = None
+    duration_ms: int | None = None
+    delta_ms: int | None = None
+    outcome_class: str = ""
+    won: bool = False
 
 
 class ReplicaInvestigationResult(BaseModel):
@@ -250,6 +255,12 @@ class ReplicaInvestigationResult(BaseModel):
     mitigation_status_codes: list[int | None] = Field(default_factory=list)
     mitigation_duration_ms: list[int | None] = Field(default_factory=list)
     runtime_comparison_summary: str = ""
+    baseline_outcome_class: str = ""
+    best_mitigation_action: str = ""
+    best_mitigation_outcome_class: str = ""
+    best_mitigation_status_code: int | None = None
+    best_mitigation_duration_ms: int | None = None
+    best_mitigation_summary: str = ""
     tested_mitigations: list[ReplicaMitigationCheck] = Field(default_factory=list)
     reasoning: str = ""
 
@@ -257,12 +268,15 @@ class ReplicaInvestigationResult(BaseModel):
 class TraceInvestigationResult(BaseModel):
     incident_id: str
     service: str
+    suspected_service: str = ""
     trace_status: Literal["narrowed", "not_run", "pending"]
     suspected_modules: list[str] = Field(default_factory=list)
     suspected_functions: list[str] = Field(default_factory=list)
     expected_flow: str = ""
     observed_divergence: str = ""
     state_anomalies: list[str] = Field(default_factory=list)
+    inspection_point: str = ""
+    replay_evidence_summary: str = ""
     confidence: float = Field(ge=0.0, le=1.0, default=0.0)
     reasoning: str = ""
 

@@ -50,6 +50,8 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByRole("heading", { name: "Enterprise Task Board" })).toBeVisible();
     await expect(page.getByText("Investigation depth · REPLICA")).toBeVisible();
     await expect(page.getByText("Investigation depth · TRACE")).toBeVisible();
+    await expect(page.getByText("Best mitigation")).toBeVisible();
+    await expect(page.locator("#traceInspectionPoint")).not.toContainText("TRACE has not narrowed");
     await expect(page.getByRole("heading", { name: "SENTINEL framed the incident for the rest of the crew" })).toBeVisible();
     await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
     await expect(page.locator(".byo-key-card .badge")).toHaveText("Bring your own OpenAI key");

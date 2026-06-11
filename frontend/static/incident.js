@@ -506,6 +506,20 @@ function renderEnterprise(data) {
   setText("replicaStatus", titleCase(replica.reproduction_status || "not_run"));
   setText("replicaHypothesis", replica.hypothesis_supported ? "Supported" : "Not yet proven");
   setText("replicaDelta", `${replica.confidence_delta ? `${Math.round(Number(replica.confidence_delta) * 100)} pts` : "0 pts"}`);
+  setText(
+    "replicaBaseline",
+    replica.replay_status_code !== null && replica.replay_status_code !== undefined
+      ? `${replica.replay_status_code}${replica.replay_duration_ms ? ` · ${replica.replay_duration_ms}ms` : ""}`
+      : "Not replayed"
+  );
+  setText(
+    "replicaBestMitigation",
+    replica.best_mitigation_action
+      ? `${replica.best_mitigation_action}${replica.best_mitigation_duration_ms ? ` · ${replica.best_mitigation_duration_ms}ms` : ""}`
+      : "No validated mitigation"
+  );
+  setText("replicaOutcome", titleCase(String(replica.best_mitigation_outcome_class || replica.baseline_outcome_class || "not_run").replace(/_/g, " ")));
+  setText("replicaComparison", replica.runtime_comparison_summary || "Runtime comparison details are not available for this incident yet.");
   if (replica.scaffold_ready && (replica.services_seen || []).length) {
     setText("replicaPack", `${replica.environment_pack_id || "-"} · ${replica.services_seen.join(", ")}`);
   }
@@ -515,12 +529,14 @@ function renderEnterprise(data) {
       ? replica.tested_mitigations
       : [{ action: "No reproduction validation yet", result: "The case is still relying on triage and memory only." }],
     (item) =>
-      `<li><strong>${item.action}</strong><br>${item.result}${item.confidence_delta ? `<br><span class="section-note">Confidence delta: ${Math.round(Number(item.confidence_delta) * 100)} pts</span>` : ""}</li>`
+      `<li><strong>${item.action}${item.won ? " · selected" : ""}</strong><br>${item.result}${item.outcome_class ? `<br><span class="section-note">Runtime outcome: ${titleCase(String(item.outcome_class).replace(/_/g, " "))}</span>` : ""}${item.confidence_delta ? `<br><span class="section-note">Confidence delta: ${Math.round(Number(item.confidence_delta) * 100)} pts</span>` : ""}</li>`
   );
 
   setText("traceSummary", trace.reasoning || "Debugging hints are not available yet.");
   setText("traceStatus", titleCase(trace.trace_status || "not_run"));
   setText("traceConfidence", trace.confidence ? percent(trace.confidence) : "0%");
+  setText("traceReplayEvidence", trace.replay_evidence_summary || "Replay evidence is not available for this incident yet.");
+  setText("traceInspectionPoint", trace.inspection_point || "TRACE has not narrowed an inspect-here-first path yet.");
   renderList(
     "traceModules",
     (trace.suspected_modules || []).length

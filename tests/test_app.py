@@ -162,6 +162,7 @@ def test_run_incident_returns_realistic_incident_context() -> None:
     assert len(payload["observability"]["metrics"]) == 4
     assert payload["observability"]["evidence_sources"]
     assert payload["runbook"]["candidate_fixes"][0]["success_rate"] >= 0.9
+    assert "runtime_score" in payload["runbook"]["candidate_fixes"][0]
     assert payload["guardian"]["safety_checks"]
     assert len(payload["workflow"]) == 9
     assert payload["orchestration"]["state"] == "completed"
@@ -171,4 +172,7 @@ def test_run_incident_returns_realistic_incident_context() -> None:
     assert payload["triage_summary"]["issue_family"]
     assert payload["memory_hits"]["similar_incidents"][0]["match_reason"]
     assert payload["replica_summary"]["environment_pack_id"]
+    assert payload["replica_summary"]["best_mitigation_action"]
+    assert "runtime_comparison_summary" in payload["replica_summary"]
     assert payload["trace_summary"]["trace_status"]
+    assert payload["trace_summary"]["inspection_point"]

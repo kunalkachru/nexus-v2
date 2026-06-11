@@ -778,8 +778,11 @@ class EnterpriseNexusRuntime:
             recent_deployments=context.signals.get("deployment", []),
             recent_logs=context.signals.get("logs", []),
         )
+        memory_hits = enrich_memory_with_runtime(memory_hits, replica_summary=replica_summary)
         top_runbook = memory_hits["runbooks"][0] if memory_hits["runbooks"] else {}
         runner_up = memory_hits["runbooks"][1] if len(memory_hits["runbooks"]) > 1 else {}
+        validated_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "").replace("_", " ")
+        validated_summary = str(replica_summary.get("best_mitigation_summary") or "")
         reasoning = (
             f"{forge_output.reasoning} Referenced {len(memory_hits['runbooks'])} runbook memories and "
             f"{len(memory_hits['unresolved_items'])} unresolved service items. "
@@ -788,8 +791,9 @@ class EnterpriseNexusRuntime:
             f"{' Runner-up: ' + str(runner_up.get('runbook_summary')) + '.' if runner_up else ''} "
             f"REPLICA: {replica_summary.get('reasoning', '')} "
             f"{str(replica_summary.get('runtime_comparison_summary') or '')} "
+            f"{validated_summary + ' ' if validated_summary else ''}"
             f"TRACE: {trace_summary.get('reasoning', '')} "
-            "FORGE kept the plan biased toward reversible, lower-blast-radius actions first."
+            f"FORGE kept the plan biased toward reversible, lower-blast-radius actions first and treated the runtime evidence as {validated_outcome or 'inferred only'}."
         )
         forge_output = forge_output.model_copy(update={"reasoning": reasoning})
         self._set_task_status(state["task_board"], "replica-validate", str(replica_summary.get("reproduction_status", "not_run")), str(replica_summary.get("reasoning", "")))
@@ -798,6 +802,7 @@ class EnterpriseNexusRuntime:
         return {
             "triage_summary": triage_summary,
             "forge_output": forge_output,
+            "memory_hits": memory_hits,
             "agent_metrics": {
                 **state["agent_metrics"],
                 "replica": self._contract(
@@ -824,7 +829,14 @@ class EnterpriseNexusRuntime:
                 ),
                 "forge": self._contract(
                     "FORGE",
-                    max((item.get("success_rate", 0.0) for item in memory_hits["runbooks"]), default=0.84),
+                    max(
+                        max((item.get("success_rate", 0.0) for item in memory_hits["runbooks"]), default=0.84),
+                        _runtime_outcome_score(
+                            str(replica_summary.get("best_mitigation_outcome_class") or ""),
+                            baseline_duration=replica_summary.get("replay_duration_ms") if isinstance(replica_summary.get("replay_duration_ms"), int) else None,
+                            mitigation_duration=replica_summary.get("best_mitigation_duration_ms") if isinstance(replica_summary.get("best_mitigation_duration_ms"), int) else None,
+                        ),
+                    ),
                     reasoning,
                     ["diagnosis_packet", "runbook_history"],
                     ["memory", "diagnosis"],
@@ -863,13 +875,26 @@ class EnterpriseNexusRuntime:
             sentinel_output=state["sentinel_output"],
             prism_output=state["prism_output"],
         )
+        best_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "")
         risk_class = "high" if priority_rank(state["sentinel_output"].severity) <= 2 else "medium"
+        if best_outcome == "resolved":
+            risk_class = "medium" if risk_class == "high" else "low"
+        elif best_outcome == "improved":
+            risk_class = "high" if priority_rank(state["sentinel_output"].severity) <= 1 else "medium"
         approval_level = "incident_manager" if risk_class == "high" else "operator"
         rollback_readiness = "ready" if guardian_output.decision == "approve" else "needs_review"
         simulation_readiness = "ready" if guardian_output.decision != "reject" else "manual_review"
         blocked_controls = guardian_output.blocked_patterns or (
             ["destructive_runbook_guard"] if guardian_output.decision == "reject" else []
         )
+        if best_outcome == "resolved":
+            validated_clause = "Validated signals: REPLICA reproduced the failure and the leading mitigation resolved it in the bounded runtime."
+        elif best_outcome == "improved":
+            validated_clause = "Validated signals: REPLICA reproduced the failure and the leading mitigation improved the runtime behavior without fully clearing the failure."
+        elif replica_summary.get("runtime_executed"):
+            validated_clause = "Validated signals: REPLICA reproduced the failure, but the tested mitigation did not materially improve the bounded runtime."
+        else:
+            validated_clause = f"Validated signals: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} and TRACE is {trace_summary.get('trace_status', 'not_run')}."
         guardian_output = guardian_output.model_copy(
             update={
                 "risk_class": risk_class,
@@ -879,7 +904,7 @@ class EnterpriseNexusRuntime:
                 "simulation_readiness": simulation_readiness,
                 "reasoning": (
                     f"{guardian_output.reasoning} "
-                    f"Validated signals: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} and TRACE is {trace_summary.get('trace_status', 'not_run')}. "
+                    f"{validated_clause} "
                     f"{str(replica_summary.get('runtime_comparison_summary') or '')} "
                     f"Inferred signals: memory-ranked analogs and diagnosis synthesis still inform the remaining confidence. "
                     f"Risk class {risk_class.upper()} requires {approval_level.replace('_', ' ')} approval. "
@@ -928,6 +953,27 @@ class EnterpriseNexusRuntime:
         duration_minutes = _duration_for_incident(context.incident, executed=executed)
         from server.grader import compute_episode_reward
 
+        final_replica_summary = build_replica_summary(
+            incident_id=context.incident.id,
+            triage_summary=state["triage_summary"],
+            root_cause=state["prism_output"].root_cause,
+            recent_logs=context.signals.get("logs", []),
+            recent_deployments=context.signals.get("deployment", []),
+            candidate_fixes=[{"action": forge_output.runbook.summary, "success_rate": 0.84}],
+        )
+        final_trace_summary = build_trace_summary(
+            incident_id=context.incident.id,
+            triage_summary=state["triage_summary"],
+            replica_summary=final_replica_summary,
+            root_cause=state["prism_output"].root_cause,
+            recent_deployments=context.signals.get("deployment", []),
+            recent_logs=context.signals.get("logs", []),
+        )
+        final_memory_hits = enrich_memory_with_runtime(
+            state["memory_hits"],
+            replica_summary=final_replica_summary,
+        )
+
         episode = Episode(
             incident=context.incident,
             sentinel_output=state["sentinel_output"],
@@ -950,29 +996,8 @@ class EnterpriseNexusRuntime:
                     source_channel="webhook",
                     detected_signals=context.raw_symptoms,
                 ),
-                "replica_summary": build_replica_summary(
-                    incident_id=context.incident.id,
-                    triage_summary=state["triage_summary"],
-                    root_cause=state["prism_output"].root_cause,
-                    recent_logs=context.signals.get("logs", []),
-                    recent_deployments=context.signals.get("deployment", []),
-                    candidate_fixes=[{"action": forge_output.runbook.summary, "success_rate": 0.84}],
-                ),
-                "trace_summary": build_trace_summary(
-                    incident_id=context.incident.id,
-                    triage_summary=state["triage_summary"],
-                    replica_summary=build_replica_summary(
-                        incident_id=context.incident.id,
-                        triage_summary=state["triage_summary"],
-                        root_cause=state["prism_output"].root_cause,
-                        recent_logs=context.signals.get("logs", []),
-                        recent_deployments=context.signals.get("deployment", []),
-                        candidate_fixes=[{"action": forge_output.runbook.summary, "success_rate": 0.84}],
-                    ),
-                    root_cause=state["prism_output"].root_cause,
-                    recent_deployments=context.signals.get("deployment", []),
-                    recent_logs=context.signals.get("logs", []),
-                ),
+                "replica_summary": final_replica_summary,
+                "trace_summary": final_trace_summary,
                 "orchestration": {
                     **state["orchestration"],
                     "state": "completed",
@@ -990,7 +1015,7 @@ class EnterpriseNexusRuntime:
                     ),
                 },
                 "task_board": {"tasks": state["task_board"]},
-                "memory_hits": state["memory_hits"],
+                "memory_hits": final_memory_hits,
                 "agent_metrics": state["agent_metrics"],
                 "fallback_summary": state["fallback_summary"],
             },
@@ -1264,6 +1289,73 @@ def build_mitigation_checks(
     ]
 
 
+def _tokenize_text(value: str) -> set[str]:
+    return {
+        part
+        for part in value.lower().replace("/", " ").replace("-", " ").replace("_", " ").split()
+        if part and len(part) > 2
+    }
+
+
+def _action_overlap(left: str, right: str) -> float:
+    left_tokens = _tokenize_text(left)
+    right_tokens = _tokenize_text(right)
+    if not left_tokens or not right_tokens:
+        return 0.0
+    return len(left_tokens & right_tokens) / max(1, len(left_tokens | right_tokens))
+
+
+def _runtime_outcome_class(
+    *,
+    baseline_status: int | None,
+    mitigation_status: int | None,
+    baseline_duration: int | None,
+    mitigation_duration: int | None,
+) -> str:
+    if mitigation_status is None:
+        return "inferred_only"
+    if baseline_status is None:
+        return "validated"
+    if baseline_status >= 500 and mitigation_status < 500:
+        return "resolved"
+    if mitigation_status < baseline_status:
+        return "improved"
+    if baseline_status == mitigation_status and baseline_duration and mitigation_duration:
+        if mitigation_duration <= int(baseline_duration * 0.6):
+            return "improved"
+    return "unresolved"
+
+
+def _runtime_outcome_score(
+    outcome_class: str,
+    *,
+    baseline_duration: int | None,
+    mitigation_duration: int | None,
+) -> float:
+    base = {
+        "resolved": 0.97,
+        "improved": 0.89,
+        "validated": 0.8,
+        "unresolved": 0.62,
+        "inferred_only": 0.0,
+    }.get(outcome_class, 0.0)
+    if (
+        outcome_class in {"resolved", "improved"}
+        and baseline_duration
+        and mitigation_duration
+        and baseline_duration > 0
+    ):
+        gain = max(0.0, min(0.08, (baseline_duration - mitigation_duration) / baseline_duration * 0.12))
+        return round(min(0.99, base + gain), 2)
+    return round(base, 2)
+
+
+def _runtime_delta_ms(baseline_duration: int | None, mitigation_duration: int | None) -> int | None:
+    if baseline_duration is None or mitigation_duration is None:
+        return None
+    return baseline_duration - mitigation_duration
+
+
 def _deployment_signal_summary(recent_deployments: list[object] | None) -> tuple[str, list[str]]:
     if not recent_deployments:
         return "", []
@@ -1408,6 +1500,21 @@ def build_replica_summary(
     if not reproduced_symptoms:
         reproduced_symptoms = default_reproduced_symptoms(issue_family, recent_logs or [])
 
+    runtime_comparison_summary = _runtime_comparison_summary(runtime_result)
+    runtime_mitigations = _runtime_override_mitigations(
+        runtime_result=runtime_result,
+        default_checks=tested_mitigations,
+    )
+    best_mitigation = next((item for item in runtime_mitigations if item.get("won")), runtime_mitigations[0] if runtime_mitigations else {})
+    best_outcome_class = str(best_mitigation.get("outcome_class") or "")
+    best_status_code = best_mitigation.get("status_code")
+    best_duration_ms = best_mitigation.get("duration_ms")
+    baseline_outcome_class = (
+        "reproduced"
+        if reproduction_status == "reproduced" and not runtime_result
+        else ("validated" if runtime_result and runtime_result.replay_status_code is not None else "not_run")
+    )
+
     return {
         "incident_id": incident_id,
         "environment_pack_id": environment_pack_id,
@@ -1426,12 +1533,20 @@ def build_replica_summary(
         "mitigation_outputs": list(runtime_result.mitigation_outputs) if runtime_result else [],
         "mitigation_status_codes": list(runtime_result.mitigation_status_codes) if runtime_result else [],
         "mitigation_duration_ms": list(runtime_result.mitigation_duration_ms) if runtime_result else [],
-        "runtime_comparison_summary": _runtime_comparison_summary(runtime_result),
-        "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
-        "tested_mitigations": _runtime_override_mitigations(
-            runtime_result=runtime_result,
-            default_checks=tested_mitigations,
+        "runtime_comparison_summary": runtime_comparison_summary,
+        "baseline_outcome_class": baseline_outcome_class,
+        "best_mitigation_action": str(best_mitigation.get("action") or ""),
+        "best_mitigation_outcome_class": best_outcome_class,
+        "best_mitigation_status_code": int(best_status_code) if isinstance(best_status_code, (int, float)) else None,
+        "best_mitigation_duration_ms": int(best_duration_ms) if isinstance(best_duration_ms, (int, float)) else None,
+        "best_mitigation_summary": (
+            f"{best_mitigation.get('action', 'No mitigation validated')} "
+            f"finished in state {best_outcome_class.replace('_', ' ') if best_outcome_class else 'not evaluated'}."
+            if best_mitigation
+            else "No runtime-backed mitigation comparison is available yet."
         ),
+        "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
+        "tested_mitigations": runtime_mitigations,
         "reasoning": (
             f"{reasoning} "
             f"{'The bounded runtime scaffold was executed for this run.' if runtime_result else ('The bounded runtime scaffold is validated and ready for replay execution.' if runner_result and runner_result.compose_config_valid and not runner_result.missing_assets else 'The bounded runtime scaffold is not fully ready yet.')}"
@@ -1449,6 +1564,8 @@ def _runtime_override_mitigations(
     outputs = list(getattr(runtime_result, "mitigation_outputs", ()) or ())
     statuses = list(getattr(runtime_result, "mitigation_status_codes", ()) or ())
     durations = list(getattr(runtime_result, "mitigation_duration_ms", ()) or ())
+    baseline_status = getattr(runtime_result, "replay_status_code", None)
+    baseline_duration = getattr(runtime_result, "replay_duration_ms", None)
     if not outputs:
         return default_checks
     rewritten: list[dict[str, object]] = []
@@ -1459,6 +1576,12 @@ def _runtime_override_mitigations(
         replay_output = outputs[index + 1] if index + 1 < len(outputs) else ""
         status = statuses[index // 2] if index // 2 < len(statuses) else None
         duration = durations[index // 2] if index // 2 < len(durations) else None
+        outcome_class = _runtime_outcome_class(
+            baseline_status=baseline_status,
+            mitigation_status=status,
+            baseline_duration=baseline_duration,
+            mitigation_duration=duration,
+        )
         rewritten.append(
             {
                 "action": default.get("action", f"Mitigation {index // 2 + 1}"),
@@ -1469,9 +1592,29 @@ def _runtime_override_mitigations(
                     f"{f' | {str(replay_output).splitlines()[-1]}' if replay_output else ''}"
                 ),
                 "confidence_delta": default.get("confidence_delta", 0.0),
+                "status_code": status,
+                "duration_ms": duration,
+                "delta_ms": _runtime_delta_ms(baseline_duration, duration),
+                "outcome_class": outcome_class,
+                "won": False,
             }
         )
-    return rewritten or default_checks
+    if not rewritten:
+        return default_checks
+    winner = max(
+        rewritten,
+        key=lambda item: (
+            _runtime_outcome_score(
+                str(item.get("outcome_class") or ""),
+                baseline_duration=baseline_duration,
+                mitigation_duration=item.get("duration_ms") if isinstance(item.get("duration_ms"), int) else None,
+            ),
+            float(item.get("confidence_delta", 0.0) or 0.0),
+        ),
+    )
+    for item in rewritten:
+        item["won"] = item is winner
+    return rewritten
 
 
 def _runtime_comparison_summary(runtime_result: object | None) -> str:
@@ -1486,13 +1629,106 @@ def _runtime_comparison_summary(runtime_result: object | None) -> str:
     if statuses:
         first_status = statuses[0]
         first_duration = durations[0] if durations else None
+        outcome = _runtime_outcome_class(
+            baseline_status=baseline_status,
+            mitigation_status=first_status,
+            baseline_duration=baseline_duration,
+            mitigation_duration=first_duration,
+        ).replace("_", " ")
         return (
             f"Baseline replay returned {baseline_status}"
             f"{f' at {baseline_duration}ms' if baseline_duration is not None else ''}; "
             f"first mitigation replay returned {first_status}"
-            f"{f' at {first_duration}ms' if first_duration is not None else ''}."
+            f"{f' at {first_duration}ms' if first_duration is not None else ''}"
+            f" and the runtime outcome was {outcome}."
         )
     return f"Baseline replay returned {baseline_status}{f' at {baseline_duration}ms' if baseline_duration is not None else ''}."
+
+
+def rank_candidate_fixes_with_runtime(
+    candidate_fixes: list[dict[str, object]] | None,
+    *,
+    replica_summary: dict[str, object],
+) -> list[dict[str, object]]:
+    ranked: list[dict[str, object]] = []
+    best_action = str(replica_summary.get("best_mitigation_action") or "")
+    best_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "")
+    best_duration = replica_summary.get("best_mitigation_duration_ms")
+    baseline_duration = replica_summary.get("replay_duration_ms")
+    for item in candidate_fixes or []:
+        if not isinstance(item, dict):
+            continue
+        action = str(item.get("action", "")).strip()
+        base_success = float(item.get("success_rate", 0.0) or 0.0)
+        overlap = _action_overlap(action, best_action) if best_action else 0.0
+        runtime_score = _runtime_outcome_score(
+            best_outcome,
+            baseline_duration=baseline_duration if isinstance(baseline_duration, int) else None,
+            mitigation_duration=best_duration if isinstance(best_duration, int) else None,
+        ) * overlap
+        ranked_item = dict(item)
+        ranked_item["runtime_alignment"] = round(overlap, 2)
+        ranked_item["runtime_score"] = round(runtime_score, 2)
+        ranked_item["runtime_outcome_class"] = best_outcome if overlap >= 0.25 else ""
+        ranked_item["success_rate"] = round(max(base_success, runtime_score), 2)
+        ranked.append(ranked_item)
+    ranked.sort(
+        key=lambda item: (
+            float(item.get("runtime_score", 0.0) or 0.0),
+            float(item.get("success_rate", 0.0) or 0.0),
+        ),
+        reverse=True,
+    )
+    return ranked
+
+
+def enrich_memory_with_runtime(
+    memory_hits: dict[str, list[dict[str, object]]] | None,
+    *,
+    replica_summary: dict[str, object],
+) -> dict[str, list[dict[str, object]]]:
+    payload = {
+        "similar_incidents": [dict(item) for item in (memory_hits or {}).get("similar_incidents", [])],
+        "runbooks": [dict(item) for item in (memory_hits or {}).get("runbooks", [])],
+        "unresolved_items": [dict(item) for item in (memory_hits or {}).get("unresolved_items", [])],
+        "recent_guardian_outcomes": [dict(item) for item in (memory_hits or {}).get("recent_guardian_outcomes", [])],
+    }
+    best_action = str(replica_summary.get("best_mitigation_action") or "")
+    best_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "").replace("_", " ")
+    best_summary = str(replica_summary.get("best_mitigation_summary") or "")
+    if not best_action:
+        return payload
+
+    for item in payload["runbooks"]:
+        overlap = _action_overlap(str(item.get("runbook_summary", "")), best_action)
+        if overlap >= 0.2:
+            item["success_rate"] = round(min(0.99, float(item.get("success_rate", 0.0) or 0.0) + 0.04), 2)
+            note = f"Runtime alignment: {best_action} tested as {best_outcome} in REPLICA."
+            item["why_now_fit"] = f"{str(item.get('why_now_fit', '')).strip()} {note}".strip()
+    payload["runbooks"].sort(key=lambda item: float(item.get("success_rate", 0.0) or 0.0), reverse=True)
+
+    for item in payload["similar_incidents"]:
+        overlap = _action_overlap(str(item.get("prior_action", "")), best_action)
+        if overlap >= 0.2:
+            item["similarity"] = round(min(0.99, float(item.get("similarity", 0.0) or 0.0) + 0.04), 2)
+            item["match_reason"] = f"{str(item.get('match_reason', '')).strip()} Runtime overlap: the prior action aligns with {best_action}."
+    payload["similar_incidents"].sort(
+        key=lambda item: (
+            bool(item.get("service_match")),
+            bool(item.get("severity_match")),
+            float(item.get("similarity", 0.0) or 0.0),
+            float(item.get("success_rate", 0.0) or 0.0),
+        ),
+        reverse=True,
+    )
+
+    for item in payload["unresolved_items"]:
+        item["follow_up_reason"] = (
+            f"{str(item.get('follow_up_reason', '')).strip()} "
+            f"Current runtime outcome: {best_summary or f'{best_action} validated as {best_outcome}.'}"
+        ).strip()
+
+    return payload
 
 
 def build_trace_summary(
@@ -1528,6 +1764,9 @@ def build_trace_summary(
     confidence = 0.0
     reasoning = "TRACE has not yet narrowed a code path for this incident."
     trace_status = "not_run"
+    suspected_service = service
+    inspection_point = "Wait for REPLICA to validate the likely failure path before opening a code investigation."
+    replay_evidence_summary = runtime_comparison or "No runtime replay evidence is attached to this incident yet."
 
     if replica_summary.get("reproduction_status") == "reproduced":
         trace_status = "narrowed"
@@ -1537,6 +1776,8 @@ def build_trace_summary(
             expected_flow = "Auth retries should cap quickly and release gateway workers when upstream latency rises."
             observed_divergence = "Retry middleware continues scheduling upstream attempts after the timeout budget is exhausted."
             state_anomalies = ["retry_count exceeds policy cap", "worker pool stays occupied during downstream timeout wait"]
+            inspection_point = "Inspect the auth retry middleware budget check first, then verify the gateway timeout guard stops scheduling retries once the auth timeout budget is spent."
+            replay_evidence_summary = runtime_comparison or "Replay reproduced the timeout cascade when auth retries stayed active under elevated downstream latency."
             if "middleware" in deployment_text:
                 state_anomalies.append("recent retry middleware refactor aligns with the divergence point")
             if any("circuit breaker" in action.lower() for action in mitigation_actions):
@@ -1555,6 +1796,8 @@ def build_trace_summary(
             expected_flow = "Checkout retries should release DB sessions before re-entering the write path."
             observed_divergence = "Retry path retains a session handle long enough to exhaust the shared pool."
             state_anomalies = ["session count grows between retries", "pool checkout waits continue after request cancellation"]
+            inspection_point = "Inspect the checkout retry patch first, especially the session cleanup hook that should release the DB handle before the next retry is scheduled."
+            replay_evidence_summary = runtime_comparison or "Replay saturated the bounded pool until the retry patch was rolled back and orphaned sessions were cleared."
             if "retry" in deployment_text:
                 state_anomalies.append("recent retry patch aligns with the session lifecycle divergence")
             if any("roll back" in action.lower() for action in mitigation_actions):
@@ -1573,6 +1816,8 @@ def build_trace_summary(
             expected_flow = "Edge listeners should always serve a valid public certificate chain."
             observed_divergence = "Expired certificate chain remained attached to the active listener after rotation was missed."
             state_anomalies = ["active cert serial differs from latest staged cert", "rotation timestamp exceeded renewal window"]
+            inspection_point = "Inspect the edge certificate loader first, then confirm the rotation job and listener reload path picked up the staged chain."
+            replay_evidence_summary = "Replay evidence shows the edge listener continued to serve the stale certificate chain."
             confidence = 0.63
             reasoning = "TRACE narrowed the issue to the certificate loader and rotation path that failed to refresh the active listener."
         elif "memory leak" in issue_family:
@@ -1581,6 +1826,8 @@ def build_trace_summary(
             expected_flow = "Completed image transform batches should release decoded frame buffers before the next queue pull."
             observed_divergence = "Decoded frame buffers remain strongly referenced after batch completion, so heap pressure compounds across replay cycles."
             state_anomalies = ["retained frame_buffer objects dominate the heap snapshot", "gc pauses grow as replayed batches accumulate"]
+            inspection_point = "Inspect the release hook and frame-cache ownership first, then confirm transform batches drop their strong references before the next queue pull."
+            replay_evidence_summary = "Replay evidence shows retained frame buffers and growing GC pauses across repeated transform batches."
             if "release hook missing" in logs_text:
                 state_anomalies.append("runtime logs already point at a missing release hook after transform completion")
             confidence = 0.67
@@ -1589,12 +1836,15 @@ def build_trace_summary(
     return {
         "incident_id": incident_id,
         "service": service,
+        "suspected_service": suspected_service,
         "trace_status": trace_status,
         "suspected_modules": suspected_modules,
         "suspected_functions": suspected_functions,
         "expected_flow": expected_flow,
         "observed_divergence": observed_divergence,
         "state_anomalies": state_anomalies,
+        "inspection_point": inspection_point,
+        "replay_evidence_summary": replay_evidence_summary,
         "confidence": confidence,
         "reasoning": reasoning,
     }

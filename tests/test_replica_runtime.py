@@ -1,5 +1,6 @@
 import subprocess
 
+from server.services.enterprise_runtime import enrich_memory_with_runtime, rank_candidate_fixes_with_runtime
 from server.services.replica_runtime import ReplicaRunner, build_execution_plan, registry, select_environment_pack, trace_targets_for_plan
 
 
@@ -118,3 +119,58 @@ def test_replica_runner_inspect_degrades_when_docker_binary_is_unavailable(monke
     result = ReplicaRunner().inspect_plan(plan)
     assert result.compose_config_valid is False
     assert result.services_seen == ()
+
+
+def test_runtime_candidate_ranking_prefers_validated_mitigation() -> None:
+    ranked = rank_candidate_fixes_with_runtime(
+        [
+            {"action": "Enable auth-svc circuit breaker and cap retries to 1", "success_rate": 0.84},
+            {"action": "Drain hot gateway pods and scale replicas +2", "success_rate": 0.88},
+        ],
+        replica_summary={
+            "best_mitigation_action": "Enable auth-svc circuit breaker and cap retries to 1",
+            "best_mitigation_outcome_class": "resolved",
+            "best_mitigation_duration_ms": 420,
+            "replay_duration_ms": 1640,
+        },
+    )
+
+    assert ranked[0]["action"] == "Enable auth-svc circuit breaker and cap retries to 1"
+    assert ranked[0]["runtime_score"] >= ranked[1]["runtime_score"]
+
+
+def test_runtime_memory_enrichment_links_validated_mitigation() -> None:
+    memory_hits = enrich_memory_with_runtime(
+        {
+            "similar_incidents": [
+                {
+                    "incident_id": "INC-X",
+                    "prior_action": "Enable auth-svc circuit breaker and cap retries to 1",
+                    "similarity": 0.41,
+                    "success_rate": 0.82,
+                    "service_match": True,
+                    "severity_match": True,
+                    "match_reason": "Shared retry pattern.",
+                }
+            ],
+            "runbooks": [
+                {
+                    "incident_id": "INC-X",
+                    "runbook_summary": "Enable auth-svc circuit breaker and cap retries to 1",
+                    "success_rate": 0.84,
+                    "why_now_fit": "Historical mitigation favored reversible recovery.",
+                }
+            ],
+            "unresolved_items": [{"incident_id": "INC-Y", "follow_up_reason": "Pending cleanup."}],
+            "recent_guardian_outcomes": [],
+        },
+        replica_summary={
+            "best_mitigation_action": "Enable auth-svc circuit breaker and cap retries to 1",
+            "best_mitigation_outcome_class": "resolved",
+            "best_mitigation_summary": "Enable auth-svc circuit breaker and cap retries to 1 finished in state resolved.",
+        },
+    )
+
+    assert "Runtime overlap" in memory_hits["similar_incidents"][0]["match_reason"]
+    assert "Runtime alignment" in memory_hits["runbooks"][0]["why_now_fit"]
+    assert "Current runtime outcome" in memory_hits["unresolved_items"][0]["follow_up_reason"]
