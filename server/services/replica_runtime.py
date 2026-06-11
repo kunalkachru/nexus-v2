@@ -239,12 +239,15 @@ class ReplicaRunner:
         )
 
     def _compose_config(self, plan: ReplicaExecutionPlan) -> tuple[bool, tuple[str, ...]]:
-        result = subprocess.run(
-            ["docker", "compose", "-f", str(plan.pack.compose_file), "config", "--format", "json"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        try:
+            result = subprocess.run(
+                ["docker", "compose", "-f", str(plan.pack.compose_file), "config", "--format", "json"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except FileNotFoundError:
+            return False, ()
         if result.returncode != 0:
             return False, ()
         try:

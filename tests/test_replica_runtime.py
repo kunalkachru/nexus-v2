@@ -1,3 +1,5 @@
+import subprocess
+
 from server.services.replica_runtime import ReplicaRunner, build_execution_plan, registry, select_environment_pack, trace_targets_for_plan
 
 
@@ -96,3 +98,23 @@ def test_replica_runner_executes_db_pool_pack() -> None:
     assert result.replay_status_code == 503
     assert result.mode == "runtime_scaffold"
     assert result.mitigation_status_codes
+
+
+def test_replica_runner_inspect_degrades_when_docker_binary_is_unavailable(monkeypatch) -> None:
+    plan = build_execution_plan(
+        issue_family="Timeout cascade / retry amplification",
+        service="auth-svc",
+        recent_logs=["retry budget exceeded", "worker saturation"],
+        recent_deployments=[{"service": "auth-svc", "change": "Retry middleware refactor"}],
+    )
+
+    assert plan is not None
+
+    def raise_missing(*args, **kwargs):
+        raise FileNotFoundError("docker")
+
+    monkeypatch.setattr(subprocess, "run", raise_missing)
+
+    result = ReplicaRunner().inspect_plan(plan)
+    assert result.compose_config_valid is False
+    assert result.services_seen == ()
