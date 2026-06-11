@@ -58,6 +58,21 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
     )
     ranked_candidate_fixes = rank_candidate_fixes_with_runtime(details["forge"]["candidate_fixes"], replica_summary=replica_summary)
 
+    best_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "")
+    if best_outcome == "resolved":
+        validated_clause = "Validated signals: REPLICA reproduced the failure and the leading mitigation resolved it in the bounded runtime."
+    elif best_outcome == "improved":
+        validated_clause = "Validated signals: REPLICA reproduced the failure and the leading mitigation improved the runtime behavior without fully clearing the failure."
+    elif replica_summary.get("runtime_executed"):
+        validated_clause = "Validated signals: REPLICA reproduced the failure, but the tested mitigation did not materially improve the bounded runtime."
+    else:
+        validated_clause = f"Validated signals: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} and TRACE is {trace_summary.get('trace_status', 'not_run')}."
+
+    enriched_guardian_reasoning = (
+        f"{validated_clause} "
+        f"{details['guardian']['reasoning']}"
+    ).strip()
+
     return {
         "incident": {
             "id": incident.id,
@@ -115,7 +130,7 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
             "confidence": details["guardian"]["confidence"],
             "safety_checks": details["guardian"]["safety_checks"],
             "policy_violations": details["guardian"]["policy_violations"],
-            "reasoning": details["guardian"]["reasoning"],
+            "reasoning": enriched_guardian_reasoning,
         },
         "triage_summary": triage_summary,
         "replica_summary": replica_summary,

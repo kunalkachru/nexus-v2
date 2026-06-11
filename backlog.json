@@ -26,7 +26,7 @@
     "id": 10,
     "title": "Runtime-aware GUARDIAN posture",
     "priority": "highest",
-    "status": "pending",
+    "status": "done",
     "description": "The GUARDIAN posture logic is fully implemented in the live graph path (_guardian_node ~line 856). It already distinguishes resolved/improved/inferred evidence states and writes different validated_clause strings. The problem: build_incident_response in surface_payloads.py returns guardian reasoning directly from details['guardian']['reasoning'] in incident_payloads.py — which is the static fixture string ('GUARDIAN approved because...'). It never runs the live posture enrichment. Fix: in build_incident_response, after building replica_summary, enrich the guardian reasoning the same way _guardian_node does — prepend the validated_clause based on best_mitigation_outcome_class.",
     "done_when": [
       "build_incident_response('INC001')['guardian']['reasoning'] contains 'reproduced', 'validated', 'inferred', 'runtime', 'resolved', or 'improved'",
