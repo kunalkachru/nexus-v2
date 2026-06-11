@@ -237,6 +237,17 @@ class ReplicaMitigationCheck(BaseModel):
     won: bool = False
 
 
+class RuntimeHostCapability(BaseModel):
+    state: str = "no_pack"
+    label: str = ""
+    host_label: str = ""
+    can_execute_replay: bool = False
+    bounded_pack_available: bool = False
+    docker_available: bool = False
+    compose_config_valid: bool = False
+    message: str = ""
+
+
 class ReplicaInvestigationResult(BaseModel):
     incident_id: str
     environment_pack_id: str
@@ -262,6 +273,7 @@ class ReplicaInvestigationResult(BaseModel):
     best_mitigation_duration_ms: int | None = None
     best_mitigation_summary: str = ""
     runtime_enablement_hint: str = ""
+    runtime_capability: RuntimeHostCapability = Field(default_factory=RuntimeHostCapability)
     tested_mitigations: list[ReplicaMitigationCheck] = Field(default_factory=list)
     reasoning: str = ""
 

@@ -519,8 +519,12 @@ function renderEnterprise(data) {
       ? `${replica.best_mitigation_action}${replica.best_mitigation_duration_ms ? ` · ${replica.best_mitigation_duration_ms}ms` : ""}`
       : "No validated mitigation"
   );
+  const runtimeCapability = replica.runtime_capability || {};
   setText("replicaOutcome", titleCase(String(replica.best_mitigation_outcome_class || replica.baseline_outcome_class || "not_run").replace(/_/g, " ")));
+  setText("replicaCapabilityState", runtimeCapability.label || "Unknown");
+  setText("replicaCapabilityHost", runtimeCapability.host_label || "Unknown");
   setText("replicaRuntimeHint", replica.runtime_enablement_hint || "Runtime mode details are not available for this incident yet.");
+  setText("replicaCapabilityMessage", runtimeCapability.message || "Replay capability details are not available for this incident yet.");
   setText("replicaComparison", replica.runtime_comparison_summary || "Runtime comparison details are not available for this incident yet.");
 
   // Populate runtime comparison block

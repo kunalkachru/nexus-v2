@@ -1,0 +1,149 @@
+[
+  {
+    "id": 15,
+    "title": "Runtime host capability contract for packaged incidents",
+    "priority": "highest",
+    "status": "done",
+    "description": "The packaged app path now truthfully says when Docker-backed replay cannot run in the current app environment, but the capability is still only implied through prose. Add an explicit runtime host capability contract to the incident context so the product can reason about whether replay is unavailable because no bounded pack exists, because Docker is unavailable in the current host, or because replay is available and can be executed. This contract should be returned for seeded incidents and live `nxs_...` incidents, and the incident page should render a concise operator-facing capability state instead of relying only on free-form reasoning strings.",
+    "done_when": [
+      "incident context includes a structured runtime host capability section for INC001, INC002, and fresh nxs incidents",
+      "the contract distinguishes at least: no_pack, host_unavailable, and replay_available states",
+      "the incident page surfaces the capability state without contradicting replica_summary.reasoning"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/services/replica_runtime.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/surface_payloads.py",
+      "server/models.py",
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/test_replica_runtime.py"
+    ]
+  },
+  {
+    "id": 16,
+    "title": "App-triggered replay endpoint for Docker-capable hosts",
+    "priority": "highest",
+    "status": "pending",
+    "description": "Add an explicit packaged-app replay trigger for bounded incidents so NEXUS can request Docker-backed replay on a Docker-capable host instead of only describing how replay would work. Keep scope intentionally narrow: only the bounded Python/FastAPI flagship packs, only the current replay substrate, and only an operator-triggered execution path. The endpoint should fail closed when the host is not replay-capable, and the incident UI should reflect that state clearly.",
+    "done_when": [
+      "there is an authenticated app endpoint to trigger bounded replay for supported incidents",
+      "the endpoint returns a stable contract for success, host_unavailable, and unsupported incidents",
+      "the incident UI can request replay and show the returned runtime state without breaking the existing static experience"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "./scripts/docker_fresh.sh",
+      "BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/replica_runtime.py",
+      "frontend/incident.html",
+      "frontend/static/api.js",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 17,
+    "title": "Fresh nxs incident parity with flagship runtime story",
+    "priority": "high",
+    "status": "pending",
+    "description": "Fresh `nxs_...` incidents created from `/inputs` should read like a bounded support investigation product, not a fallback-only status seam. Strengthen the live and client fallback paths so fresh incidents inherit the same issue-family mapping, memory posture, runtime capability state, and trace handoff quality as the seeded flagship incidents, while remaining honest about what is inferred versus measured.",
+    "done_when": [
+      "a fresh nxs incident shows bounded runtime capability state, non-generic trace guidance, and memory-backed mitigation language",
+      "the fresh incident narrative does not contradict the seeded runtime story",
+      "browser verification for the raw log intake path remains green"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "./scripts/docker_fresh.sh",
+      "BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "frontend/static/api.js",
+      "frontend/static/incident.js",
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/surface_payloads.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/LOCAL_ENTERPRISE_ONE_SHOT_TEST.md"
+    ]
+  },
+  {
+    "id": 18,
+    "title": "Multi-mitigation REPLICA comparison and decision packet",
+    "priority": "high",
+    "status": "pending",
+    "description": "REPLICA currently compresses its result into one winning mitigation. Deepen this into a visible comparison packet that shows baseline, primary mitigation, and runner-up mitigation outcomes when available. Feed that comparison into FORGE, GUARDIAN, and the incident UI so the operator can see why one mitigation won and why another remained only partial or inferior.",
+    "done_when": [
+      "replica_summary returns a stable multi-mitigation comparison structure",
+      "FORGE reasoning cites why the chosen mitigation beat the runner-up",
+      "GUARDIAN reasoning distinguishes resolved, improved, and runner-up-only evidence",
+      "the incident UI shows the comparison without relying on long prose"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "./scripts/docker_fresh.sh",
+      "BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/replica_runtime.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/surface_payloads.py",
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "tests/test_replica_runtime.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 19,
+    "title": "TRACE developer packet v3 and runtime-host demo closure",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Turn TRACE into a stronger bounded developer handoff for the flagship outages by adding more explicit file-level, owner-level, and suspected divergence cues, then close the loop in demo and docs so the runtime-host model is demonstrated clearly. This slice should leave the repo with one coherent story: seeded incidents, fresh incidents, runtime capability states, replay trigger path, and developer handoff all align.",
+    "done_when": [
+      "TRACE output for INC001 and INC002 contains explicit inspect-here-first guidance with file-level cues",
+      "demo.py and the walkthrough docs explain the runtime-host model and replay trigger path accurately",
+      "manual verification docs reflect the current packaged-app reality"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "python demo.py",
+      "npm run browser:verify",
+      "./scripts/docker_fresh.sh",
+      "BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/surface_payloads.py",
+      "demo.py",
+      "docs/DEMO_WALKTHROUGH.md",
+      "docs/DEMO_CHEAT_SHEET.md",
+      "docs/LOCAL_ENTERPRISE_ONE_SHOT_TEST.md",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  }
+]

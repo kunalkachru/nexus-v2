@@ -380,6 +380,7 @@ def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth
     assert context_payload["replica_summary"]["reproduction_status"]
     assert context_payload["replica_summary"]["best_mitigation_outcome_class"] is not None
     assert context_payload["replica_summary"]["runtime_enablement_hint"]
+    assert context_payload["replica_summary"]["runtime_capability"]["state"]
     assert context_payload["trace_summary"]["trace_status"]
     assert context_payload["trace_summary"]["inspection_point"] is not None
     assert context_payload["trace_summary"]["developer_handoff_summary"] is not None
@@ -462,6 +463,13 @@ def test_live_incident_context_contract_returns_backend_evidence(client: TestCli
     assert payload["replica_summary"]["environment_pack_id"]
     assert payload["replica_summary"]["runtime_comparison_summary"] is not None
     assert payload["replica_summary"]["best_mitigation_action"]
+    assert payload["replica_summary"]["runtime_capability"]["state"] in {
+        "replay_available",
+        "host_unavailable",
+        "pack_validation_required",
+        "no_pack",
+        "replay_executed",
+    }
     assert payload["trace_summary"]["service"]
     assert payload["trace_summary"]["replay_evidence_summary"] is not None
     assert payload["trace_summary"]["code_owner_team"] is not None
@@ -638,6 +646,7 @@ def test_incident_context_defaults_to_deterministic_without_user_key(client: Tes
     assert payload["replica_summary"]["tested_mitigations"] is not None
     assert payload["replica_summary"]["best_mitigation_summary"] is not None
     assert payload["replica_summary"]["runtime_enablement_hint"] is not None
+    assert payload["replica_summary"]["runtime_capability"]["state"]
     assert payload["trace_summary"]["suspected_modules"] is not None
     assert payload["trace_summary"]["inspection_point"] is not None
     assert payload["trace_summary"]["suspected_files"] is not None

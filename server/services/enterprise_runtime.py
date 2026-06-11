@@ -1429,6 +1429,72 @@ def _runtime_enablement_hint(
     return "Runtime replay is not available for this incident yet."
 
 
+def _runtime_host_capability(
+    *,
+    plan: object,
+    runner_result: object,
+    runtime_result: object,
+) -> dict[str, object]:
+    bounded_pack_available = bool(plan and runner_result and not getattr(runner_result, "missing_assets", ()))
+    docker_available = bool(getattr(runner_result, "docker_available", False)) if runner_result else False
+    compose_config_valid = bool(getattr(runner_result, "compose_config_valid", False)) if runner_result else False
+
+    if runtime_result:
+        return {
+            "state": "replay_executed",
+            "label": "Replay executed",
+            "host_label": "Current app host",
+            "can_execute_replay": True,
+            "bounded_pack_available": bounded_pack_available,
+            "docker_available": docker_available,
+            "compose_config_valid": compose_config_valid,
+            "message": "This host executed Docker-backed replay for the bounded runtime pack.",
+        }
+    if bounded_pack_available and docker_available and compose_config_valid:
+        return {
+            "state": "replay_available",
+            "label": "Replay available",
+            "host_label": "Current app host",
+            "can_execute_replay": True,
+            "bounded_pack_available": True,
+            "docker_available": True,
+            "compose_config_valid": True,
+            "message": "This host can execute Docker-backed replay for the bounded runtime pack when replay is explicitly triggered.",
+        }
+    if bounded_pack_available and not docker_available:
+        return {
+            "state": "host_unavailable",
+            "label": "Host unavailable",
+            "host_label": "External Docker host required",
+            "can_execute_replay": False,
+            "bounded_pack_available": True,
+            "docker_available": False,
+            "compose_config_valid": False,
+            "message": "The incident maps to a bounded runtime pack, but the current app environment cannot execute Docker-backed replay.",
+        }
+    if bounded_pack_available:
+        return {
+            "state": "pack_validation_required",
+            "label": "Pack validation required",
+            "host_label": "Current app host",
+            "can_execute_replay": False,
+            "bounded_pack_available": True,
+            "docker_available": docker_available,
+            "compose_config_valid": False,
+            "message": "A bounded runtime pack exists for this incident, but the compose contract still needs validation before replay can run.",
+        }
+    return {
+        "state": "no_pack",
+        "label": "No bounded pack",
+        "host_label": "Not applicable",
+        "can_execute_replay": False,
+        "bounded_pack_available": False,
+        "docker_available": docker_available,
+        "compose_config_valid": False,
+        "message": "No bounded runtime pack matches this incident class yet.",
+    }
+
+
 def build_replica_summary(
     *,
     incident_id: str,
@@ -1579,6 +1645,11 @@ def build_replica_summary(
     )
     runtime_mode = "runtime_scaffold" if runtime_result else ("pack_scaffold" if plan and runner_result and not runner_result.missing_assets else "inferred")
     scaffold_ready = bool(plan and runner_result and not runner_result.missing_assets)
+    runtime_capability = _runtime_host_capability(
+        plan=plan,
+        runner_result=runner_result,
+        runtime_result=runtime_result,
+    )
 
     return {
         "incident_id": incident_id,
@@ -1623,6 +1694,7 @@ def build_replica_summary(
             compose_config_valid=bool(runner_result and runner_result.compose_config_valid),
             docker_available=bool(runner_result.docker_available) if runner_result else False,
         ),
+        "runtime_capability": runtime_capability,
         "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
         "tested_mitigations": runtime_mitigations,
         "reasoning": (
