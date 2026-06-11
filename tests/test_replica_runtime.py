@@ -1,5 +1,6 @@
-import subprocess
 import shutil
+import subprocess
+from pathlib import Path
 
 from server.services.enterprise_runtime import build_replica_summary, enrich_memory_with_runtime, rank_candidate_fixes_with_runtime
 from server.services.replica_runtime import ReplicaRunner, build_execution_plan, registry, select_environment_pack, trace_targets_for_plan
@@ -12,6 +13,19 @@ def test_replica_registry_exposes_two_flagship_packs() -> None:
     assert "checkout-python-fastapi-postgres-v1" in packs
     assert packs["checkout-python-fastapi-auth-redis-v1"].replay_profile == "checkout_retry_replay_v1"
     assert packs["checkout-python-fastapi-postgres-v1"].replay_profile == "checkout_write_replay_v1"
+
+
+def test_replica_registry_respects_runtime_pack_root_override(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("NEXUS_REPLICA_PACKS_ROOT", str(tmp_path))
+
+    packs = registry()
+
+    assert packs["checkout-python-fastapi-auth-redis-v1"].compose_file == (
+        tmp_path / "checkout-python-fastapi-auth-redis-v1" / "docker-compose.yml"
+    )
+    assert packs["checkout-python-fastapi-postgres-v1"].compose_file == (
+        tmp_path / "checkout-python-fastapi-postgres-v1" / "docker-compose.yml"
+    )
 
 
 def test_select_environment_pack_prefers_retry_pack_for_timeout_cascade() -> None:
@@ -122,6 +136,8 @@ def test_replica_runner_inspect_degrades_when_docker_binary_is_unavailable(monke
 
 
 def test_replica_summary_keeps_pack_scaffold_when_docker_unavailable(monkeypatch) -> None:
+    monkeypatch.delenv("NEXUS_RUNTIME_HOST_BASE_URL", raising=False)
+    monkeypatch.delenv("NEXUS_RUNTIME_HOST_SHARED_TOKEN", raising=False)
     monkeypatch.setattr(shutil, "which", lambda _: None)
 
     summary = build_replica_summary(
@@ -151,6 +167,33 @@ def test_replica_summary_keeps_pack_scaffold_when_docker_unavailable(monkeypatch
     assert summary["runtime_capability"]["can_execute_replay"] is False
     assert "cannot execute Docker-backed replay" in summary["runtime_enablement_hint"]
     assert "Docker-backed replay is unavailable in the current app environment" in summary["reasoning"]
+
+
+def test_replica_summary_reports_relay_available_when_runtime_host_configured(monkeypatch) -> None:
+    monkeypatch.setenv("NEXUS_RUNTIME_HOST_BASE_URL", "http://runtime-host.internal")
+    monkeypatch.setenv("NEXUS_RUNTIME_HOST_SHARED_TOKEN", "relay-secret")
+    monkeypatch.setattr(shutil, "which", lambda _: None)
+
+    summary = build_replica_summary(
+        incident_id="INC001",
+        triage_summary={
+            "issue_family": "Timeout cascade / retry amplification",
+            "likely_owner_service": "auth-svc",
+        },
+        root_cause="Runaway retry storm on downstream auth calls exhausted worker threads and drove API timeouts",
+        recent_logs=[
+            "09:05:12 WARN api-gateway retry budget exceeded for POST /payments after 4 upstream attempts",
+            "09:05:34 ERROR auth-svc upstream timeout after 5000ms request_id=req-8e12",
+        ],
+        recent_deployments=[{"service": "auth-svc", "change": "Retry middleware refactor"}],
+        candidate_fixes=[
+            {"action": "Enable auth-svc circuit breaker and cap retries to 1", "success_rate": 0.91},
+        ],
+    )
+
+    assert summary["runtime_capability"]["state"] == "relay_available"
+    assert summary["runtime_capability"]["can_execute_replay"] is True
+    assert summary["runtime_capability"]["host_label"] == "External runtime host"
 
 
 def test_runtime_candidate_ranking_prefers_validated_mitigation() -> None:

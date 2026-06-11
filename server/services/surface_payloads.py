@@ -3,12 +3,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from server.config import AppConfig
 from server.incident_payloads import get_incident_definition, get_incident_details, list_supported_incident_ids
 from server.models import IncidentWorkflowStage, QueueIncidentSummary, QueueResponse
 from server.artifacts import get_artifact_summary
 from server.services.observability import ObservabilityService
 from server.services.result_contracts import build_structured_result
 from server.services.priority import normalize_priority_label, priority_snapshot
+from server.services.replica_runtime import build_runtime_host_relay_status
 from server.services.enterprise_runtime import (
     build_replica_summary,
     build_trace_summary,
@@ -179,7 +181,7 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
     }
 
 
-def load_metrics_payload() -> dict[str, object]:
+def load_metrics_payload(config: AppConfig | None = None) -> dict[str, object]:
     with METRICS_PATH.open() as file_handle:
         payload = json.load(file_handle)
     payload["workflow_observation_states"] = workflow_observation_states()
@@ -205,7 +207,7 @@ def load_metrics_payload() -> dict[str, object]:
     }
     payload["rl_episode_contract"] = payload.get("rl_episode_contract") or _synthesize_rl_episode_contract(latest_episode)
     payload["queue_snapshot"] = build_queue_snapshot(payload)
-    payload["platform_status"] = build_platform_status(payload)
+    payload["platform_status"] = build_platform_status(payload, config=config or AppConfig())
     payload["artifact_summary"] = get_artifact_summary()
     return payload
 
@@ -416,9 +418,10 @@ def build_training_summary(payload: dict[str, object]) -> dict[str, object]:
     }
 
 
-def build_platform_status(payload: dict[str, object]) -> dict[str, object]:
+def build_platform_status(payload: dict[str, object], config: AppConfig | None = None) -> dict[str, object]:
     artifact_summary = get_artifact_summary()
     enterprise_summary = build_training_enterprise_summary(payload)
+    runtime_host_relay = build_runtime_host_relay_status(config or AppConfig())
     return {
         "mode": "Product",
         "webhook_auth": "Configured",
@@ -439,6 +442,7 @@ def build_platform_status(payload: dict[str, object]) -> dict[str, object]:
         "fallback_rate": enterprise_summary["fallback_rate"],
         "branch_completion_rate": enterprise_summary["branch_completion_rate"],
         "guarded_execution_rate": enterprise_summary["guarded_execution_rate"],
+        "runtime_host_relay": runtime_host_relay,
     }
 
 

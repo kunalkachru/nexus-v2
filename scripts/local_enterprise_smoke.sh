@@ -136,5 +136,34 @@ assert any(rb.get("why_now_fit") for rb in runbooks), \
 print("    Memory enrichment check passed.")
 PY
 
+if [[ "${EXPECT_RUNTIME_HOST_RELAY:-0}" == "1" ]]; then
+  echo "[8] Relay-backed replay path"
+  python3 - "${BASE_URL}" << 'PY'
+import json, sys, urllib.request
+
+base_url = sys.argv[1]
+headers = {"x-user-id": "user-123", "x-tenant-id": "tenant-a", "x-roles": "operator"}
+
+def request(path, *, method="GET", payload=None):
+    body = None if payload is None else json.dumps(payload).encode()
+    req = urllib.request.Request(f"{base_url}{path}", data=body, method=method, headers={
+        **headers,
+        **({"content-type": "application/json"} if payload is not None else {}),
+    })
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.loads(r.read().decode())
+
+context = request("/api/v1/incidents/INC001/context")
+capability = context["replica_summary"]["runtime_capability"]
+assert capability["state"] in {"relay_available", "relay_executed"}, capability
+
+replay = request("/api/v1/incidents/INC001/replica-replay", method="POST", payload={})
+assert replay["status"] == "relay_executed", replay
+assert replay["runtime_capability"]["state"] == "relay_executed", replay["runtime_capability"]
+assert replay["replica_summary"]["runtime_mode"] == "relay_runtime_scaffold", replay["replica_summary"]
+print("    Relay replay check passed.")
+PY
+fi
+
 echo ""
 echo "=== All smoke checks passed ==="

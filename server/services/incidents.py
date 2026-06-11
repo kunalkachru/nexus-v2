@@ -55,7 +55,7 @@ from server.services.enterprise_runtime import (
     runtime_aligned_candidate_fixes,
     runbook_score_from_candidates,
 )
-from server.services.replica_runtime import ReplicaExecutionResult
+from server.services.replica_runtime import ReplicaExecutionResult, invoke_runtime_host_relay
 from training.runner import TrainingForgeClient
 
 logger = logging.getLogger(__name__)
@@ -1208,6 +1208,7 @@ class IncidentService:
         observability = dict(context.get("observability") or {})
         incident = dict(context.get("incident") or {})
         runbook = dict(context.get("runbook") or {})
+        config = AppConfig()
 
         replica_summary = build_replica_summary(
             incident_id=nexus_incident_id,
@@ -1218,6 +1219,47 @@ class IncidentService:
             candidate_fixes=list(runbook.get("candidate_fixes") or []),
             execute_runtime=True,
         )
+        runtime_capability = dict(replica_summary.get("runtime_capability") or {})
+        capability_state = str(runtime_capability.get("state") or "no_pack")
+
+        if capability_state == "relay_available" and config.runtime_host_base_url and config.runtime_host_shared_token:
+            relay_response = invoke_runtime_host_relay(
+                base_url=config.runtime_host_base_url,
+                shared_token=config.runtime_host_shared_token,
+                payload={
+                    "incident_id": nexus_incident_id,
+                    "issue_family": str(triage_summary.get("issue_family") or ""),
+                    "service": str(triage_summary.get("likely_owner_service") or ""),
+                    "recent_logs": list(observability.get("recent_logs") or []),
+                    "recent_deployments": list(incident.get("recent_deployments") or []),
+                    "execute_runtime": True,
+                },
+            )
+            relay_capability = dict(relay_response.get("runtime_capability") or {})
+            relay_execution_result = ReplicaExecutionResult(**dict(relay_response.get("execution_result") or {}))
+            relay_capability.update(
+                {
+                    "state": "relay_executed" if relay_response.get("status") == "replay_executed" else "relay_available",
+                    "label": "Relay executed" if relay_response.get("status") == "replay_executed" else "Relay available",
+                    "host_label": "External runtime host",
+                    "can_execute_replay": True,
+                }
+            )
+            replica_summary = build_replica_summary(
+                incident_id=nexus_incident_id,
+                triage_summary=triage_summary,
+                root_cause=str(diagnosis.get("root_cause") or ""),
+                recent_logs=list(observability.get("recent_logs") or []),
+                recent_deployments=list(incident.get("recent_deployments") or []),
+                candidate_fixes=list(runbook.get("candidate_fixes") or []),
+                execute_runtime=False,
+                runtime_execution=relay_execution_result,
+                runtime_capability_override=relay_capability,
+                runtime_mode_override="relay_runtime_scaffold",
+            )
+            runtime_capability = dict(replica_summary.get("runtime_capability") or {})
+            capability_state = str(runtime_capability.get("state") or "relay_executed")
+
         trace_summary = build_trace_summary(
             incident_id=nexus_incident_id,
             triage_summary=triage_summary,
@@ -1226,17 +1268,17 @@ class IncidentService:
             recent_deployments=list(incident.get("recent_deployments") or []),
             recent_logs=list(observability.get("recent_logs") or []),
         )
-        runtime_capability = dict(replica_summary.get("runtime_capability") or {})
-        capability_state = str(runtime_capability.get("state") or "no_pack")
         status = {
             "replay_executed": "replay_executed",
+            "relay_executed": "relay_executed",
+            "relay_available": "replay_available",
             "host_unavailable": "host_unavailable",
             "pack_validation_required": "host_unavailable",
             "replay_available": "replay_available",
             "no_pack": "unsupported",
         }.get(capability_state, "unsupported")
 
-        if status == "replay_executed":
+        if status in {"replay_executed", "relay_executed"}:
             await record_replay_launch(
                 {
                     "scenario_id": "bounded_runtime_replay",
@@ -1244,7 +1286,7 @@ class IncidentService:
                     "tenant_id": tenant_id or incident.get("tenant_id") or "tenant-system",
                     "source_channel": incident.get("source_channel") or incident.get("source") or "incident_console",
                     "title": incident.get("name") or nexus_incident_id,
-                    "launch_label": "Replica replay",
+                    "launch_label": "Replica relay replay" if status == "relay_executed" else "Replica replay",
                 }
             )
 

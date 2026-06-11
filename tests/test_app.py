@@ -131,6 +131,7 @@ def test_metrics_api_returns_dashboard_payload() -> None:
     assert payload["latest_episode"]["incident_id"]
     assert payload["queue_snapshot"]["open_incidents"] >= 1
     assert payload["platform_status"]["mode"] == "Product"
+    assert payload["platform_status"]["runtime_host_relay"]["configured"] is False
 
 
 def test_primary_screens_hide_dense_details_by_default() -> None:

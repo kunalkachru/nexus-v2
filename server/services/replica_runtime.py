@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import time
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from urllib.request import urlopen
+from urllib.request import Request as UrlRequest, urlopen
+
+from server.models import RuntimeHostReplayRequest, RuntimeHostReplayResponse
 
 
-REPLICA_PACKS_ROOT = Path(__file__).resolve().parents[2] / "replica_packs"
+DEFAULT_REPLICA_PACKS_ROOT = Path(__file__).resolve().parents[2] / "replica_packs"
+
+
+def replica_packs_root() -> Path:
+    override = os.getenv("NEXUS_REPLICA_PACKS_ROOT", "").strip()
+    return Path(override) if override else DEFAULT_REPLICA_PACKS_ROOT
 
 
 @dataclass(frozen=True)
@@ -55,13 +63,14 @@ class ReplicaExecutionResult:
 
 
 def registry() -> dict[str, ReplicaEnvironmentPack]:
+    packs_root = replica_packs_root()
     return {
         "checkout-python-fastapi-auth-redis-v1": ReplicaEnvironmentPack(
             pack_id="checkout-python-fastapi-auth-redis-v1",
             incident_classes=("timeout_retry_amplification", "checkout_timeout_cascade"),
             services=("api-gateway", "auth-svc", "checkout-api"),
             stack=("python", "fastapi", "redis"),
-            compose_file=REPLICA_PACKS_ROOT / "checkout-python-fastapi-auth-redis-v1" / "docker-compose.yml",
+            compose_file=packs_root / "checkout-python-fastapi-auth-redis-v1" / "docker-compose.yml",
             replay_profile="checkout_retry_replay_v1",
             mitigation_hooks=("cap_retries", "open_circuit_breaker", "disable_retry_middleware"),
             trace_source_map={
@@ -75,7 +84,7 @@ def registry() -> dict[str, ReplicaEnvironmentPack]:
             incident_classes=("db_pool_exhaustion", "session_leak"),
             services=("checkout-svc", "postgres-orders"),
             stack=("python", "fastapi", "postgres"),
-            compose_file=REPLICA_PACKS_ROOT / "checkout-python-fastapi-postgres-v1" / "docker-compose.yml",
+            compose_file=packs_root / "checkout-python-fastapi-postgres-v1" / "docker-compose.yml",
             replay_profile="checkout_write_replay_v1",
             mitigation_hooks=("terminate_orphaned_sessions", "rollback_retry_patch", "restart_checkout_service"),
             trace_source_map={
@@ -180,7 +189,7 @@ class ReplicaRunner:
             if not hook_path.exists():
                 missing_assets.append(str(hook_path))
 
-        docker_available = shutil.which("docker") is not None
+        docker_available = self._compose_base_command() is not None
         compose_config_valid = False
         services_seen: tuple[str, ...] = ()
         if plan.pack.compose_file.exists() and docker_available:
@@ -245,9 +254,12 @@ class ReplicaRunner:
         )
 
     def _compose_config(self, plan: ReplicaExecutionPlan) -> tuple[bool, tuple[str, ...]]:
+        compose_base = self._compose_base_command()
+        if compose_base is None:
+            return False, ()
         try:
             result = subprocess.run(
-                ["docker", "compose", "-f", str(plan.pack.compose_file), "config", "--format", "json"],
+                [*compose_base, "-f", str(plan.pack.compose_file), "config", "--format", "json"],
                 capture_output=True,
                 text=True,
                 check=False,
@@ -264,15 +276,18 @@ class ReplicaRunner:
         return True, services
 
     def _compose_up(self, plan: ReplicaExecutionPlan) -> None:
+        compose_base = self._compose_base_command()
+        if compose_base is None:
+            raise FileNotFoundError("docker compose is unavailable")
         subprocess.run(
-            ["docker", "compose", "-f", str(plan.pack.compose_file), "down", "-v", "--remove-orphans"],
+            [*compose_base, "-f", str(plan.pack.compose_file), "down", "-v", "--remove-orphans"],
             cwd=str(plan.pack.compose_file.parent),
             capture_output=True,
             text=True,
             check=False,
         )
         subprocess.run(
-            ["docker", "compose", "-f", str(plan.pack.compose_file), "up", "-d"],
+            [*compose_base, "-f", str(plan.pack.compose_file), "up", "-d"],
             cwd=str(plan.pack.compose_file.parent),
             capture_output=True,
             text=True,
@@ -280,8 +295,11 @@ class ReplicaRunner:
         )
 
     def _compose_down(self, plan: ReplicaExecutionPlan) -> None:
+        compose_base = self._compose_base_command()
+        if compose_base is None:
+            return
         subprocess.run(
-            ["docker", "compose", "-f", str(plan.pack.compose_file), "down", "-v"],
+            [*compose_base, "-f", str(plan.pack.compose_file), "down", "-v"],
             cwd=str(plan.pack.compose_file.parent),
             capture_output=True,
             text=True,
@@ -289,12 +307,15 @@ class ReplicaRunner:
         )
 
     def _run_script(self, script_path: Path) -> str:
+        env = os.environ.copy()
+        env.setdefault("NEXUS_RUNTIME_HTTP_HOST", self._runtime_http_host())
         result = subprocess.run(
             ["bash", str(script_path)],
             cwd=str(script_path.parent.parent),
             capture_output=True,
             text=True,
             check=True,
+            env=env,
         )
         return result.stdout
 
@@ -335,10 +356,14 @@ class ReplicaRunner:
 
     def _wait_for_runtime(self, plan: ReplicaExecutionPlan) -> None:
         health_urls: list[str] = []
+        runtime_host = self._runtime_http_host()
         if plan.pack.pack_id == "checkout-python-fastapi-auth-redis-v1":
-            health_urls = ["http://127.0.0.1:18080/health", "http://127.0.0.1:18081/health"]
+            health_urls = [
+                f"http://{runtime_host}:18080/health",
+                f"http://{runtime_host}:18081/health",
+            ]
         elif plan.pack.pack_id == "checkout-python-fastapi-postgres-v1":
-            health_urls = ["http://127.0.0.1:19080/health"]
+            health_urls = [f"http://{runtime_host}:19080/health"]
         deadline = time.time() + plan.startup_timeout_seconds
         while time.time() < deadline:
             try:
@@ -348,3 +373,172 @@ class ReplicaRunner:
                 time.sleep(0.5)
                 continue
         raise RuntimeError(f"Timed out waiting for runtime health for {plan.pack.pack_id}")
+
+    def _compose_base_command(self) -> list[str] | None:
+        if shutil.which("docker") is not None:
+            try:
+                result = subprocess.run(
+                    ["docker", "compose", "version"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+            except FileNotFoundError:
+                result = None
+            if result is not None and result.returncode == 0:
+                return ["docker", "compose"]
+        if shutil.which("docker-compose") is not None:
+            return ["docker-compose"]
+        return None
+
+    def _runtime_http_host(self) -> str:
+        return os.getenv("NEXUS_RUNTIME_HTTP_HOST", "127.0.0.1").strip() or "127.0.0.1"
+
+
+def build_runtime_host_relay_status(config: object | None) -> dict[str, object]:
+    base_url = str(getattr(config, "runtime_host_base_url", "") or "").strip()
+    token = str(getattr(config, "runtime_host_shared_token", "") or "").strip()
+    configured = bool(base_url and token)
+    return {
+        "configured": configured,
+        "base_url": base_url,
+        "auth_configured": bool(token),
+        "mode": "external_relay" if configured else "not_configured",
+        "message": (
+            "A runtime-host relay is configured for packaged replay delegation."
+            if configured
+            else "No external runtime-host relay is configured for packaged replay delegation yet."
+        ),
+    }
+
+
+def _runtime_capability_for_host(
+    *,
+    plan: ReplicaExecutionPlan | None,
+    inspected: ReplicaExecutionResult | None,
+    executed: ReplicaExecutionResult | None,
+) -> dict[str, object]:
+    bounded_pack_available = bool(plan and inspected and not inspected.missing_assets)
+    docker_available = bool(inspected.docker_available) if inspected else False
+    compose_config_valid = bool(inspected.compose_config_valid) if inspected else False
+
+    if executed and executed.replay_status_code is not None:
+        return {
+            "state": "replay_executed",
+            "label": "Replay executed",
+            "host_label": "Runtime host",
+            "can_execute_replay": True,
+            "bounded_pack_available": bounded_pack_available,
+            "docker_available": docker_available,
+            "compose_config_valid": compose_config_valid,
+            "message": "The runtime host executed Docker-backed replay for the bounded runtime pack.",
+        }
+    if bounded_pack_available and docker_available and compose_config_valid:
+        return {
+            "state": "replay_available",
+            "label": "Replay available",
+            "host_label": "Runtime host",
+            "can_execute_replay": True,
+            "bounded_pack_available": True,
+            "docker_available": True,
+            "compose_config_valid": True,
+            "message": "The runtime host can execute Docker-backed replay for the bounded runtime pack.",
+        }
+    if bounded_pack_available and not docker_available:
+        return {
+            "state": "host_unavailable",
+            "label": "Host unavailable",
+            "host_label": "Runtime host",
+            "can_execute_replay": False,
+            "bounded_pack_available": True,
+            "docker_available": False,
+            "compose_config_valid": False,
+            "message": "The bounded runtime pack exists, but this runtime host cannot execute Docker-backed replay.",
+        }
+    if bounded_pack_available:
+        return {
+            "state": "pack_validation_required",
+            "label": "Pack validation required",
+            "host_label": "Runtime host",
+            "can_execute_replay": False,
+            "bounded_pack_available": True,
+            "docker_available": docker_available,
+            "compose_config_valid": False,
+            "message": "A bounded runtime pack exists, but the compose contract still needs validation on the runtime host.",
+        }
+    return {
+        "state": "no_pack",
+        "label": "No bounded pack",
+        "host_label": "Runtime host",
+        "can_execute_replay": False,
+        "bounded_pack_available": False,
+        "docker_available": docker_available,
+        "compose_config_valid": False,
+        "message": "No bounded runtime pack matches this incident class on the runtime host.",
+    }
+
+
+def execute_runtime_host_replay(payload: RuntimeHostReplayRequest) -> RuntimeHostReplayResponse:
+    plan = build_execution_plan(
+        issue_family=payload.issue_family,
+        service=payload.service,
+        recent_logs=payload.recent_logs,
+        recent_deployments=payload.recent_deployments,
+    )
+    if plan is None:
+        capability = _runtime_capability_for_host(plan=None, inspected=None, executed=None)
+        return RuntimeHostReplayResponse(
+            status="unsupported",
+            message=capability["message"],
+            runtime_capability=capability,
+            execution_plan={},
+            execution_result={},
+        )
+
+    runner = ReplicaRunner()
+    inspected = runner.inspect_plan(plan)
+    executed = (
+        runner.execute_scaffold(plan, mitigation_limit=payload.mitigation_limit)
+        if payload.execute_runtime and inspected.compose_config_valid and not inspected.missing_assets and inspected.docker_available
+        else None
+    )
+    capability = _runtime_capability_for_host(plan=plan, inspected=inspected, executed=executed)
+    status = {
+        "replay_executed": "replay_executed",
+        "replay_available": "replay_available",
+        "host_unavailable": "host_unavailable",
+        "pack_validation_required": "pack_validation_required",
+        "no_pack": "unsupported",
+    }.get(str(capability.get("state") or "no_pack"), "unsupported")
+    return RuntimeHostReplayResponse(
+        status=status,
+        message=str(capability.get("message") or "Runtime host replay state unavailable."),
+        runtime_capability=capability,
+        execution_plan={
+            "pack_id": plan.pack.pack_id,
+            "incident_class": plan.incident_class,
+            "healthcheck_targets": list(plan.healthcheck_targets),
+            "replay_entrypoint": plan.replay_entrypoint,
+            "mitigation_sequence": list(plan.mitigation_sequence),
+        },
+        execution_result=asdict(executed or inspected),
+    )
+
+
+def invoke_runtime_host_relay(
+    *,
+    base_url: str,
+    shared_token: str,
+    payload: dict[str, object],
+) -> dict[str, object]:
+    request = UrlRequest(
+        url=f"{base_url.rstrip('/')}/api/v1/internal/runtime-host/replica-replay",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "content-type": "application/json",
+            "x-runtime-host-token": shared_token,
+        },
+        method="POST",
+    )
+    with urlopen(request, timeout=60) as response:
+        return json.loads(response.read().decode("utf-8"))

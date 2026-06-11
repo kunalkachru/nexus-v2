@@ -77,20 +77,32 @@ Incident context now includes additive enterprise fields:
 These have already been executed locally against the current code:
 
 - `pytest tests/test_app.py tests/test_api_contract.py tests/test_catalogue.py -q`
-  - result: `30 passed`
+  - result: covered by the full suite and targeted contract gates
 - `pytest tests/ -q`
-  - result: `113 passed`
+  - result: `134 passed`
 - `npm run browser:verify`
-  - result: `6 passed`
+  - result: `10 passed`
 - `python demo.py`
+  - result: passed
+- `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh`
+  - result: passed
+- `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh`
   - result: passed
 
 ## Recommended One-Shot Local Validation
 
 ### Step 1: Rebuild the local Docker app
 
+Standard packaged path:
+
 ```bash
 ./scripts/docker_fresh.sh
+```
+
+Relay-backed packaged path:
+
+```bash
+ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
 ```
 
 Wait until the script prints:
@@ -104,6 +116,12 @@ Fresh container is ready.
 ```bash
 chmod +x ./scripts/local_enterprise_smoke.sh
 ./scripts/local_enterprise_smoke.sh
+```
+
+If you started the relay-backed packaged path, run:
+
+```bash
+EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
 ```
 
 Expected result:
@@ -144,12 +162,27 @@ For the Docker path, use:
 NEXUS_ENABLE_REPLICA_RUNTIME=1 ./scripts/docker_fresh.sh
 ```
 
+For the packaged relay path, use:
+
+```bash
+ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
+EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
+```
+
+What that relay profile does:
+
+- keeps the user-facing app on `:7860`
+- starts a private `runtime-host` service that owns Docker-backed replay
+- delegates `/api/v1/incidents/{id}/replica-replay` from the packaged app to that relay
+- returns `relay_available` or `relay_executed` instead of `host_unavailable` when the relay can run the bounded pack
+
 Expected result:
 
 - REPLICA still uses the same flagged outage pack
 - the runtime mode becomes runtime-backed for the local run
 - replay and mitigation hook output are available in the `replica_summary` payload
 - the incident page exposes a `Run bounded replay` action when the host is capable
+- in the relay-backed Docker profile, the same action routes through the runtime host transparently
 - the runtime comparison becomes explicit:
   - baseline replay status and duration
   - selected mitigation replay status and duration
@@ -195,6 +228,7 @@ Expected:
   - baseline replay versus best mitigation
   - clear runtime outcome such as `improved` or `resolved`
   - if runtime mode is enabled locally, the pack/service footprint and replay comparison should be visible in the payload-backed wording
+  - if the relay-backed Docker profile is enabled, runtime capability should read as `relay_available` before replay and `relay_executed` after replay
 - `Investigation depth · TRACE` is visible and shows:
   - trace status
   - likely modules/functions
@@ -222,6 +256,32 @@ What this demonstrates:
 - diagnosis is grounded in memory, not only current logs
 - orchestration state is visible to the operator
 - reproduction and debugging findings are visible before the final action is approved
+
+### Test Case 1A: Relay-backed replay from the packaged app
+
+Precondition:
+
+- start with `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh`
+
+URL:
+
+```text
+http://127.0.0.1:7860/incident?nexus_incident_id=INC001
+```
+
+Steps:
+
+1. confirm the REPLICA panel says replay is available through an external runtime host
+2. click `Run bounded replay`
+3. wait for the incident panel to refresh
+
+Expected:
+
+- replay completes without a page error
+- runtime capability changes to `relay_executed`
+- runtime mode reads as relay-backed runtime execution
+- baseline vs mitigated comparison appears in the incident panel
+- the same flow also works for `INC002`
 
 ### Test Case 2: Fresh incident replays once and lands on Guardian
 

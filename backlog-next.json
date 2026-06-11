@@ -145,5 +145,136 @@
       "tests/test_api_contract.py",
       "tests/e2e/browser-verification.spec.js"
     ]
+  },
+  {
+    "id": 20,
+    "title": "Runtime-host relay contract and internal execution API",
+    "priority": "highest",
+    "status": "done",
+    "description": "Add a bounded machine-to-machine contract for REPLICA replay so a packaged NEXUS app can delegate runtime execution to a Docker-capable host instead of assuming replay must happen inside the app container. This slice should only establish the request/response model, internal auth gate, runtime-host endpoint, and platform-status visibility. It should not yet rewire the operator replay button to use the relay.",
+    "done_when": [
+      "there is a stable internal runtime-host replay endpoint protected by a shared token",
+      "the endpoint accepts bounded replay inputs and returns a stable execution contract",
+      "platform status exposes whether a runtime host relay is configured"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/config.py",
+      "server/models.py",
+      "server/app.py",
+      "server/services/replica_runtime.py",
+      "server/services/surface_payloads.py",
+      "tests/test_api_contract.py",
+      "tests/test_app.py"
+    ]
+  },
+  {
+    "id": 21,
+    "title": "Packaged-app replay delegation to runtime host",
+    "priority": "highest",
+    "status": "done",
+    "description": "Teach `/api/v1/incidents/{id}/replica-replay` to call the runtime-host relay when the packaged app itself is not Docker-capable but a relay host is configured. The incident UI should remain unchanged while the returned runtime-capability state becomes `relay_available` or `relay_executed` instead of `host_unavailable` where appropriate.",
+    "done_when": [
+      "seeded incidents can execute bounded replay from the packaged app through the runtime-host relay",
+      "runtime capability truthfully distinguishes direct replay, relay replay, and unavailable states",
+      "incident replay responses remain stable for seeded and fresh incidents"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "./scripts/docker_fresh.sh",
+      "BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/replica_runtime.py",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  },
+  {
+    "id": 22,
+    "title": "Docker compose runtime-host profile for local packaged verification",
+    "priority": "high",
+    "status": "done",
+    "description": "Add an optional local runtime-host service or profile to the Docker path so the packaged app can be verified end-to-end on `:7860` with the replay button using a Docker-capable relay. Keep the scope local-only and bounded to the two curated packs.",
+    "done_when": [
+      "docker compose can start a runtime-host relay for local verification",
+      "the relay can execute at least INC001 and INC002 bounded packs",
+      "the packaged-app smoke path covers relay-backed replay"
+    ],
+    "test_gates": [
+      "./scripts/docker_fresh.sh",
+      "BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "docker-compose.yml",
+      "Dockerfile",
+      "scripts/docker_fresh.sh",
+      "scripts/local_enterprise_smoke.sh",
+      "server/config.py",
+      "docs/LOCAL_ENTERPRISE_ONE_SHOT_TEST.md"
+    ]
+  },
+  {
+    "id": 23,
+    "title": "Persist replay evidence on live incidents and surface relay provenance",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Once relay-backed replay works, persist the latest replay evidence for live incidents so operators do not lose runtime findings on refresh. Surface whether replay came from direct host execution or delegated relay execution.",
+    "done_when": [
+      "live incidents retain the latest replay-backed replica summary after refresh",
+      "runtime provenance is visible in the incident payload and UI",
+      "fresh incidents stop feeling ephemeral after replay is triggered"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "./scripts/docker_fresh.sh",
+      "BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/models.py",
+      "server/db.py",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "docs/DEMO_WALKTHROUGH.md"
+    ]
+  },
+  {
+    "id": 24,
+    "title": "Repo-aware TRACE ownership cues for flagship packs",
+    "priority": "medium",
+    "status": "pending",
+    "description": "After relay execution is real, deepen TRACE by making file-level cues more explicit and tying them to pack-aware ownership and replay provenance. Keep this bounded to the curated flagship packs rather than pretending to do universal repository indexing.",
+    "done_when": [
+      "TRACE cites replay-proven failing path plus bounded file/owner cues for INC001 and INC002",
+      "developer handoff wording references relay/direct runtime provenance when available",
+      "docs and demo narrative reflect the stronger handoff truthfully"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "./scripts/docker_fresh.sh",
+      "BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "docs/DEMO_CHEAT_SHEET.md",
+      "docs/DEMO_WALKTHROUGH.md",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
   }
 ]

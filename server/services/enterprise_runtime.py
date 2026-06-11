@@ -9,6 +9,7 @@ from typing import Any, NotRequired, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from server.artifacts import _load_artifacts
+from server.config import AppConfig
 from server.incident_payloads import get_incident_details, list_supported_incident_ids
 from server.models import (
     Episode,
@@ -23,7 +24,7 @@ from server.models import (
     SystemContext,
 )
 from server.services.priority import normalize_priority_label, priority_rank
-from server.services.replica_runtime import ReplicaRunner, build_execution_plan, trace_targets_for_plan
+from server.services.replica_runtime import ReplicaExecutionResult, ReplicaRunner, build_execution_plan, build_runtime_host_relay_status, trace_targets_for_plan
 
 
 class RuntimeState(TypedDict):
@@ -1526,7 +1527,12 @@ def _runtime_enablement_hint(
     runtime_mode: str,
     compose_config_valid: bool,
     docker_available: bool,
+    runtime_capability_state: str = "",
 ) -> str:
+    if runtime_capability_state == "relay_executed":
+        return "A configured runtime host ran Docker-backed replay for this incident. REPLICA is showing measured baseline and mitigation outcomes from delegated execution."
+    if runtime_capability_state == "relay_available":
+        return "This incident maps to a bounded runtime scaffold and can delegate Docker-backed replay to the configured runtime host."
     if runtime_executed:
         return "Docker-backed replay ran for this incident. REPLICA is showing measured baseline and mitigation outcomes."
     if scaffold_ready and compose_config_valid and docker_available:
@@ -1549,6 +1555,7 @@ def _runtime_host_capability(
     bounded_pack_available = bool(plan and runner_result and not getattr(runner_result, "missing_assets", ()))
     docker_available = bool(getattr(runner_result, "docker_available", False)) if runner_result else False
     compose_config_valid = bool(getattr(runner_result, "compose_config_valid", False)) if runner_result else False
+    relay_configured = bool(build_runtime_host_relay_status(AppConfig()).get("configured"))
 
     if runtime_result:
         return {
@@ -1560,6 +1567,17 @@ def _runtime_host_capability(
             "docker_available": docker_available,
             "compose_config_valid": compose_config_valid,
             "message": "This host executed Docker-backed replay for the bounded runtime pack.",
+        }
+    if bounded_pack_available and not docker_available and relay_configured:
+        return {
+            "state": "relay_available",
+            "label": "Relay available",
+            "host_label": "External runtime host",
+            "can_execute_replay": True,
+            "bounded_pack_available": True,
+            "docker_available": False,
+            "compose_config_valid": compose_config_valid,
+            "message": "The current app host cannot run Docker-backed replay directly, but a configured runtime host can execute it on demand.",
         }
     if bounded_pack_available and docker_available and compose_config_valid:
         return {
@@ -1615,6 +1633,9 @@ def build_replica_summary(
     recent_deployments: list[object] | None = None,
     candidate_fixes: list[object] | None = None,
     execute_runtime: bool | None = None,
+    runtime_execution: ReplicaExecutionResult | None = None,
+    runtime_capability_override: dict[str, object] | None = None,
+    runtime_mode_override: str | None = None,
 ) -> dict[str, object]:
     issue_family = str(triage_summary.get("issue_family", "")).lower()
     logs_text = " ".join(str(item) for item in (recent_logs or [])).lower()
@@ -1628,13 +1649,15 @@ def build_replica_summary(
         recent_logs=recent_logs,
         recent_deployments=recent_deployments,
     )
-    runner_result = ReplicaRunner().inspect_plan(plan) if plan else None
+    runner_result = runtime_execution if runtime_execution is not None else (ReplicaRunner().inspect_plan(plan) if plan else None)
     execute_runtime = (
         os.environ.get("NEXUS_ENABLE_REPLICA_RUNTIME", "0") == "1"
         if execute_runtime is None
         else execute_runtime
     )
-    runtime_result = ReplicaRunner().execute_scaffold(plan) if plan and execute_runtime and runner_result and runner_result.compose_config_valid and not runner_result.missing_assets else None
+    runtime_result = runtime_execution or (
+        ReplicaRunner().execute_scaffold(plan) if plan and execute_runtime and runner_result and runner_result.compose_config_valid and not runner_result.missing_assets else None
+    )
 
     environment_pack_id = "generic-support-triage-pack-v1"
     reproduction_status = "not_run"
@@ -1760,9 +1783,9 @@ def build_replica_summary(
         baseline_outcome_class=baseline_outcome_class,
     )
     mitigation_verdict = str(mitigation_comparison.get("verdict") or "")
-    runtime_mode = "runtime_scaffold" if runtime_result else ("pack_scaffold" if plan and runner_result and not runner_result.missing_assets else "inferred")
+    runtime_mode = runtime_mode_override or ("runtime_scaffold" if runtime_result else ("pack_scaffold" if plan and runner_result and not runner_result.missing_assets else "inferred"))
     scaffold_ready = bool(plan and runner_result and not runner_result.missing_assets)
-    runtime_capability = _runtime_host_capability(
+    runtime_capability = runtime_capability_override or _runtime_host_capability(
         plan=plan,
         runner_result=runner_result,
         runtime_result=runtime_result,
@@ -1811,13 +1834,14 @@ def build_replica_summary(
             runtime_mode=runtime_mode,
             compose_config_valid=bool(runner_result and runner_result.compose_config_valid),
             docker_available=bool(runner_result.docker_available) if runner_result else False,
+            runtime_capability_state=str(runtime_capability.get("state") or ""),
         ),
         "runtime_capability": runtime_capability,
         "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
         "tested_mitigations": runtime_mitigations,
         "reasoning": (
             f"{reasoning} "
-            f"{'The bounded runtime scaffold was executed for this run.' if runtime_result else ('The bounded runtime scaffold is validated and ready for replay execution.' if runner_result and runner_result.compose_config_valid and not runner_result.missing_assets else ('The bounded runtime scaffold is mapped for this incident, but Docker-backed replay is unavailable in the current app environment.' if runner_result and not runner_result.missing_assets and not runner_result.docker_available else ('The bounded runtime scaffold is mapped for this incident, but the compose contract still needs validation.' if runner_result and not runner_result.missing_assets else 'The bounded runtime scaffold is not fully ready yet.')))}"
+            f"{'The bounded runtime scaffold was executed for this run.' if runtime_result and runtime_mode != 'relay_runtime_scaffold' else ('A configured runtime host executed the bounded runtime scaffold for this run.' if runtime_result and runtime_mode == 'relay_runtime_scaffold' else ('The bounded runtime scaffold is validated and ready for replay execution.' if runner_result and runner_result.compose_config_valid and not runner_result.missing_assets and str(runtime_capability.get('state') or '') != 'relay_available' else ('The bounded runtime scaffold can delegate replay to the configured runtime host.' if str(runtime_capability.get('state') or '') == 'relay_available' else ('The bounded runtime scaffold is mapped for this incident, but Docker-backed replay is unavailable in the current app environment.' if runner_result and not runner_result.missing_assets and not runner_result.docker_available else ('The bounded runtime scaffold is mapped for this incident, but the compose contract still needs validation.' if runner_result and not runner_result.missing_assets else 'The bounded runtime scaffold is not fully ready yet.')))))}"
             f"{f' {mitigation_verdict}' if mitigation_verdict else ''}"
         ).strip(),
     }

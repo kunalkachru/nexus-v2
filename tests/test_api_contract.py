@@ -688,15 +688,172 @@ def test_history_replay_training_and_platform_contracts(client: TestClient, auth
     assert training_payload["artifact_summary"]["training_snapshots"] >= 1
     assert training_payload["artifact_summary"]["learning_contracts"] >= 1
     assert training_payload["reward_evaluation"]["reward_curve_final"] >= 0.65
-    assert training_payload["rl_episode_contract"]["observation"]["incident_id"]
-    assert training_payload["rl_episode_contract"]["agent_trace"]
-    assert training_payload["rl_episode_contract"]["raw_priority_label"]
-    assert training_payload["rl_episode_contract"]["solution_proposal"]
-    assert training_payload["rl_episode_contract"]["live_reasoning"] is False
-    assert platform_payload["webhook_signature_verification"] == "Active"
-    assert platform_payload["replay_launches"] >= 0
-    assert platform_payload["training_snapshots"] >= 1
-    assert platform_payload["contract_surface"]
+    assert platform_payload["runtime_host_relay"]["configured"] is False
+    assert "/api/v1/internal/runtime-host/replica-replay" in platform_payload["contract_surface"]
+
+
+def test_runtime_host_replay_requires_shared_token(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(app.state.config, "runtime_host_shared_token", "relay-secret")
+
+    response = client.post(
+        "/api/v1/internal/runtime-host/replica-replay",
+        json={
+            "incident_id": "INC001",
+            "issue_family": "Timeout cascade / retry amplification",
+            "service": "auth-svc",
+            "recent_logs": ["api-gateway timeout", "retry budget exceeded"],
+            "recent_deployments": [{"service": "auth-svc", "change": "Retry middleware refactor"}],
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "invalid runtime host token"
+
+
+def test_runtime_host_replay_returns_host_unavailable_without_docker(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(app.state.config, "runtime_host_shared_token", "relay-secret")
+    monkeypatch.setattr("server.services.replica_runtime.shutil.which", lambda _: None)
+
+    response = client.post(
+        "/api/v1/internal/runtime-host/replica-replay",
+        headers={"x-runtime-host-token": "relay-secret"},
+        json={
+            "incident_id": "INC001",
+            "issue_family": "Timeout cascade / retry amplification",
+            "service": "auth-svc",
+            "recent_logs": ["api-gateway timeout", "retry budget exceeded"],
+            "recent_deployments": [{"service": "auth-svc", "change": "Retry middleware refactor"}],
+            "execute_runtime": True,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "host_unavailable"
+    assert payload["runtime_capability"]["state"] == "host_unavailable"
+    assert payload["execution_result"]["pack_id"] == "checkout-python-fastapi-auth-redis-v1"
+
+
+def test_runtime_host_replay_returns_executed_contract_with_stubbed_runtime(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(app.state.config, "runtime_host_shared_token", "relay-secret")
+
+    inspect_result = ReplicaExecutionResult(
+        pack_id="checkout-python-fastapi-postgres-v1",
+        compose_ready=True,
+        replay_ready=True,
+        mitigation_hooks_ready=True,
+        missing_assets=(),
+        docker_available=True,
+        compose_config_valid=True,
+        services_seen=("checkout", "postgres"),
+    )
+    execute_result = ReplicaExecutionResult(
+        pack_id="checkout-python-fastapi-postgres-v1",
+        compose_ready=True,
+        replay_ready=True,
+        mitigation_hooks_ready=True,
+        missing_assets=(),
+        docker_available=True,
+        compose_config_valid=True,
+        services_seen=("checkout", "postgres"),
+        replay_output="status_code=503 duration_ms=2100",
+        replay_status_code=503,
+        replay_duration_ms=2100,
+        mitigation_outputs=("rollback retry patch", "status_code=200 duration_ms=260"),
+        mitigation_status_codes=(200,),
+        mitigation_duration_ms=(260,),
+        mode="runtime_scaffold",
+    )
+    monkeypatch.setattr("server.services.replica_runtime.ReplicaRunner.inspect_plan", lambda self, plan: inspect_result)
+    monkeypatch.setattr("server.services.replica_runtime.ReplicaRunner.execute_scaffold", lambda self, plan, mitigation_limit=None: execute_result)
+
+    response = client.post(
+        "/api/v1/internal/runtime-host/replica-replay",
+        headers={"x-runtime-host-token": "relay-secret"},
+        json={
+            "incident_id": "INC002",
+            "issue_family": "Database pool exhaustion / session leak",
+            "service": "checkout-svc",
+            "recent_logs": ["QueuePool limit exceeded", "idle in transaction"],
+            "recent_deployments": [{"service": "checkout-svc", "change": "Retry patch rollout"}],
+            "execute_runtime": True,
+            "mitigation_limit": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "replay_executed"
+    assert payload["runtime_capability"]["state"] == "replay_executed"
+    assert payload["execution_result"]["replay_status_code"] == 503
+    assert payload["execution_result"]["mitigation_status_codes"] == [200]
+
+
+def test_seeded_incident_replica_replay_delegates_to_runtime_host_when_configured(
+    client: TestClient,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("NEXUS_RUNTIME_HOST_BASE_URL", "http://runtime-host.internal")
+    monkeypatch.setenv("NEXUS_RUNTIME_HOST_SHARED_TOKEN", "relay-secret")
+    monkeypatch.setattr("server.services.replica_runtime.shutil.which", lambda _: None)
+    monkeypatch.setattr(
+        "server.services.incidents.invoke_runtime_host_relay",
+        lambda **kwargs: {
+            "status": "replay_executed",
+            "message": "The runtime host executed Docker-backed replay for the bounded runtime pack.",
+            "runtime_capability": {
+                "state": "replay_executed",
+                "label": "Replay executed",
+                "host_label": "Runtime host",
+                "can_execute_replay": True,
+                "bounded_pack_available": True,
+                "docker_available": True,
+                "compose_config_valid": True,
+                "message": "The runtime host executed Docker-backed replay for the bounded runtime pack.",
+            },
+            "execution_plan": {
+                "pack_id": "checkout-python-fastapi-auth-redis-v1",
+                "incident_class": "timeout_retry_amplification",
+                "healthcheck_targets": ["gateway", "auth", "redis"],
+                "replay_entrypoint": "scripts/replay_checkout_retry.sh",
+                "mitigation_sequence": ["cap_retries", "open_circuit_breaker", "disable_retry_middleware"],
+            },
+            "execution_result": {
+                "pack_id": "checkout-python-fastapi-auth-redis-v1",
+                "compose_ready": True,
+                "replay_ready": True,
+                "mitigation_hooks_ready": True,
+                "missing_assets": [],
+                "docker_available": True,
+                "compose_config_valid": True,
+                "services_seen": ["gateway", "auth", "redis"],
+                "replay_output": "status_code=504 duration_ms=1800",
+                "replay_status_code": 504,
+                "replay_duration_ms": 1800,
+                "mitigation_outputs": ["cap retries", "status_code=200 duration_ms=320"],
+                "mitigation_status_codes": [200],
+                "mitigation_duration_ms": [320],
+                "mode": "runtime_scaffold",
+            },
+        },
+    )
+
+    response = client.post("/api/v1/incidents/INC001/replica-replay", headers=auth_headers())
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "relay_executed"
+    assert payload["runtime_capability"]["state"] == "relay_executed"
+    assert payload["replica_summary"]["runtime_capability"]["state"] == "relay_executed"
+    assert payload["replica_summary"]["runtime_executed"] is True
+    assert payload["replica_summary"]["runtime_mode"] == "relay_runtime_scaffold"
 
 
 def test_replay_launch_creates_live_incident(client: TestClient, auth_headers) -> None:

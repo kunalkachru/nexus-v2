@@ -50,3 +50,12 @@ async def verify_webhook_signature(request: Request) -> None:
     expected = f"sha256={expected_digest}"
     if not hmac.compare_digest(provided, expected):
         raise HTTPException(status_code=401, detail="invalid webhook signature")
+
+
+async def require_runtime_host_auth(request: Request) -> None:
+    configured = getattr(getattr(request.app.state, "config", None), "runtime_host_shared_token", "").strip()
+    if not configured:
+        raise HTTPException(status_code=503, detail="runtime host token not configured")
+    provided = request.headers.get("x-runtime-host-token", "").strip()
+    if not provided or not hmac.compare_digest(provided, configured):
+        raise HTTPException(status_code=401, detail="invalid runtime host token")

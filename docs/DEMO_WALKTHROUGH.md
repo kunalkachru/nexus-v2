@@ -52,12 +52,20 @@ NEXUS is currently a support triage and incident investigation product with six 
 
 The six-stage flow forms a complete incident response pipeline from classification through remediation readiness, while keeping runtime replay explicitly bounded and optional.
 
+For packaged local demos, runtime replay can now be delegated to a private `runtime-host` service so the product can stay truthful even when the main app container is not Docker-capable.
+
 ## Local Setup
 
 ### Preferred: Docker
 
 ```bash
 ./scripts/docker_fresh.sh
+```
+
+For the packaged relay demo where the UI stays on `:7860` but replay is delegated to a Docker-capable sidecar, use:
+
+```bash
+ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
 ```
 
 Then open:
@@ -160,6 +168,7 @@ The runtime evidence narrative connects three stages, but only part of it is mea
 
 - the diagnosis hypothesis maps cleanly into one bounded reproduction path
 - when runtime replay is enabled, the proposed mitigation can be measured against the failure signature
+- when the packaged app is running in Docker, the same replay can be delegated to the runtime host instead of failing inside the app container
 - the selected mitigation can be explained against a visible runner-up instead of feeling arbitrary
 - escalation to a human reviewer includes evidence-backed confidence in the action
 

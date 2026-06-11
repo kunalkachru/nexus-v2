@@ -7,7 +7,26 @@ services:
     environment:
       APP_ENV: product
       PORT: 7860
+      NEXUS_RUNTIME_HOST_BASE_URL: ${NEXUS_RUNTIME_HOST_BASE_URL:-}
+      NEXUS_RUNTIME_HOST_SHARED_TOKEN: ${NEXUS_RUNTIME_HOST_SHARED_TOKEN:-}
     ports:
       - "7860:7860"
     volumes:
       - ./artifacts:/app/artifacts
+  runtime-host:
+    profiles: ["runtime-host"]
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime-host
+      args:
+        APP_ENV: product
+    environment:
+      APP_ENV: product
+      PORT: 7860
+      NEXUS_RUNTIME_HOST_SHARED_TOKEN: ${NEXUS_RUNTIME_HOST_SHARED_TOKEN:-nexus-runtime-host-token}
+      NEXUS_RUNTIME_HTTP_HOST: ${NEXUS_RUNTIME_HTTP_HOST:-127.0.0.1}
+      NEXUS_REPLICA_PACKS_ROOT: ${NEXUS_REPLICA_PACKS_ROOT:-/workspace/replica_packs}
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ${NEXUS_RUNTIME_HOST_SOURCE_PATH:-.}:${NEXUS_RUNTIME_HOST_SOURCE_PATH:-/workspace}
+      - /var/run/docker.sock:/var/run/docker.sock

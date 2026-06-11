@@ -3,13 +3,15 @@ set -euo pipefail
 
 python <<'PY'
 import json
+import os
 import time
 import urllib.error
 import urllib.request
 
+runtime_host = os.environ.get("NEXUS_RUNTIME_HTTP_HOST", "127.0.0.1")
 start = time.time()
 try:
-    response = urllib.request.urlopen("http://127.0.0.1:18080/checkout", timeout=8)
+    response = urllib.request.urlopen(f"http://{runtime_host}:18080/checkout", timeout=8)
     body = response.read().decode("utf-8")
     status_code = response.getcode()
 except urllib.error.HTTPError as exc:

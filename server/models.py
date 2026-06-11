@@ -248,6 +248,24 @@ class RuntimeHostCapability(BaseModel):
     message: str = ""
 
 
+class RuntimeHostReplayRequest(BaseModel):
+    incident_id: str = ""
+    issue_family: str
+    service: str
+    recent_logs: list[object] = Field(default_factory=list)
+    recent_deployments: list[object] = Field(default_factory=list)
+    execute_runtime: bool = True
+    mitigation_limit: int | None = None
+
+
+class RuntimeHostReplayResponse(BaseModel):
+    status: str
+    message: str
+    runtime_capability: dict[str, object] = Field(default_factory=dict)
+    execution_plan: dict[str, object] = Field(default_factory=dict)
+    execution_result: dict[str, object] = Field(default_factory=dict)
+
+
 class ReplicaInvestigationResult(BaseModel):
     incident_id: str
     environment_pack_id: str

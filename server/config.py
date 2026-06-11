@@ -21,3 +21,5 @@ class AppConfig(BaseModel):
     allowed_tenant_ids: list[str] = Field(default_factory=lambda: _env_list("NEXUS_ALLOWED_TENANT_IDS", ["tenant-a", "tenant-system"]))
     forge_model_name: str = Field(default_factory=lambda: _env("NEXUS_FORGE_MODEL_NAME", "gpt-4o"))
     use_live_llm: bool = Field(default_factory=lambda: _env("NEXUS_USE_OPENAI", "0") == "1")
+    runtime_host_base_url: str = Field(default_factory=lambda: _env("NEXUS_RUNTIME_HOST_BASE_URL", "").strip())
+    runtime_host_shared_token: str = Field(default_factory=lambda: _env("NEXUS_RUNTIME_HOST_SHARED_TOKEN", "").strip())

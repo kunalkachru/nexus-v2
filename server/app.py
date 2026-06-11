@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from server.audit import write_audit_log
-from server.auth import AuthenticatedContext, require_auth, require_role
+from server.auth import AuthenticatedContext, require_auth, require_role, require_runtime_host_auth
 from server.auth import verify_webhook_signature
 from server.config import AppConfig
 from server.db import DatabaseSession, create_session_factory, get_db
@@ -24,11 +24,13 @@ from server.integrations.models import (
     SlackIncidentCommand,
     StreamAnomalyReport,
 )
+from server.models import RuntimeHostReplayRequest
 from server.openai_keys import extract_request_openai_api_key
 from server.rate_limit import RateLimiter
 from server.services.incidents import IncidentService
 from server.services.live_demo import build_demo_payload
 from server.services.observability import ObservabilityService
+from server.services.replica_runtime import execute_runtime_host_replay
 from server.services.surface_payloads import build_platform_status, load_metrics_payload
 from server.services.tenancy import TenancyService
 
@@ -228,8 +230,8 @@ async def get_platform_status(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="platform_status")
-    payload = await asyncio.to_thread(load_metrics_payload)
-    response = build_platform_status(payload)
+    payload = await asyncio.to_thread(load_metrics_payload, request.app.state.config)
+    response = build_platform_status(payload, config=request.app.state.config)
     response["contract_surface"] = [
         "/webhooks/incident",
         "/api/v1/incidents/raw-text",
@@ -243,6 +245,7 @@ async def get_platform_status(
         "/api/v1/incidents/{incident_id}/guardian-review",
         "/api/v1/incidents/{incident_id}/execute",
         "/api/v1/incidents/{incident_id}/replica-replay",
+        "/api/v1/internal/runtime-host/replica-replay",
     ]
     await write_audit_log(
         "platform.status.read",
@@ -250,6 +253,15 @@ async def get_platform_status(
         {"user_id": auth.user_id},
     )
     return response
+
+
+@app.post("/api/v1/internal/runtime-host/replica-replay")
+async def runtime_host_replica_replay(
+    payload: RuntimeHostReplayRequest,
+    _: None = Depends(require_runtime_host_auth),
+) -> dict[str, object]:
+    response = await asyncio.to_thread(execute_runtime_host_replay, payload)
+    return response.model_dump(mode="json")
 
 
 @app.post("/api/v1/incidents/manual-report", status_code=202)
@@ -440,7 +452,8 @@ async def get_incident_status(
 @app.get("/api/metrics")
 async def get_metrics():
     try:
-        return await asyncio.to_thread(load_metrics_payload)
+        config = getattr(app.state, "config", AppConfig())
+        return await asyncio.to_thread(load_metrics_payload, config)
     except FileNotFoundError:
         return JSONResponse(status_code=404, content={"error": "metrics payload not found"})
     except json.JSONDecodeError:
