@@ -51,11 +51,48 @@ from server.services.enterprise_runtime import (
     build_trace_summary,
     build_triage_summary,
     build_training_enterprise_summary,
+    infer_issue_family,
+    runtime_aligned_candidate_fixes,
     runbook_score_from_candidates,
 )
 from training.runner import TrainingForgeClient
 
 logger = logging.getLogger(__name__)
+
+
+def _root_cause_from_issue_family(issue_family: str, service: str) -> str:
+    issue_family_text = issue_family.lower()
+    if "retry amplification" in issue_family_text:
+        return f"Timeout cascade caused by retry amplification in the {service or 'checkout'} authorization path."
+    if "pool exhaustion" in issue_family_text or "session leak" in issue_family_text:
+        return f"Database pool exhaustion caused by a leaked retry session path in {service or 'checkout'}."
+    if "certificate expiry" in issue_family_text:
+        return f"Trust boundary outage caused by an expired certificate on {service or 'the public edge'}."
+    if "memory leak" in issue_family_text:
+        return f"Runtime degradation caused by retained memory in {service or 'the worker fleet'}."
+    return f"Likely production incident pattern affecting {service or 'service'}."
+
+
+def _runtime_aligned_live_runbook(
+    *,
+    issue_family: str,
+    service: str,
+    reason: str,
+) -> dict[str, object]:
+    candidate_fixes = runtime_aligned_candidate_fixes(issue_family, service)
+    recommended = candidate_fixes[0]["action"] if candidate_fixes else f"Validate {service or 'service'} ownership and prepare rollback-safe mitigation."
+    summary_prefix = service or "service"
+    return {
+        "language": "bash",
+        "summary": f"Live mitigation plan for {summary_prefix}",
+        "selection_logic": (
+            f"Runtime-aligned candidate fixes were selected for the {issue_family.lower()} path so the live incident stays close to the bounded REPLICA packs."
+        ),
+        "candidate_fixes": candidate_fixes,
+        "recommended_runbook": recommended,
+        "reasoning": reason,
+        "cost_usd": 0.08,
+    }
 
 
 class IncidentService:
@@ -250,6 +287,25 @@ class IncidentService:
             tenant_id=tenant_id,
             source="manual_form",
             service=payload.affected_service,
+            raw_input_text="\n".join(
+                [
+                    f"service={payload.affected_service}",
+                    f"severity={severity}",
+                    f"summary={payload.root_cause_suspected or payload.additional_context or 'manual report'}",
+                    *[f"symptom={symptom}" for symptom in payload.symptoms],
+                ]
+            ),
+            normalized_evidence={
+                "service": payload.affected_service,
+                "severity": severity,
+                "signature": " / ".join(payload.symptoms[:2]) if payload.symptoms else (payload.root_cause_suspected or "Manual incident report"),
+                "evidence": payload.symptoms,
+                "reported_by": payload.reported_by,
+                "team": payload.team,
+                "additional_context": payload.additional_context,
+                "affected_regions": payload.affected_regions,
+                "affected_hosts": payload.affected_hosts,
+            },
         )
         incident = IncidentRecord.model_validate(created)
         recent_deployments = await self._deployment_lookup.get_recent_deployments(
@@ -552,10 +608,19 @@ class IncidentService:
                 "The pasted logs were normalized into service, severity, and signature before "
                 "routing through the agent flow."
             )
-        diagnosis = {
-            "root_cause": (
-                f"Live incident for {incident.service or 'service'} awaiting deeper observability enrichment"
+        issue_family = infer_issue_family(
+            " ".join(
+                [
+                    incident.title,
+                    incident.raw_input_text,
+                    raw_signature,
+                    " ".join(str(item) for item in observability["recent_logs"]),
+                ]
             ),
+            incident.title,
+        )
+        diagnosis = {
+            "root_cause": _root_cause_from_issue_family(issue_family, raw_service or incident.service or incident.nexus_incident_id),
             "confidence": 0.75,
             "supporting_logs": observability["recent_logs"],
             "correlation_analysis": (
@@ -566,9 +631,6 @@ class IncidentService:
             ),
         }
         if incident.raw_input_text:
-            diagnosis["root_cause"] = (
-                f"Likely {raw_signature.lower() if raw_signature else 'incident pattern'} affecting {raw_service or 'service'}"
-            )
             diagnosis["confidence"] = 0.8
             diagnosis["supporting_logs"] = [
                 raw_signature or "Raw input normalized from pasted logs",
@@ -580,25 +642,15 @@ class IncidentService:
             diagnosis["reasoning"] = (
                 "The console is showing the parsed raw incident text, the extracted evidence, and the inferred incident pattern."
             )
-        runbook = {
-            "language": "bash",
-            "summary": f"Live mitigation plan for {incident.service or 'service'}",
-            "selection_logic": "Prefer the safest rollback-ready response while the production observability adapters are expanded.",
-            "candidate_fixes": [
-                {"action": "Validate ownership and confirm incident scope", "success_rate": 0.92},
-                {"action": "Prepare rollback-safe mitigation and monitor audit trail", "success_rate": 0.86},
-            ],
-            "recommended_runbook": f"Validate {incident.service or 'service'} ownership and prepare rollback-safe mitigation.",
-            "reasoning": "The live incident view keeps the same remediation contract while using backend state instead of client synthesis.",
-            "cost_usd": 0.08,
-        }
+        runbook = _runtime_aligned_live_runbook(
+            issue_family=issue_family,
+            service=raw_service or incident.service or incident.nexus_incident_id,
+            reason="The live incident view keeps the remediation contract aligned to the same bounded runtime packs used in the flagship outage demos.",
+        )
         if incident.raw_input_text:
             runbook["summary"] = f"Remediation plan for the pasted {raw_service or 'service'} incident"
-            runbook["recommended_runbook"] = (
-                f"Validate {raw_service or 'service'} ownership, confirm the pasted signature, and prepare rollback-safe mitigation."
-            )
             runbook["reasoning"] = (
-                "The raw input has been normalized into a service and signature, so the remediation path can refer to the concrete incident evidence."
+                "The raw input has been normalized into a concrete issue family, so the remediation path can refer to the same runtime-backed mitigation set used by the seeded outage classes."
             )
         guardian = self._guardian_context(incident)
         guardian_decision = guardian["decision"]
@@ -929,9 +981,15 @@ class IncidentService:
             source_channel="raw_text",
             detected_signals=live_observability["recent_logs"],
         )
-        live_candidate_fixes = [
-            {"action": forge_output.runbook.summary, "success_rate": max(0.0, min(0.99, guardian_output.safety_score))},
-        ]
+        live_candidate_fixes = runtime_aligned_candidate_fixes(
+            str(triage_summary.get("issue_family", "")),
+            raw_service,
+        )
+        if live_candidate_fixes:
+            live_candidate_fixes[0]["success_rate"] = max(
+                float(live_candidate_fixes[0].get("success_rate", 0.0) or 0.0),
+                max(0.0, min(0.99, guardian_output.safety_score)),
+            )
         replica_summary = build_replica_summary(
             incident_id=incident.nexus_incident_id,
             triage_summary=triage_summary,

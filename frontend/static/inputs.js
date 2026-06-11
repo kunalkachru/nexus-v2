@@ -244,8 +244,8 @@ function setActiveChannel(card, cards) {
   const result = document.getElementById("channelResult");
   if (result) {
     result.textContent = card.dataset.channel === "raw_text"
-      ? "Paste raw logs or load the example to preview parsed evidence."
-      : "No intake parsed yet.";
+      ? "Paste raw logs or load the example to preview parsed evidence. For Docker-backed REPLICA replay after intake, start NEXUS with NEXUS_ENABLE_REPLICA_RUNTIME=1."
+      : "No intake parsed yet. For Docker-backed REPLICA replay after intake, start NEXUS with NEXUS_ENABLE_REPLICA_RUNTIME=1.";
   }
 }
 
@@ -260,7 +260,7 @@ function renderRawLogPreview(rawText) {
   if (result) {
     result.textContent = parsed.service === "-"
       ? "Paste raw logs or click Load example logs to preview parsed evidence."
-      : `Parsed ${parsed.service} as ${parsed.severity} with ${parsed.signature.toLowerCase()}.`;
+      : `Parsed ${parsed.service} as ${parsed.severity} with ${parsed.signature.toLowerCase()}. Runtime-backed replay becomes available when NEXUS_ENABLE_REPLICA_RUNTIME=1 is enabled.`;
   }
 }
 

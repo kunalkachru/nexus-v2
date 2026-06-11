@@ -1157,6 +1157,8 @@ def infer_issue_family(root_cause: str, incident_name: str) -> str:
     text = f"{root_cause} {incident_name}".lower()
     if "retry" in text and "timeout" in text:
         return "Timeout cascade / retry amplification"
+    if "timeout" in text and any(token in text for token in ("checkout", "auth", "payment", "gateway")):
+        return "Timeout cascade / retry amplification"
     if "pool" in text or "session leak" in text or "connection" in text:
         return "Database pool exhaustion / session leak"
     if "certificate" in text or "tls" in text or "handshake" in text:
@@ -1356,6 +1358,31 @@ def _runtime_delta_ms(baseline_duration: int | None, mitigation_duration: int | 
     return baseline_duration - mitigation_duration
 
 
+def runtime_aligned_candidate_fixes(issue_family: str, service: str) -> list[dict[str, object]]:
+    issue_family_text = issue_family.lower()
+    if "retry amplification" in issue_family_text or ("timeout" in issue_family_text and "retry" in issue_family_text):
+        return [
+            {"action": "Enable auth-svc circuit breaker and cap retries to 1", "success_rate": 0.9},
+            {"action": "Roll back auth-svc retry middleware", "success_rate": 0.87},
+            {"action": "Drain hot gateway pods and scale replicas +2", "success_rate": 0.8},
+        ]
+    if "pool exhaustion" in issue_family_text or "session leak" in issue_family_text:
+        return [
+            {"action": "Terminate orphaned sessions and restart checkout pods", "success_rate": 0.89},
+            {"action": "Roll back checkout retry patch", "success_rate": 0.86},
+            {"action": "Increase pool size temporarily to 650", "success_rate": 0.78},
+        ]
+    if "certificate expiry" in issue_family_text or "trust boundary" in issue_family_text:
+        return [
+            {"action": "Rotate the expired certificate", "success_rate": 0.93},
+            {"action": "Reload the active edge listener", "success_rate": 0.86},
+        ]
+    return [
+        {"action": f"Validate {service or 'service'} ownership and confirm incident scope", "success_rate": 0.9},
+        {"action": "Prepare rollback-safe mitigation and monitor audit trail", "success_rate": 0.82},
+    ]
+
+
 def _deployment_signal_summary(recent_deployments: list[object] | None) -> tuple[str, list[str]]:
     if not recent_deployments:
         return "", []
@@ -1370,6 +1397,21 @@ def _deployment_signal_summary(recent_deployments: list[object] | None) -> tuple
     if "certificate" in text or "rotation" in text:
         supporting_conditions.append("certificate rotation or listener deployment is part of the affected edge path")
     return text, supporting_conditions
+
+
+def _runtime_enablement_hint(
+    *,
+    scaffold_ready: bool,
+    runtime_executed: bool,
+    runtime_mode: str,
+) -> str:
+    if runtime_executed:
+        return "Docker-backed replay ran for this incident. REPLICA is showing measured baseline and mitigation outcomes."
+    if scaffold_ready:
+        return "Runtime scaffold is ready. Start NEXUS with NEXUS_ENABLE_REPLICA_RUNTIME=1 to execute Docker-backed replay instead of scaffold-only inference."
+    if runtime_mode == "inferred":
+        return "This incident is using inferred reproduction logic because no bounded runtime scaffold matches yet."
+    return "Runtime replay is not available for this incident yet."
 
 
 def build_replica_summary(
@@ -1500,20 +1542,26 @@ def build_replica_summary(
     if not reproduced_symptoms:
         reproduced_symptoms = default_reproduced_symptoms(issue_family, recent_logs or [])
 
-    runtime_comparison_summary = _runtime_comparison_summary(runtime_result)
     runtime_mitigations = _runtime_override_mitigations(
         runtime_result=runtime_result,
         default_checks=tested_mitigations,
     )
+    runtime_comparison_summary = _runtime_comparison_summary(runtime_result, runtime_mitigations)
     best_mitigation = next((item for item in runtime_mitigations if item.get("won")), runtime_mitigations[0] if runtime_mitigations else {})
     best_outcome_class = str(best_mitigation.get("outcome_class") or "")
     best_status_code = best_mitigation.get("status_code")
     best_duration_ms = best_mitigation.get("duration_ms")
     baseline_outcome_class = (
         "reproduced"
-        if reproduction_status == "reproduced" and not runtime_result
-        else ("validated" if runtime_result and runtime_result.replay_status_code is not None else "not_run")
+        if (runtime_result and isinstance(runtime_result.replay_status_code, int) and runtime_result.replay_status_code >= 500)
+        else (
+            "reproduced"
+            if reproduction_status == "reproduced" and not runtime_result
+            else ("validated" if runtime_result and runtime_result.replay_status_code is not None else "not_run")
+        )
     )
+    runtime_mode = "runtime_scaffold" if runtime_result else ("pack_scaffold" if runner_result and runner_result.compose_config_valid else "inferred")
+    scaffold_ready = bool(runner_result and runner_result.compose_config_valid and not runner_result.missing_assets)
 
     return {
         "incident_id": incident_id,
@@ -1523,8 +1571,8 @@ def build_replica_summary(
         "reproduced_symptoms": reproduced_symptoms,
         "hypothesis_supported": hypothesis_supported,
         "confidence_delta": confidence_delta,
-        "scaffold_ready": bool(runner_result and runner_result.compose_config_valid and not runner_result.missing_assets),
-        "runtime_mode": "runtime_scaffold" if runtime_result else ("pack_scaffold" if runner_result and runner_result.compose_config_valid else "inferred"),
+        "scaffold_ready": scaffold_ready,
+        "runtime_mode": runtime_mode,
         "runtime_executed": bool(runtime_result),
         "services_seen": list(runner_result.services_seen) if runner_result else [],
         "replay_output": runtime_result.replay_output if runtime_result else "",
@@ -1544,6 +1592,11 @@ def build_replica_summary(
             f"finished in state {best_outcome_class.replace('_', ' ') if best_outcome_class else 'not evaluated'}."
             if best_mitigation
             else "No runtime-backed mitigation comparison is available yet."
+        ),
+        "runtime_enablement_hint": _runtime_enablement_hint(
+            scaffold_ready=scaffold_ready,
+            runtime_executed=bool(runtime_result),
+            runtime_mode=runtime_mode,
         ),
         "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
         "tested_mitigations": runtime_mitigations,
@@ -1617,29 +1670,32 @@ def _runtime_override_mitigations(
     return rewritten
 
 
-def _runtime_comparison_summary(runtime_result: object | None) -> str:
+def _runtime_comparison_summary(
+    runtime_result: object | None,
+    runtime_mitigations: list[dict[str, object]] | None = None,
+) -> str:
     if not runtime_result:
         return ""
     baseline_status = getattr(runtime_result, "replay_status_code", None)
     baseline_duration = getattr(runtime_result, "replay_duration_ms", None)
-    statuses = list(getattr(runtime_result, "mitigation_status_codes", ()) or ())
-    durations = list(getattr(runtime_result, "mitigation_duration_ms", ()) or ())
     if baseline_status is None:
         return ""
-    if statuses:
-        first_status = statuses[0]
-        first_duration = durations[0] if durations else None
+    winner = next((item for item in (runtime_mitigations or []) if item.get("won")), (runtime_mitigations or [None])[0] if runtime_mitigations else None)
+    if isinstance(winner, dict):
+        best_action = str(winner.get("action") or "Selected mitigation")
+        best_status = winner.get("status_code")
+        best_duration = winner.get("duration_ms")
         outcome = _runtime_outcome_class(
             baseline_status=baseline_status,
-            mitigation_status=first_status,
+            mitigation_status=best_status,
             baseline_duration=baseline_duration,
-            mitigation_duration=first_duration,
+            mitigation_duration=best_duration,
         ).replace("_", " ")
         return (
             f"Baseline replay returned {baseline_status}"
             f"{f' at {baseline_duration}ms' if baseline_duration is not None else ''}; "
-            f"first mitigation replay returned {first_status}"
-            f"{f' at {first_duration}ms' if first_duration is not None else ''}"
+            f"best mitigation {best_action} returned {best_status}"
+            f"{f' at {best_duration}ms' if best_duration is not None else ''}"
             f" and the runtime outcome was {outcome}."
         )
     return f"Baseline replay returned {baseline_status}{f' at {baseline_duration}ms' if baseline_duration is not None else ''}."
@@ -1765,14 +1821,25 @@ def build_trace_summary(
     reasoning = "TRACE has not yet narrowed a code path for this incident."
     trace_status = "not_run"
     suspected_service = service
+    code_owner_team = "Platform Operations"
+    code_owner_slug = "@platform-ops"
+    suspected_files: list[str] = []
     inspection_point = "Wait for REPLICA to validate the likely failure path before opening a code investigation."
     replay_evidence_summary = runtime_comparison or "No runtime replay evidence is attached to this incident yet."
+    developer_handoff_summary = "TRACE has not prepared a developer handoff packet for this incident yet."
 
     if replica_summary.get("reproduction_status") == "reproduced":
         trace_status = "narrowed"
         if "retry amplification" in issue_family:
             suspected_modules = [module_name for module_name, _ in mapped_targets] or ["auth.middleware.retry", "gateway.timeout_guard", "auth.circuit_breaker"]
             suspected_functions = [function_name for _, function_name in mapped_targets] or ["apply_retry_policy", "await_upstream_auth", "record_timeout_budget"]
+            suspected_service = "auth-svc"
+            code_owner_team = "Identity Platform"
+            code_owner_slug = "@identity-platform"
+            suspected_files = [
+                "replica_packs/checkout-python-fastapi-auth-redis-v1/auth/auth_server.py",
+                "replica_packs/checkout-python-fastapi-auth-redis-v1/gateway/gateway_server.py",
+            ]
             expected_flow = "Auth retries should cap quickly and release gateway workers when upstream latency rises."
             observed_divergence = "Retry middleware continues scheduling upstream attempts after the timeout budget is exhausted."
             state_anomalies = ["retry_count exceeds policy cap", "worker pool stays occupied during downstream timeout wait"]
@@ -1790,9 +1857,19 @@ def build_trace_summary(
                 state_anomalies.append(runtime_comparison)
             confidence = 0.74 if "middleware" in deployment_text else 0.69
             reasoning = "TRACE narrowed the issue to the retry middleware path that keeps auth retries alive after the timeout budget is already exhausted."
+            developer_handoff_summary = (
+                f"Start with {suspected_files[0]} and hand this packet to {code_owner_team}. "
+                "The bounded replay shows the baseline request timing out until retries are capped or the circuit breaker is opened."
+            )
         elif "pool exhaustion" in issue_family or "session leak" in issue_family:
             suspected_modules = [module_name for module_name, _ in mapped_targets] or ["checkout.db.session", "checkout.retry_patch", "checkout.transaction_flow"]
             suspected_functions = [function_name for _, function_name in mapped_targets] or ["checkout_session_scope", "retry_checkout_write", "release_db_session"]
+            suspected_service = "checkout-svc"
+            code_owner_team = "Checkout Platform"
+            code_owner_slug = "@checkout-platform"
+            suspected_files = [
+                "replica_packs/checkout-python-fastapi-postgres-v1/checkout/checkout_server.py",
+            ]
             expected_flow = "Checkout retries should release DB sessions before re-entering the write path."
             observed_divergence = "Retry path retains a session handle long enough to exhaust the shared pool."
             state_anomalies = ["session count grows between retries", "pool checkout waits continue after request cancellation"]
@@ -1810,9 +1887,17 @@ def build_trace_summary(
                 state_anomalies.append(runtime_comparison)
             confidence = 0.76 if "retry" in deployment_text else 0.72
             reasoning = "TRACE narrowed the issue to the checkout retry patch where the session lifecycle no longer closes cleanly after failure."
+            developer_handoff_summary = (
+                f"Start with {suspected_files[0]} and hand this packet to {code_owner_team}. "
+                "The bounded replay shows the pool recovering only after the leaking retry path is removed or orphaned sessions are terminated."
+            )
         elif "certificate expiry" in issue_family:
             suspected_modules = ["edge.cert_loader", "edge.listener_config", "acme.rotation_job"]
             suspected_functions = ["load_public_certificate", "validate_chain_expiry", "reload_edge_listener"]
+            suspected_service = "edge-gateway"
+            code_owner_team = "Edge Reliability"
+            code_owner_slug = "@edge-reliability"
+            suspected_files = ["edge/cert_loader.py", "edge/listener.py"]
             expected_flow = "Edge listeners should always serve a valid public certificate chain."
             observed_divergence = "Expired certificate chain remained attached to the active listener after rotation was missed."
             state_anomalies = ["active cert serial differs from latest staged cert", "rotation timestamp exceeded renewal window"]
@@ -1820,9 +1905,14 @@ def build_trace_summary(
             replay_evidence_summary = "Replay evidence shows the edge listener continued to serve the stale certificate chain."
             confidence = 0.63
             reasoning = "TRACE narrowed the issue to the certificate loader and rotation path that failed to refresh the active listener."
+            developer_handoff_summary = "Inspect the certificate loader and listener reload path before any broader edge rollback."
         elif "memory leak" in issue_family:
             suspected_modules = ["image_worker.frame_cache", "image_worker.transform_pipeline", "image_worker.release_hooks"]
             suspected_functions = ["store_frame_buffer", "run_transform_batch", "release_decoded_frames"]
+            suspected_service = "image-worker"
+            code_owner_team = "Media Runtime"
+            code_owner_slug = "@media-runtime"
+            suspected_files = ["workers/image_worker.py", "workers/frame_cache.py"]
             expected_flow = "Completed image transform batches should release decoded frame buffers before the next queue pull."
             observed_divergence = "Decoded frame buffers remain strongly referenced after batch completion, so heap pressure compounds across replay cycles."
             state_anomalies = ["retained frame_buffer objects dominate the heap snapshot", "gc pauses grow as replayed batches accumulate"]
@@ -1832,6 +1922,7 @@ def build_trace_summary(
                 state_anomalies.append("runtime logs already point at a missing release hook after transform completion")
             confidence = 0.67
             reasoning = "TRACE narrowed the issue to the frame-cache release path where completed transform batches retain decoded buffers."
+            developer_handoff_summary = "Inspect the release hook and frame cache ownership path before attempting to recycle workers."
 
     return {
         "incident_id": incident_id,
@@ -1845,6 +1936,10 @@ def build_trace_summary(
         "state_anomalies": state_anomalies,
         "inspection_point": inspection_point,
         "replay_evidence_summary": replay_evidence_summary,
+        "code_owner_team": code_owner_team,
+        "code_owner_slug": code_owner_slug,
+        "suspected_files": suspected_files,
+        "developer_handoff_summary": developer_handoff_summary,
         "confidence": confidence,
         "reasoning": reasoning,
     }

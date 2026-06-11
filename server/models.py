@@ -261,6 +261,7 @@ class ReplicaInvestigationResult(BaseModel):
     best_mitigation_status_code: int | None = None
     best_mitigation_duration_ms: int | None = None
     best_mitigation_summary: str = ""
+    runtime_enablement_hint: str = ""
     tested_mitigations: list[ReplicaMitigationCheck] = Field(default_factory=list)
     reasoning: str = ""
 
@@ -277,6 +278,10 @@ class TraceInvestigationResult(BaseModel):
     state_anomalies: list[str] = Field(default_factory=list)
     inspection_point: str = ""
     replay_evidence_summary: str = ""
+    code_owner_team: str = ""
+    code_owner_slug: str = ""
+    suspected_files: list[str] = Field(default_factory=list)
+    developer_handoff_summary: str = ""
     confidence: float = Field(ge=0.0, le=1.0, default=0.0)
     reasoning: str = ""
 

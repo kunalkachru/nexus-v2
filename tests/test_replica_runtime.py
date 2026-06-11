@@ -99,6 +99,7 @@ def test_replica_runner_executes_db_pool_pack() -> None:
     assert result.replay_status_code == 503
     assert result.mode == "runtime_scaffold"
     assert result.mitigation_status_codes
+    assert len(result.mitigation_status_codes) == len(plan.mitigation_sequence)
 
 
 def test_replica_runner_inspect_degrades_when_docker_binary_is_unavailable(monkeypatch) -> None:

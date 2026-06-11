@@ -193,7 +193,7 @@ class ReplicaRunner:
             services_seen=services_seen,
         )
 
-    def execute_scaffold(self, plan: ReplicaExecutionPlan, *, mitigation_limit: int = 1) -> ReplicaExecutionResult:
+    def execute_scaffold(self, plan: ReplicaExecutionPlan, *, mitigation_limit: int | None = None) -> ReplicaExecutionResult:
         inspected = self.inspect_plan(plan)
         if inspected.missing_assets or not inspected.compose_config_valid:
             return inspected
@@ -211,7 +211,8 @@ class ReplicaRunner:
             replay_output = self._run_script(plan.pack.compose_file.parent / plan.replay_entrypoint)
             replay_status_code, replay_duration_ms = self._extract_replay_signal(replay_output)
             hooks_root = plan.pack.compose_file.parent / "hooks"
-            for hook_name in plan.mitigation_sequence[:mitigation_limit]:
+            selected_hooks = plan.mitigation_sequence if mitigation_limit is None else plan.mitigation_sequence[:mitigation_limit]
+            for hook_name in selected_hooks:
                 mitigation_outputs.append(self._run_script(hooks_root / f"{hook_name}.sh"))
                 rerun_output = self._run_script(plan.pack.compose_file.parent / plan.replay_entrypoint)
                 mitigation_outputs.append(rerun_output)

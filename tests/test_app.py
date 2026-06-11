@@ -174,5 +174,8 @@ def test_run_incident_returns_realistic_incident_context() -> None:
     assert payload["replica_summary"]["environment_pack_id"]
     assert payload["replica_summary"]["best_mitigation_action"]
     assert "runtime_comparison_summary" in payload["replica_summary"]
+    assert payload["replica_summary"]["runtime_enablement_hint"]
     assert payload["trace_summary"]["trace_status"]
     assert payload["trace_summary"]["inspection_point"]
+    assert payload["trace_summary"]["code_owner_team"]
+    assert payload["trace_summary"]["suspected_files"]

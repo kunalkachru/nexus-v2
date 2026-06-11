@@ -344,7 +344,8 @@ function renderSummary(data) {
     "incidentOverviewNote",
     `Detected ${incident.detected_at} via ${incident.source_channel || "webhook"} and active for ${incident.duration_minutes} minutes. Likely owner: ${triage.likely_owner_team || triage.likely_owner_service || "Platform Operations"}. Support queue: ${triage.support_queue || "Production escalation"}.`
   );
-  setText("operatorNextStep", `${nextStep} ${triage.manual_relay_removed || ""}`);
+  const runtimeHint = data.replica_summary?.runtime_enablement_hint || "";
+  setText("operatorNextStep", `${nextStep} ${triage.manual_relay_removed || ""}${runtimeHint ? ` ${runtimeHint}` : ""}`);
   setText(
     "liveReasoningDetail",
     data.llm_access?.message || (
@@ -519,6 +520,7 @@ function renderEnterprise(data) {
       : "No validated mitigation"
   );
   setText("replicaOutcome", titleCase(String(replica.best_mitigation_outcome_class || replica.baseline_outcome_class || "not_run").replace(/_/g, " ")));
+  setText("replicaRuntimeHint", replica.runtime_enablement_hint || "Runtime mode details are not available for this incident yet.");
   setText("replicaComparison", replica.runtime_comparison_summary || "Runtime comparison details are not available for this incident yet.");
   if (replica.scaffold_ready && (replica.services_seen || []).length) {
     setText("replicaPack", `${replica.environment_pack_id || "-"} · ${replica.services_seen.join(", ")}`);
@@ -537,17 +539,24 @@ function renderEnterprise(data) {
   setText("traceConfidence", trace.confidence ? percent(trace.confidence) : "0%");
   setText("traceReplayEvidence", trace.replay_evidence_summary || "Replay evidence is not available for this incident yet.");
   setText("traceInspectionPoint", trace.inspection_point || "TRACE has not narrowed an inspect-here-first path yet.");
+  setText(
+    "traceDeveloperHandoff",
+    trace.developer_handoff_summary
+      ? `${trace.developer_handoff_summary}${trace.code_owner_team ? ` Owner: ${trace.code_owner_team}` : ""}${trace.code_owner_slug ? ` (${trace.code_owner_slug})` : ""}.`
+      : "TRACE has not prepared a developer handoff packet yet."
+  );
   renderList(
     "traceModules",
     (trace.suspected_modules || []).length
       ? trace.suspected_modules.map((moduleName, index) => ({
           moduleName,
           functionName: (trace.suspected_functions || [])[index] || "",
+          fileName: (trace.suspected_files || [])[index] || "",
           divergence: trace.observed_divergence || "",
         }))
       : [{ moduleName: "No narrowed code path yet", functionName: "", divergence: trace.expected_flow || "TRACE has not run on this incident yet." }],
     (item) =>
-      `<li><strong>${item.moduleName}</strong>${item.functionName ? `<br><span class="section-note">${item.functionName}</span>` : ""}${item.divergence ? `<br><span class="section-note">${item.divergence}</span>` : ""}</li>`
+      `<li><strong>${item.moduleName}</strong>${item.functionName ? `<br><span class="section-note">${item.functionName}</span>` : ""}${item.fileName ? `<br><span class="section-note">${item.fileName}</span>` : ""}${item.divergence ? `<br><span class="section-note">${item.divergence}</span>` : ""}</li>`
   );
   renderList(
     "traceAnomalies",

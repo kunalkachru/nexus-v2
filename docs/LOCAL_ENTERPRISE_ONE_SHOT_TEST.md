@@ -138,6 +138,12 @@ NEXUS_ENABLE_REPLICA_RUNTIME=1 python demo.py
 
 Or start the local app with the same env var before opening the incident page.
 
+For the Docker path, use:
+
+```bash
+NEXUS_ENABLE_REPLICA_RUNTIME=1 ./scripts/docker_fresh.sh
+```
+
 Expected result:
 
 - REPLICA still uses the same flagged outage pack
@@ -145,7 +151,8 @@ Expected result:
 - replay and mitigation hook output are available in the `replica_summary` payload
 - the runtime comparison becomes explicit:
   - baseline replay status and duration
-  - first mitigation replay status and duration
+  - best mitigation replay status and duration
+  - explicit runtime mode guidance in the incident UI
 - for `INC001`, the bounded retry pack should show a 504 baseline and a faster post-mitigation replay
 - for `INC002`, the bounded DB pack should show a 503 baseline and a successful post-mitigation replay
 
@@ -192,6 +199,8 @@ Expected:
   - observed divergence
   - state anomalies
   - inspect-here-first guidance for engineering
+  - code owner/team guidance
+  - suspected files to inspect first
   - runtime anomalies should include the bounded replay status/duration when runtime mode is enabled
 - `Memory-grounded context` is visible
 - at least one similar incident is shown
