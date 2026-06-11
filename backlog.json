@@ -46,7 +46,7 @@
     "id": 11,
     "title": "TRACE developer handoff packet v2",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "build_trace_summary is correctly implemented — when reproduction_status == 'reproduced' it populates inspection_point, suspected_modules, suspected_functions, state_anomalies. The problem: replay_status_code and replay_duration_ms are None in scaffold/inferred mode (no Docker exec), so the condition 'if replay_status_code == 504 and replay_duration_ms' never fires and the state_anomalies list does not include the runtime replay evidence line. Fix: after item 9 sets best_mitigation_outcome_class and runtime_comparison_summary, those will be non-empty. build_trace_summary already reads runtime_comparison from replica_summary.get('runtime_comparison_summary') at line 1806 and appends it to state_anomalies when truthy. So fixing item 9 will cascade and fix item 11 automatically. Verify this is the case after item 9 lands. If inspection_point still does not cite runtime evidence, add a fallback sentence citing best_mitigation_action and best_mitigation_outcome_class from replica_summary.",
     "done_when": [
       "build_incident_response('INC001')['trace_summary']['inspection_point'] length > 80 chars and is not the default placeholder",
