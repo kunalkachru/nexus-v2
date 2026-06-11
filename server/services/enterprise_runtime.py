@@ -887,14 +887,17 @@ class EnterpriseNexusRuntime:
         blocked_controls = guardian_output.blocked_patterns or (
             ["destructive_runbook_guard"] if guardian_output.decision == "reject" else []
         )
-        if best_outcome == "resolved":
-            validated_clause = "Validated signals: REPLICA reproduced the failure and the leading mitigation resolved it in the bounded runtime."
-        elif best_outcome == "improved":
-            validated_clause = "Validated signals: REPLICA reproduced the failure and the leading mitigation improved the runtime behavior without fully clearing the failure."
+        if replica_summary.get("runtime_executed") and best_outcome == "resolved":
+            validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation resolved it in the bounded runtime."
+        elif replica_summary.get("runtime_executed") and best_outcome == "improved":
+            validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation improved the runtime behavior without fully clearing the failure."
         elif replica_summary.get("runtime_executed"):
-            validated_clause = "Validated signals: REPLICA reproduced the failure, but the tested mitigation did not materially improve the bounded runtime."
+            validated_clause = "Validated runtime signals: REPLICA reproduced the failure, but the tested mitigation did not materially improve the bounded runtime."
         else:
-            validated_clause = f"Validated signals: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} and TRACE is {trace_summary.get('trace_status', 'not_run')}."
+            validated_clause = (
+                f"Current signals are inferred from the bounded scaffold: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} "
+                f"and TRACE is {trace_summary.get('trace_status', 'not_run')}. Runtime replay has not executed in this live path."
+            )
         guardian_output = guardian_output.model_copy(
             update={
                 "risk_class": risk_class,
@@ -1276,13 +1279,12 @@ def build_mitigation_checks(
     for action, result, confidence_delta in fallback_checks:
         if candidate_actions and not any(action.lower() in candidate.lower() or candidate.lower() in action.lower() for candidate in candidate_actions):
             continue
-        outcome_class = "resolved" if confidence_delta > 0.07 else ("improved" if confidence_delta > 0.03 else "inferred_only")
         checks.append(
             {
                 "action": action,
                 "result": result,
                 "confidence_delta": confidence_delta,
-                "outcome_class": outcome_class,
+                "outcome_class": "inferred_only",
             }
         )
     if checks:
@@ -1292,7 +1294,7 @@ def build_mitigation_checks(
             "action": action,
             "result": result,
             "confidence_delta": confidence_delta,
-            "outcome_class": "resolved" if confidence_delta > 0.07 else ("improved" if confidence_delta > 0.03 else "inferred_only"),
+            "outcome_class": "inferred_only",
         }
         for action, result, confidence_delta in fallback_checks
     ]
@@ -1411,11 +1413,17 @@ def _runtime_enablement_hint(
     scaffold_ready: bool,
     runtime_executed: bool,
     runtime_mode: str,
+    compose_config_valid: bool,
+    docker_available: bool,
 ) -> str:
     if runtime_executed:
         return "Docker-backed replay ran for this incident. REPLICA is showing measured baseline and mitigation outcomes."
-    if scaffold_ready:
+    if scaffold_ready and compose_config_valid and docker_available:
         return "Runtime scaffold is ready. Start NEXUS with NEXUS_ENABLE_REPLICA_RUNTIME=1 to execute Docker-backed replay instead of scaffold-only inference."
+    if scaffold_ready and not docker_available:
+        return "This incident maps to a bounded runtime scaffold, but the current app environment cannot execute Docker-backed replay. Run NEXUS on a Docker-capable host with NEXUS_ENABLE_REPLICA_RUNTIME=1 to execute replay."
+    if scaffold_ready:
+        return "This incident maps to a bounded runtime scaffold, but the compose contract still needs validation before replay can run."
     if runtime_mode == "inferred":
         return "This incident is using inferred reproduction logic because no bounded runtime scaffold matches yet."
     return "Runtime replay is not available for this incident yet."
@@ -1467,6 +1475,8 @@ def build_replica_summary(
             supporting_conditions.append(
                 f"compose plan validates with services: {', '.join(runner_result.services_seen)}"
             )
+        if runner_result and not runner_result.docker_available:
+            supporting_conditions.append("docker binary is unavailable in the current app environment")
         if runtime_result and runtime_result.replay_output:
             supporting_conditions.append("runtime scaffold executed a replay hook successfully")
 
@@ -1567,8 +1577,8 @@ def build_replica_summary(
             else ("validated" if runtime_result and runtime_result.replay_status_code is not None else "not_run")
         )
     )
-    runtime_mode = "runtime_scaffold" if runtime_result else ("pack_scaffold" if runner_result and runner_result.compose_config_valid else "inferred")
-    scaffold_ready = bool(runner_result and runner_result.compose_config_valid and not runner_result.missing_assets)
+    runtime_mode = "runtime_scaffold" if runtime_result else ("pack_scaffold" if plan and runner_result and not runner_result.missing_assets else "inferred")
+    scaffold_ready = bool(plan and runner_result and not runner_result.missing_assets)
 
     return {
         "incident_id": incident_id,
@@ -1595,21 +1605,29 @@ def build_replica_summary(
         "best_mitigation_status_code": int(best_status_code) if isinstance(best_status_code, (int, float)) else None,
         "best_mitigation_duration_ms": int(best_duration_ms) if isinstance(best_duration_ms, (int, float)) else None,
         "best_mitigation_summary": (
-            f"{best_mitigation.get('action', 'No mitigation validated')} "
-            f"finished in state {best_outcome_class.replace('_', ' ') if best_outcome_class else 'not evaluated'}."
-            if best_mitigation
-            else "No runtime-backed mitigation comparison is available yet."
+            (
+                f"{best_mitigation.get('action', 'No mitigation validated')} "
+                f"finished in state {best_outcome_class.replace('_', ' ') if best_outcome_class else 'not evaluated'}."
+            )
+            if best_mitigation and runtime_result
+            else (
+                f"{best_mitigation.get('action', 'No mitigation selected')} is the leading scaffold-only mitigation candidate."
+                if best_mitigation
+                else "No runtime-backed mitigation comparison is available yet."
+            )
         ),
         "runtime_enablement_hint": _runtime_enablement_hint(
             scaffold_ready=scaffold_ready,
             runtime_executed=bool(runtime_result),
             runtime_mode=runtime_mode,
+            compose_config_valid=bool(runner_result and runner_result.compose_config_valid),
+            docker_available=bool(runner_result.docker_available) if runner_result else False,
         ),
         "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
         "tested_mitigations": runtime_mitigations,
         "reasoning": (
             f"{reasoning} "
-            f"{'The bounded runtime scaffold was executed for this run.' if runtime_result else ('The bounded runtime scaffold is validated and ready for replay execution.' if runner_result and runner_result.compose_config_valid and not runner_result.missing_assets else 'The bounded runtime scaffold is not fully ready yet.')}"
+            f"{'The bounded runtime scaffold was executed for this run.' if runtime_result else ('The bounded runtime scaffold is validated and ready for replay execution.' if runner_result and runner_result.compose_config_valid and not runner_result.missing_assets else ('The bounded runtime scaffold is mapped for this incident, but Docker-backed replay is unavailable in the current app environment.' if runner_result and not runner_result.missing_assets and not runner_result.docker_available else ('The bounded runtime scaffold is mapped for this incident, but the compose contract still needs validation.' if runner_result and not runner_result.missing_assets else 'The bounded runtime scaffold is not fully ready yet.')))}"
         ).strip(),
     }
 
@@ -1685,12 +1703,11 @@ def _runtime_comparison_summary(
         if not runtime_mitigations:
             return ""
         winner = next((item for item in runtime_mitigations if item.get("won")), runtime_mitigations[0] if runtime_mitigations else None)
-        if isinstance(winner, dict) and winner.get("outcome_class"):
+        if isinstance(winner, dict):
             best_action = str(winner.get("action") or "Selected mitigation")
-            outcome = str(winner.get("outcome_class") or "inferred_only").replace("_", " ")
             return (
-                f"Sandbox testing shows the mitigation '{best_action}' "
-                f"has a validated outcome class of {outcome} based on test results and confidence analysis."
+                f"Scaffold-only mode ranked '{best_action}' as the leading mitigation candidate. "
+                "Runtime replay has not validated this mitigation yet."
             )
         return ""
     baseline_status = getattr(runtime_result, "replay_status_code", None)

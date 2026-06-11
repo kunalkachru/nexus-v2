@@ -1,6 +1,7 @@
 import subprocess
+import shutil
 
-from server.services.enterprise_runtime import enrich_memory_with_runtime, rank_candidate_fixes_with_runtime
+from server.services.enterprise_runtime import build_replica_summary, enrich_memory_with_runtime, rank_candidate_fixes_with_runtime
 from server.services.replica_runtime import ReplicaRunner, build_execution_plan, registry, select_environment_pack, trace_targets_for_plan
 
 
@@ -112,14 +113,40 @@ def test_replica_runner_inspect_degrades_when_docker_binary_is_unavailable(monke
 
     assert plan is not None
 
-    def raise_missing(*args, **kwargs):
-        raise FileNotFoundError("docker")
-
-    monkeypatch.setattr(subprocess, "run", raise_missing)
+    monkeypatch.setattr(shutil, "which", lambda _: None)
 
     result = ReplicaRunner().inspect_plan(plan)
+    assert result.docker_available is False
     assert result.compose_config_valid is False
     assert result.services_seen == ()
+
+
+def test_replica_summary_keeps_pack_scaffold_when_docker_unavailable(monkeypatch) -> None:
+    monkeypatch.setattr(shutil, "which", lambda _: None)
+
+    summary = build_replica_summary(
+        incident_id="INC001",
+        triage_summary={
+            "issue_family": "Timeout cascade / retry amplification",
+            "likely_owner_service": "auth-svc",
+        },
+        root_cause="Runaway retry storm on downstream auth calls exhausted worker threads and drove API timeouts",
+        recent_logs=[
+            "09:05:12 WARN api-gateway retry budget exceeded for POST /payments after 4 upstream attempts",
+            "09:05:34 ERROR auth-svc upstream timeout after 5000ms request_id=req-8e12",
+            "09:06:01 WARN api-gateway worker pool saturation 93/96 workers busy",
+        ],
+        recent_deployments=[{"service": "auth-svc", "change": "Retry middleware refactor"}],
+        candidate_fixes=[
+            {"action": "Enable auth-svc circuit breaker and cap retries to 1", "success_rate": 0.91},
+        ],
+    )
+
+    assert summary["runtime_mode"] == "pack_scaffold"
+    assert summary["scaffold_ready"] is True
+    assert summary["best_mitigation_outcome_class"] == "inferred_only"
+    assert "cannot execute Docker-backed replay" in summary["runtime_enablement_hint"]
+    assert "Docker-backed replay is unavailable in the current app environment" in summary["reasoning"]
 
 
 def test_runtime_candidate_ranking_prefers_validated_mitigation() -> None:

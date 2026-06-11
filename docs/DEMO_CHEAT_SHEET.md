@@ -27,18 +27,18 @@ Meaning:
 
 - `SENTINEL` triages and frames the case
 - `PRISM` investigates likely cause and historical context
-- `REPLICA` runs bounded sandbox runtime testing to validate diagnosis and mitigations
+- `REPLICA` surfaces a bounded reproduction layer and can run sandbox replay when runtime execution is explicitly enabled
 - `TRACE` prepares investigation depth and developer handoff packet
 - `FORGE` prepares remediation with runtime-weighted candidate ranking
-- `GUARDIAN` governs the final decision, enriched by runtime validation
+- `GUARDIAN` governs the final decision, enriched by runtime evidence when available and scaffold-backed inference otherwise
 
 ## Key Innovation: Runtime Evidence Weighting
 
 The runtime layer (REPLICA) feeds outcome classes back into FORGE and GUARDIAN:
 
-- `resolved` — mitigation fully cleared the failure in sandbox
-- `improved` — mitigation improved behavior but did not fully resolve
-- `inferred_only` — no runtime-backed evidence yet
+- `resolved` — mitigation fully cleared the failure in measured runtime replay
+- `improved` — mitigation improved behavior in measured runtime replay but did not fully resolve it
+- `inferred_only` — scaffold-only ranking is available, but runtime replay has not validated the mitigation yet
 
 This outcome class shapes runbook selection priority and GUARDIAN's risk classification.
 
@@ -74,21 +74,21 @@ Why this is the best demo:
 | **Diagnosis** | Runaway retry storm → worker exhaustion | Leaked sessions → pool starvation |
 | **REPLICA Status** | reproduced | reproduced |
 | **Best Mitigation** | Circuit breaker + cap retries to 1 | Terminate orphaned sessions + restart |
-| **Outcome Class** | resolved (confidence_delta 0.08) | resolved (confidence_delta 0.06) |
-| **FORGE Cites** | "resolved in the bounded runtime" | "resolved in the bounded runtime" |
-| **GUARDIAN Risk** | LOW (resolved→drops high→medium/low) | MEDIUM (improved/resolved keeps medium) |
+| **Outcome Class** | `inferred_only` by default, `resolved` when runtime replay is enabled | `inferred_only` by default, `resolved` when runtime replay is enabled |
+| **FORGE Cites** | scaffold-only ranking by default, measured outcome when runtime replay runs | scaffold-only ranking by default, measured outcome when runtime replay runs |
+| **GUARDIAN Risk** | inferred posture by default, tighter runtime-backed posture when replay runs | inferred posture by default, tighter runtime-backed posture when replay runs |
 | **Approval** | Operator level | Operator level |
 | **Key Difference** | Retry path fully halted | Pool capacity restored |
 
-Both incidents show the complete runtime flow: REPLICA validates the hypothesis, FORGE weights by outcome, GUARDIAN adjusts risk and confidence accordingly.
+Both incidents show the complete investigation flow. Runtime replay is optional and bounded; when it runs, FORGE and GUARDIAN shift from scaffold-backed inference to measured outcome language.
 
 ## Fastest Demo Flow
 
 1. Open `/inputs` or use `/incident?nexus_incident_id=INC001`
 2. Explain each stage: SENTINEL (severity) → PRISM (root cause) → REPLICA (validated outcome)
 3. Show TRACE investigation depth and suggested modules
-4. Show FORGE reasoning citing runtime evidence
-5. Show GUARDIAN risk classification adjusted by runtime validation
+4. Show FORGE reasoning citing either scaffold-only ranking or measured runtime evidence, depending on mode
+5. Show GUARDIAN risk classification adjusted by the currently available evidence mode
 6. Click `Approve runbook`
 7. Show memory enrichment (why_now_fit for matching runbooks)
 

@@ -60,14 +60,17 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
     ranked_candidate_fixes = rank_candidate_fixes_with_runtime(details["forge"]["candidate_fixes"], replica_summary=replica_summary)
 
     best_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "")
-    if best_outcome == "resolved":
-        validated_clause = "Validated signals: REPLICA reproduced the failure and the leading mitigation resolved it in the bounded runtime."
-    elif best_outcome == "improved":
-        validated_clause = "Validated signals: REPLICA reproduced the failure and the leading mitigation improved the runtime behavior without fully clearing the failure."
+    if replica_summary.get("runtime_executed") and best_outcome == "resolved":
+        validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation resolved it in the bounded runtime."
+    elif replica_summary.get("runtime_executed") and best_outcome == "improved":
+        validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation improved the runtime behavior without fully clearing the failure."
     elif replica_summary.get("runtime_executed"):
-        validated_clause = "Validated signals: REPLICA reproduced the failure, but the tested mitigation did not materially improve the bounded runtime."
+        validated_clause = "Validated runtime signals: REPLICA reproduced the failure, but the tested mitigation did not materially improve the bounded runtime."
     else:
-        validated_clause = f"Validated signals: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} and TRACE is {trace_summary.get('trace_status', 'not_run')}."
+        validated_clause = (
+            f"Current signals are inferred from the bounded scaffold: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} "
+            f"and TRACE is {trace_summary.get('trace_status', 'not_run')}. Runtime replay has not executed in this seeded view."
+        )
 
     enriched_guardian_reasoning = (
         f"{validated_clause} "

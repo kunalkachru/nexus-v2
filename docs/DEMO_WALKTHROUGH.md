@@ -41,16 +41,16 @@ This is the strongest case because it has:
 
 ## What The Product Is Today
 
-NEXUS is currently a support triage and incident investigation product with six shipped visible agents:
+NEXUS is currently a support triage and incident investigation product with six visible investigation stages:
 
 - `SENTINEL` — incident classification
 - `PRISM` — root cause diagnosis
-- `REPLICA` — runtime evidence generation
+- `REPLICA` — bounded reproduction layer with optional runtime replay
 - `TRACE` — investigation depth and developer handoff
 - `FORGE` — runbook selection with runtime evidence weighting
-- `GUARDIAN` — safety review with runtime-aware posture
+- `GUARDIAN` — safety review that distinguishes runtime-backed evidence from scaffold-backed inference
 
-The six-agent flow forms a complete incident response pipeline from classification through remediation readiness.
+The six-stage flow forms a complete incident response pipeline from classification through remediation readiness, while keeping runtime replay explicitly bounded and optional.
 
 ## Local Setup
 
@@ -133,32 +133,32 @@ Open the created incident or use:
 
 - `SENTINEL`: likely severity, likely service, likely issue family
 - `PRISM`: evidence correlation, recent change analysis, and prior issue retrieval
-- `REPLICA`: bounded runtime sandbox testing to validate the diagnosis and mitigation effectiveness
+- `REPLICA`: bounded reproduction layer that can validate the diagnosis and mitigation effectiveness when runtime replay is enabled
 - `TRACE`: investigation depth, suspected modules, and developer handoff packet
-- `FORGE`: action preparation, mitigation comparison weighted by runtime evidence
-- `GUARDIAN`: review posture, risk posture with runtime evidence validation, and final approval or rejection
+- `FORGE`: action preparation, mitigation comparison weighted by measured runtime evidence when available and scaffold-only inference otherwise
+- `GUARDIAN`: review posture, risk posture that distinguishes validated runtime evidence from scaffold-only inference, and final approval or rejection
 
 ### Runtime Evidence Flow (REPLICA → FORGE → GUARDIAN)
 
-The runtime evidence narrative connects three stages:
+The runtime evidence narrative connects three stages, but only part of it is measured by default:
 
-1. **REPLICA** executes a bounded sandbox to reproduce the failure and test mitigations, producing:
-   - `best_mitigation_outcome_class`: resolved / improved / inferred_only
-   - `runtime_comparison_summary`: prose comparison of baseline vs mitigation
+1. **REPLICA** maps the incident to a bounded sandbox and, when runtime replay is enabled, reproduces the failure and tests mitigations. It produces:
+   - `best_mitigation_outcome_class`: `resolved` / `improved` when replay ran, `inferred_only` otherwise
+   - `runtime_comparison_summary`: measured baseline-vs-mitigation text when replay ran, scaffold-only ranking text otherwise
 
 2. **FORGE** uses the outcome class to weight runbook selection:
    - reasoning cites the mitigation outcome: "resolved," "improved," or "inferred"
    - candidate fixes ranked by action overlap with the tested mitigation
 
-3. **GUARDIAN** enriches its safety posture with runtime validation:
-   - `validated_clause` prepended to reasoning based on outcome class
-   - risk classification adjusted: "resolved" lowers risk from high→medium
-   - approval confidence increases when runtime evidence validates the hypothesis
+3. **GUARDIAN** enriches its safety posture with the current evidence mode:
+   - a validated runtime clause only when replay executed
+   - scaffold-only inference wording otherwise
+   - approval confidence can rise when measured runtime evidence validates the hypothesis
 
 ### What the runtime flow validates
 
-- the diagnosis hypothesis holds under bounded reproduction
-- the proposed mitigation actually clears the failure signature
+- the diagnosis hypothesis maps cleanly into one bounded reproduction path
+- when runtime replay is enabled, the proposed mitigation can be measured against the failure signature
 - escalation to a human reviewer includes evidence-backed confidence in the action
 
 ### What to validate

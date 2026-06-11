@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -41,6 +42,7 @@ class ReplicaExecutionResult:
     replay_ready: bool
     mitigation_hooks_ready: bool
     missing_assets: tuple[str, ...]
+    docker_available: bool = True
     compose_config_valid: bool = False
     services_seen: tuple[str, ...] = ()
     replay_output: str = ""
@@ -178,9 +180,10 @@ class ReplicaRunner:
             if not hook_path.exists():
                 missing_assets.append(str(hook_path))
 
+        docker_available = shutil.which("docker") is not None
         compose_config_valid = False
         services_seen: tuple[str, ...] = ()
-        if plan.pack.compose_file.exists():
+        if plan.pack.compose_file.exists() and docker_available:
             compose_config_valid, services_seen = self._compose_config(plan)
 
         return ReplicaExecutionResult(
@@ -189,6 +192,7 @@ class ReplicaRunner:
             replay_ready=replay_script.exists(),
             mitigation_hooks_ready=all((hooks_root / f"{hook_name}.sh").exists() for hook_name in plan.mitigation_sequence),
             missing_assets=tuple(missing_assets),
+            docker_available=docker_available,
             compose_config_valid=compose_config_valid,
             services_seen=services_seen,
         )
@@ -228,6 +232,7 @@ class ReplicaRunner:
             replay_ready=inspected.replay_ready,
             mitigation_hooks_ready=inspected.mitigation_hooks_ready,
             missing_assets=inspected.missing_assets,
+            docker_available=inspected.docker_available,
             compose_config_valid=inspected.compose_config_valid,
             services_seen=inspected.services_seen,
             replay_output=replay_output.strip(),

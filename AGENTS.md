@@ -1,197 +1,119 @@
-# NEXUS — Codex Agent Loop Instructions
+# NEXUS Agent Loop Instructions
 
-## What you are doing
+Use this file when running Codex or Claude in a commit-and-continue loop against a written backlog.
 
-Implement items 9–14 in backlog.json, one at a time, top to bottom.
-Never stop between items. Never ask for confirmation between items.
-Build → test → commit → next item.
+## Current Product State
 
----
+- Product shape: support triage and incident investigation workspace
+- Flagship incidents:
+  - `INC001` checkout timeout / retry amplification
+  - `INC002` checkout DB pool exhaustion / session leak
+- Current validated baseline:
+  - `pytest tests/ -q` -> `124 passed`
+  - `npm run browser:verify` -> `10 passed`
+  - `python demo.py` -> passes
+  - `./scripts/docker_fresh.sh` -> passes
+  - `BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes
 
-## The loop — follow exactly every iteration
+## What Loops Are For
 
-```
-1. Read backlog.json
-2. Find the first item where "status" == "pending"
-3. If none → print "NEXUS backlog complete." and stop
-4. Read the item's description and files_likely_touched fully
-5. Read every file mentioned before writing any code
-6. Implement the item
-7. Run every command in the item's test_gates array
-8. All gates pass?
-   YES → set status "done" in backlog.json
-         git add -A && git commit -m "feat(#<id>): <title>\n\n- <what changed>\n- tests: X passed"
-         go to step 1
-   NO  → read the failure, fix the code, re-run (up to 5 attempts)
-         after 5 failures → append to BLOCKERS.md, set status "blocked", commit, go to step 1
-```
+Loops are for draining a backlog file without stopping after every slice.
 
----
+Use a loop only when all three are true:
 
-## Before writing any code for an item
+1. The work is already decomposed into ordered backlog items.
+2. Each item has concrete completion criteria.
+3. Each item has explicit test gates.
 
-1. Read every file in files_likely_touched
-2. Read adjacent files for style context
-3. Run the failing test gates first to confirm the baseline failure before fixing
+If those are not true, write the backlog first. Do not improvise broad product work in a loop.
 
----
+## Loop Inputs
 
-## Stack facts — critical
+Before starting, the agent must read:
 
-- Backend: Python 3.11 / FastAPI
-- Frontend: **vanilla JS only — no React, no JSX, no npm build step**
-- Frontend files: `frontend/incident.html`, `frontend/static/incident.js`, `frontend/static/api.js`
-- Tests: pytest in `tests/` directory
-- Browser tests: Playwright via `npm run browser:verify` (auto-starts uvicorn on :8000)
-- Docker: `./scripts/docker_fresh.sh` — full rebuild, waits for :7860/health
-- Smoke: `BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh`
+1. `WORKING_STATE.md`
+2. the active backlog file, for example `backlog.json` or `backlog-next.json`
+3. any referenced docs for the target phase
 
----
+## Required Backlog Shape
 
-## Key file map
+Each backlog item should include:
 
-| What | Where |
-|---|---|
-| Incident context (live graph path) | `server/services/enterprise_runtime.py` |
-| Incident context (static/seeded path) | `server/services/surface_payloads.py` |
-| Static incident fixtures | `server/incident_payloads.py` |
-| Live demo path | `server/services/live_demo.py` |
-| Incident HTML | `frontend/incident.html` |
-| Incident JS | `frontend/static/incident.js` |
-| API contract tests | `tests/test_api_contract.py` |
-| App tests | `tests/test_app.py` |
-| Playwright spec | `tests/e2e/browser-verification.spec.js` |
-| Smoke script | `scripts/local_enterprise_smoke.sh` |
+- `id`
+- `title`
+- `priority`
+- `status` (`pending`, `done`, or `blocked`)
+- `description`
+- `done_when`
+- `test_gates`
+- `files_likely_touched`
 
-## Key function map
+## The Loop
 
-| Function | File | Line (approx) |
-|---|---|---|
-| `build_incident_response` | surface_payloads.py | ~29 |
-| `build_overlay_from_snapshot` | enterprise_runtime.py | ~355 |
-| `build_replica_summary` | enterprise_runtime.py | ~1417 |
-| `build_mitigation_checks` | enterprise_runtime.py | ~1270 |
-| `_runtime_outcome_class` | enterprise_runtime.py | ~1310 |
-| `_runtime_comparison_summary` | enterprise_runtime.py | ~1673 |
-| `rank_candidate_fixes_with_runtime` | enterprise_runtime.py | ~1704 |
-| `enrich_memory_with_runtime` | enterprise_runtime.py | ~1741 |
-| `build_trace_summary` | enterprise_runtime.py | ~1790 |
-| `_guardian_contract` | enterprise_runtime.py | ~1098 |
-| `_guardian_node` (live path) | enterprise_runtime.py | ~856 |
-| `_forge_node` (live path) | enterprise_runtime.py | ~770 |
+Run this exactly:
 
----
+1. Read the backlog file.
+2. Find the first item with `status == "pending"`.
+3. If none remain, stop and report backlog completion.
+4. Read every file listed in `files_likely_touched`.
+5. Implement the smallest complete slice that satisfies `done_when`.
+6. Run every command in `test_gates`.
+7. If all gates pass:
+   - update the item to `done`
+   - commit the slice
+   - continue to the next pending item
+8. If gates fail:
+   - debug and retry
+   - after repeated failure, mark the item `blocked`, document the blocker, commit the backlog state, then continue only if explicitly allowed by the backlog rules
 
-## Known pre-existing failures — do NOT fix these, do NOT let them block progress
+## Commit Rules
 
-```
-FAILED tests/test_replica_runtime.py::test_replica_runner_inspects_pack_scaffold_assets
-FAILED tests/test_replica_runtime.py::test_replica_runner_executes_db_pool_pack
-FAILED tests/test_security.py::test_webhook_requires_valid_signature
-```
+- Commit once per completed backlog item.
+- Keep commit messages intentional.
+- Recommended format:
 
-These 3 failures exist in the baseline (123 passed, 0 failed). Gate: `pytest tests/ -q` passes as long as the failed count does not increase beyond 3 and no new failures appear.
-
----
-
-## Test gate commands
-
-```bash
-# Primary — baseline is 123 passed, 0 failed (pre-existing); must not get worse
-pytest tests/ -q
-
-# Targeted
-pytest tests/test_api_contract.py tests/test_app.py -q
-
-# Inline assertions — run from repo root
-python3 -c "import sys; sys.path.insert(0,'.'); <assertion>"
-
-# Browser (auto-starts uvicorn :8000, runs Chromium headlessly)
-npm run browser:verify
-
-# Docker full rebuild — only required for items 12 and 14
-./scripts/docker_fresh.sh
-
-# Smoke against live Docker container — only after docker_fresh.sh
-BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
-
-# Demo
-python demo.py
-```
-
----
-
-## Incident IDs for all testing
-
-- `INC001` — checkout timeout / retry amplification — issue_family: "Timeout cascade / retry amplification"
-- `INC002` — checkout DB pool exhaustion / session leak — issue_family: "Database pool exhaustion / session leak"
-- Never invent other incident IDs for testing
-
----
-
-## DOM IDs that must exist after item 12
-
-The Playwright tests check for these IDs in incident.html. If they do not exist the browser tests will fail.
-
-```
-#runtimeComparisonBlock   — wrapper div for the comparison block
-#runtimeBaselineRow       — baseline status/duration row
-#runtimeMitigatedRow      — mitigated status/duration row  
-#runtimeOutcomeLabel      — text label: "resolved", "improved", or "not improved"
-#forgeReasoning           — already exists (line 118 incident.html)
-#guardianReasoning        — already exists (line 157 browser spec checks this)
-#traceInspectionPoint     — already exists (line 541 incident.js)
-```
-
----
-
-## Commit format
-
-```
+```text
 feat(#<id>): <title>
 
-- what changed (which functions/files)
-- test results: X passed, 0 pre-existing failures unchanged
+- what changed
+- tests: <key gates that passed>
 ```
 
----
+## Hard Rules
 
-## BLOCKERS.md append format
+- Never mark an item `done` without running its listed test gates.
+- Never skip browser or Docker gates when they are listed.
+- Never rename existing API response keys unless the backlog item explicitly requires it.
+- Never treat scaffold-only inference as runtime validation.
+- Never stop for confirmation between items unless the backlog says to pause.
+- Never overwrite unrelated user work.
 
-```markdown
-## BLOCKER: Item #<id> — <title>
-**Date:** YYYY-MM-DD
-**Attempts:** 5
-**Failing gate:** <exact command>
-**Last error:**
-<first 40 lines>
-**What was tried:** attempt 1... attempt 2...
-**Suggested human action:** <diagnosis>
-```
+## Current Code Map
 
----
+| Area | File |
+|---|---|
+| Seeded/static incident path | `server/services/surface_payloads.py` |
+| Live graph incident path | `server/services/enterprise_runtime.py` |
+| Runtime pack substrate | `server/services/replica_runtime.py` |
+| Incident fixtures | `server/incident_payloads.py` |
+| Incident UI | `frontend/incident.html` |
+| Incident client logic | `frontend/static/incident.js` |
+| Incident data loading and fallback synthesis | `frontend/static/api.js` |
+| API contract tests | `tests/test_api_contract.py` |
+| App tests | `tests/test_app.py` |
+| Runtime tests | `tests/test_replica_runtime.py` |
+| Browser verification | `tests/e2e/browser-verification.spec.js` |
 
-## Hard rules
+## Current Frontier
 
-- Never skip a test gate
-- Never mark "done" while any gate is failing (beyond the 0 pre-existing failures)
-- Never stop between items for confirmation
-- Never break a currently passing test
-- Never use React, JSX, or npm build steps in frontend
-- Never create a file that already exists — extend it
-- Never rename existing API response keys — only add new ones
-- Run all inline python3 assertions from the repo root with `sys.path.insert(0,'.')`
+The `9–14` backlog is complete. New loop runs should target a new backlog for the next frontier:
 
----
+1. real app-triggered runtime replay on a Docker-capable execution host
+2. stronger parity for fresh `nxs_...` incidents versus seeded incidents
+3. deeper TRACE developer packet with file-level and owner-level cues
+4. multi-mitigation REPLICA comparison surfaced in the decision packet
+5. final demo/docs sync for the runtime-host model
 
-## Baseline
+## Reference
 
-- Branch: `master`, baseline commit: `dce8c99`
-- Tests: `pytest tests/ -q` → 123 passed, 0 failed (pre-existing, do not fix)
-- Playwright: `npm run browser:verify` → 6 passed (will grow to 10 after item 12)
-
----
-
-## Start
-
-Read backlog.json. Find item 9. Read files_likely_touched. Confirm the baseline failure with a test run. Fix it. Proceed.
+See [docs/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOPS_RUNBOOK.md) for the operator-facing guide and prompt templates.
