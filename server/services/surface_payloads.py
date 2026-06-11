@@ -15,6 +15,7 @@ from server.services.enterprise_runtime import (
     build_training_enterprise_summary,
     build_triage_summary,
     rank_candidate_fixes_with_runtime,
+    enrich_memory_with_runtime,
 )
 
 
@@ -72,6 +73,17 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
         f"{validated_clause} "
         f"{details['guardian']['reasoning']}"
     ).strip()
+
+    memory_hits = {
+        "similar_incidents": [dict(item) for item in details.get("similar_past_incidents", [])],
+        "runbooks": [
+            {**dict(item), "runbook_summary": item.get("name", "")}
+            for item in details.get("recommended_runbooks", [])
+        ],
+        "unresolved_items": [],
+        "recent_guardian_outcomes": [],
+    }
+    memory_hits = enrich_memory_with_runtime(memory_hits, replica_summary=replica_summary)
 
     return {
         "incident": {
@@ -135,6 +147,7 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
         "triage_summary": triage_summary,
         "replica_summary": replica_summary,
         "trace_summary": trace_summary,
+        "memory_hits": memory_hits,
         "structured_result": {
             **build_structured_result(
                 incident_id=incident.id,

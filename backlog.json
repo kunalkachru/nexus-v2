@@ -91,7 +91,7 @@
     "id": 13,
     "title": "Memory linkage to runtime outcomes",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "enrich_memory_with_runtime is called in the live graph path (line 781, 972) but build_incident_response in surface_payloads.py does NOT call it and does NOT return memory_hits at all. Check: build_incident_response('INC001') has no 'memory_hits' key in its response dict. Fix: (1) add enrich_memory_with_runtime import to surface_payloads.py, (2) in build_incident_response, call it after building replica_summary, (3) return memory_hits in the response dict. After this, the Playwright test and smoke check for why_now_fit will work because enrich_memory_with_runtime already sets why_now_fit correctly when action overlap >= 0.2. Note: build_memory_pack is an async method on KnowledgeService — surface_payloads.py uses sync code. Use a deterministic sync fallback: read memory from incident_payloads details and enrich it.",
     "done_when": [
       "'memory_hits' key exists in build_incident_response('INC001') response",
