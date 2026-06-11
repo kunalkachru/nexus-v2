@@ -143,6 +143,11 @@ Expected result:
 - REPLICA still uses the same flagged outage pack
 - the runtime mode becomes runtime-backed for the local run
 - replay and mitigation hook output are available in the `replica_summary` payload
+- the runtime comparison becomes explicit:
+  - baseline replay status and duration
+  - first mitigation replay status and duration
+- for `INC001`, the bounded retry pack should show a 504 baseline and a faster post-mitigation replay
+- for `INC002`, the bounded DB pack should show a 503 baseline and a successful post-mitigation replay
 
 ## Manual Browser Test Cases
 
@@ -178,11 +183,13 @@ Expected:
   - reproduction status
   - tested mitigations
   - confidence delta
+  - if runtime mode is enabled locally, the pack/service footprint and replay comparison should be visible in the payload-backed wording
 - `Investigation depth · TRACE` is visible and shows:
   - trace status
   - likely modules/functions
   - observed divergence
   - state anomalies
+  - runtime anomalies should include the bounded replay status/duration when runtime mode is enabled
 - `Memory-grounded context` is visible
 - at least one similar incident is shown
 - at least one prior runbook memory is shown

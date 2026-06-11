@@ -80,3 +80,19 @@ def test_trace_targets_follow_selected_pack_source_map() -> None:
     targets = trace_targets_for_plan(plan)
     assert ("auth.middleware.retry", "apply_retry_policy") in targets
     assert ("gateway.timeout_guard", "await_upstream_auth") in targets
+
+
+def test_replica_runner_executes_db_pool_pack() -> None:
+    plan = build_execution_plan(
+        issue_family="Database pool exhaustion / session leak",
+        service="checkout-svc",
+        recent_logs=["QueuePool limit reached", "session leak"],
+        recent_deployments=[{"service": "checkout-svc", "change": "Retry-on-timeout patch"}],
+    )
+
+    assert plan is not None
+    result = ReplicaRunner().execute_scaffold(plan)
+    assert result.pack_id == "checkout-python-fastapi-postgres-v1"
+    assert result.replay_status_code == 503
+    assert result.mode == "runtime_scaffold"
+    assert result.mitigation_status_codes

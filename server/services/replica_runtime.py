@@ -48,6 +48,7 @@ class ReplicaExecutionResult:
     replay_duration_ms: int | None = None
     mitigation_outputs: tuple[str, ...] = ()
     mitigation_status_codes: tuple[int | None, ...] = ()
+    mitigation_duration_ms: tuple[int | None, ...] = ()
     mode: str = "scaffold"
 
 
@@ -202,6 +203,7 @@ class ReplicaRunner:
         replay_duration_ms: int | None = None
         mitigation_outputs: list[str] = []
         mitigation_status_codes: list[int | None] = []
+        mitigation_duration_ms: list[int | None] = []
         try:
             self._reset_runtime_state(plan)
             self._compose_up(plan)
@@ -213,8 +215,9 @@ class ReplicaRunner:
                 mitigation_outputs.append(self._run_script(hooks_root / f"{hook_name}.sh"))
                 rerun_output = self._run_script(plan.pack.compose_file.parent / plan.replay_entrypoint)
                 mitigation_outputs.append(rerun_output)
-                rerun_status_code, _ = self._extract_replay_signal(rerun_output)
+                rerun_status_code, rerun_duration = self._extract_replay_signal(rerun_output)
                 mitigation_status_codes.append(rerun_status_code)
+                mitigation_duration_ms.append(rerun_duration)
         finally:
             self._compose_down(plan)
 
@@ -231,6 +234,7 @@ class ReplicaRunner:
             replay_duration_ms=replay_duration_ms,
             mitigation_outputs=tuple(output.strip() for output in mitigation_outputs),
             mitigation_status_codes=tuple(mitigation_status_codes),
+            mitigation_duration_ms=tuple(mitigation_duration_ms),
             mode="runtime_scaffold",
         )
 
@@ -251,6 +255,13 @@ class ReplicaRunner:
         return True, services
 
     def _compose_up(self, plan: ReplicaExecutionPlan) -> None:
+        subprocess.run(
+            ["docker", "compose", "-f", str(plan.pack.compose_file), "down", "-v", "--remove-orphans"],
+            cwd=str(plan.pack.compose_file.parent),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
         subprocess.run(
             ["docker", "compose", "-f", str(plan.pack.compose_file), "up", "-d"],
             cwd=str(plan.pack.compose_file.parent),
@@ -308,6 +319,7 @@ class ReplicaRunner:
             defaults = {
                 "pool_limit.txt": "500\n",
                 "session_leak_enabled.txt": "1\n",
+                "pool_exhausted.txt": "1\n",
             }
         for name, value in defaults.items():
             (runtime_dir / name).write_text(value)
@@ -316,6 +328,8 @@ class ReplicaRunner:
         health_urls: list[str] = []
         if plan.pack.pack_id == "checkout-python-fastapi-auth-redis-v1":
             health_urls = ["http://127.0.0.1:18080/health", "http://127.0.0.1:18081/health"]
+        elif plan.pack.pack_id == "checkout-python-fastapi-postgres-v1":
+            health_urls = ["http://127.0.0.1:19080/health"]
         deadline = time.time() + plan.startup_timeout_seconds
         while time.time() < deadline:
             try:

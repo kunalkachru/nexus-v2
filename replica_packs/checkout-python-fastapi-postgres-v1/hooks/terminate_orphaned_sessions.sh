@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Mitigation scaffold: terminate orphaned DB sessions"
+RUNTIME_DIR="$(cd "$(dirname "$0")/../runtime" && pwd)"
+
+cat > "${RUNTIME_DIR}/pool_exhausted.txt" <<'EOF'
+0
+EOF
+echo "Mitigation applied: terminate orphaned DB sessions"

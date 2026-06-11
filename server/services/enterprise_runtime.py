@@ -787,6 +787,7 @@ class EnterpriseNexusRuntime:
             f"{' Why now: ' + str(top_runbook.get('why_now_fit')) + '.' if top_runbook.get('why_now_fit') else ''}"
             f"{' Runner-up: ' + str(runner_up.get('runbook_summary')) + '.' if runner_up else ''} "
             f"REPLICA: {replica_summary.get('reasoning', '')} "
+            f"{str(replica_summary.get('runtime_comparison_summary') or '')} "
             f"TRACE: {trace_summary.get('reasoning', '')} "
             "FORGE kept the plan biased toward reversible, lower-blast-radius actions first."
         )
@@ -879,6 +880,7 @@ class EnterpriseNexusRuntime:
                 "reasoning": (
                     f"{guardian_output.reasoning} "
                     f"Validated signals: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} and TRACE is {trace_summary.get('trace_status', 'not_run')}. "
+                    f"{str(replica_summary.get('runtime_comparison_summary') or '')} "
                     f"Inferred signals: memory-ranked analogs and diagnosis synthesis still inform the remaining confidence. "
                     f"Risk class {risk_class.upper()} requires {approval_level.replace('_', ' ')} approval. "
                     f"Rollback readiness is {rollback_readiness} and simulation readiness is {simulation_readiness}."
@@ -1423,6 +1425,8 @@ def build_replica_summary(
         "replay_duration_ms": runtime_result.replay_duration_ms if runtime_result else None,
         "mitigation_outputs": list(runtime_result.mitigation_outputs) if runtime_result else [],
         "mitigation_status_codes": list(runtime_result.mitigation_status_codes) if runtime_result else [],
+        "mitigation_duration_ms": list(runtime_result.mitigation_duration_ms) if runtime_result else [],
+        "runtime_comparison_summary": _runtime_comparison_summary(runtime_result),
         "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
         "tested_mitigations": _runtime_override_mitigations(
             runtime_result=runtime_result,
@@ -1444,6 +1448,7 @@ def _runtime_override_mitigations(
         return default_checks
     outputs = list(getattr(runtime_result, "mitigation_outputs", ()) or ())
     statuses = list(getattr(runtime_result, "mitigation_status_codes", ()) or ())
+    durations = list(getattr(runtime_result, "mitigation_duration_ms", ()) or ())
     if not outputs:
         return default_checks
     rewritten: list[dict[str, object]] = []
@@ -1453,18 +1458,41 @@ def _runtime_override_mitigations(
         hook_output = outputs[index]
         replay_output = outputs[index + 1] if index + 1 < len(outputs) else ""
         status = statuses[index // 2] if index // 2 < len(statuses) else None
+        duration = durations[index // 2] if index // 2 < len(durations) else None
         rewritten.append(
             {
                 "action": default.get("action", f"Mitigation {index // 2 + 1}"),
                 "result": (
                     f"{str(hook_output).splitlines()[0] if hook_output else 'Hook executed'}"
                     f"{f' -> replay status {status}' if status is not None else ''}"
+                    f"{f' at {duration}ms' if duration is not None else ''}"
                     f"{f' | {str(replay_output).splitlines()[-1]}' if replay_output else ''}"
                 ),
                 "confidence_delta": default.get("confidence_delta", 0.0),
             }
         )
     return rewritten or default_checks
+
+
+def _runtime_comparison_summary(runtime_result: object | None) -> str:
+    if not runtime_result:
+        return ""
+    baseline_status = getattr(runtime_result, "replay_status_code", None)
+    baseline_duration = getattr(runtime_result, "replay_duration_ms", None)
+    statuses = list(getattr(runtime_result, "mitigation_status_codes", ()) or ())
+    durations = list(getattr(runtime_result, "mitigation_duration_ms", ()) or ())
+    if baseline_status is None:
+        return ""
+    if statuses:
+        first_status = statuses[0]
+        first_duration = durations[0] if durations else None
+        return (
+            f"Baseline replay returned {baseline_status}"
+            f"{f' at {baseline_duration}ms' if baseline_duration is not None else ''}; "
+            f"first mitigation replay returned {first_status}"
+            f"{f' at {first_duration}ms' if first_duration is not None else ''}."
+        )
+    return f"Baseline replay returned {baseline_status}{f' at {baseline_duration}ms' if baseline_duration is not None else ''}."
 
 
 def build_trace_summary(
@@ -1483,6 +1511,7 @@ def build_trace_summary(
     mitigation_actions = [str(item.get("action", "")).strip() for item in replica_summary.get("tested_mitigations", []) if isinstance(item, dict)]
     replay_status_code = replica_summary.get("replay_status_code")
     replay_duration_ms = replica_summary.get("replay_duration_ms")
+    runtime_comparison = str(replica_summary.get("runtime_comparison_summary") or "")
     plan = build_execution_plan(
         issue_family=str(triage_summary.get("issue_family", "")),
         service=service,
@@ -1516,6 +1545,8 @@ def build_trace_summary(
                 state_anomalies.append("runtime starvation confirms the retry path is blocking gateway capacity, not just auth latency")
             if replay_status_code == 504 and replay_duration_ms:
                 state_anomalies.append(f"runtime replay reproduced a 504 after {replay_duration_ms}ms before mitigation")
+            if runtime_comparison:
+                state_anomalies.append(runtime_comparison)
             confidence = 0.74 if "middleware" in deployment_text else 0.69
             reasoning = "TRACE narrowed the issue to the retry middleware path that keeps auth retries alive after the timeout budget is already exhausted."
         elif "pool exhaustion" in issue_family or "session leak" in issue_family:
@@ -1532,6 +1563,8 @@ def build_trace_summary(
                 state_anomalies.append("runtime logs confirm sessions remain open after request cancellation")
             if replay_status_code and replay_duration_ms:
                 state_anomalies.append(f"runtime replay returned status {replay_status_code} after {replay_duration_ms}ms under the bounded pool")
+            if runtime_comparison:
+                state_anomalies.append(runtime_comparison)
             confidence = 0.76 if "retry" in deployment_text else 0.72
             reasoning = "TRACE narrowed the issue to the checkout retry patch where the session lifecycle no longer closes cleanly after failure."
         elif "certificate expiry" in issue_family:

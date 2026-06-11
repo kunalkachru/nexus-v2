@@ -1,12 +1,17 @@
 services:
   checkout:
-    image: python:3.13-slim
-    command: ["sh", "-c", "echo checkout pack scaffold ready && sleep infinity"]
+    build:
+      context: ./checkout
+    command: ["python", "/app/checkout_server.py"]
+    volumes:
+      - ./runtime:/runtime
+    ports:
+      - "19080:8000"
     healthcheck:
-      test: ["CMD", "python", "-c", "print('ok')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 5s
       timeout: 3s
-      retries: 3
+      retries: 10
 
   postgres:
     image: postgres:16-alpine
@@ -14,6 +19,8 @@ services:
       POSTGRES_PASSWORD: nexus
       POSTGRES_USER: nexus
       POSTGRES_DB: checkout
+    ports:
+      - "15432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nexus -d checkout"]
       interval: 5s
