@@ -180,7 +180,7 @@
     "id": 66,
     "title": "Fresh-incident truth gate for live intake",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make fresh `nxs_...` incidents obey the same truth boundaries as the flagship seeded cases. A live incident should not imply replay, debugger support, or runtime validation unless a curated pack was actually selected and the evidence was truly produced.",
     "implementation_tasks": [
       "tighten fresh-incident packet assembly so runtime and debugger claims are gated on actual pack support and actual execution evidence",
