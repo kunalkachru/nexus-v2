@@ -215,7 +215,7 @@
     "id": 67,
     "title": "Debugger evidence contract v2",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Turn the bounded debugger packet into a stricter contract. Every debugger packet should explicitly say which pack it is bounded to, what replay evidence anchors it, which files and functions to inspect first, and how unsupported states are represented. This keeps the debugger story honest and more useful for engineering handoff.",
     "implementation_tasks": [
       "define required debugger packet fields for supported and unsupported incident classes",
