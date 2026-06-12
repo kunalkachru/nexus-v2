@@ -170,7 +170,7 @@
     "id": 60,
     "title": "Final product-design polish and story sync",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "After the new engineering-delivery and governance surfaces land, do a final polish pass to keep the product coherent. This is not another random redesign; it is a story-sync pass so queue, incident, training, replay, exports, and docs all feel like one enterprise workflow product.",
     "done_when": [
       "the product surfaces feel coherent after the new export, runtime-host, and audit additions",
