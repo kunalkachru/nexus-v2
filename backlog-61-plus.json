@@ -249,7 +249,7 @@
     "id": 68,
     "title": "End-to-end truthfulness suite and readiness checkpoint",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Close the phase with a deliberate truthfulness checkpoint. Strengthen the test and manual validation story around the two flagship incidents plus a fresh live incident, and publish an owner-facing readiness summary that states exactly what is real today, what remains bounded, and what is still not enterprise-ready.",
     "implementation_tasks": [
       "expand automated checks for INC001, INC002, and a fresh live incident across browser and Docker paths",

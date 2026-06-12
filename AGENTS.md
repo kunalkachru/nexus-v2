@@ -8,7 +8,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
 - Flagship incidents:
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
-- Current validated baseline (post items 54–60):
+- Current validated baseline (post items 61–68 hardening phase):
   - `pytest tests/ -q` -> `141 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes

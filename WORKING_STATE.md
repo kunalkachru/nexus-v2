@@ -9,8 +9,8 @@ Items `35–40`: **complete**
 Items `41–46`: **complete**
 Items `47–53`: **complete**
 Items `54–60`: **complete**
-Items `61–68`: **planned in `backlog-61-plus.json`**
-Next phase: hardening and truthfulness checkpoint
+Items `61–68`: **complete** (hardening and truthfulness checkpoint)
+Next phase: ready for breadth expansion or production hardening
 
 ## App In One Sentence
 
@@ -19,7 +19,7 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 ## Baseline State
 
 - Branch: `master`
-- Baseline feature slice through item `60`: `beeac7e`
+- Baseline feature slice through item `68` (hardening complete): latest commit
 - `pytest tests/ -q` → **141 passed**
 - `npm run browser:verify` → **11 passed**
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
