@@ -16,6 +16,54 @@ from server.models import RuntimeHostReplayRequest, RuntimeHostReplayResponse
 DEFAULT_REPLICA_PACKS_ROOT = Path(__file__).resolve().parents[2] / "replica_packs"
 
 
+class EvidencePosture:
+    """Shared evidence-posture vocabulary across seeded/live/exports/UI.
+
+    Evidence tiers define the level of validation backing a claim:
+    - validated_runtime: replay executed and produced measurable signals
+    - runtime_ready: replay available but not executed
+    - inferred_only: scaffold-only inference, no runtime backing
+    - bounded_debugger: debugger packet produced for specific pack
+    """
+
+    VALIDATED_RUNTIME = "validated_runtime"
+    RUNTIME_READY = "runtime_ready"
+    INFERRED_ONLY = "inferred_only"
+    BOUNDED_DEBUGGER = "bounded_debugger"
+
+    @staticmethod
+    def validated_clause(
+        *,
+        runtime_executed: bool,
+        best_outcome_class: str | None = None,
+        replay_status_code: int | None = None,
+    ) -> str:
+        """Build a consistent validated/inferred clause for all surfaces."""
+        if not runtime_executed:
+            return "Current signals are inferred-only: no bounded runtime replay has executed."
+
+        outcome = str(best_outcome_class or "").replace("_", " ").strip() or "analyzed"
+        if outcome == "resolved":
+            return "Validated runtime signals: bounded REPLICA reproduced the failure and the proposed mitigation resolved it."
+        elif outcome == "improved":
+            return "Validated runtime signals: bounded REPLICA reproduced the failure and the proposed mitigation improved it without fully resolving."
+        else:
+            return f"Validated runtime signals: bounded REPLICA reproduced the failure with HTTP {replay_status_code or 'unknown'} but tested mitigations did not resolve."
+
+    @staticmethod
+    def evidence_tier_for_context(
+        *,
+        runtime_executed: bool,
+        debugger_available: bool = False,
+    ) -> str:
+        """Determine the evidence tier for a context."""
+        if debugger_available:
+            return EvidencePosture.BOUNDED_DEBUGGER
+        if runtime_executed:
+            return EvidencePosture.VALIDATED_RUNTIME
+        return EvidencePosture.INFERRED_ONLY
+
+
 def replica_packs_root() -> Path:
     override = os.getenv("NEXUS_REPLICA_PACKS_ROOT", "").strip()
     return Path(override) if override else DEFAULT_REPLICA_PACKS_ROOT

@@ -75,7 +75,7 @@
     "id": 63,
     "title": "Evidence posture contract across seeded and live paths",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Create one evidence-posture contract for the whole product so every incident surface uses the same truth labels. Runtime-backed, scaffold-only, inferred-only, bounded-debugger, and runtime-host-relay language should come from a shared contract rather than drift between seeded fixtures, live graph output, exports, and UI prose.",
     "implementation_tasks": [
       "introduce a shared evidence-posture contract builder or mapper used by both seeded and live payload assembly",

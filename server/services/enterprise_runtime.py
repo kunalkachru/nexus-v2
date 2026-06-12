@@ -34,6 +34,7 @@ from server.services.replica_runtime import (
     build_hypothesis_packet,
     build_runtime_host_relay_status,
     trace_targets_for_plan,
+    EvidencePosture,
 )
 
 
@@ -583,17 +584,11 @@ class EnterpriseNexusRuntime:
         blocked_controls = list(updated_guardian.get("blocked_controls") or updated_guardian.get("policy_violations") or [])
         if not blocked_controls and guardian_decision == "reject":
             blocked_controls = ["destructive_runbook_guard"]
-        if replica_summary.get("runtime_executed") and best_outcome == "resolved":
-            validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation resolved it in the bounded runtime."
-        elif replica_summary.get("runtime_executed") and best_outcome == "improved":
-            validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation improved the runtime behavior without fully clearing the failure."
-        elif replica_summary.get("runtime_executed"):
-            validated_clause = "Validated runtime signals: REPLICA reproduced the failure, but the tested mitigation did not materially improve the bounded runtime."
-        else:
-            validated_clause = (
-                f"Current signals are inferred from the bounded scaffold: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} "
-                f"and TRACE is {trace_summary.get('trace_status', 'not_run')}. Runtime replay has not executed in this live path."
-            )
+        validated_clause = EvidencePosture.validated_clause(
+            runtime_executed=bool(replica_summary.get("runtime_executed")),
+            best_outcome_class=best_outcome or None,
+            replay_status_code=replica_summary.get("replay_status_code"),
+        )
         guardian_reasoning = (
             f"{str(updated_guardian.get('reasoning', '')).strip()} "
             f"{validated_clause} "
@@ -1131,17 +1126,11 @@ class EnterpriseNexusRuntime:
         blocked_controls = guardian_output.blocked_patterns or (
             ["destructive_runbook_guard"] if guardian_output.decision == "reject" else []
         )
-        if replica_summary.get("runtime_executed") and best_outcome == "resolved":
-            validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation resolved it in the bounded runtime."
-        elif replica_summary.get("runtime_executed") and best_outcome == "improved":
-            validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation improved the runtime behavior without fully clearing the failure."
-        elif replica_summary.get("runtime_executed"):
-            validated_clause = "Validated runtime signals: REPLICA reproduced the failure, but the tested mitigation did not materially improve the bounded runtime."
-        else:
-            validated_clause = (
-                f"Current signals are inferred from the bounded scaffold: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} "
-                f"and TRACE is {trace_summary.get('trace_status', 'not_run')}. Runtime replay has not executed in this live path."
-            )
+        validated_clause = EvidencePosture.validated_clause(
+            runtime_executed=bool(replica_summary.get("runtime_executed")),
+            best_outcome_class=best_outcome or None,
+            replay_status_code=replica_summary.get("replay_status_code"),
+        )
         guardian_output = guardian_output.model_copy(
             update={
                 "risk_class": risk_class,

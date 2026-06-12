@@ -10,7 +10,7 @@ from server.artifacts import get_artifact_summary
 from server.services.observability import ObservabilityService
 from server.services.result_contracts import build_structured_result
 from server.services.priority import normalize_priority_label, priority_snapshot
-from server.services.replica_runtime import build_runtime_host_relay_status
+from server.services.replica_runtime import build_runtime_host_relay_status, EvidencePosture
 from server.services.enterprise_runtime import (
     build_replica_summary,
     build_trace_summary,
@@ -62,17 +62,12 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
     ranked_candidate_fixes = rank_candidate_fixes_with_runtime(details["forge"]["candidate_fixes"], replica_summary=replica_summary)
 
     best_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "")
-    if replica_summary.get("runtime_executed") and best_outcome == "resolved":
-        validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation resolved it in the bounded runtime."
-    elif replica_summary.get("runtime_executed") and best_outcome == "improved":
-        validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation improved the runtime behavior without fully clearing the failure."
-    elif replica_summary.get("runtime_executed"):
-        validated_clause = "Validated runtime signals: REPLICA reproduced the failure, but the tested mitigation did not materially improve the bounded runtime."
-    else:
-        validated_clause = (
-            f"Current signals are inferred from the bounded scaffold: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} "
-            f"and TRACE is {trace_summary.get('trace_status', 'not_run')}. Runtime replay has not executed in this seeded view."
-        )
+    replay_status_code = replica_summary.get("replay_status_code")
+    validated_clause = EvidencePosture.validated_clause(
+        runtime_executed=bool(replica_summary.get("runtime_executed")),
+        best_outcome_class=best_outcome or None,
+        replay_status_code=int(replay_status_code) if replay_status_code else None,
+    )
 
     enriched_guardian_reasoning = (
         f"{validated_clause} "
