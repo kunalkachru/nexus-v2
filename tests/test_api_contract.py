@@ -564,6 +564,10 @@ def test_live_incident_context_contract_returns_backend_evidence(client: TestCli
     assert payload["replica_summary"]["environment_pack_id"]
     assert payload["replica_summary"]["runtime_comparison_summary"] is not None
     assert payload["replica_summary"]["best_mitigation_action"]
+    assert payload["replica_summary"]["hypothesis_packet"]["supported"] is True
+    assert payload["replica_summary"]["hypothesis_packet"]["incident_class"] == "timeout_retry_amplification"
+    assert payload["replica_summary"]["hypothesis_packet"]["triggering_conditions"]
+    assert payload["replica_summary"]["hypothesis_packet"]["expected_failure_signature"]
     assert payload["replica_summary"]["runtime_capability"]["state"] in {
         "replay_available",
         "host_unavailable",
@@ -951,6 +955,8 @@ def test_live_raw_text_incident_persists_replay_evidence_and_relay_provenance(
     assert context_payload["replica_summary"]["runtime_provenance"]["label"] == "Delegated runtime host replay"
     assert context_payload["replica_summary"]["runtime_trust_packet"]["decision"] == "executed"
     assert context_payload["replica_summary"]["runtime_trust_packet"]["execution_mode"] == "delegated_relay"
+    assert context_payload["replica_summary"]["hypothesis_packet"]["supported"] is True
+    assert context_payload["replica_summary"]["hypothesis_packet"]["incident_class"] == "timeout_retry_amplification"
     assert context_payload["trace_summary"]["runtime_provenance"]["mode"] == "delegated_relay"
     assert "runtime host" in context_payload["trace_summary"]["developer_handoff_summary"].lower()
     assert context_payload["incident"]["normalized_evidence"]["latest_replay"]["status"] == "relay_executed"
@@ -1015,6 +1021,9 @@ def test_live_raw_text_incident_refresh_uses_persisted_replay_packet(
     assert context_payload["replica_summary"]["runtime_executed"] is True
     assert context_payload["replica_summary"]["best_mitigation_action"] == "Terminate orphaned sessions and restart checkout pods"
     assert context_payload["replica_summary"]["runtime_provenance"]["mode"] == "direct_runtime"
+    assert context_payload["replica_summary"]["hypothesis_packet"]["supported"] is True
+    assert context_payload["replica_summary"]["hypothesis_packet"]["incident_class"] == "db_pool_exhaustion"
+    assert context_payload["replica_summary"]["hypothesis_packet"]["expected_failure_signature"]
     assert context_payload["trace_summary"]["runtime_provenance"]["mode"] == "direct_runtime"
     assert context_payload["trace_summary"]["suspected_files"][0].endswith("checkout_server.py")
     assert "trace_ownership_map.json" in context_payload["trace_summary"]["code_owner_source"]
@@ -1221,6 +1230,8 @@ def test_incident_context_defaults_to_deterministic_without_user_key(client: Tes
     assert payload["replica_summary"]["tested_mitigations"] is not None
     assert payload["replica_summary"]["best_mitigation_summary"] is not None
     assert payload["replica_summary"]["runtime_enablement_hint"] is not None
+    assert payload["replica_summary"]["hypothesis_packet"]["supported"] is True
+    assert payload["replica_summary"]["hypothesis_packet"]["mitigation_checkpoints"]
     assert payload["replica_summary"]["runtime_capability"]["state"]
     assert payload["trace_summary"]["suspected_modules"] is not None
     assert payload["trace_summary"]["inspection_point"] is not None

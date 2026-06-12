@@ -167,6 +167,10 @@ def test_replica_summary_keeps_pack_scaffold_when_docker_unavailable(monkeypatch
     assert summary["runtime_capability"]["can_execute_replay"] is False
     assert "cannot execute Docker-backed replay" in summary["runtime_enablement_hint"]
     assert "Docker-backed replay is unavailable in the current app environment" in summary["reasoning"]
+    assert summary["hypothesis_packet"]["supported"] is True
+    assert summary["hypothesis_packet"]["incident_class"] == "timeout_retry_amplification"
+    assert any("HTTP 504" in item for item in summary["hypothesis_packet"]["expected_failure_signature"])
+    assert summary["hypothesis_packet"]["mitigation_checkpoints"][0]["action"] == "Enable auth-svc circuit breaker and cap retries to 1"
 
 
 def test_replica_summary_reports_relay_available_when_runtime_host_configured(monkeypatch) -> None:
@@ -194,6 +198,31 @@ def test_replica_summary_reports_relay_available_when_runtime_host_configured(mo
     assert summary["runtime_capability"]["state"] == "relay_available"
     assert summary["runtime_capability"]["can_execute_replay"] is True
     assert summary["runtime_capability"]["host_label"] == "External runtime host"
+
+
+def test_replica_summary_builds_db_pool_hypothesis_packet() -> None:
+    summary = build_replica_summary(
+        incident_id="INC002",
+        triage_summary={
+            "issue_family": "Database pool exhaustion / session leak",
+            "likely_owner_service": "checkout-svc",
+        },
+        root_cause="Checkout retry patch leaked sessions until the primary pool was exhausted and checkout writes started failing",
+        recent_logs=[
+            "09:18:11 ERROR checkout-svc sqlalchemy.exc.TimeoutError: QueuePool limit reached",
+            "09:18:14 WARN checkout-svc leaked session detected on retry failure path",
+        ],
+        recent_deployments=[{"service": "checkout-svc", "change": "Retry-on-timeout patch"}],
+        candidate_fixes=[
+            {"action": "Terminate orphaned sessions and restart checkout pods", "success_rate": 0.9},
+            {"action": "Roll back checkout retry patch", "success_rate": 0.88},
+        ],
+    )
+
+    assert summary["hypothesis_packet"]["supported"] is True
+    assert summary["hypothesis_packet"]["incident_class"] == "db_pool_exhaustion"
+    assert any("HTTP 503" in item for item in summary["hypothesis_packet"]["expected_failure_signature"])
+    assert summary["hypothesis_packet"]["mitigation_checkpoints"][0]["action"] == "Terminate orphaned sessions and restart checkout pods"
 
 
 def test_runtime_candidate_ranking_prefers_validated_mitigation() -> None:

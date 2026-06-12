@@ -30,6 +30,10 @@ class ReplicaEnvironmentPack:
     compose_file: Path
     replay_profile: str
     mitigation_hooks: tuple[str, ...]
+    hypothesis_summary: str = ""
+    expected_baseline_status: int | None = None
+    triggering_conditions: tuple[str, ...] = field(default_factory=tuple)
+    expected_failure_signature: tuple[str, ...] = field(default_factory=tuple)
     trace_source_map: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
 
@@ -74,6 +78,20 @@ def registry() -> dict[str, ReplicaEnvironmentPack]:
             compose_file=packs_root / "checkout-python-fastapi-auth-redis-v1" / "docker-compose.yml",
             replay_profile="checkout_retry_replay_v1",
             mitigation_hooks=("cap_retries", "open_circuit_breaker", "disable_retry_middleware"),
+            hypothesis_summary=(
+                "Prove that checkout timeouts persist only when downstream auth latency stays elevated while the retry-heavy auth path remains enabled."
+            ),
+            expected_baseline_status=504,
+            triggering_conditions=(
+                "Downstream auth latency is held above the checkout timeout budget.",
+                "Retry middleware remains enabled on the auth boundary.",
+                "Gateway worker pressure stays high enough for retry amplification to cascade.",
+            ),
+            expected_failure_signature=(
+                "Baseline replay returns HTTP 504 on the checkout path.",
+                "Retry budget exceeded and upstream auth timeout anchors appear together.",
+                "Runtime improves only when retries are capped or the retry-heavy middleware path is removed.",
+            ),
             trace_source_map={
                 "auth.middleware.retry": ("apply_retry_policy",),
                 "gateway.timeout_guard": ("await_upstream_auth",),
@@ -88,6 +106,20 @@ def registry() -> dict[str, ReplicaEnvironmentPack]:
             compose_file=packs_root / "checkout-python-fastapi-postgres-v1" / "docker-compose.yml",
             replay_profile="checkout_write_replay_v1",
             mitigation_hooks=("terminate_orphaned_sessions", "rollback_retry_patch", "restart_checkout_service"),
+            hypothesis_summary=(
+                "Prove that the checkout retry patch leaks database sessions until the bounded pool is exhausted and checkout writes start failing."
+            ),
+            expected_baseline_status=503,
+            triggering_conditions=(
+                "The checkout retry patch stays active on the write path.",
+                "The bounded Postgres pool is capped at the production threshold.",
+                "Session cleanup does not complete after retry failure.",
+            ),
+            expected_failure_signature=(
+                "Baseline replay returns HTTP 503 once the pool saturates.",
+                "QueuePool or session-leak anchors appear before checkout writes recover.",
+                "Runtime clears only after leaked sessions are terminated or the retry patch is rolled back.",
+            ),
             trace_source_map={
                 "checkout.db.session": ("checkout_session_scope",),
                 "checkout.retry_patch": ("retry_checkout_write",),
@@ -217,6 +249,78 @@ def trace_targets_for_plan(plan: ReplicaExecutionPlan | None) -> list[tuple[str,
         primary_function = functions[0] if functions else ""
         pairs.append((module_name, primary_function))
     return pairs
+
+
+def build_hypothesis_packet(
+    *,
+    plan: ReplicaExecutionPlan | None,
+    issue_family: str,
+    service: str,
+    deployment_conditions: list[str] | None = None,
+    tested_mitigations: list[dict[str, object]] | None = None,
+    runtime_result: ReplicaExecutionResult | None = None,
+) -> dict[str, object]:
+    if plan is None:
+        return {
+            "supported": False,
+            "summary": "No bounded REPLICA hypothesis packet is available for this incident class yet.",
+            "scope": "unmapped_incident_class",
+            "triggering_conditions": [],
+            "expected_failure_signature": [],
+            "mitigation_checkpoints": [],
+            "mapping_basis": "",
+            "validation_state": "not_supported",
+        }
+
+    deployment_conditions = [str(item).strip() for item in (deployment_conditions or []) if str(item).strip()]
+    mitigation_checkpoints: list[dict[str, object]] = []
+    for index, mitigation in enumerate(tested_mitigations or [], start=1):
+        action = str(mitigation.get("action") or "").strip()
+        if not action:
+            continue
+        mitigation_checkpoints.append(
+            {
+                "step": index,
+                "action": action,
+                "expected_signal": str(mitigation.get("result") or "").strip(),
+                "outcome_class": str(mitigation.get("outcome_class") or "inferred_only"),
+            }
+        )
+
+    expected_failure_signature = list(plan.pack.expected_failure_signature)
+    if runtime_result and runtime_result.replay_status_code is not None:
+        expected_failure_signature.insert(
+            0,
+            f"Validated baseline replay returned HTTP {runtime_result.replay_status_code} in {runtime_result.replay_duration_ms or 'unknown'}ms.",
+        )
+    elif plan.pack.expected_baseline_status is not None:
+        expected_failure_signature.insert(
+            0,
+            f"Baseline replay is expected to return HTTP {plan.pack.expected_baseline_status} for the bounded failure path.",
+        )
+
+    mapping_basis_parts = [
+        f"Issue family mapped to {plan.incident_class.replace('_', ' ')}.",
+        f"Primary service boundary: {service or 'unknown service'}.",
+    ]
+    if issue_family:
+        mapping_basis_parts.insert(0, f"Observed issue family: {issue_family}.")
+    if deployment_conditions:
+        mapping_basis_parts.append(f"Deployment clues carried into the hypothesis: {'; '.join(deployment_conditions)}.")
+
+    return {
+        "supported": True,
+        "summary": plan.pack.hypothesis_summary,
+        "scope": "curated_flagship_pack",
+        "incident_class": plan.incident_class,
+        "pack_id": plan.pack.pack_id,
+        "service": service,
+        "triggering_conditions": [*plan.pack.triggering_conditions, *deployment_conditions],
+        "expected_failure_signature": expected_failure_signature,
+        "mitigation_checkpoints": mitigation_checkpoints,
+        "mapping_basis": " ".join(mapping_basis_parts),
+        "validation_state": "executed" if runtime_result else "staged",
+    }
 
 
 class ReplicaRunner:

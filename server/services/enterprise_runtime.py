@@ -27,7 +27,14 @@ from server.models import (
     SystemContext,
 )
 from server.services.priority import normalize_priority_label, priority_rank
-from server.services.replica_runtime import ReplicaExecutionResult, ReplicaRunner, build_execution_plan, build_runtime_host_relay_status, trace_targets_for_plan
+from server.services.replica_runtime import (
+    ReplicaExecutionResult,
+    ReplicaRunner,
+    build_execution_plan,
+    build_hypothesis_packet,
+    build_runtime_host_relay_status,
+    trace_targets_for_plan,
+)
 
 
 TRACE_OWNERSHIP_MAP_PATH = Path(__file__).with_name("trace_ownership_map.json")
@@ -1874,6 +1881,7 @@ def build_replica_summary(
         recent_logs=recent_logs,
         recent_deployments=recent_deployments,
     )
+    incident_class = str(plan.incident_class) if plan else ""
     runner_result = runtime_execution if runtime_execution is not None else (ReplicaRunner().inspect_plan(plan) if plan else None)
     execute_runtime = (
         os.environ.get("NEXUS_ENABLE_REPLICA_RUNTIME", "0") == "1"
@@ -1905,7 +1913,9 @@ def build_replica_summary(
         if runtime_result and runtime_result.replay_output:
             supporting_conditions.append("runtime scaffold executed a replay hook successfully")
 
-    if "retry amplification" in issue_family or ("retry" in logs_text and "timeout" in logs_text):
+    if incident_class == "timeout_retry_amplification" or (
+        not incident_class and ("retry amplification" in issue_family or ("retry" in logs_text and "timeout" in logs_text))
+    ):
         reproduction_status = "reproduced"
         supporting_conditions = [
             "downstream auth latency above 5s",
@@ -1926,7 +1936,9 @@ def build_replica_summary(
             "The failure pattern reproduced only when the retry-heavy middleware path remained enabled under downstream auth degradation. "
             "The sandbox required both the retry middleware change and elevated downstream auth latency to sustain the timeout cascade."
         )
-    elif "pool exhaustion" in issue_family or "session leak" in issue_family or "queuepool" in logs_text:
+    elif incident_class == "db_pool_exhaustion" or (
+        not incident_class and ("pool exhaustion" in issue_family or "session leak" in issue_family or "queuepool" in logs_text)
+    ):
         reproduction_status = "reproduced"
         supporting_conditions = [
             "checkout retry patch enabled",
@@ -2015,6 +2027,14 @@ def build_replica_summary(
         runner_result=runner_result,
         runtime_result=runtime_result,
     )
+    hypothesis_packet = build_hypothesis_packet(
+        plan=plan,
+        issue_family=str(triage_summary.get("issue_family", "")),
+        service=service,
+        deployment_conditions=deployment_conditions,
+        tested_mitigations=runtime_mitigations,
+        runtime_result=runtime_result,
+    )
     runtime_provenance = _runtime_provenance(
         runtime_mode=runtime_mode,
         runtime_executed=bool(runtime_result),
@@ -2066,6 +2086,7 @@ def build_replica_summary(
             docker_available=bool(runner_result.docker_available) if runner_result else False,
             runtime_capability_state=str(runtime_capability.get("state") or ""),
         ),
+        "hypothesis_packet": hypothesis_packet,
         "runtime_capability": runtime_capability,
         "runtime_provenance": runtime_provenance,
         "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),

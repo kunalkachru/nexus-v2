@@ -53,6 +53,8 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByText("Best mitigation")).toBeVisible();
     await expect(page.getByRole("button", { name: /Run bounded replay/i })).toBeVisible();
     await expect(page.locator("#replicaCapabilityDetail")).toContainText(/Host:|No bounded pack/);
+    await expect(page.locator("#replicaHypothesisSummary")).toContainText(/Prove|bounded/);
+    await expect(page.locator("#replicaHypothesisChecks")).toContainText("Triggering conditions");
     await expect(page.locator("#replicaReplayLifecycleState")).toContainText("Replay lifecycle");
     await expect(page.locator("#replicaTrustSummary")).toContainText("Replay trust packet");
     await expect(page.locator("#traceInspectionPoint")).not.toContainText("TRACE has not narrowed");
@@ -169,6 +171,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#sentinelReasoning")).not.toHaveText("Waiting for incident context.");
     await expect(page.locator("#threadSentinelCopy")).not.toHaveText("Waiting for incident context.");
     await expect(page.locator("#guardianReasoning")).toContainText(/Guardian review is pending|recorded|safe/i);
+    await expect(page.locator("#replicaHypothesisSummary")).toContainText(/Prove|bounded/);
   });
 
   // ── NEW TESTS added for items 9-12 ──────────────────────────────────────────

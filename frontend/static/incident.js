@@ -248,6 +248,24 @@ function renderList(elementId, items, renderer) {
   element.innerHTML = items.map(renderer).join("");
 }
 
+function ensureReplicaHypothesisPacket() {
+  if (document.getElementById("replicaHypothesisSummary")) {
+    return;
+  }
+  const replayActions = document.querySelector(".shell-actions");
+  if (!replayActions || !replayActions.parentElement) {
+    return;
+  }
+  const wrapper = document.createElement("div");
+  wrapper.id = "replicaHypothesisPacket";
+  wrapper.innerHTML = `
+    <p class="section-label">Replica hypothesis packet</p>
+    <p class="section-note" id="replicaHypothesisSummary">REPLICA will describe the bounded environment hypothesis here once the packet loads.</p>
+    <ul class="simple-list" id="replicaHypothesisChecks"></ul>
+  `;
+  replayActions.insertAdjacentElement("beforebegin", wrapper);
+}
+
 function setText(id, value) {
   const element = document.getElementById(id);
   if (element && value !== undefined && value !== null) {
@@ -536,6 +554,7 @@ function renderEnterprise(data) {
   const replayLifecycle = replica.replay_lifecycle || {};
   const replayLifecycleEvents = replayLifecycle.events || [];
   const runtimeTrustPacket = replica.runtime_trust_packet || {};
+  const hypothesisPacket = replica.hypothesis_packet || {};
   const runtimeCapabilityDetail = [
     runtimeCapability.host_label ? `Host: ${runtimeCapability.host_label}` : "",
     runtimeCapability.bounded_pack_available ? "Bounded pack mapped" : "No bounded pack",
@@ -549,6 +568,36 @@ function renderEnterprise(data) {
   setText("replicaRuntimeHint", replica.runtime_enablement_hint || "Runtime mode details are not available for this incident yet.");
   setText("replicaCapabilityMessage", runtimeCapability.message || "Replay capability details are not available for this incident yet.");
   setText("replicaCapabilityDetail", runtimeCapabilityDetail || "Runtime capability posture is not available for this incident yet.");
+  ensureReplicaHypothesisPacket();
+  setText(
+    "replicaHypothesisSummary",
+    hypothesisPacket.summary
+      ? `${hypothesisPacket.summary} ${hypothesisPacket.mapping_basis || ""}`.trim()
+      : "REPLICA has not mapped a bounded environment hypothesis for this incident yet."
+  );
+  renderList(
+    "replicaHypothesisChecks",
+    hypothesisPacket.supported
+      ? [
+          {
+            label: "Triggering conditions",
+            items: hypothesisPacket.triggering_conditions || [],
+          },
+          {
+            label: "Expected failure signature",
+            items: hypothesisPacket.expected_failure_signature || [],
+          },
+          {
+            label: "Mitigation checkpoints",
+            items: (hypothesisPacket.mitigation_checkpoints || []).map((item) =>
+              item.action ? `${item.action}${item.expected_signal ? `: ${item.expected_signal}` : ""}` : ""
+            ),
+          },
+        ].filter((section) => section.items.length)
+      : [{ label: "Scope", items: ["No curated flagship REPLICA pack matched this incident class yet."] }],
+    (section) =>
+      `<li><strong>${section.label}</strong><br><span class="section-note">${section.items.join(" · ")}</span></li>`
+  );
   setText(
     "replicaReplayStatus",
     replica.runtime_executed

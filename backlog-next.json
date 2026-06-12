@@ -439,7 +439,7 @@
     "id": 31,
     "title": "Replica hypothesis packet v2 for flagship incidents",
     "priority": "highest",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen the bounded reproduction story for INC001 and INC002 by making REPLICA expose the exact environment hypothesis it is validating: triggering conditions, expected failure signature, and the mitigation checkpoints it will test. This is the first step from runtime replay into a more real reproduction agent, while staying tightly scoped to the curated packs.",
     "done_when": [
       "REPLICA returns a visible hypothesis packet for INC001 and INC002 with triggering conditions and expected failure signature",
