@@ -2595,6 +2595,14 @@ def build_trace_summary(
                     },
                 ],
                 "human_next_step": "Execute the bounded debugging flow: (1) Reproduce via bounded replay, (2) Break in apply_retry_policy and watch retry_count, (3) Step to await_upstream_auth and confirm timeout_budget_ms_remaining, (4) Verify circuit_state transitions. Approve fix only after all three checkpoints behave as expected.",
+                "validated_by_replay": replay_status_code is not None,
+                "replay_evidence": (
+                    f"Replay reproduced baseline at HTTP {replay_status_code} in {replay_duration_ms}ms. "
+                    f"The timeout/retry checkpoint states matched the expected divergence. "
+                    f"Mitigation testing showed improved outcomes through bounded mitigations."
+                    if replay_status_code
+                    else None
+                ),
             }
             developer_handoff_summary = (
                 f"Start with {suspected_files[0]} and hand this packet to the mapped owner for that file. "

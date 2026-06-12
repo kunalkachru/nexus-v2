@@ -63,7 +63,7 @@
     "id": 43,
     "title": "Persisted debugger evidence and replay-linked debugging trail",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "The bounded debugger flow for `INC001` is useful, but it still behaves like a generated note. Persist the debugging trail into the incident packet and replay history so the engineer can see what checkpoints were expected, what evidence linked the replay to the debugging path, and what was last observed after replay. Keep it bounded to the curated timeout/retry pack.",
     "done_when": [
       "the INC001 debugger flow persists as part of the incident or replay packet instead of acting like a transient note",

@@ -875,22 +875,30 @@ function renderEnterprise(data) {
   setText(
     "traceDebuggerSummary",
     debuggerPacket.supported
-      ? `${debuggerPacket.summary} Scope: ${debuggerPacket.scope || "bounded pack only"}.`
+      ? `${debuggerPacket.summary} Scope: ${debuggerPacket.scope || "bounded pack only"}. ${
+          debuggerPacket.validated_by_replay
+            ? "This debugging trail was validated by bounded replay execution."
+            : ""
+        }`
       : debuggerPacket.summary || "No bounded debugger packet is implemented for this incident class yet."
   );
+  const debuggerChecks = debuggerPacket.supported
+    ? [
+        `Target file: ${debuggerPacket.target_file || "unknown"}`,
+        `Entry function: ${debuggerPacket.entry_function || "unknown"}`,
+        ...((debuggerPacket.state_checkpoints || []).map(
+          (item) =>
+            `${item.name || "checkpoint"} · ${item.location || "unknown location"} · Expected: ${item.expected || "n/a"} · Divergence: ${item.divergence || "n/a"}`
+        )),
+        `Human next step: ${debuggerPacket.human_next_step || "Use the TRACE packet for manual debugging."}`,
+      ]
+    : ["Debugger packet not implemented for this incident class."];
+  if (debuggerPacket.replay_evidence) {
+    debuggerChecks.push(`Replay validation: ${debuggerPacket.replay_evidence}`);
+  }
   renderList(
     "traceDebuggerChecks",
-    debuggerPacket.supported
-      ? [
-          `Target file: ${debuggerPacket.target_file || "unknown"}`,
-          `Entry function: ${debuggerPacket.entry_function || "unknown"}`,
-          ...((debuggerPacket.state_checkpoints || []).map(
-            (item) =>
-              `${item.name || "checkpoint"} · ${item.location || "unknown location"} · Expected: ${item.expected || "n/a"} · Divergence: ${item.divergence || "n/a"}`
-          )),
-          `Human next step: ${debuggerPacket.human_next_step || "Use the TRACE packet for manual debugging."}`,
-        ]
-      : ["Debugger packet not implemented for this incident class."],
+    debuggerChecks,
     (item) => `<li>${item}</li>`
   );
 }
