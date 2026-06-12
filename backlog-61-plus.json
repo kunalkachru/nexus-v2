@@ -1,0 +1,282 @@
+[
+  {
+    "id": 61,
+    "title": "Durable runtime execution ledger",
+    "priority": "high",
+    "status": "pending",
+    "description": "Replace the packaged app's process-local replay posture with a durable runtime execution ledger that survives refreshes and restarts. The product can stay bounded, but the operator-facing queue, current run state, and recent replay history should come from persisted runtime evidence rather than only transient in-memory state.",
+    "implementation_tasks": [
+      "define a durable execution-ledger record shape for replay request, running, completion, and failure states",
+      "persist runtime execution entries through the existing incident or artifact substrate instead of app-memory-only state",
+      "make /api/v1/runtime/execution-state return durable recent state with clear empty-state behavior",
+      "keep the runtime-host and packaged-app stories aligned so the UI never shows a replay as running after the durable ledger says otherwise"
+    ],
+    "done_when": [
+      "runtime execution posture survives page refresh and app restart boundaries for recent runs",
+      "the runtime execution endpoint returns durable current or recent state instead of only process-local state",
+      "operator-facing runtime queue and history read as trustworthy operational data rather than ephemeral session state"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  },
+  {
+    "id": 62,
+    "title": "Runtime-host reconciliation and failure semantics",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make runtime-host outcomes explicit and consistent. The product should distinguish relay unreachable, replay unsupported, replay failed, replay partially executed, and replay completed states without collapsing them into generic success or failure language.",
+    "implementation_tasks": [
+      "define a bounded runtime status vocabulary shared by packaged app, runtime host, UI, and exported evidence",
+      "surface reconciliation data that explains whether the packaged app, relay host, or pack execution produced the final status",
+      "tighten failure copy so unreachable host, unsupported pack, timed-out replay, and failed mitigation outcomes are clearly different",
+      "propagate the same semantics into governance, handoff, and replay history surfaces"
+    ],
+    "done_when": [
+      "runtime replay outcomes use stable, differentiated states across API and UI",
+      "operator-facing evidence makes it obvious whether the relay was unreachable, unsupported, failed mid-run, or completed",
+      "seeded and live incidents do not overstate runtime validation when reconciliation says otherwise"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py tests/test_replica_runtime.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/incidents.py",
+      "server/services/replica_runtime.py",
+      "frontend/static/incident.js",
+      "frontend/static/api.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/test_replica_runtime.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 63,
+    "title": "Evidence posture contract across seeded and live paths",
+    "priority": "high",
+    "status": "pending",
+    "description": "Create one evidence-posture contract for the whole product so every incident surface uses the same truth labels. Runtime-backed, scaffold-only, inferred-only, bounded-debugger, and runtime-host-relay language should come from a shared contract rather than drift between seeded fixtures, live graph output, exports, and UI prose.",
+    "implementation_tasks": [
+      "introduce a shared evidence-posture contract builder or mapper used by both seeded and live payload assembly",
+      "normalize wording and keys for runtime-backed, scaffold-only, inferred-only, and debugger-bounded states",
+      "use the shared contract in incident detail, exports, training, and replay-history surfaces",
+      "remove any UI-only truthfulness wording that is not anchored to the shared posture contract"
+    ],
+    "done_when": [
+      "seeded and live incident paths expose the same evidence-posture fields and semantics",
+      "UI and export copy rely on the same posture contract instead of ad hoc phrasing",
+      "the product cannot describe scaffold-only or inferred evidence as runtime-backed through any primary surface"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/surface_payloads.py",
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/static/api.js",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 64,
+    "title": "Live-memory-first ranking and seeded fallback honesty",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Shift the memory layer toward real operational history. When tenant-specific incidents, approvals, outcomes, or reopen signals exist, they should outrank seeded examples. Seeded memories can remain as bounded fallback knowledge, but the product should say when it is leaning on fallback examples rather than the tenant's own history.",
+    "implementation_tasks": [
+      "prioritize live incident history, execution outcomes, and reopen patterns over seeded examples when ranking similar cases",
+      "label seeded fallback memories explicitly and explain why they were used",
+      "feed live-memory provenance into incident UI and training memory surfaces",
+      "keep recall quality for empty-history tenants by preserving seeded fallback behavior with honest wording"
+    ],
+    "done_when": [
+      "memory ranking prefers live tenant history when relevant evidence exists",
+      "seeded fallback examples are visibly labeled as fallback rather than first-class operational history",
+      "operators can tell whether a memory recommendation came from their own history or from bounded seeded examples"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 65,
+    "title": "Deterministic replay reset and repeatability gate",
+    "priority": "high",
+    "status": "pending",
+    "description": "Harden the curated runtime packs so replay results are repeatable and reset cleanly. The goal is not broader reproduction coverage; it is making the two flagship packs feel reliable enough that baseline and mitigated runs can be compared without leftover state corrupting the story.",
+    "implementation_tasks": [
+      "add or tighten explicit pack reset behavior before and after replay and mitigation runs",
+      "verify baseline and mitigated outcomes are repeatable across consecutive runs for INC001 and INC002",
+      "record comparison-friendly evidence that explains whether a replay result was fresh or influenced by prior state",
+      "propagate repeatability or reset failures into runtime trust messaging instead of hiding them"
+    ],
+    "done_when": [
+      "curated packs reset cleanly between consecutive replay runs",
+      "baseline versus mitigated behavior is repeatable enough to support believable comparison for both flagship incidents",
+      "runtime trust surfaces expose reset or repeatability caveats when they exist"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py -q",
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/replica_runtime.py",
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "tests/test_replica_runtime.py",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  },
+  {
+    "id": 66,
+    "title": "Fresh-incident truth gate for live intake",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make fresh `nxs_...` incidents obey the same truth boundaries as the flagship seeded cases. A live incident should not imply replay, debugger support, or runtime validation unless a curated pack was actually selected and the evidence was truly produced.",
+    "implementation_tasks": [
+      "tighten fresh-incident packet assembly so runtime and debugger claims are gated on actual pack support and actual execution evidence",
+      "make unsupported live incidents degrade gracefully with explicit bounded-language rather than soft overclaiming",
+      "ensure replay, trace, and debugger sections stay semantically aligned between seeded incidents and live intake",
+      "verify fresh incidents remain legible and useful even when no runtime pack is available"
+    ],
+    "done_when": [
+      "fresh incidents never imply replay or debugger validation unless the evidence really exists",
+      "unsupported live incidents communicate bounded capability clearly without breaking the operator flow",
+      "seeded and live incident paths remain semantically aligned for runtime and debugger posture"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/static/inputs.js",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  },
+  {
+    "id": 67,
+    "title": "Debugger evidence contract v2",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Turn the bounded debugger packet into a stricter contract. Every debugger packet should explicitly say which pack it is bounded to, what replay evidence anchors it, which files and functions to inspect first, and how unsupported states are represented. This keeps the debugger story honest and more useful for engineering handoff.",
+    "implementation_tasks": [
+      "define required debugger packet fields for supported and unsupported incident classes",
+      "anchor debugger packets to replay provenance, file targets, function targets, and bounded-scope wording",
+      "surface the contract consistently in incident UI, exports, and handoff surfaces",
+      "tighten tests so missing replay provenance or bounded-scope messaging cannot silently regress"
+    ],
+    "done_when": [
+      "debugger packets have a stable contract for both supported and unsupported incidents",
+      "engineering handoff surfaces cite pack id, file targets, function targets, and replay provenance when available",
+      "the debugger story stays explicitly bounded and cannot be mistaken for a universal live debugger"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/DEMO_WALKTHROUGH.md"
+    ]
+  },
+  {
+    "id": 68,
+    "title": "End-to-end truthfulness suite and readiness checkpoint",
+    "priority": "high",
+    "status": "pending",
+    "description": "Close the phase with a deliberate truthfulness checkpoint. Strengthen the test and manual validation story around the two flagship incidents plus a fresh live incident, and publish an owner-facing readiness summary that states exactly what is real today, what remains bounded, and what is still not enterprise-ready.",
+    "implementation_tasks": [
+      "expand automated checks for INC001, INC002, and a fresh live incident across browser and Docker paths",
+      "add a short owner-facing readiness document or section that truthfully states real, bounded, and not-yet-real capabilities",
+      "synchronize AGENTS.md, WORKING_STATE.md, demo walkthrough, and execution-plan docs to the finished hardening state",
+      "treat this item as the explicit phase-close gate before any new breadth backlog is written"
+    ],
+    "done_when": [
+      "the flagship incidents and a fresh live incident are covered by a stronger end-to-end truthfulness validation path",
+      "owner-facing docs clearly separate real capabilities, bounded capabilities, and not-yet-implemented ambitions",
+      "the repo ends the phase with current control docs and a credible readiness checkpoint for the product"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh",
+      "docs/DEMO_WALKTHROUGH.md",
+      "docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md",
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/LOOPS_RUNBOOK.md"
+    ]
+  }
+]

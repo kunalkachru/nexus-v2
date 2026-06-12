@@ -9,7 +9,8 @@ Items `35–40`: **complete**
 Items `41–46`: **complete**
 Items `47–53`: **complete**
 Items `54–60`: **complete**
-Next phase: define `backlog-61-plus.json` before starting another loop
+Items `61–68`: **planned in `backlog-61-plus.json`**
+Next phase: hardening and truthfulness checkpoint
 
 ## App In One Sentence
 
@@ -99,6 +100,7 @@ These paths must stay semantically aligned.
 - `backlog-41-plus.json` — completed backlog through item `46`
 - `backlog-47-plus.json` — completed backlog through item `53`
 - `backlog-54-plus.json` — completed backlog through item `60`
+- `backlog-61-plus.json` — active backlog for hardening and truthfulness checkpoint
 - `AGENTS.md` — loop rules and current validated baseline
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
@@ -121,5 +123,5 @@ These paths must stay semantically aligned.
 
 ## Next Recommended Frontier
 
-Write `backlog-61-plus.json` only after reviewing the real post-60 codebase and product truth.
-The next backlog should bias toward hardening, truthfulness, and enterprise workflow reliability rather than broadening agent claims.
+The active frontier is `backlog-61-plus.json`.
+This phase should bias toward hardening, truthfulness, and enterprise workflow reliability rather than broadening agent claims.

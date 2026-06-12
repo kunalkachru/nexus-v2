@@ -28,14 +28,16 @@ Do not start a loop against a vague objective like "improve Nexus more." Write a
 
 The `15–60` backlog is complete.
 
-No active next backlog is defined yet.
+The active next backlog is `backlog-61-plus.json`.
 
-Before another loop starts:
+This phase is for hardening and truthfulness, not breadth expansion.
 
-1. review the finished codebase and product truth
-2. write `backlog-61-plus.json`
-3. refresh `AGENTS.md`, `WORKING_STATE.md`, and this runbook
-4. only then begin the next loop
+Before the loop starts:
+
+1. read the finished codebase control docs
+2. read `backlog-61-plus.json`
+3. keep the work bounded to the listed items
+4. only then begin the loop
 
 ## Before Starting A Loop
 
@@ -43,7 +45,7 @@ Make sure the agent reads:
 
 1. [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
 2. [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
-3. the active backlog file
+3. [backlog-61-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-61-plus.json)
 4. [docs/DEMO_WALKTHROUGH.md](/Users/kunalkachru/Documents/nexus-v3/docs/DEMO_WALKTHROUGH.md)
 
 Recommended local checks before starting:
@@ -70,7 +72,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 4. Paste a prompt like this:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/DEMO_WALKTHROUGH.md, and <backlog file>.
+Read AGENTS.md, WORKING_STATE.md, docs/DEMO_WALKTHROUGH.md, and backlog-61-plus.json.
 Run a commit-and-continue loop against the backlog.
 
 Rules:
@@ -94,7 +96,7 @@ Rules:
 Use the same flow, but keep the grounding stricter:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/DEMO_WALKTHROUGH.md, and <backlog file> completely before coding.
+Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/DEMO_WALKTHROUGH.md, and backlog-61-plus.json completely before coding.
 Resume from the first pending backlog item.
 Drain the backlog top to bottom in a build-test-commit loop.
 Do not invent scope outside the backlog.
@@ -195,5 +197,5 @@ As of the latest validated state:
 - browser verification is green
 - Docker smoke is green through the packaged app on `:7860`
 - runtime replay can be delegated to a Docker-capable runtime host
-- the debugger is still bounded to one curated outage class
-- the next real frontier is product-grade UX and deeper bounded agent behavior, not breadth for breadth's sake
+- the debugger is still bounded to the two curated flagship outage classes
+- the next real frontier is hardening runtime truth, seeded/live evidence alignment, and bounded-agent reliability

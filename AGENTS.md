@@ -56,6 +56,7 @@ Each backlog item should include:
 - `priority`
 - `status` (`pending`, `done`, or `blocked`)
 - `description`
+- `implementation_tasks`
 - `done_when`
 - `test_gates`
 - `files_likely_touched`
@@ -132,9 +133,9 @@ feat(#<id>): <title>
 
 The `15–60` backlog is complete.
 
-No active execution backlog is defined yet.
+The active next execution backlog is `backlog-61-plus.json`.
 
-The next step is to write `backlog-61-plus.json` before starting another loop.
+This phase is a hardening and truthfulness checkpoint for the bounded support-triage product.
 
 ## Reality Check
 
