@@ -141,6 +141,51 @@
             </div>
         </section>
 
+        <section class="section" id="operatorROISection">
+            <div class="section-header">
+                <h2>Operator ROI and audit surface</h2>
+                <div class="section-note">Show the value NEXUS delivers operationally: manual relay reduction, replay coverage, approval outcomes, memory reuse. The operator and owner should see why this system is useful without reading explanatory docs.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Manual relay reduction</div>
+                    <div class="kpi-grid">
+                        <div class="summary-card"><div class="label">Classification time</div><div class="value" id="classificationTime">-</div></div>
+                        <div class="summary-card"><div class="label">Incidents triaged</div><div class="value" id="incidentsTriaged">-</div></div>
+                        <div class="summary-card"><div class="label">Manual steps removed</div><div class="value" id="manualStepsRemoved">-</div></div>
+                    </div>
+                    <p class="section-note" id="manualRelayNote">NEXUS condenses multi-tier manual support work into one prepared packet. Without this system, each incident would require manual evidence gathering and escalation through multiple support tiers.</p>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Replay coverage and outcomes</div>
+                    <div class="kpi-grid">
+                        <div class="summary-card"><div class="label">Incidents replayed</div><div class="value" id="incidentsReplayed">-</div></div>
+                        <div class="summary-card"><div class="label">Approval rate</div><div class="value" id="approvalRate">-</div></div>
+                        <div class="summary-card"><div class="label">Execution success</div><div class="value" id="executionSuccess">-</div></div>
+                    </div>
+                    <p class="section-note" id="replayOutcomeNote">When runtime replay is enabled, NEXUS validates hypotheses in bounded Docker environments and measures mitigation effectiveness before approving live action.</p>
+                </div>
+            </div>
+            <div class="detail-card" style="margin-top: 14px;">
+                <div class="badge">Memory reuse and recurrence signals</div>
+                <p class="hero-copy">NEXUS learns from each incident. Similar cases and prior mitigations are ranked by outcome-weighted preference, so operators see what actually worked before.</p>
+                <div class="story-grid" style="margin-top: 1em;">
+                    <div style="padding: 0.75em; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                        <div class="stat"><div class="stat-label">Memory hits</div><div class="stat-value" id="memoryHitCount">-</div></div>
+                        <p class="section-note">Similar incidents retrieved from history in this session.</p>
+                    </div>
+                    <div style="padding: 0.75em; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                        <div class="stat"><div class="stat-label">Recurrent classes</div><div class="stat-value" id="recurrentIssueClasses">-</div></div>
+                        <p class="section-note">Issue families that appear repeatedly in the support queue.</p>
+                    </div>
+                    <div style="padding: 0.75em; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                        <div class="stat"><div class="stat-label">Memory rank boost</div><div class="stat-value" id="memoryOutcomeWeight">Outcome-weighted</div></div>
+                        <p class="section-note">Prior cases with approved/executed mitigations rank higher than generic similarity alone.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="section" id="learningSection">
             <div class="section-header">
                 <h2>Learning summary</h2>

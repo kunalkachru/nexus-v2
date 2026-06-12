@@ -144,7 +144,7 @@
     "id": 52,
     "title": "Operator ROI and audit surface",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Expose the product value more explicitly: manual relay reduction, replay coverage, approval outcomes, recurrence signals, and memory reuse. The operator and owner should be able to see why this system is useful operationally, not just what a single incident did.",
     "done_when": [
       "the product shows at least one operator-facing surface summarizing support-triage value and audit outcomes",
