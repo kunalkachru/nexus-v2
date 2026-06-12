@@ -58,7 +58,7 @@
     "id": 56,
     "title": "Runtime-host run queue and execution guardrails",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Move runtime-host productization beyond capability visibility into bounded execution operations. Surface a lightweight run queue, current execution state, and guardrails such as replay eligibility, concurrency posture, and pack-specific runtime limits. The goal is to make runtime execution feel managed and trustworthy rather than hidden and instantaneous.",
     "done_when": [
       "operators can see current runtime execution posture and queued or recent replay activity in-product",

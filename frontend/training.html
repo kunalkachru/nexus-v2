@@ -141,6 +141,33 @@
             </div>
         </section>
 
+        <section class="section" id="runtimeExecutionStateSection">
+            <div class="section-header">
+                <h2>Runtime execution posture and queue</h2>
+                <div class="section-note">Track the current state of bounded runtime replay execution, guardrails, and recent replay activity.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Current execution state</div>
+                    <div class="kpi-grid">
+                        <div class="summary-card"><div class="label">State</div><div class="value" id="executionStateStatus">Idle</div></div>
+                        <div class="summary-card"><div class="label">Current pack</div><div class="value" id="executionStatePack">-</div></div>
+                        <div class="summary-card"><div class="label">Concurrency</div><div class="value" id="executionStateConcurrency">0/1</div></div>
+                    </div>
+                    <p class="section-note" id="executionStateMessage">Runtime execution is managed and bounded.</p>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Execution guardrails</div>
+                    <p class="hero-copy" id="executionGuardrailsNote">Loading guardrails...</p>
+                    <ul class="simple-list" id="executionGuardrailsList"></ul>
+                </div>
+            </div>
+            <div class="detail-card" style="margin-top: 14px;">
+                <div class="badge">Recent replay activity</div>
+                <ul class="simple-list" id="executionHistoryList"></ul>
+            </div>
+        </section>
+
         <section class="section" id="operatorROISection">
             <div class="section-header">
                 <h2>Operator ROI and audit surface</h2>

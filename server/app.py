@@ -1,7 +1,9 @@
 import asyncio
 import json
+from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 import logging
 
 from fastapi import Depends, FastAPI, Query, Request
@@ -37,6 +39,68 @@ from server.services.tenancy import TenancyService
 logger = logging.getLogger(__name__)
 
 
+class RuntimeExecutionState:
+    def __init__(self):
+        self.current_state = "idle"
+        self.current_pack_id = None
+        self.current_incident_id = None
+        self.started_at = None
+        self.execution_history = deque(maxlen=20)
+        self.max_concurrent_replays = 1
+        self.current_concurrency = 0
+        self.guardrails = {
+            "max_replay_duration_ms": 30000,
+            "max_concurrent_replays": 1,
+            "pack_specific_limits": {
+                "checkout-python-fastapi-auth-redis-v1": {"max_duration_ms": 25000, "max_retries": 3},
+                "checkout-python-fastapi-postgres-v1": {"max_duration_ms": 30000, "max_retries": 3},
+            },
+            "replay_eligibility_checks": ["pack_present", "docker_available", "relay_capable"],
+        }
+
+    def start_execution(self, pack_id: str, incident_id: str):
+        self.current_state = "running"
+        self.current_pack_id = pack_id
+        self.current_incident_id = incident_id
+        self.started_at = datetime.now(timezone.utc).isoformat()
+        self.current_concurrency = 1
+
+    def finish_execution(self, status: str = "completed"):
+        if self.current_state == "running":
+            duration_ms = None
+            if self.started_at:
+                start = datetime.fromisoformat(self.started_at)
+                duration_ms = int((datetime.now(timezone.utc) - start).total_seconds() * 1000)
+
+            history_entry = {
+                "incident_id": self.current_incident_id,
+                "pack_id": self.current_pack_id,
+                "status": status,
+                "started_at": self.started_at,
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "duration_ms": duration_ms,
+            }
+            self.execution_history.append(history_entry)
+
+            self.current_state = "idle"
+            self.current_pack_id = None
+            self.current_incident_id = None
+            self.started_at = None
+            self.current_concurrency = 0
+
+    def to_dict(self):
+        return {
+            "current_state": self.current_state,
+            "current_pack_id": self.current_pack_id,
+            "current_incident_id": self.current_incident_id,
+            "started_at": self.started_at,
+            "current_concurrency": self.current_concurrency,
+            "max_concurrent_replays": self.max_concurrent_replays,
+            "execution_history": list(self.execution_history),
+            "guardrails": self.guardrails,
+        }
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     config = AppConfig()
@@ -44,6 +108,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.db_session_factory = create_session_factory(config)
     app.state.rate_limiter = RateLimiter()
     app.state.tenancy_service = TenancyService()
+    app.state.runtime_execution_state = RuntimeExecutionState()
     yield
 
 
@@ -276,6 +341,16 @@ async def get_runtime_capabilities(
     }
 
 
+@app.get("/api/v1/runtime/execution-state")
+async def get_runtime_execution_state(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="platform_status")
+    execution_state = getattr(request.app.state, "runtime_execution_state", RuntimeExecutionState())
+    return execution_state.to_dict()
+
+
 @app.post("/api/v1/internal/runtime-host/replica-replay")
 async def runtime_host_replica_replay(
     payload: RuntimeHostReplayRequest,
@@ -436,7 +511,26 @@ async def replay_incident_v1(
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="incident_replica_replay")
     require_role(auth, "operator", "guardian", "incident_manager")
-    response = await service.trigger_replica_replay(nexus_incident_id, tenant_id=auth.tenant_id)
+
+    execution_state = getattr(request.app.state, "runtime_execution_state", RuntimeExecutionState())
+    context = await service.get_incident_context_v1(
+        nexus_incident_id,
+        tenant_id=auth.tenant_id,
+        live_reasoning=False,
+        openai_api_key=None,
+    )
+    replica_summary = context.get("replica_summary", {})
+    pack_id = str(replica_summary.get("environment_pack_id", "unknown"))
+
+    execution_state.start_execution(pack_id, nexus_incident_id)
+    try:
+        response = await service.trigger_replica_replay(nexus_incident_id, tenant_id=auth.tenant_id)
+        status = response.get("status", "unknown")
+        execution_state.finish_execution("completed" if status in {"replay_executed", "relay_executed"} else "failed")
+    except Exception as e:
+        execution_state.finish_execution("failed")
+        raise
+
     await write_audit_log(
         "incident.replica_replay_v1.requested",
         auth.tenant_id,

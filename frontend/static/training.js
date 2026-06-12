@@ -372,6 +372,46 @@ function renderRuntimeCapabilities(capabilitiesData) {
   }
 }
 
+function renderExecutionState(executionStateData) {
+  const state = executionStateData || {};
+  const currentState = state.current_state || "idle";
+  const guardrails = state.guardrails || {};
+  const history = state.execution_history || [];
+
+  setText("executionStateStatus", titleCase(currentState));
+  setText("executionStatePack", state.current_pack_id || "-");
+  setText("executionStateConcurrency", `${state.current_concurrency || 0}/${state.max_concurrent_replays || 1}`);
+
+  const stateMessage = currentState === "running"
+    ? `Currently executing replay for ${state.current_incident_id || "incident"}`
+    : "No replay currently running";
+  setText("executionStateMessage", stateMessage);
+
+  const guardrailsList = document.getElementById("executionGuardrailsList");
+  if (guardrailsList) {
+    const guardrailItems = [
+      `Max replay duration: ${guardrails.max_replay_duration_ms || "unlimited"}ms`,
+      `Max concurrent replays: ${guardrails.max_concurrent_replays || 1}`,
+      `Eligibility checks: ${(guardrails.replay_eligibility_checks || []).map(c => titleCase(c)).join(", ") || "None"}`,
+    ];
+    guardrailsList.innerHTML = guardrailItems.map(item => `<li>${item}</li>`).join("");
+  }
+
+  const historyList = document.getElementById("executionHistoryList");
+  if (historyList) {
+    if (history.length > 0) {
+      historyList.innerHTML = history.slice(0, 10)
+        .map(entry => {
+          const duration = entry.duration_ms ? ` · ${entry.duration_ms}ms` : "";
+          return `<li><strong>${entry.incident_id}</strong><br><span class="section-note">${titleCase(entry.status)}${duration} · Pack: ${entry.pack_id}</span></li>`;
+        })
+        .join("");
+    } else {
+      historyList.innerHTML = "<li>No recent replay activity</li>";
+    }
+  }
+}
+
 function renderOperatorROI(trainingData) {
   // Classification and manual relay metrics
   setText("classificationTime", "< 2s");
@@ -395,10 +435,11 @@ function renderOperatorROI(trainingData) {
 
 window.addEventListener("load", async () => {
   wireTrainingNavigation();
-  const [trainingData, platformData, capabilitiesData] = await Promise.all([
+  const [trainingData, platformData, capabilitiesData, executionStateData] = await Promise.all([
     fetchAuthedJson("/api/v1/training/summary").catch(() => loadMetrics()),
     fetchAuthedJson("/api/v1/platform/status").catch(() => loadMetrics()),
     fetchAuthedJson("/api/v1/runtime/capabilities").catch(() => ({})),
+    fetchAuthedJson("/api/v1/runtime/execution-state").catch(() => ({})),
   ]);
 
   renderSessionTriage(trainingData);
@@ -408,4 +449,5 @@ window.addEventListener("load", async () => {
   renderGovernance(platformData.platform_status || platformData);
   renderAdvanced(trainingData);
   renderRuntimeCapabilities(capabilitiesData);
+  renderExecutionState(executionStateData);
 });
