@@ -8,7 +8,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
 - Flagship incidents:
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
-- Current validated baseline (post items 41–45):
+- Current validated baseline (post items 41–46):
   - `pytest tests/ -q` -> `141 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes
@@ -21,6 +21,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
   - **Runtime-host visibility** in UI showing which host executed replay
   - **Operator-triggered bounded replay** from the incident console with live refresh
   - **Post-approval outcome capture** visible in incident detail and training page with memory context
+  - **Operator-to-engineering demo closure** with updated owner walkthrough and post-approval flow
 
 ## What Loops Are For
 
@@ -39,7 +40,7 @@ If those are not true, write the backlog first. Do not improvise broad product w
 Before starting, the agent must read:
 
 1. `WORKING_STATE.md`
-2. the active backlog file, currently `backlog-41-plus.json`
+2. the active backlog file, currently `backlog-47-plus.json`
 3. any referenced docs for the target phase
 
 ## Required Backlog Shape
@@ -119,20 +120,17 @@ feat(#<id>): <title>
 
 ## Current Frontier
 
-The `15–40` backlog is complete. Items `41–45` from `backlog-41-plus.json` are complete.
+The `15–46` backlog is complete. New loop runs should target `backlog-47-plus.json`.
 
-Remaining implementation frontier:
+The next implementation frontier is:
 
-- **Item 46**: final operator-to-engineering demo closure for the flagship support flow
-
-Completed implementation items:
-
-1. ✓ operator-triggered bounded replay for fresh incidents from the live incident console (item 41)
-2. ✓ runtime-host capability matrix and pack coverage visibility (item 42)
-3. ✓ persisted debugger evidence and replay-linked debugging trail for `INC001` (item 43)
-4. ✓ stronger developer handoff packet tied to code-owner and mitigation evidence (item 44)
-5. ✓ post-approval outcome capture and memory ingestion (item 45)
-6. ⧖ final operator-to-engineering demo closure for the flagship support flow (item 46)
+1. engineering handoff export and case packaging
+2. bounded debugger parity for `INC002`
+3. deeper runtime-host productization beyond the current visibility layer
+4. outcome-weighted memory ranking based on what actually worked
+5. pack onboarding contract for new curated outage classes
+6. operator ROI and audit surface
+7. larger visual-system reinvention pass beyond item 35
 
 ## Reality Check
 
@@ -147,6 +145,8 @@ Implemented now:
 - one bounded debugger flow for `INC001`
 - improved fresh-incident reasoning that distinguishes scaffold-only versus runtime-backed evidence
 - runtime-host visibility in the operator UI
+- post-approval outcome capture and memory-linked execution context
+- end-to-end operator-to-engineering walkthrough that matches the shipped product flow
 
 Not implemented yet:
 

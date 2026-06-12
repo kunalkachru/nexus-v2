@@ -6,8 +6,8 @@ Short handoff for Codex or Claude sessions. Keep current and compact.
 
 Items `15–34`: **complete**
 Items `35–40`: **complete**
-Items `41–45`: **complete**
-Next phase: complete item 46 (final demo closure)
+Items `41–46`: **complete**
+Next phase: execute `backlog-47-plus.json`
 
 ## App In One Sentence
 
@@ -16,7 +16,7 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 ## Baseline State
 
 - Branch: `master`
-- Baseline feature slice through item `40`: `358fb68`
+- Baseline feature slice through item `46`: `23946d7`
 - `pytest tests/ -q` → **141 passed**
 - `npm run browser:verify` → **11 passed**
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
@@ -47,6 +47,7 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 - **persisted debugger evidence and replay-linked debugging trail** for INC001 (item 43)
 - **developer handoff packet v5** with owner-first inspection brief and replay evidence (item 44)
 - **post-approval outcome capture and memory ingestion** with visible incident UI and training reference (item 45)
+- **final operator-to-engineering demo closure** with updated walkthrough and post-approval flow (item 46)
 
 ## What Is Real Today Vs Still Bounded
 
@@ -78,7 +79,8 @@ These paths must stay semantically aligned.
 
 - `backlog-next.json` — completed backlog through item `34`
 - `backlog-35-plus.json` — completed backlog through item `40`
-- `backlog-41-plus.json` — active backlog for the next frontier
+- `backlog-41-plus.json` — completed backlog through item `46`
+- `backlog-47-plus.json` — active backlog for the next frontier
 - `AGENTS.md` — loop rules and current validated baseline
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
@@ -101,9 +103,10 @@ These paths must stay semantically aligned.
 
 ## Next Recommended Frontier
 
-1. operator-triggered bounded replay for fresh incidents from the incident console
-2. runtime-host capability matrix and pack visibility beyond the incident detail page
-3. persisted debugger evidence and replay-linked debugging trail for `INC001`
-4. stronger developer handoff tied to code-owner and mitigation evidence
-5. post-approval outcome capture and memory ingestion
-6. final operator-to-engineering demo closure for the flagship support flow
+1. engineering handoff export and case packaging
+2. bounded debugger parity for `INC002`
+3. runtime-host productization v2 beyond the current visibility layer
+4. outcome-weighted memory ranking based on executed outcomes
+5. pack onboarding contract for new curated outage classes
+6. operator ROI and audit surface
+7. larger visual-system reinvention pass beyond item 35

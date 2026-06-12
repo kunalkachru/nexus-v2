@@ -26,16 +26,17 @@ Do not start a loop against a vague objective like "improve Nexus more." Write a
 
 ## Current Recommended Scope
 
-The `15–40` backlog is complete.
+The `15–46` backlog is complete.
 
-The active next backlog should be `backlog-41-plus.json`, covering:
+The active next backlog should be `backlog-47-plus.json`, covering:
 
-1. operator-triggered bounded replay for fresh incidents
-2. runtime-host capability matrix and pack coverage visibility
-3. persisted debugger evidence and replay-linked debugging trail
-4. stronger developer handoff packet tied to code-owner and mitigation evidence
-5. post-approval outcome capture and memory ingestion
-6. final operator-to-engineering demo closure for the flagship support flow
+1. engineering handoff export and case packaging
+2. bounded debugger parity for `INC002`
+3. runtime-host productization v2
+4. outcome-weighted memory ranking
+5. pack onboarding contract
+6. operator ROI and audit surface
+7. larger visual-system reinvention pass
 
 ## Before Starting A Loop
 
