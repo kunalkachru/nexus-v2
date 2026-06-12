@@ -264,18 +264,11 @@ async def get_runtime_capabilities(
     config = request.app.state.config
     supported_packs = runtime_host_supported_packs()
     relay_status = build_runtime_host_relay_status(config)
-    relay_health = {}
-    if config.runtime_host_base_url:
-        relay_health = probe_runtime_host(config.runtime_host_base_url)
 
     return {
         "supported_packs": supported_packs,
         "pack_count": len(supported_packs),
-        "runtime_host_relay": {
-            "configured": relay_status.get("configured", False),
-            "base_url": config.runtime_host_base_url or None,
-            "health": relay_health,
-        },
+        "runtime_host_relay": relay_status,
         "coverage_summary": {
             "timeout_retry_amplification": any("timeout_retry_amplification" in p.get("incident_classes", []) for p in supported_packs),
             "db_pool_exhaustion": any("db_pool_exhaustion" in p.get("incident_classes", []) for p in supported_packs),

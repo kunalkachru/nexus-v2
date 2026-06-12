@@ -644,6 +644,23 @@ function renderEnterprise(data) {
   setText("replicaRuntimeHint", runtimeProvenanceDetail);
   setText("replicaCapabilityMessage", runtimeCapability.message || "Replay capability details are not available for this incident yet.");
   setText("replicaCapabilityDetail", runtimeCapabilityDetail || "Runtime capability posture is not available for this incident yet.");
+
+  // Populate runtime-host card
+  const runtimeHostState = [
+    runtimeCapability.label,
+    runtimeCapability.host_label,
+  ].filter(Boolean).join(" on ");
+  setText("runtimeHostState", runtimeHostState || "Runtime host posture pending");
+
+  if (hypothesisPacket.supported && hypothesisPacket.pack_id) {
+    const packInfoCard = document.getElementById("runtimePackInfo");
+    if (packInfoCard) {
+      packInfoCard.style.display = "block";
+      setText("runtimePackId", hypothesisPacket.pack_id);
+      setText("runtimeIncidentClass", titleCase(hypothesisPacket.incident_class || "unknown"));
+      setText("runtimeCoverage", hypothesisPacket.supported ? "Bounded pack available" : "Not supported");
+    }
+  }
   ensureReplicaHypothesisPacket();
   setText(
     "replicaHypothesisSummary",

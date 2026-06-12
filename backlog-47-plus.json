@@ -59,7 +59,7 @@
     "id": 49,
     "title": "Runtime-host productization v2",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Go deeper than the current visibility layer and make runtime-host feel like a fuller product capability. Add stronger operator controls or views for runtime mode, pack selection context, execution eligibility, and coverage boundaries. The goal is to make the bounded reproduction layer feel intentionally productized, not just surfaced.",
     "done_when": [
       "runtime-host posture feels like an intentional product layer rather than a hidden technical detail",

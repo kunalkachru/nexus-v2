@@ -348,10 +348,28 @@ function renderRuntimeCapabilities(capabilitiesData) {
   setText("coverageTimeoutRetry", coverage.timeout_retry_amplification ? "✓ Covered" : "Not yet");
   setText("coverageDbPool", coverage.db_pool_exhaustion ? "✓ Covered" : "Not yet");
 
+  // Populate runtime-host section
   const relayStatusText = relayStatus.configured
     ? `Runtime-host relay configured at ${relayStatus.base_url}. ${relayStatus.health?.healthy ? "Relay is healthy." : "Relay health check failed."}`
     : "Runtime-host relay is not configured. Replay will use Docker on the current app host if available.";
-  setText("runtimeHostStatus", relayStatusText);
+  setText("runtimeHostMessage", relayStatusText);
+
+  setText("runtimeHostStatus", relayStatus.state || "not_configured");
+  setText("runtimeHostReachable", relayStatus.reachable ? "✓ Reachable" : "✗ Not reachable");
+  setText("runtimeHostHealth", relayStatus.healthy ? "✓ Healthy" : relayStatus.configured ? "✗ Unhealthy" : "-");
+
+  const supportedClasses = packs.flatMap(pack => pack.incident_classes || []);
+  const uniqueClasses = [...new Set(supportedClasses)];
+  const classList = document.getElementById("supportedIncidentClasses");
+  if (classList) {
+    if (uniqueClasses.length > 0) {
+      classList.innerHTML = uniqueClasses
+        .map(cls => `<li>${titleCase(cls)}</li>`)
+        .join("");
+    } else {
+      classList.innerHTML = "<li>No bounded incident classes supported yet</li>";
+    }
+  }
 }
 
 window.addEventListener("load", async () => {

@@ -100,6 +100,47 @@
             </div>
         </section>
 
+        <section class="section" id="runtimeHostSection">
+            <div class="section-header">
+                <h2>Bounded runtime capability</h2>
+                <div class="section-note">NEXUS uses curated Docker-backed reproduction packs to validate hypotheses and test mitigations. Runtime-host shows what bounded replay is available for operator-initiated testing.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Current runtime-host posture</div>
+                    <div class="kpi-grid">
+                        <div class="summary-card"><div class="label">Configuration status</div><div class="value" id="runtimeHostStatus">Not configured</div></div>
+                        <div class="summary-card"><div class="label">Reachability</div><div class="value" id="runtimeHostReachable">-</div></div>
+                        <div class="summary-card"><div class="label">Health</div><div class="value" id="runtimeHostHealth">-</div></div>
+                    </div>
+                    <p class="section-note" id="runtimeHostMessage">Runtime-host status will appear here.</p>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Supported incident packs</div>
+                    <p class="hero-copy" id="runtimePackCoverageNote">Loading supported incident classes...</p>
+                    <ul class="simple-list" id="supportedIncidentClasses"></ul>
+                </div>
+            </div>
+            <div class="detail-card" style="margin-top: 14px;">
+                <div class="badge">What bounded runtime replay can do</div>
+                <p class="hero-copy">When runtime-host is configured, NEXUS can reproduce curated outage scenarios in an isolated Docker environment, test mitigation strategies, and measure outcome improvements without affecting live traffic.</p>
+                <div class="story-grid" style="margin-top: 1em;">
+                    <div style="padding: 0.75em; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                        <div class="stat"><div class="stat-label">Bounded scope</div><div class="stat-value" id="runtimeBoundedScope">Curated flagship packs</div></div>
+                        <p class="section-note">Replay is limited to pre-built packs for known outage classes, not general-purpose debugging.</p>
+                    </div>
+                    <div style="padding: 0.75em; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                        <div class="stat"><div class="stat-label">Isolation</div><div class="stat-value" id="runtimeIsolation">Production-safe</div></div>
+                        <p class="section-note">Each replay runs in its own Docker sandbox. No production data touches the test environment.</p>
+                    </div>
+                    <div style="padding: 0.75em; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                        <div class="stat"><div class="stat-label">Coverage boundaries</div><div class="stat-value" id="runtimeCoverageBoundaries">Well-defined</div></div>
+                        <p class="section-note">The product only supports incident classes with curated hypothesis packets and replay contracts.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="section" id="learningSection">
             <div class="section-header">
                 <h2>Learning summary</h2>

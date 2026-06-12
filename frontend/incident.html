@@ -252,9 +252,18 @@
                         <div class="stat"><div class="stat-label">Replay capability</div><div class="stat-value" id="replicaCapabilityState">-</div></div>
                         <div class="stat"><div class="stat-label">Replay host</div><div class="stat-value" id="replicaCapabilityHost">-</div></div>
                     </div>
-                    <p class="section-note" id="replicaCapabilityDetail">Runtime host posture will appear here once REPLICA loads.</p>
-                    <p class="section-note" id="replicaRuntimeHint">Runtime mode details will appear here once REPLICA loads.</p>
-                    <p class="section-note" id="replicaCapabilityMessage">Replay capability details will appear here once REPLICA loads.</p>
+                    <div class="detail-card" id="runtimeHostCard" style="margin-top: 1em; background-color: rgba(74, 144, 226, 0.05); border: 1px solid rgba(74, 144, 226, 0.15);">
+                        <div class="badge">Runtime-host posture</div>
+                        <p class="section-note" id="replicaCapabilityDetail">Runtime host posture will appear here once REPLICA loads.</p>
+                        <p class="section-note" id="runtimeHostState" style="margin-top: 0.5em; font-weight: 500;"></p>
+                        <p class="section-note" id="replicaRuntimeHint">Runtime mode details will appear here once REPLICA loads.</p>
+                        <p class="section-note" id="replicaCapabilityMessage">Replay capability details will appear here once REPLICA loads.</p>
+                        <div id="runtimePackInfo" style="margin-top: 1em; padding: 0.75em; background-color: rgba(255, 255, 255, 0.05); border-radius: 4px; display: none;">
+                            <div class="stat"><div class="stat-label">Pack ID</div><div class="stat-value" id="runtimePackId">-</div></div>
+                            <div class="stat"><div class="stat-label">Incident class</div><div class="stat-value" id="runtimeIncidentClass">-</div></div>
+                            <div class="stat"><div class="stat-label">Coverage</div><div class="stat-value" id="runtimeCoverage">-</div></div>
+                        </div>
+                    </div>
                     <div class="shell-actions">
                         <button class="nav-link channel-cta" id="replicaReplayBtn" type="button">Run bounded replay</button>
                     </div>
