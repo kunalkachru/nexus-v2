@@ -286,6 +286,24 @@ function ensureTraceCodePacket() {
   traceModules.insertAdjacentElement("beforebegin", wrapper);
 }
 
+function ensureMitigationLadderPacket() {
+  if (document.getElementById("replicaMitigationLadderSummary")) {
+    return;
+  }
+  const mitigationsList = document.getElementById("replicaMitigations");
+  if (!mitigationsList || !mitigationsList.parentElement) {
+    return;
+  }
+  const wrapper = document.createElement("div");
+  wrapper.id = "replicaMitigationLadderPacket";
+  wrapper.innerHTML = `
+    <p class="section-label">Mitigation ladder</p>
+    <p class="section-note" id="replicaMitigationLadderSummary">FORGE will summarize the bounded mitigation ladder here once the packet loads.</p>
+    <ul class="simple-list" id="replicaMitigationLadderSteps"></ul>
+  `;
+  mitigationsList.insertAdjacentElement("beforebegin", wrapper);
+}
+
 function setText(id, value) {
   const element = document.getElementById(id);
   if (element && value !== undefined && value !== null) {
@@ -575,6 +593,7 @@ function renderEnterprise(data) {
   const replayLifecycleEvents = replayLifecycle.events || [];
   const runtimeTrustPacket = replica.runtime_trust_packet || {};
   const hypothesisPacket = replica.hypothesis_packet || {};
+  const mitigationLadder = replica.mitigation_ladder || runbook.mitigation_ladder || guardian.mitigation_ladder || {};
   const runtimeCapabilityDetail = [
     runtimeCapability.host_label ? `Host: ${runtimeCapability.host_label}` : "",
     runtimeCapability.bounded_pack_available ? "Bounded pack mapped" : "No bounded pack",
@@ -757,6 +776,21 @@ function renderEnterprise(data) {
   if (replica.scaffold_ready && (replica.services_seen || []).length) {
     setText("replicaPack", `${replica.environment_pack_id || "-"} · ${replica.services_seen.join(", ")}`);
   }
+  ensureMitigationLadderPacket();
+  setText(
+    "replicaMitigationLadderSummary",
+    mitigationLadder.operator_summary
+      ? `${mitigationLadder.operator_summary} Stop condition: ${mitigationLadder.stop_condition || "Not specified."}`
+      : "FORGE has not attached a bounded mitigation ladder yet."
+  );
+  renderList(
+    "replicaMitigationLadderSteps",
+    (mitigationLadder.steps || []).length
+      ? mitigationLadder.steps
+      : [{ role: "primary", action: "No bounded ladder yet", summary: "Runtime comparison has not produced a primary/fallback sequence yet.", outcome_class: "inferred_only" }],
+    (item) =>
+      `<li><strong>${titleCase(item.role || "step")} · ${item.action || "No action"}</strong><br><span class="section-note">${titleCase(String(item.outcome_class || "inferred_only").replace(/_/g, " "))}</span>${item.summary ? `<br><span class="section-note">${item.summary}</span>` : ""}</li>`
+  );
   renderList(
     "replicaMitigations",
     (replica.tested_mitigations || []).length

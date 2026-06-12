@@ -491,7 +491,7 @@
     "id": 33,
     "title": "Bounded mitigation execution ladder across REPLICA, FORGE, and GUARDIAN",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Right now mitigation comparison is present, but the product still feels like a single-step recommendation. Deepen that into a bounded execution ladder: preferred mitigation, fallback mitigation, and stop conditions, all derived from the replay comparison and made legible to GUARDIAN and the operator.",
     "done_when": [
       "FORGE exposes a primary and bounded fallback mitigation ladder for the flagship outages",

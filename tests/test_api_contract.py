@@ -410,6 +410,8 @@ def test_seeded_incident_replica_replay_reports_success_with_stubbed_runtime(
     assert payload["replica_summary"]["best_mitigation_status_code"] == 200
     assert payload["replica_summary"]["mitigation_comparison"]["winner"]["action"] == "Enable auth-svc circuit breaker and cap retries to 1"
     assert payload["replica_summary"]["mitigation_comparison"]["runner_up"]["action"] == "Roll back auth-svc retry middleware"
+    assert payload["replica_summary"]["mitigation_ladder"]["primary"]["action"] == "Enable auth-svc circuit breaker and cap retries to 1"
+    assert payload["replica_summary"]["mitigation_ladder"]["fallback"]["action"] == "Roll back auth-svc retry middleware"
 
 
 def test_live_incident_replica_replay_reports_unsupported_when_no_pack_matches(
@@ -568,6 +570,8 @@ def test_live_incident_context_contract_returns_backend_evidence(client: TestCli
     assert payload["replica_summary"]["hypothesis_packet"]["incident_class"] == "timeout_retry_amplification"
     assert payload["replica_summary"]["hypothesis_packet"]["triggering_conditions"]
     assert payload["replica_summary"]["hypothesis_packet"]["expected_failure_signature"]
+    assert payload["replica_summary"]["mitigation_ladder"]["primary"]["action"]
+    assert payload["replica_summary"]["mitigation_ladder"]["stop_condition"]
     assert payload["replica_summary"]["runtime_capability"]["state"] in {
         "replay_available",
         "host_unavailable",
@@ -1034,6 +1038,9 @@ def test_live_raw_text_incident_refresh_uses_persisted_replay_packet(
     assert context_payload["trace_summary"]["suspected_files"][0].endswith("checkout_server.py")
     assert "trace_ownership_map.json" in context_payload["trace_summary"]["code_owner_source"]
     assert "trace_ownership_map.json" in context_payload["trace_summary"]["developer_handoff_summary"]
+    assert context_payload["replica_summary"]["mitigation_ladder"]["primary"]["action"] == "Terminate orphaned sessions and restart checkout pods"
+    assert "Stop condition:" in context_payload["runbook"]["reasoning"]
+    assert "Stop condition:" in context_payload["guardian"]["reasoning"]
     assert "treated the runtime evidence as resolved" in context_payload["runbook"]["reasoning"]
     assert context_payload["runbook"]["candidate_fixes"][0]["runtime_outcome_class"] == "resolved"
     assert "Validated runtime signals" in context_payload["guardian"]["reasoning"]
@@ -1239,6 +1246,7 @@ def test_incident_context_defaults_to_deterministic_without_user_key(client: Tes
     assert payload["replica_summary"]["hypothesis_packet"]["supported"] is True
     assert payload["replica_summary"]["hypothesis_packet"]["mitigation_checkpoints"]
     assert payload["replica_summary"]["runtime_capability"]["state"]
+    assert payload["replica_summary"]["mitigation_ladder"]["steps"]
     assert payload["trace_summary"]["stack_path"]
     assert payload["trace_summary"]["runtime_clue"]
     assert payload["trace_summary"]["suspected_modules"] is not None

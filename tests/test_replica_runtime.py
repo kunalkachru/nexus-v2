@@ -3,7 +3,14 @@ import subprocess
 from pathlib import Path
 
 from server.services.enterprise_runtime import build_replica_summary, enrich_memory_with_runtime, rank_candidate_fixes_with_runtime
-from server.services.replica_runtime import ReplicaRunner, build_execution_plan, registry, select_environment_pack, trace_targets_for_plan
+from server.services.replica_runtime import (
+    ReplicaExecutionResult,
+    ReplicaRunner,
+    build_execution_plan,
+    registry,
+    select_environment_pack,
+    trace_targets_for_plan,
+)
 
 
 def test_replica_registry_exposes_two_flagship_packs() -> None:
@@ -223,6 +230,54 @@ def test_replica_summary_builds_db_pool_hypothesis_packet() -> None:
     assert summary["hypothesis_packet"]["incident_class"] == "db_pool_exhaustion"
     assert any("HTTP 503" in item for item in summary["hypothesis_packet"]["expected_failure_signature"])
     assert summary["hypothesis_packet"]["mitigation_checkpoints"][0]["action"] == "Terminate orphaned sessions and restart checkout pods"
+
+
+def test_replica_summary_builds_mitigation_ladder_for_improved_but_unresolved_runtime() -> None:
+    runtime_execution = ReplicaExecutionResult(
+        pack_id="checkout-python-fastapi-auth-redis-v1",
+        compose_ready=True,
+        replay_ready=True,
+        mitigation_hooks_ready=True,
+        missing_assets=(),
+        docker_available=True,
+        compose_config_valid=True,
+        services_seen=("gateway", "auth", "redis"),
+        replay_output="status_code=504 duration_ms=1800",
+        replay_status_code=504,
+        replay_duration_ms=1800,
+        mitigation_outputs=(
+            "cap retries",
+            "status_code=504 duration_ms=720",
+            "rollback middleware",
+            "status_code=504 duration_ms=1100",
+        ),
+        mitigation_status_codes=(504, 504),
+        mitigation_duration_ms=(720, 1100),
+        mode="runtime_scaffold",
+    )
+
+    summary = build_replica_summary(
+        incident_id="INC001",
+        triage_summary={
+            "issue_family": "Timeout cascade / retry amplification",
+            "likely_owner_service": "auth-svc",
+        },
+        root_cause="Runaway retry storm on downstream auth calls exhausted worker threads and drove API timeouts",
+        recent_logs=[
+            "09:05:12 WARN api-gateway retry budget exceeded for POST /payments after 4 upstream attempts",
+            "09:05:34 ERROR auth-svc upstream timeout after 5000ms request_id=req-8e12",
+        ],
+        recent_deployments=[{"service": "auth-svc", "change": "Retry middleware refactor"}],
+        candidate_fixes=[
+            {"action": "Enable auth-svc circuit breaker and cap retries to 1", "success_rate": 0.91},
+            {"action": "Roll back auth-svc retry middleware", "success_rate": 0.87},
+        ],
+        runtime_execution=runtime_execution,
+    )
+
+    assert summary["mitigation_ladder"]["primary"]["action"] == "Enable auth-svc circuit breaker and cap retries to 1"
+    assert summary["mitigation_ladder"]["fallback"]["action"] == "Roll back auth-svc retry middleware"
+    assert "only improves the runtime" in summary["mitigation_ladder"]["stop_condition"]
 
 
 def test_runtime_candidate_ranking_prefers_validated_mitigation() -> None:

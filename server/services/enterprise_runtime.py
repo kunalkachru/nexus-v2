@@ -492,6 +492,8 @@ class EnterpriseNexusRuntime:
                 or updated_runbook.get("recommended_runbook")
                 or ""
             )
+        mitigation_ladder = dict(replica_summary.get("mitigation_ladder") or {})
+        updated_runbook["mitigation_ladder"] = mitigation_ladder
 
         top_runbook = updated_memory_hits["runbooks"][0] if updated_memory_hits["runbooks"] else {}
         runner_up = updated_memory_hits["runbooks"][1] if len(updated_memory_hits["runbooks"]) > 1 else {}
@@ -508,7 +510,9 @@ class EnterpriseNexusRuntime:
             f"{str(replica_summary.get('runtime_comparison_summary') or '')} "
             f"{validated_summary + ' ' if validated_summary else ''}"
             f"TRACE: {trace_summary.get('reasoning', '')} "
-            f"FORGE kept the plan biased toward reversible, lower-blast-radius actions first and treated the runtime evidence as {validated_outcome or 'inferred only'}."
+            f"FORGE kept the plan biased toward reversible, lower-blast-radius actions first and treated the runtime evidence as {validated_outcome or 'inferred only'}. "
+            f"{str(mitigation_ladder.get('operator_summary') or '')} "
+            f"Stop condition: {str(mitigation_ladder.get('stop_condition') or '')}"
         ).strip()
         updated_runbook["reasoning"] = " ".join(runbook_reasoning.split())
 
@@ -541,6 +545,8 @@ class EnterpriseNexusRuntime:
             f"{validated_clause} "
             f"{str(replica_summary.get('runtime_comparison_summary') or '')} "
             f"Inferred signals: memory-ranked analogs and diagnosis synthesis still inform the remaining confidence. "
+            f"{str(mitigation_ladder.get('guardian_summary') or '')} "
+            f"Stop condition: {str(mitigation_ladder.get('stop_condition') or '')} "
             f"Risk class {risk_class.upper()} requires {approval_level.replace('_', ' ')} approval. "
             f"Rollback readiness is {rollback_readiness} and simulation readiness is {simulation_readiness}."
         ).strip()
@@ -552,6 +558,7 @@ class EnterpriseNexusRuntime:
                 "blocked_controls": blocked_controls,
                 "rollback_readiness": rollback_readiness,
                 "simulation_readiness": simulation_readiness,
+                "mitigation_ladder": mitigation_ladder,
             }
         )
 
@@ -1661,6 +1668,84 @@ def _build_mitigation_comparison(
     }
 
 
+def _build_mitigation_ladder(comparison: dict[str, object]) -> dict[str, object]:
+    winner = comparison.get("winner") if isinstance(comparison, dict) else None
+    runner_up = comparison.get("runner_up") if isinstance(comparison, dict) else None
+    baseline = comparison.get("baseline") if isinstance(comparison, dict) else None
+
+    primary_action = str((winner or {}).get("action") or "")
+    primary_outcome = str((winner or {}).get("outcome_class") or "inferred_only")
+    fallback_action = str((runner_up or {}).get("action") or "")
+    fallback_outcome = str((runner_up or {}).get("outcome_class") or "inferred_only")
+    baseline_outcome = str((baseline or {}).get("outcome_class") or "not_run")
+
+    if primary_outcome == "resolved":
+        stop_condition = "Stop after the primary mitigation once the bounded replay no longer returns the baseline 5xx failure and the customer path remains stable."
+        operator_summary = (
+            f"Run {primary_action or 'the primary mitigation'} first and stop there if the bounded replay stays resolved. "
+            f"{f'Keep {fallback_action} as the bounded fallback only if the failure signature returns.' if fallback_action else 'Escalate with TRACE if the failure signature returns.'}"
+        )
+        guardian_summary = (
+            f"Approve the primary step first. {f'Do not pre-authorize {fallback_action} unless the resolved signal regresses.' if fallback_action else 'Do not authorize broader changes unless the resolved signal regresses.'}"
+        )
+    elif primary_outcome == "improved":
+        stop_condition = (
+            f"If {primary_action or 'the primary mitigation'} only improves the runtime and the baseline failure signature remains active, move to "
+            f"{fallback_action or 'manual escalation with TRACE'} next."
+        )
+        operator_summary = (
+            f"Start with {primary_action or 'the primary mitigation'} because it improves the bounded replay first. "
+            f"{f'If the incident is still not resolved, execute {fallback_action} as the bounded fallback.' if fallback_action else 'If the incident is still not resolved, stop and escalate with the TRACE packet.'}"
+        )
+        guardian_summary = (
+            f"Approve the primary step as a bounded first move, but require another review before treating the incident as resolved. "
+            f"{f'Fallback approval should point to {fallback_action} if the failure signature remains.' if fallback_action else 'Fallback should be manual engineering escalation if the failure signature remains.'}"
+        )
+    else:
+        stop_condition = (
+            f"If {primary_action or 'the primary mitigation'} does not materially improve the baseline {baseline_outcome.replace('_', ' ')}, stop automation and escalate with the TRACE packet."
+        )
+        operator_summary = (
+            f"Primary move is {primary_action or 'the leading mitigation candidate'}, but it is not yet runtime-cleared. "
+            f"{f'Use {fallback_action} only as the next bounded attempt under explicit review.' if fallback_action else 'Escalate directly instead of assuming the next step is safe.'}"
+        )
+        guardian_summary = (
+            f"Do not treat the incident as resolved after the primary move alone. "
+            f"{f'Fallback {fallback_action} still requires explicit approval.' if fallback_action else 'Further action requires explicit engineering review.'}"
+        )
+
+    steps = []
+    if primary_action:
+        steps.append(
+            {
+                "rank": 1,
+                "role": "primary",
+                "action": primary_action,
+                "outcome_class": primary_outcome,
+                "summary": str((winner or {}).get("summary") or ""),
+            }
+        )
+    if fallback_action:
+        steps.append(
+            {
+                "rank": 2,
+                "role": "fallback",
+                "action": fallback_action,
+                "outcome_class": fallback_outcome,
+                "summary": str((runner_up or {}).get("summary") or ""),
+            }
+        )
+
+    return {
+        "primary": steps[0] if steps else {},
+        "fallback": steps[1] if len(steps) > 1 else {},
+        "steps": steps,
+        "stop_condition": stop_condition,
+        "operator_summary": operator_summary,
+        "guardian_summary": guardian_summary,
+    }
+
+
 def runtime_aligned_candidate_fixes(issue_family: str, service: str) -> list[dict[str, object]]:
     issue_family_text = issue_family.lower()
     if "retry amplification" in issue_family_text or ("timeout" in issue_family_text and "retry" in issue_family_text):
@@ -2019,6 +2104,7 @@ def build_replica_summary(
         runtime_mitigations,
         baseline_outcome_class=baseline_outcome_class,
     )
+    mitigation_ladder = _build_mitigation_ladder(mitigation_comparison)
     mitigation_verdict = str(mitigation_comparison.get("verdict") or "")
     runtime_mode = runtime_mode_override or ("runtime_scaffold" if runtime_result else ("pack_scaffold" if plan and runner_result and not runner_result.missing_assets else "inferred"))
     scaffold_ready = bool(plan and runner_result and not runner_result.missing_assets)
@@ -2078,6 +2164,7 @@ def build_replica_summary(
             )
         ),
         "mitigation_comparison": mitigation_comparison,
+        "mitigation_ladder": mitigation_ladder,
         "runtime_enablement_hint": _runtime_enablement_hint(
             scaffold_ready=scaffold_ready,
             runtime_executed=bool(runtime_result),

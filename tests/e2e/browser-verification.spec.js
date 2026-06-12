@@ -186,6 +186,8 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#runtimeMitigatedRow")).toBeVisible();
     await expect(page.locator("#runtimeRunnerUpRow")).toBeVisible();
     await expect(page.locator("#runtimeOutcomeLabel")).toBeVisible();
+    await expect(page.locator("#replicaMitigationLadderSummary")).toContainText(/Stop condition|fallback|bounded/i);
+    await expect(page.locator("#replicaMitigationLadderSteps")).toContainText(/Primary|Fallback/);
 
     const outcomeText = await page.locator("#runtimeOutcomeLabel").textContent();
     expect(/resolved|improved|not improved|inferred/i.test(outcomeText || "")).toBeTruthy();
