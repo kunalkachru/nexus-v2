@@ -173,7 +173,7 @@
     "id": 53,
     "title": "Visual system reinvention pass",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Return to the deferred UI ambition and push beyond the successful refinement from item 35. This pass should aim for a more distinctive and memorable product look while preserving the operational clarity gained in items 35 and 36. Treat it as a deliberate design pass, not random cosmetic change.",
     "done_when": [
       "the product feels materially more distinctive than the current visual refinement pass",
