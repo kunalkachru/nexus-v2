@@ -8,7 +8,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
 - Flagship incidents:
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
-- Current validated baseline (post items 35–39):
+- Current validated baseline (post items 35–40):
   - `pytest tests/ -q` -> `141 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes
@@ -37,7 +37,7 @@ If those are not true, write the backlog first. Do not improvise broad product w
 Before starting, the agent must read:
 
 1. `WORKING_STATE.md`
-2. the active backlog file, currently `backlog-35-plus.json`
+2. the active backlog file, currently `backlog-41-plus.json`
 3. any referenced docs for the target phase
 
 ## Required Backlog Shape
@@ -117,16 +117,16 @@ feat(#<id>): <title>
 
 ## Current Frontier
 
-The `15–34` backlog is complete. New loop runs should target `backlog-35-plus.json`.
+The `15–40` backlog is complete. New loop runs should target `backlog-41-plus.json`.
 
 The next implementation frontier is:
 
-1. stronger product-grade UI and visual differentiation across the core surfaces
-2. a richer flagship incident console that is legible without narration
-3. stronger fresh `nxs_...` incident parity with the seeded runtime story
-4. a more concrete bounded debugger flow for `INC001`
-5. runtime-host productization and clearer operator controls
-6. docs and demo sync for the new product layer
+1. operator-triggered bounded replay for fresh incidents from the live incident console
+2. runtime-host capability matrix and pack coverage visibility
+3. persisted debugger evidence and replay-linked debugging trail for `INC001`
+4. stronger developer handoff packet tied to code-owner and mitigation evidence
+5. post-approval outcome capture and memory ingestion
+6. final operator-to-engineering demo closure for the flagship support flow
 
 ## Reality Check
 
@@ -138,7 +138,9 @@ Implemented now:
 - replay lifecycle and replay history visibility
 - bounded TRACE ownership and trace-to-code packet for both flagship outages
 - bounded mitigation ladder across REPLICA, FORGE, and GUARDIAN
-- one bounded debugger-style packet for `INC001`
+- one bounded debugger flow for `INC001`
+- improved fresh-incident reasoning that distinguishes scaffold-only versus runtime-backed evidence
+- runtime-host visibility in the operator UI
 
 Not implemented yet:
 

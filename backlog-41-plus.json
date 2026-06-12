@@ -1,0 +1,168 @@
+[
+  {
+    "id": 41,
+    "title": "Operator-triggered bounded replay for fresh incidents",
+    "priority": "high",
+    "status": "pending",
+    "description": "Close the biggest product gap left in the live path: fresh `nxs_...` incidents should be able to move from scaffold-only reasoning to runtime-backed evidence from the incident console itself. The operator should be able to trigger bounded replay when a matching curated pack exists, see the replay state clearly, and understand when the incident is still inferred-only versus upgraded to measured evidence.",
+    "done_when": [
+      "a fresh incident can trigger bounded replay from the incident console when a curated pack match exists",
+      "the live incident visibly transitions from scaffold-only to runtime-backed language after replay succeeds",
+      "the replay action remains truthful when no curated pack is available or runtime replay cannot run"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "frontend/static/api.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  },
+  {
+    "id": 42,
+    "title": "Runtime-host capability matrix and pack coverage surface",
+    "priority": "high",
+    "status": "pending",
+    "description": "Turn runtime-host support from a local hint into a visible product layer. Show which curated packs exist, what outage classes they cover, whether replay can run on the current environment, and what the bounded limits are. The goal is product trust: the operator and owner should understand exactly what NEXUS can reproduce today.",
+    "done_when": [
+      "the UI exposes a capability matrix or coverage block for runtime-host and curated packs",
+      "operators can distinguish available packs, unavailable coverage, and current execution posture without reading source code",
+      "the product explains its bounded runtime coverage explicitly rather than implying broad reproduction support"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/replica_runtime.py",
+      "server/services/incidents.py",
+      "runtime_host/server/app.py",
+      "frontend/training.html",
+      "frontend/static/incident.js",
+      "frontend/static/dashboard.css",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 43,
+    "title": "Persisted debugger evidence and replay-linked debugging trail",
+    "priority": "high",
+    "status": "pending",
+    "description": "The bounded debugger flow for `INC001` is useful, but it still behaves like a generated note. Persist the debugging trail into the incident packet and replay history so the engineer can see what checkpoints were expected, what evidence linked the replay to the debugging path, and what was last observed after replay. Keep it bounded to the curated timeout/retry pack.",
+    "done_when": [
+      "the INC001 debugger flow persists as part of the incident or replay packet instead of acting like a transient note",
+      "the debugging trail clearly links replay evidence to the ordered checkpoints",
+      "the UI makes it easy to understand the last bounded debugging trail for INC001"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_replica_runtime.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/test_replica_runtime.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 44,
+    "title": "Developer handoff packet v5 with owner-first inspection brief",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Deepen TRACE into a more immediately actionable engineering handoff. Combine code-owner cues, suspected file/function path, replay-linked anomaly, debugger flow summary where available, and the chosen mitigation context into one owner-first brief that can be handed directly to an engineer.",
+    "done_when": [
+      "TRACE produces a concise owner-first engineering handoff for the flagship outages",
+      "the handoff ties the suspected code path to replay evidence and selected mitigation context",
+      "the UI renders the developer handoff as a practical first debugging brief rather than a generic analysis block"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 45,
+    "title": "Post-approval outcome capture and memory ingestion",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Close the product loop after Guardian approval. Capture what happened after approval or execution, summarize the outcome in operator language, and write the result back into the memory layer so future incidents can cite what actually worked. This should make the system feel more like a learning enterprise product and less like a static demo.",
+    "done_when": [
+      "approved incidents capture an execution or outcome summary that is visible in the incident UI",
+      "the memory layer can reference prior executed outcomes rather than only seeded or inferred context",
+      "the post-approval path feels like part of the product lifecycle, not an abrupt stop after Guardian"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "frontend/training.html",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 46,
+    "title": "Final operator-to-engineering demo closure",
+    "priority": "medium",
+    "status": "pending",
+    "description": "After the deeper live replay, runtime-host, debugger, and memory flows are in place, sync the owner-facing docs and manual test path again. The goal is one complete demo story: intake, live replay upgrade, engineering handoff, Guardian approval, outcome capture, and learning loop. The owner should be able to run the Docker flow and explain the exact enterprise problem being solved without improvising.",
+    "done_when": [
+      "owner-facing docs reflect the post-item-45 product truthfully and end-to-end",
+      "manual Docker/browser steps cover the support-to-engineering workflow cleanly",
+      "the docs clearly separate real shipped behavior from bounded limits and non-shipped ambitions"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "docs/DEMO_WALKTHROUGH.md",
+      "docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md",
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/LOOPS_RUNBOOK.md",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  }
+]

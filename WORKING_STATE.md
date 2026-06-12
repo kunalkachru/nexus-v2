@@ -5,8 +5,8 @@ Short handoff for Codex or Claude sessions. Keep current and compact.
 ## Current Phase
 
 Items `15–34`: **complete**
-Items `35–39`: **complete**
-Next: final docs sync (item 40)
+Items `35–40`: **complete**
+Next phase: execute `backlog-41-plus.json`
 
 ## App In One Sentence
 
@@ -15,7 +15,7 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 ## Baseline State
 
 - Branch: `master`
-- Baseline commit: `83d8510`
+- Baseline feature slice through item `40`: `358fb68`
 - `pytest tests/ -q` → **141 passed**
 - `npm run browser:verify` → **11 passed**
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
@@ -40,6 +40,7 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 - **improved incident console information architecture** (item 36)
 - **fresh incident runtime-story parity** with clear scaffold-only language (item 37)
 - **runtime-host visibility** in operator UI (item 39)
+- **owner-facing docs and manual walkthrough synced to current runtime-host product reality** (item 40)
 
 ## What Is Real Today Vs Still Bounded
 
@@ -70,7 +71,8 @@ These paths must stay semantically aligned.
 ## Loop Setup Files
 
 - `backlog-next.json` — completed backlog through item `34`
-- `backlog-35-plus.json` — active backlog for the next frontier
+- `backlog-35-plus.json` — completed backlog through item `40`
+- `backlog-41-plus.json` — active backlog for the next frontier
 - `AGENTS.md` — loop rules and current validated baseline
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
@@ -93,9 +95,9 @@ These paths must stay semantically aligned.
 
 ## Next Recommended Frontier
 
-1. full UI revamp for the core product surfaces so the product feels materially different and easier to understand
-2. stronger flagship incident console information architecture
-3. stronger parity for fresh `nxs_...` incidents with the seeded runtime story
-4. bounded debugger execution flow for `INC001`
-5. runtime-host operator UX and runtime pack productization
-6. final docs/demo sync for the deeper product layer
+1. operator-triggered bounded replay for fresh incidents from the incident console
+2. runtime-host capability matrix and pack visibility beyond the incident detail page
+3. persisted debugger evidence and replay-linked debugging trail for `INC001`
+4. stronger developer handoff tied to code-owner and mitigation evidence
+5. post-approval outcome capture and memory ingestion
+6. final operator-to-engineering demo closure for the flagship support flow
