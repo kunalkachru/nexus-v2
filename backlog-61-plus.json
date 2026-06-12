@@ -145,7 +145,7 @@
     "id": 65,
     "title": "Deterministic replay reset and repeatability gate",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Harden the curated runtime packs so replay results are repeatable and reset cleanly. The goal is not broader reproduction coverage; it is making the two flagship packs feel reliable enough that baseline and mitigated runs can be compared without leftover state corrupting the story.",
     "implementation_tasks": [
       "add or tighten explicit pack reset behavior before and after replay and mitigation runs",

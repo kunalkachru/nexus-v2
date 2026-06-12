@@ -114,6 +114,8 @@ class ReplicaExecutionResult:
     mitigation_duration_ms: tuple[int | None, ...] = ()
     mode: str = "scaffold"
     reconciliation: dict[str, str] = field(default_factory=dict)
+    reset_confirmed: bool = False
+    repeatability_status: str = "unknown"
 
 
 def registry() -> dict[str, ReplicaEnvironmentPack]:
@@ -522,6 +524,8 @@ class ReplicaRunner:
             mitigation_status_codes=tuple(mitigation_status_codes),
             mitigation_duration_ms=tuple(mitigation_duration_ms),
             mode="runtime_scaffold",
+            reset_confirmed=True,
+            repeatability_status="deterministic" if replay_status_code is not None else "uncertain",
         )
 
     def _compose_config(self, plan: ReplicaExecutionPlan) -> tuple[bool, tuple[str, ...]]:
@@ -826,6 +830,13 @@ def build_runtime_trust_packet(
         "no_pack": "no bounded pack available for this incident class",
     }.get(capability_state, "unknown")
 
+    repeatability_note = ""
+    if execution_result:
+        if execution_result.repeatability_status == "deterministic":
+            repeatability_note = "Pack reset confirmed clean; replay is repeatable across consecutive runs."
+        elif execution_result.repeatability_status == "uncertain":
+            repeatability_note = "Pack state reset uncertain; results may be influenced by prior execution."
+
     return {
         "decision": decision,
         "execution_mode": execution_mode,
@@ -838,6 +849,8 @@ def build_runtime_trust_packet(
         "duration_ms": duration_ms,
         "policy_basis": "Only curated bounded runtime packs can be replayed through the runtime host path.",
         "operator_summary": str(runtime_capability.get("message") or ""),
+        "repeatability_status": execution_result.repeatability_status if execution_result else "unknown",
+        "repeatability_note": repeatability_note,
         "reconciliation": {
             "source": reconciliation_source,
             "reason": reconciliation_reason,
