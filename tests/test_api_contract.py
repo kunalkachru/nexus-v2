@@ -1037,7 +1037,9 @@ def test_live_raw_text_incident_refresh_uses_persisted_replay_packet(
     assert context_payload["trace_summary"]["failure_boundary"]
     assert "direct replay" in context_payload["trace_summary"]["runtime_clue"].lower()
     assert context_payload["trace_summary"]["runtime_provenance"]["mode"] == "direct_runtime"
-    assert context_payload["trace_summary"]["debugger_packet"]["supported"] is False
+    assert context_payload["trace_summary"]["debugger_packet"]["supported"] is True
+    assert context_payload["trace_summary"]["debugger_packet"]["bounded_to_pack"] == "checkout-python-fastapi-postgres-v1"
+    assert "ordered_checkpoints" in context_payload["trace_summary"]["debugger_packet"]
     assert context_payload["trace_summary"]["suspected_files"][0].endswith("checkout_server.py")
     assert "trace_ownership_map.json" in context_payload["trace_summary"]["code_owner_source"]
     assert "trace_ownership_map.json" in context_payload["trace_summary"]["developer_handoff_summary"]

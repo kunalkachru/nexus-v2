@@ -2625,7 +2625,13 @@ def build_trace_summary(
             expected_flow = "Checkout retries should release DB sessions before re-entering the write path."
             observed_divergence = "Retry path retains a session handle long enough to exhaust the shared pool."
             state_anomalies = ["session count grows between retries", "pool checkout waits continue after request cancellation"]
-            inspection_point = "Inspect the checkout retry patch first, especially the session cleanup hook that should release the DB handle before the next retry is scheduled."
+            inspection_point = (
+                "Bounded debugger flow for DB pool exhaustion / session leak:\n"
+                "1. Break in retry_checkout_write and confirm session_handle is released before the next retry\n"
+                "2. Step to checkout_session_scope and verify the scoped session closes on the failure path\n"
+                "3. Inspect release_db_session and confirm rollback happens even after timeout-triggered cancellation\n"
+                "Expected state transitions: release session → close scope → return pool connection"
+            )
             replay_evidence_summary = runtime_comparison or "Replay saturated the bounded pool until the retry patch was rolled back and orphaned sessions were cleared."
             if "retry" in deployment_text:
                 state_anomalies.append("recent retry patch aligns with the session lifecycle divergence")
@@ -2671,6 +2677,37 @@ def build_trace_summary(
                 or (f"Baseline replay returned HTTP {replay_status_code} after {replay_duration_ms}ms until the leaking retry path was removed." if replay_status_code else "")
                 or "Replay saturated the bounded pool until the retry patch was rolled back or leaked sessions were terminated."
             )
+            debugger_packet = {
+                "supported": True,
+                "bounded_to_pack": "checkout-python-fastapi-postgres-v1",
+                "scope": "DB pool exhaustion / session leak only — not a universal database debugger",
+                "summary": "Ordered debugging flow for this curated pack. This debugger is bounded to the DB pool exhaustion outage and applies only to the checked-in Postgres environment pack.",
+                "ordered_checkpoints": [
+                    {
+                        "order": 1,
+                        "function": "retry_checkout_write",
+                        "module": "checkout.retry_patch",
+                        "expected_state": "retry_count respects policy cap",
+                        "inspect": "Confirm the retry branch does not re-enter until the prior DB session has been fully released.",
+                    },
+                    {
+                        "order": 2,
+                        "function": "checkout_session_scope",
+                        "module": "checkout.db.session",
+                        "expected_state": "session_handle is None after scope exit",
+                        "inspect": "Verify the scoped session closes on the failure path before retry scheduling continues.",
+                    },
+                    {
+                        "order": 3,
+                        "function": "release_db_session",
+                        "module": "checkout.transaction_flow",
+                        "expected_state": "pool_available_count returns to baseline after release",
+                        "inspect": "Check that rollback and session-release happen even after timeout-triggered cancellation.",
+                    },
+                ],
+                "failure_signature": "Pool connections remain allocated between retry attempts, causing the bounded pool to exhaust as retry cycles accumulate.",
+                "validation_method": runtime_comparison or "Bounded replay validates whether pool recovery correlates with the retry-patch fix.",
+            }
             developer_handoff_summary = (
                 f"Start with {suspected_files[0]} and hand this packet to the mapped owner for that file. "
                 "The bounded replay shows the pool recovering only after the leaking retry path is removed or orphaned sessions are terminated."

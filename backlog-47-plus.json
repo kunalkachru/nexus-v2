@@ -31,7 +31,7 @@
     "id": 48,
     "title": "INC002 bounded debugger flow parity",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Bring bounded debugger depth closer to parity for the DB pool exhaustion outage. Add an explicit ordered debugger flow for `INC002` with concrete state checkpoints, expected transitions, and a truthful bounded scope tied to the curated Postgres pack. Keep it specific to the known outage class rather than pretending to support general-purpose database debugging.",
     "done_when": [
       "INC002 has a bounded debugger flow with concrete checkpoints and ordered reasoning",

@@ -202,26 +202,32 @@ Implemented now:
 
 ### Bounded debugger flow explained
 
-The INC001 debugger packet is **not** a universal live debugger. It is:
-- **Bounded to one curated pack**: `checkout-python-fastapi-auth-redis-v1` only
-- **Bounded to one outage class**: timeout/retry amplification only
-- **Ordered as a debugging flow**: three checkpoints in sequence with expected state transitions
-- **Meant for manual execution**: an engineer breaks in the right place and watches three variables move through expected states
+The bounded debugger packets for INC001 and INC002 are **not** universal live debuggers. They are:
+- **Bounded to curated packs**: `checkout-python-fastapi-auth-redis-v1` (INC001) and `checkout-python-fastapi-postgres-v1` (INC002)
+- **Bounded to specific outage classes**: timeout/retry amplification (INC001) and DB pool exhaustion (INC002)
+- **Ordered as debugging flows**: three checkpoints in sequence with expected state transitions
+- **Meant for manual execution**: an engineer breaks in the right place and watches variables move through expected states
 
-This debugger packet guides the engineer to:
+#### INC001 (Timeout/Retry Amplification)
 1. Reproduce the baseline failure via bounded replay
 2. Break in `apply_retry_policy` and watch `retry_count` respect its cap
 3. Step to `await_upstream_auth` and verify `timeout_budget_ms_remaining` stays positive  
 4. Inspect `circuit_state` and confirm it opens once the threshold is crossed
 
+#### INC002 (DB Pool Exhaustion)
+1. Reproduce the baseline failure via bounded replay
+2. Break in `retry_checkout_write` and verify session is released before the next retry
+3. Step to `checkout_session_scope` and check that the scoped session closes on the failure path
+4. Inspect `release_db_session` and confirm rollback happens even after timeout-triggered cancellation
+
 The difference from a true debugger:
 - **True debugger**: can debug any stack, any repository, any failure mode, with live breakpoints and expressions
-- **Bounded debugger**: applies only to this specific curated pack and failure class; relies on pre-calculated checkpoint locations and expected transitions
+- **Bounded debugger**: applies only to specific curated packs and failure classes; relies on pre-calculated checkpoint locations and expected transitions
 
 Still theoretical / not shipped:
 
-- arbitrary environment reproduction outside the two curated packs (timeout/retry, DB pool exhaustion)
-- universal code debugging across any stack or repository (the INC001 debugger is bounded to one curated pack)
+- arbitrary environment reproduction outside the two curated packs
+- universal code debugging across any stack or repository (both INC001 and INC002 debuggers are bounded to curated packs)
 - live breakpoint attachment into arbitrary production services
 - autonomous multi-step production remediation without a human review point
 - arbitrary fresh incident runtime replay (fresh incidents use scaffold-only inference until replay is executed)
@@ -231,7 +237,8 @@ Still theoretical / not shipped:
 1. read the top summary and confirm the screen feels like a triage console
 2. inspect the agent handoff and confirm the workflow is understandable
 3. inspect memory and related history if shown
-4. inspect the bounded debugger packet and confirm it is explicitly limited to the curated timeout/retry pack
+4. inspect the bounded debugger packet (for INC001 or INC002) and confirm it is explicitly limited to the curated pack
+5. confirm INC002 debugger flow has the same ordered-checkpoint structure as INC001
 5. inspect the proposed action
 6. inspect Guardian’s review language
 
