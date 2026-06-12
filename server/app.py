@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from server.audit import write_audit_log
 from server.auth import AuthenticatedContext, require_auth, require_role, require_runtime_host_auth
 from server.auth import verify_webhook_signature
+from server.artifacts import record_execution_event, _load_artifacts
 from server.config import AppConfig
 from server.db import DatabaseSession, create_session_factory, get_db
 from server.integrations.alerts import AlertNormalizer
@@ -45,7 +46,6 @@ class RuntimeExecutionState:
         self.current_pack_id = None
         self.current_incident_id = None
         self.started_at = None
-        self.execution_history = deque(maxlen=20)
         self.max_concurrent_replays = 1
         self.current_concurrency = 0
         self.guardrails = {
@@ -72,7 +72,7 @@ class RuntimeExecutionState:
                 start = datetime.fromisoformat(self.started_at)
                 duration_ms = int((datetime.now(timezone.utc) - start).total_seconds() * 1000)
 
-            history_entry = {
+            event = {
                 "incident_id": self.current_incident_id,
                 "pack_id": self.current_pack_id,
                 "status": status,
@@ -80,7 +80,7 @@ class RuntimeExecutionState:
                 "finished_at": datetime.now(timezone.utc).isoformat(),
                 "duration_ms": duration_ms,
             }
-            self.execution_history.append(history_entry)
+            asyncio.create_task(record_execution_event(event))
 
             self.current_state = "idle"
             self.current_pack_id = None
@@ -89,6 +89,10 @@ class RuntimeExecutionState:
             self.current_concurrency = 0
 
     def to_dict(self):
+        artifacts = _load_artifacts()
+        execution_events = artifacts.get("execution_events", [])
+        recent_events = execution_events[-20:] if execution_events else []
+
         return {
             "current_state": self.current_state,
             "current_pack_id": self.current_pack_id,
@@ -96,7 +100,7 @@ class RuntimeExecutionState:
             "started_at": self.started_at,
             "current_concurrency": self.current_concurrency,
             "max_concurrent_replays": self.max_concurrent_replays,
-            "execution_history": list(self.execution_history),
+            "execution_history": recent_events,
             "guardrails": self.guardrails,
         }
 

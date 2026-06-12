@@ -21,6 +21,7 @@ def _default_payload() -> dict[str, list[dict[str, object]]]:
         "learning_contracts": [],
         "audit_events": [],
         "guardian_reviews": [],
+        "execution_events": [],
     }
 
 
@@ -49,12 +50,14 @@ def _load_artifacts() -> dict[str, list[dict[str, object]]]:
     learning_contracts = payload.get("learning_contracts", [])
     audit_events = payload.get("audit_events", [])
     guardian_reviews = payload.get("guardian_reviews", [])
+    execution_events = payload.get("execution_events", [])
     result = {
         "replay_launches": [item for item in replay_launches if isinstance(item, dict)],
         "training_snapshots": [item for item in training_snapshots if isinstance(item, dict)],
         "learning_contracts": [item for item in learning_contracts if isinstance(item, dict)],
         "audit_events": [item for item in audit_events if isinstance(item, dict)],
         "guardian_reviews": [item for item in guardian_reviews if isinstance(item, dict)],
+        "execution_events": [item for item in execution_events if isinstance(item, dict)],
     }
     _ARTIFACT_CACHE = result
     return {key: list(value) for key, value in result.items()}
@@ -130,6 +133,18 @@ async def record_guardian_review(record: dict[str, object]) -> None:
         _persist_artifacts(payload)
 
 
+async def record_execution_event(record: dict[str, object]) -> None:
+    async with _ARTIFACT_LOCK:
+        payload = _load_artifacts()
+        payload["execution_events"].append(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                **record,
+            }
+        )
+        _persist_artifacts(payload)
+
+
 def get_artifact_summary() -> dict[str, int]:
     payload = _load_artifacts()
     return {
@@ -138,4 +153,5 @@ def get_artifact_summary() -> dict[str, int]:
         "learning_contracts": len(payload["learning_contracts"]),
         "audit_events": len(payload["audit_events"]),
         "guardian_reviews": len(payload["guardian_reviews"]),
+        "execution_events": len(payload["execution_events"]),
     }

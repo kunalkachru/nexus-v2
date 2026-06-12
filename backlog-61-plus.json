@@ -3,7 +3,7 @@
     "id": 61,
     "title": "Durable runtime execution ledger",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Replace the packaged app's process-local replay posture with a durable runtime execution ledger that survives refreshes and restarts. The product can stay bounded, but the operator-facing queue, current run state, and recent replay history should come from persisted runtime evidence rather than only transient in-memory state.",
     "implementation_tasks": [
       "define a durable execution-ledger record shape for replay request, running, completion, and failure states",
