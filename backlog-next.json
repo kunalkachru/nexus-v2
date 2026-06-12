@@ -352,5 +352,191 @@
       "tests/test_api_contract.py",
       "tests/e2e/browser-verification.spec.js"
     ]
+  },
+  {
+    "id": 28,
+    "title": "Runtime-host platform status and operator visibility",
+    "priority": "highest",
+    "status": "pending",
+    "description": "Turn the runtime host from an implicit backend detail into an operator-visible product capability. The packaged app should show whether a runtime host is configured, reachable, healthy, and what bounded packs it can execute, so replay availability feels like product truth instead of an implementation accident.",
+    "done_when": [
+      "incident and/or platform views show runtime-host configured vs reachable vs unavailable states clearly",
+      "operators can see which flagship bounded packs are relay-capable from the packaged app",
+      "runtime capability copy is consistent across seeded and fresh nxs incidents"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/replica_runtime.py",
+      "server/services/incidents.py",
+      "frontend/static/incident.js",
+      "frontend/static/platform.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 29,
+    "title": "Replay run lifecycle UX for packaged incidents",
+    "priority": "high",
+    "status": "pending",
+    "description": "Replay in the packaged app currently behaves like a fire-and-return request. Productize that into a clearer lifecycle with requested, running, completed, and failed states, so operators understand whether they are waiting on a runtime host, reviewing a fresh result, or looking at historical replay evidence.",
+    "done_when": [
+      "the incident UI shows replay requested/running/completed/failed states explicitly",
+      "the latest replay history entry reflects lifecycle state transitions rather than only final completion",
+      "re-running replay from the packaged app is understandable without reading raw response text"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_persistence.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/repositories.py",
+      "server/services/incidents.py",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/test_persistence.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 30,
+    "title": "Runtime-host trust, audit, and failure explanation packet",
+    "priority": "high",
+    "status": "pending",
+    "description": "If runtime-host replay is going to sell as an enterprise feature, the operator needs a trust packet: why replay was allowed, what environment executed it, and why it failed when it fails. Keep the scope bounded to auditability and operator explanation, not a full security subsystem.",
+    "done_when": [
+      "relay-backed replay returns stable operator-facing explanation fields for allowed, denied, and failed executions",
+      "incident history or audit surfaces show whether replay came from direct host, relay host, or stayed inferred only",
+      "failure cases explain the limiting factor without collapsing to generic errors"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q",
+      "pytest tests/ -q",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/incidents.py",
+      "server/services/replica_runtime.py",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/test_app.py"
+    ]
+  },
+  {
+    "id": 31,
+    "title": "Replica hypothesis packet v2 for flagship incidents",
+    "priority": "highest",
+    "status": "pending",
+    "description": "Deepen the bounded reproduction story for INC001 and INC002 by making REPLICA expose the exact environment hypothesis it is validating: triggering conditions, expected failure signature, and the mitigation checkpoints it will test. This is the first step from runtime replay into a more real reproduction agent, while staying tightly scoped to the curated packs.",
+    "done_when": [
+      "REPLICA returns a visible hypothesis packet for INC001 and INC002 with triggering conditions and expected failure signature",
+      "fresh nxs incidents mapped to those classes inherit the same bounded hypothesis contract truthfully",
+      "operators can explain what REPLICA is trying to prove before the replay even runs"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/replica_runtime.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "tests/test_replica_runtime.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 32,
+    "title": "Trace-to-code packet with bounded stack and file evidence",
+    "priority": "high",
+    "status": "pending",
+    "description": "Move TRACE one step closer to a real debugging assistant by adding a bounded stack-path packet for the flagship incidents: likely function chain, failure boundary, and the runtime clue that pushed TRACE toward that path. Do not attempt universal dynamic debugging yet; keep it specific to the curated outage classes.",
+    "done_when": [
+      "TRACE output includes a bounded stack or call-path narrative for INC001 and INC002",
+      "the handoff links the chosen path back to replay evidence instead of only issue-family heuristics",
+      "the developer packet feels like a first debugging note rather than only a triage summary"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 33,
+    "title": "Bounded mitigation execution ladder across REPLICA, FORGE, and GUARDIAN",
+    "priority": "high",
+    "status": "pending",
+    "description": "Right now mitigation comparison is present, but the product still feels like a single-step recommendation. Deepen that into a bounded execution ladder: preferred mitigation, fallback mitigation, and stop conditions, all derived from the replay comparison and made legible to GUARDIAN and the operator.",
+    "done_when": [
+      "FORGE exposes a primary and bounded fallback mitigation ladder for the flagship outages",
+      "GUARDIAN reasoning references the selected ladder and the stop conditions between steps",
+      "the incident UI makes it clear what happens if the leading mitigation only improves but does not resolve"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_replica_runtime.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "tests/test_api_contract.py",
+      "tests/test_replica_runtime.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 34,
+    "title": "Flagship bounded debugger packet for one outage class",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Build the first honest debugging-agent step, but only for one outage class. Start with either INC001 or INC002 and generate a debugger-style packet that shows expected variable/state checkpoints, likely divergence location, and what a human engineer should inspect next in code. This is the safe bridge toward a real debugging agent without pretending to support arbitrary stacks.",
+    "done_when": [
+      "one flagship outage class has a bounded debugger packet that references concrete state checkpoints",
+      "the packet is visible in the incident UI and clearly labeled as bounded to the curated pack",
+      "docs explain what is implemented versus what remains theoretical"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "docs/DEMO_WALKTHROUGH.md",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
   }
 ]
