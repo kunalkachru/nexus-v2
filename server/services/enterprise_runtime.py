@@ -2515,7 +2515,13 @@ def build_trace_summary(
             expected_flow = "Auth retries should cap quickly and release gateway workers when upstream latency rises."
             observed_divergence = "Retry middleware continues scheduling upstream attempts after the timeout budget is exhausted."
             state_anomalies = ["retry_count exceeds policy cap", "worker pool stays occupied during downstream timeout wait"]
-            inspection_point = "Inspect the auth retry middleware budget check first, then verify the gateway timeout guard stops scheduling retries once the auth timeout budget is spent."
+            inspection_point = (
+                "Bounded debugger flow for timeout/retry amplification:\n"
+                "1. Break in apply_retry_policy and confirm retry_count respects the bounded cap\n"
+                "2. Step to await_upstream_auth and verify timeout_budget_ms_remaining stays positive\n"
+                "3. Inspect circuit_state in record_timeout_budget and confirm it opens once threshold is crossed\n"
+                "Expected state transitions: cap retries → respect timeout budget → open circuit breaker"
+            )
             replay_evidence_summary = runtime_comparison or "Replay reproduced the timeout cascade when auth retries stayed active under elevated downstream latency."
             if "middleware" in deployment_text:
                 state_anomalies.append("recent retry middleware refactor aligns with the divergence point")
@@ -2563,8 +2569,9 @@ def build_trace_summary(
             )
             debugger_packet = {
                 "supported": True,
-                "scope": "checkout-python-fastapi-auth-redis-v1 only",
-                "summary": "Bounded debugger packet for the timeout/retry outage. Follow the retry path while reproducing the curated 504 replay and inspect the checkpoint variables below.",
+                "bounded_to_pack": "checkout-python-fastapi-auth-redis-v1",
+                "scope": "timeout/retry amplification only — not a universal debugger",
+                "summary": "Ordered debugging flow for this curated pack. This debugger is bounded to the timeout/retry outage and applies only to the checked-in environment pack. See DEMO_WALKTHROUGH.md for the difference between this bounded flow and a true general-purpose debugger.",
                 "target_file": suspected_files[0],
                 "entry_function": "apply_retry_policy",
                 "state_checkpoints": [
@@ -2587,7 +2594,7 @@ def build_trace_summary(
                         "divergence": "The breaker remains closed while the retry storm continues to amplify worker saturation.",
                     },
                 ],
-                "human_next_step": "Reproduce the 504 path, break first in apply_retry_policy, then confirm gateway timeout budget and circuit state move together before approving a code fix.",
+                "human_next_step": "Execute the bounded debugging flow: (1) Reproduce via bounded replay, (2) Break in apply_retry_policy and watch retry_count, (3) Step to await_upstream_auth and confirm timeout_budget_ms_remaining, (4) Verify circuit_state transitions. Approve fix only after all three checkpoints behave as expected.",
             }
             developer_handoff_summary = (
                 f"Start with {suspected_files[0]} and hand this packet to the mapped owner for that file. "

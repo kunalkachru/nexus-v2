@@ -198,6 +198,24 @@ Implemented now:
   - it is tied to the curated pack `checkout-python-fastapi-auth-redis-v1`
 - the mitigation ladder is visible as primary step, fallback step, and stop condition
 
+### Bounded debugger flow explained
+
+The INC001 debugger packet is **not** a universal live debugger. It is:
+- **Bounded to one curated pack**: `checkout-python-fastapi-auth-redis-v1` only
+- **Bounded to one outage class**: timeout/retry amplification only
+- **Ordered as a debugging flow**: three checkpoints in sequence with expected state transitions
+- **Meant for manual execution**: an engineer breaks in the right place and watches three variables move through expected states
+
+This debugger packet guides the engineer to:
+1. Reproduce the baseline failure via bounded replay
+2. Break in `apply_retry_policy` and watch `retry_count` respect its cap
+3. Step to `await_upstream_auth` and verify `timeout_budget_ms_remaining` stays positive  
+4. Inspect `circuit_state` and confirm it opens once the threshold is crossed
+
+The difference from a true debugger:
+- **True debugger**: can debug any stack, any repository, any failure mode, with live breakpoints and expressions
+- **Bounded debugger**: applies only to this specific curated pack and failure class; relies on pre-calculated checkpoint locations and expected transitions
+
 Still theoretical / not shipped:
 
 - arbitrary environment reproduction outside the curated packs

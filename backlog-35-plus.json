@@ -87,7 +87,7 @@
     "id": 38,
     "title": "Bounded debugger flow for INC001 beyond the static packet",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Take the current INC001 debugger packet one step deeper by making it read like an executable debugging flow instead of a static note. Keep it honest and bounded to the curated timeout/retry pack. The output should guide an engineer through the order of checks, expected state transitions, and likely divergence point in a way that materially helps debugging without pretending to be a universal live debugger.",
     "done_when": [
       "INC001 exposes a clearer ordered debugging flow with concrete checkpoints and expected state transitions",
