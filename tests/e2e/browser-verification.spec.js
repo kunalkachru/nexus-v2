@@ -219,6 +219,9 @@ test.describe("NEXUS browser verification", () => {
     expect(inspectionText).not.toContain("TRACE has not narrowed");
     expect(/middleware|retry|circuit.?breaker|auth|gateway|timeout/i.test(inspectionText || "")).toBeTruthy();
     await expect(page.locator("#traceDeveloperHandoff")).toContainText("trace_ownership_map.json");
+    await expect(page.locator("#traceStackSummary")).toContainText(/gateway timeout guard|retry policy|bounded stack/i);
+    await expect(page.locator("#traceRuntimeClue")).toContainText(/runtime|replay|504/i);
+    await expect(page.locator("#traceStackPath")).toContainText(/gateway\.timeout_guard|auth\.middleware\.retry/);
   });
 
   // Items 9 & 10: FORGE reasoning cites runtime; GUARDIAN posture is non-generic

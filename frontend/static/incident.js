@@ -266,6 +266,26 @@ function ensureReplicaHypothesisPacket() {
   replayActions.insertAdjacentElement("beforebegin", wrapper);
 }
 
+function ensureTraceCodePacket() {
+  if (document.getElementById("traceStackSummary")) {
+    return;
+  }
+  const traceModules = document.getElementById("traceModules");
+  if (!traceModules || !traceModules.parentElement) {
+    return;
+  }
+  const wrapper = document.createElement("div");
+  wrapper.id = "traceCodePacket";
+  wrapper.innerHTML = `
+    <p class="section-label">Trace-to-code packet</p>
+    <p class="section-note" id="traceStackSummary">TRACE will summarize the bounded stack path here once the packet loads.</p>
+    <p class="section-note" id="traceFailureBoundary">TRACE will describe the failure boundary here once the packet loads.</p>
+    <p class="section-note" id="traceRuntimeClue">TRACE will attach the runtime clue here once the packet loads.</p>
+    <ul class="simple-list" id="traceStackPath"></ul>
+  `;
+  traceModules.insertAdjacentElement("beforebegin", wrapper);
+}
+
 function setText(id, value) {
   const element = document.getElementById(id);
   if (element && value !== undefined && value !== null) {
@@ -759,6 +779,18 @@ function renderEnterprise(data) {
     trace.developer_handoff_summary
       ? `${trace.developer_handoff_summary}${trace.code_owner_team ? ` Owner: ${trace.code_owner_team}` : ""}${trace.code_owner_slug ? ` (${trace.code_owner_slug})` : ""}${trace.code_owner_source ? ` · Source: ${trace.code_owner_source}` : ""}.`
       : "TRACE has not prepared a developer handoff packet yet."
+  );
+  ensureTraceCodePacket();
+  setText("traceStackSummary", trace.stack_path_summary || "TRACE has not prepared a bounded stack path for this incident yet.");
+  setText("traceFailureBoundary", trace.failure_boundary || "TRACE has not identified the failure boundary yet.");
+  setText("traceRuntimeClue", trace.runtime_clue || "TRACE has not attached a runtime clue yet.");
+  renderList(
+    "traceStackPath",
+    (trace.stack_path || []).length
+      ? trace.stack_path
+      : [{ service: "No bounded stack path yet", module: "", function: "", file: "", checkpoint: trace.expected_flow || "TRACE has not run on this incident yet." }],
+    (item) =>
+      `<li><strong>${item.service || "Unknown service"}</strong>${item.module ? `<br><span class="section-note">${item.module}</span>` : ""}${item.function ? `<br><span class="section-note">${item.function}</span>` : ""}${item.file ? `<br><span class="section-note">${item.file}</span>` : ""}${item.checkpoint ? `<br><span class="section-note">${item.checkpoint}</span>` : ""}</li>`
   );
   renderList(
     "traceModules",

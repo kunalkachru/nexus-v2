@@ -466,7 +466,7 @@
     "id": 32,
     "title": "Trace-to-code packet with bounded stack and file evidence",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Move TRACE one step closer to a real debugging assistant by adding a bounded stack-path packet for the flagship incidents: likely function chain, failure boundary, and the runtime clue that pushed TRACE toward that path. Do not attempt universal dynamic debugging yet; keep it specific to the curated outage classes.",
     "done_when": [
       "TRACE output includes a bounded stack or call-path narrative for INC001 and INC002",

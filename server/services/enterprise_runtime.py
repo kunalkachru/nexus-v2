@@ -2394,16 +2394,21 @@ def build_trace_summary(
     inspection_point = "Wait for REPLICA to validate the likely failure path before opening a code investigation."
     replay_evidence_summary = runtime_comparison or "No runtime replay evidence is attached to this incident yet."
     developer_handoff_summary = "TRACE has not prepared a developer handoff packet for this incident yet."
+    stack_path: list[dict[str, object]] = []
+    stack_path_summary = "TRACE has not prepared a bounded stack path for this incident yet."
+    failure_boundary = "Failure boundary not identified yet."
+    runtime_clue = runtime_comparison or "No runtime clue is attached to this trace packet yet."
     runtime_provenance = {
         "mode": str(replica_runtime_provenance.get("mode") or "inferred_only"),
         "label": str(replica_runtime_provenance.get("label") or "Inferred only"),
         "summary": str(replica_runtime_provenance.get("summary") or "TRACE is still using bounded inference rather than measured runtime replay."),
         "executed_by": str(replica_runtime_provenance.get("executed_by") or "not_run"),
     }
+    incident_class = str(plan.incident_class) if plan else ""
 
     if replica_summary.get("reproduction_status") == "reproduced":
         trace_status = "narrowed"
-        if "retry amplification" in issue_family:
+        if incident_class == "timeout_retry_amplification" or ("retry amplification" in issue_family and not incident_class):
             suspected_modules = [module_name for module_name, _ in mapped_targets] or ["auth.middleware.retry", "gateway.timeout_guard", "auth.circuit_breaker"]
             suspected_functions = [function_name for _, function_name in mapped_targets] or ["apply_retry_policy", "await_upstream_auth", "record_timeout_budget"]
             suspected_service = "auth-svc"
@@ -2430,12 +2435,44 @@ def build_trace_summary(
                 state_anomalies.append(comparison_verdict)
             confidence = 0.74 if "middleware" in deployment_text else 0.69
             reasoning = "TRACE narrowed the issue to the retry middleware path that keeps auth retries alive after the timeout budget is already exhausted."
+            stack_path = [
+                {
+                    "service": "api-gateway",
+                    "module": "gateway.timeout_guard",
+                    "function": "await_upstream_auth",
+                    "file": suspected_files[1],
+                    "checkpoint": "Stop scheduling more upstream auth work once the checkout timeout budget is already spent.",
+                },
+                {
+                    "service": "auth-svc",
+                    "module": "auth.middleware.retry",
+                    "function": "apply_retry_policy",
+                    "file": suspected_files[0],
+                    "checkpoint": "Cap retry_count before the middleware re-enters the downstream auth path.",
+                },
+                {
+                    "service": "auth-svc",
+                    "module": "auth.circuit_breaker",
+                    "function": "record_timeout_budget",
+                    "file": suspected_files[0],
+                    "checkpoint": "Open the breaker once repeated timeouts breach the bounded threshold.",
+                },
+            ]
+            stack_path_summary = "Trace the request from the gateway timeout guard into the auth retry policy and finally the circuit-breaker budget record."
+            failure_boundary = "The failure boundary sits between gateway timeout enforcement and auth retry re-entry: retries continue after the request should already be considered spent."
+            runtime_clue = (
+                runtime_comparison
+                or (f"Baseline replay returned HTTP {replay_status_code} after {replay_duration_ms}ms while the retry-heavy auth path stayed active." if replay_status_code else "")
+                or "Replay reproduced the timeout cascade only while auth retries remained enabled."
+            )
             developer_handoff_summary = (
                 f"Start with {suspected_files[0]} and hand this packet to the mapped owner for that file. "
                 "The bounded replay shows the baseline request timing out until retries are capped or the circuit breaker is opened."
                 f"{f' {comparison_verdict}' if comparison_verdict else ''}"
             )
-        elif "pool exhaustion" in issue_family or "session leak" in issue_family:
+        elif incident_class == "db_pool_exhaustion" or (
+            not incident_class and ("pool exhaustion" in issue_family or "session leak" in issue_family)
+        ):
             suspected_modules = [module_name for module_name, _ in mapped_targets] or ["checkout.db.session", "checkout.retry_patch", "checkout.transaction_flow"]
             suspected_functions = [function_name for _, function_name in mapped_targets] or ["checkout_session_scope", "retry_checkout_write", "release_db_session"]
             suspected_service = "checkout-svc"
@@ -2461,6 +2498,36 @@ def build_trace_summary(
                 state_anomalies.append(comparison_verdict)
             confidence = 0.76 if "retry" in deployment_text else 0.72
             reasoning = "TRACE narrowed the issue to the checkout retry patch where the session lifecycle no longer closes cleanly after failure."
+            stack_path = [
+                {
+                    "service": "checkout-svc",
+                    "module": "checkout.retry_patch",
+                    "function": "retry_checkout_write",
+                    "file": suspected_files[0],
+                    "checkpoint": "Verify the retry branch does not re-enter before the prior DB session has been released.",
+                },
+                {
+                    "service": "checkout-svc",
+                    "module": "checkout.db.session",
+                    "function": "checkout_session_scope",
+                    "file": suspected_files[0],
+                    "checkpoint": "Confirm the scoped session closes on the failure path before the next retry is scheduled.",
+                },
+                {
+                    "service": "checkout-svc",
+                    "module": "checkout.transaction_flow",
+                    "function": "release_db_session",
+                    "file": suspected_files[0],
+                    "checkpoint": "Check that rollback and session-release happen even after timeout-triggered cancellation.",
+                },
+            ]
+            stack_path_summary = "Trace the write path from retry entry into session scope creation and finally the DB-session release boundary."
+            failure_boundary = "The failure boundary sits at the retry-to-session handoff: the next write attempt begins before the previous session lifecycle closes."
+            runtime_clue = (
+                runtime_comparison
+                or (f"Baseline replay returned HTTP {replay_status_code} after {replay_duration_ms}ms until the leaking retry path was removed." if replay_status_code else "")
+                or "Replay saturated the bounded pool until the retry patch was rolled back or leaked sessions were terminated."
+            )
             developer_handoff_summary = (
                 f"Start with {suspected_files[0]} and hand this packet to the mapped owner for that file. "
                 "The bounded replay shows the pool recovering only after the leaking retry path is removed or orphaned sessions are terminated."
@@ -2517,9 +2584,11 @@ def build_trace_summary(
     if runtime_provenance["mode"] == "delegated_relay":
         replay_evidence_summary = f"{replay_evidence_summary} Runtime provenance: delegated replay from the external runtime host.".strip()
         developer_handoff_summary = f"{developer_handoff_summary} Runtime evidence came from the external runtime host replay.".strip()
+        runtime_clue = f"{runtime_clue} Runtime provenance: delegated replay from the external runtime host.".strip()
     elif runtime_provenance["mode"] == "direct_runtime":
         replay_evidence_summary = f"{replay_evidence_summary} Runtime provenance: direct replay on the current app host.".strip()
         developer_handoff_summary = f"{developer_handoff_summary} Runtime evidence came from direct replay on the current app host.".strip()
+        runtime_clue = f"{runtime_clue} Runtime provenance: direct replay on the current app host.".strip()
 
     return {
         "incident_id": incident_id,
@@ -2533,6 +2602,10 @@ def build_trace_summary(
         "state_anomalies": state_anomalies,
         "inspection_point": inspection_point,
         "replay_evidence_summary": replay_evidence_summary,
+        "stack_path": stack_path,
+        "stack_path_summary": stack_path_summary,
+        "failure_boundary": failure_boundary,
+        "runtime_clue": runtime_clue,
         "code_owner_team": code_owner_team,
         "code_owner_slug": code_owner_slug,
         "code_owner_source": code_owner_source,
