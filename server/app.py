@@ -392,6 +392,26 @@ async def get_audit_logs_v1(
     return logs
 
 
+@app.get("/api/v1/incidents/{nexus_incident_id}/handoff-export")
+async def get_engineering_handoff_v1(
+    nexus_incident_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_handoff_export")
+    handoff = await service.build_engineering_handoff(
+        nexus_incident_id,
+        tenant_id=auth.tenant_id,
+    )
+    await write_audit_log(
+        "incident.handoff_export.generated",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id},
+    )
+    return handoff
+
+
 @app.post("/api/v1/incidents/{nexus_incident_id}/execute")
 async def execute_incident_v1(
     nexus_incident_id: str,

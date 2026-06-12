@@ -50,6 +50,18 @@ function sleep(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function downloadTextFile(text, filename) {
+  const blob = new Blob([text], { type: "text/markdown" });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
 function formatTimestamp(value) {
   if (!value) {
     return "Unknown time";
@@ -1245,6 +1257,27 @@ window.addEventListener("load", async () => {
     } finally {
       if (button) {
         button.disabled = false;
+      }
+    }
+  });
+
+  document.getElementById("exportHandoffBtn")?.addEventListener("click", async () => {
+    const button = document.getElementById("exportHandoffBtn");
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Generating export...";
+    }
+    try {
+      const response = await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/handoff-export`);
+      const text = response.handoff_text || "No handoff generated";
+      downloadTextFile(text, `${incidentId}-engineering-handoff.md`);
+    } catch (err) {
+      console.error("Handoff export failed:", err);
+      alert("Failed to generate engineering handoff. See console for details.");
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Export to engineering";
       }
     }
   });

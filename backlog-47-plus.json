@@ -3,7 +3,7 @@
     "id": 47,
     "title": "Engineering handoff export and case packaging",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Turn the current incident packet into a real support-to-engineering deliverable. Export a clean engineering case package that includes incident framing, runtime-backed versus inferred-only evidence, replay result, chosen mitigation and fallback, suspected owner/file/function, debugger trail where available, and post-approval outcome summary. The packet should be understandable outside the incident UI and feel ready for a Jira, GitHub issue, or Slack escalation workflow.",
     "done_when": [
       "the incident can produce a concise engineering handoff export that bundles the core evidence and action context",
