@@ -1235,15 +1235,7 @@ window.addEventListener("load", async () => {
           `<li><strong>${item.label}</strong><br><span class="section-note">${formatTimestamp(item.recorded_at)}</span><br><span class="section-note">${item.message}</span></li>`
       );
       const response = await postAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/replica-replay`, {});
-      if (!currentIncidentData) {
-        currentIncidentData = await refreshIncident();
-      }
-      currentIncidentData = {
-        ...currentIncidentData,
-        replay_lifecycle: response.replay_lifecycle || currentIncidentData.replay_lifecycle,
-        replica_summary: response.replica_summary || currentIncidentData.replica_summary,
-        trace_summary: response.trace_summary || currentIncidentData.trace_summary,
-      };
+      currentIncidentData = await refreshIncident();
       renderSummary(currentIncidentData);
       renderEnterprise(currentIncidentData);
       setText("replicaReplayStatus", response.message || "Replay request completed.");

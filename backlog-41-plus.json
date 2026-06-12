@@ -3,7 +3,7 @@
     "id": 41,
     "title": "Operator-triggered bounded replay for fresh incidents",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Close the biggest product gap left in the live path: fresh `nxs_...` incidents should be able to move from scaffold-only reasoning to runtime-backed evidence from the incident console itself. The operator should be able to trigger bounded replay when a matching curated pack exists, see the replay state clearly, and understand when the incident is still inferred-only versus upgraded to measured evidence.",
     "done_when": [
       "a fresh incident can trigger bounded replay from the incident console when a curated pack match exists",
