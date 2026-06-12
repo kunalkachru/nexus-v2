@@ -1,10 +1,31 @@
 # NEXUS Support Triage Product Execution Plan
 
-Current as of 2026-06-05.
+Current as of 2026-06-12.
 
 This is the implementation-grade plan for turning NEXUS from a broad incident-response demo into a support triage and investigation product that can be built, demoed, and sold around one real enterprise problem.
 
 It is written so the next step after reading it is implementation.
+
+## Current Shipped Status
+
+The strategy in this document is still the correct product direction, and the repo has now shipped a bounded but real version of several parts of it:
+
+- support-triage framing across the main product surfaces
+- two flagship outage classes:
+  - `INC001` checkout timeout / retry amplification
+  - `INC002` checkout DB pool exhaustion / session leak
+- two real bounded REPLICA runtime packs
+- packaged-app replay delegation through a Docker-capable runtime host
+- replay persistence for live `nxs_...` incidents
+- bounded TRACE ownership and trace-to-code packets
+- a bounded mitigation ladder across REPLICA, FORGE, and GUARDIAN
+- one bounded debugger-style packet for `INC001`
+
+The next phase should not broaden scope to many more outage classes yet. It should deepen the current flagship product in three ways:
+
+1. stronger product-grade UX and information architecture
+2. stronger fresh-incident parity with the seeded flagship experience
+3. deeper but still honest bounded debugger and runtime-host behavior
 
 ## Product Thesis
 

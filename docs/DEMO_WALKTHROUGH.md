@@ -1,6 +1,6 @@
 # NEXUS v2 Full Manual Browser Walkthrough
 
-Current as of 2026-06-05.
+Current as of 2026-06-12.
 
 This is the full manual walkthrough for the current NEXUS product story.
 
@@ -10,6 +10,15 @@ Use it when you want to:
 - validate the end-to-end flagship use case
 - present the current shipped workflow
 - explain how the product reduces manual support escalation work
+
+## Current Validation Baseline
+
+The current validated baseline for this walkthrough is:
+
+- `pytest tests/ -q` -> `141 passed`
+- `npm run browser:verify` -> `11 passed`
+- `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
+- `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes
 
 ## What This Walkthrough Is Proving
 

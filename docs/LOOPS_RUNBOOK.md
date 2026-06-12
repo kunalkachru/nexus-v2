@@ -26,15 +26,16 @@ Do not start a loop against a vague objective like "improve Nexus more." Write a
 
 ## Current Recommended Scope
 
-The first loop backlog (`items 9–14`) is complete.
+The `15–34` backlog is complete.
 
-If you want to continue now, the next backlog should cover:
+The active next backlog should be `backlog-35-plus.json`, covering:
 
-1. app-triggered runtime replay on a Docker-capable execution host
-2. fresh `nxs_...` incident parity with `INC001` and `INC002`
-3. deeper TRACE developer handoff packet
-4. multi-mitigation REPLICA comparison
-5. final runtime-host demo and docs closure
+1. stronger product-grade UI across the core surfaces
+2. richer incident-console information architecture
+3. stronger fresh `nxs_...` incident parity
+4. bounded debugger execution depth for `INC001`
+5. runtime-host operator UX and pack visibility
+6. final docs/demo sync for the new product layer
 
 ## Before Starting A Loop
 
@@ -43,6 +44,7 @@ Make sure the agent reads:
 1. [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
 2. [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
 3. the active backlog file
+4. [docs/DEMO_WALKTHROUGH.md](/Users/kunalkachru/Documents/nexus-v3/docs/DEMO_WALKTHROUGH.md)
 
 Recommended local checks before starting:
 
@@ -56,8 +58,8 @@ python demo.py
 If the loop will touch the packaged app path, also run:
 
 ```bash
-./scripts/docker_fresh.sh
-BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
+ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
+EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
 ```
 
 ## How To Start A Loop In Codex
@@ -68,7 +70,7 @@ BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
 4. Paste a prompt like this:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, and <backlog file>.
+Read AGENTS.md, WORKING_STATE.md, docs/DEMO_WALKTHROUGH.md, and <backlog file>.
 Run a commit-and-continue loop against the backlog.
 
 Rules:
@@ -79,16 +81,20 @@ Rules:
 - commit once per completed item
 - do not stop between items
 - if blocked after repeated attempts, mark the item blocked and explain why
+- keep seeded/static and live incident paths semantically aligned
+- do not treat scaffold-only evidence as runtime validation
+- any packaged-app runtime claim must be verified through the :7860 Docker path before the item is marked done
 ```
 
 5. Let the agent run until the backlog is done or blocked.
 
 ## How To Start A Loop In Claude
 
-Use the same flow, but be stricter about grounding:
+Use the same flow, but keep the grounding stricter:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, and <backlog file> completely before coding.
+Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/DEMO_WALKTHROUGH.md, and <backlog file> completely before coding.
+Resume from the first pending backlog item.
 Drain the backlog top to bottom in a build-test-commit loop.
 Do not invent scope outside the backlog.
 Do not treat scaffold-only evidence as runtime validation.
@@ -108,7 +114,7 @@ Any packaged-app runtime claim must be verified through the :7860 Docker path be
 - For frontend-heavy work:
 
 ```text
-Browser verification must stay green and the incident page must remain legible for both INC001 and INC002.
+Browser verification must stay green, and the key screens should remain legible for INC001, INC002, and a fresh nxs incident.
 ```
 
 - For seeded-versus-live consistency:
@@ -133,7 +139,7 @@ feat(#<id>): <title>
 For documentation-only loop infrastructure updates:
 
 ```text
-docs: tighten loop runbook and agent instructions
+docs: refresh loop control docs for current frontier
 ```
 
 ## How To Monitor A Running Loop
@@ -165,6 +171,7 @@ Resume from the first pending backlog item. Do not repeat completed items.
 - Scaffold-only inference must be labeled as scaffold-only.
 - Docker-unavailable app environments must not be described as if no runtime pack exists.
 - Fresh `nxs_...` incidents can be simpler, but they must not contradict the flagship runtime story.
+- Do not describe the debugger as universal or interactive unless a backlog item truly implements that.
 
 ## Current Reality
 
@@ -172,7 +179,7 @@ As of the latest validated state:
 
 - seeded and live incident narratives distinguish scaffold-only versus runtime-backed evidence
 - browser verification is green
-- Docker smoke is green
-- runtime replay inside the packaged app is still not truly end-to-end; it requires a Docker-capable execution host outside the app container
-
-That last point is the correct next loop frontier.
+- Docker smoke is green through the packaged app on `:7860`
+- runtime replay can be delegated to a Docker-capable runtime host
+- the debugger is still bounded to one curated outage class
+- the next real frontier is product-grade UX and deeper bounded agent behavior, not breadth for breadth's sake

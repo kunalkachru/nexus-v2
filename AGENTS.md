@@ -9,11 +9,11 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
 - Current validated baseline:
-  - `pytest tests/ -q` -> `124 passed`
-  - `npm run browser:verify` -> `10 passed`
+  - `pytest tests/ -q` -> `141 passed`
+  - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes
-  - `./scripts/docker_fresh.sh` -> passes
-  - `BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes
+  - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
+  - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes
 
 ## What Loops Are For
 
@@ -32,7 +32,7 @@ If those are not true, write the backlog first. Do not improvise broad product w
 Before starting, the agent must read:
 
 1. `WORKING_STATE.md`
-2. the active backlog file, for example `backlog.json` or `backlog-next.json`
+2. the active backlog file, currently `backlog-35-plus.json`
 3. any referenced docs for the target phase
 
 ## Required Backlog Shape
@@ -87,6 +87,8 @@ feat(#<id>): <title>
 - Never treat scaffold-only inference as runtime validation.
 - Never stop for confirmation between items unless the backlog says to pause.
 - Never overwrite unrelated user work.
+- Any packaged-app runtime claim must be verified through the `:7860` Docker path before the item is marked done.
+- Keep seeded/static and live incident paths semantically aligned.
 
 ## Current Code Map
 
@@ -95,24 +97,50 @@ feat(#<id>): <title>
 | Seeded/static incident path | `server/services/surface_payloads.py` |
 | Live graph incident path | `server/services/enterprise_runtime.py` |
 | Runtime pack substrate | `server/services/replica_runtime.py` |
+| Packaged app replay + incident context | `server/services/incidents.py` |
+| Runtime host service | `runtime_host/server/app.py` |
 | Incident fixtures | `server/incident_payloads.py` |
 | Incident UI | `frontend/incident.html` |
 | Incident client logic | `frontend/static/incident.js` |
-| Incident data loading and fallback synthesis | `frontend/static/api.js` |
+| Shared UI data loading and fallback synthesis | `frontend/static/api.js` |
+| Global UI styling | `frontend/static/styles.css` |
 | API contract tests | `tests/test_api_contract.py` |
 | App tests | `tests/test_app.py` |
 | Runtime tests | `tests/test_replica_runtime.py` |
 | Browser verification | `tests/e2e/browser-verification.spec.js` |
+| Docker-path smoke | `scripts/local_enterprise_smoke.sh` |
 
 ## Current Frontier
 
-The `9–14` backlog is complete. New loop runs should target a new backlog for the next frontier:
+The `15–34` backlog is complete. New loop runs should target `backlog-35-plus.json`.
 
-1. real app-triggered runtime replay on a Docker-capable execution host
-2. stronger parity for fresh `nxs_...` incidents versus seeded incidents
-3. deeper TRACE developer packet with file-level and owner-level cues
-4. multi-mitigation REPLICA comparison surfaced in the decision packet
-5. final demo/docs sync for the runtime-host model
+The next implementation frontier is:
+
+1. stronger product-grade UI and visual differentiation across the core surfaces
+2. a richer flagship incident console that is legible without narration
+3. stronger fresh `nxs_...` incident parity with the seeded runtime story
+4. a more concrete bounded debugger flow for `INC001`
+5. runtime-host productization and clearer operator controls
+6. docs and demo sync for the new product layer
+
+## Reality Check
+
+Implemented now:
+
+- two real bounded REPLICA runtime packs
+- packaged-app replay delegation through a Docker-capable runtime host
+- runtime trust and audit packet
+- replay lifecycle and replay history visibility
+- bounded TRACE ownership and trace-to-code packet for both flagship outages
+- bounded mitigation ladder across REPLICA, FORGE, and GUARDIAN
+- one bounded debugger-style packet for `INC001`
+
+Not implemented yet:
+
+- arbitrary environment reproduction
+- universal code debugging across arbitrary stacks
+- autonomous multi-step production remediation
+- a fully redesigned visual system across the entire product
 
 ## Reference
 
