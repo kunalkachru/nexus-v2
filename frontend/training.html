@@ -151,6 +151,28 @@
             </div>
         </section>
 
+        <section class="section" id="runtimeCapabilitiesSection">
+            <div class="section-header">
+                <h2>Runtime capabilities and pack coverage</h2>
+                <div class="section-note">Show which bounded runtime packs are available, what outage classes they cover, and whether the runtime-host relay is configured.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Available packs</div>
+                    <p class="hero-copy" id="packCountSummary">Loading runtime capabilities...</p>
+                    <div id="packsList"></div>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Coverage summary</div>
+                    <div class="kpi-grid">
+                        <div class="summary-card"><div class="label">Timeout/retry amplification</div><div class="value" id="coverageTimeoutRetry">-</div></div>
+                        <div class="summary-card"><div class="label">DB pool exhaustion</div><div class="value" id="coverageDbPool">-</div></div>
+                    </div>
+                    <p class="section-note" id="runtimeHostStatus">Runtime-host relay status will appear here once capabilities load.</p>
+                </div>
+            </div>
+        </section>
+
         <details class="section section-collapsible training-artifact-shell" id="advancedSection">
             <summary class="section-summary">
                 <div>

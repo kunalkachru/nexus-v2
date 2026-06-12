@@ -30,7 +30,7 @@ from server.rate_limit import RateLimiter
 from server.services.incidents import IncidentService
 from server.services.live_demo import build_demo_payload
 from server.services.observability import ObservabilityService
-from server.services.replica_runtime import execute_runtime_host_replay
+from server.services.replica_runtime import execute_runtime_host_replay, runtime_host_supported_packs, build_runtime_host_relay_status, probe_runtime_host
 from server.services.surface_payloads import build_platform_status, load_metrics_payload
 from server.services.tenancy import TenancyService
 
@@ -253,6 +253,34 @@ async def get_platform_status(
         {"user_id": auth.user_id},
     )
     return response
+
+
+@app.get("/api/v1/runtime/capabilities")
+async def get_runtime_capabilities(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="platform_status")
+    config = request.app.state.config
+    supported_packs = runtime_host_supported_packs()
+    relay_status = build_runtime_host_relay_status(config)
+    relay_health = {}
+    if config.runtime_host_base_url:
+        relay_health = probe_runtime_host(config.runtime_host_base_url)
+
+    return {
+        "supported_packs": supported_packs,
+        "pack_count": len(supported_packs),
+        "runtime_host_relay": {
+            "configured": relay_status.get("configured", False),
+            "base_url": config.runtime_host_base_url or None,
+            "health": relay_health,
+        },
+        "coverage_summary": {
+            "timeout_retry_amplification": any("timeout_retry_amplification" in p.get("incident_classes", []) for p in supported_packs),
+            "db_pool_exhaustion": any("db_pool_exhaustion" in p.get("incident_classes", []) for p in supported_packs),
+        },
+    }
 
 
 @app.post("/api/v1/internal/runtime-host/replica-replay")

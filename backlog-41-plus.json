@@ -33,7 +33,7 @@
     "id": 42,
     "title": "Runtime-host capability matrix and pack coverage surface",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Turn runtime-host support from a local hint into a visible product layer. Show which curated packs exist, what outage classes they cover, whether replay can run on the current environment, and what the bounded limits are. The goal is product trust: the operator and owner should understand exactly what NEXUS can reproduce today.",
     "done_when": [
       "the UI exposes a capability matrix or coverage block for runtime-host and curated packs",

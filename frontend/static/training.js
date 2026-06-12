@@ -297,11 +297,44 @@ function renderSessionTriage(trainingData) {
   );
 }
 
+function renderRuntimeCapabilities(capabilitiesData) {
+  const capabilities = capabilitiesData || {};
+  const packs = capabilities.supported_packs || [];
+  const coverage = capabilities.coverage_summary || {};
+  const relayStatus = capabilities.runtime_host_relay || {};
+
+  setText("packCountSummary", `${packs.length} bounded runtime pack${packs.length !== 1 ? "s" : ""} available for curated reproduction.`);
+
+  const packsList = document.getElementById("packsList");
+  if (packsList && packs.length > 0) {
+    packsList.innerHTML = packs
+      .map(
+        (pack) => `
+          <div class="summary-card">
+            <div class="label">${pack.pack_id}</div>
+            <div class="section-note">Classes: ${(pack.incident_classes || []).map(c => c.replace(/_/g, " ")).join(", ") || "Unknown"}</div>
+            <div class="section-note">Stack: ${(pack.stack || []).join(", ") || "Unknown"}</div>
+          </div>
+        `
+      )
+      .join("");
+  }
+
+  setText("coverageTimeoutRetry", coverage.timeout_retry_amplification ? "✓ Covered" : "Not yet");
+  setText("coverageDbPool", coverage.db_pool_exhaustion ? "✓ Covered" : "Not yet");
+
+  const relayStatusText = relayStatus.configured
+    ? `Runtime-host relay configured at ${relayStatus.base_url}. ${relayStatus.health?.healthy ? "Relay is healthy." : "Relay health check failed."}`
+    : "Runtime-host relay is not configured. Replay will use Docker on the current app host if available.";
+  setText("runtimeHostStatus", relayStatusText);
+}
+
 window.addEventListener("load", async () => {
   wireTrainingNavigation();
-  const [trainingData, platformData] = await Promise.all([
+  const [trainingData, platformData, capabilitiesData] = await Promise.all([
     fetchAuthedJson("/api/v1/training/summary").catch(() => loadMetrics()),
     fetchAuthedJson("/api/v1/platform/status").catch(() => loadMetrics()),
+    fetchAuthedJson("/api/v1/runtime/capabilities").catch(() => ({})),
   ]);
 
   renderSessionTriage(trainingData);
@@ -309,4 +342,5 @@ window.addEventListener("load", async () => {
   renderCurves(trainingData);
   renderGovernance(platformData.platform_status || platformData);
   renderAdvanced(trainingData);
+  renderRuntimeCapabilities(capabilitiesData);
 });
