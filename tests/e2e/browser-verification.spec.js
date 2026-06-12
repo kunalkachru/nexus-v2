@@ -52,6 +52,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByText("Investigation depth · TRACE")).toBeVisible();
     await expect(page.getByText("Best mitigation")).toBeVisible();
     await expect(page.getByRole("button", { name: /Run bounded replay/i })).toBeVisible();
+    await expect(page.locator("#replicaCapabilityDetail")).toContainText(/Host:|No bounded pack/);
     await expect(page.locator("#traceInspectionPoint")).not.toContainText("TRACE has not narrowed");
     await expect(page.locator("#traceDeveloperHandoff")).toContainText("trace_ownership_map.json");
     await expect(page.getByRole("heading", { name: "SENTINEL framed the incident for the rest of the crew" })).toBeVisible();
@@ -115,6 +116,17 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#stateMap")).toBeVisible();
 
     await page.screenshot({ path: "artifacts/browser/training-learning-controls-expanded.png", fullPage: true });
+  });
+
+  test("settings exposes runtime-host posture and bounded pack coverage", async ({ page }) => {
+    await page.goto("/settings");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page).toHaveTitle(/Settings/);
+    await expect(page.getByRole("heading", { name: "Runtime Host" })).toBeVisible();
+    await expect(page.locator("#runtimeHostState")).toBeVisible();
+    await expect(page.locator("#runtimeHostPackCount")).not.toHaveText("-");
+    await expect(page.locator("#runtimeHostPacks")).toContainText("checkout-python-fastapi-auth-redis-v1");
   });
 
   test("advanced routes preserve return context back into the incident console", async ({ page }) => {

@@ -65,6 +65,8 @@ def test_dashboard_routes_are_served() -> None:
     assert "Governance summary" in training.text
     assert "Advanced artifacts" in training.text
     assert "Trust posture, contracts, and deployment controls" in settings.text
+    assert "Runtime Host" in settings.text
+    assert "Relay posture" in settings.text
     assert 'href="queue"' in incident.text
 
 
@@ -132,6 +134,8 @@ def test_metrics_api_returns_dashboard_payload() -> None:
     assert payload["queue_snapshot"]["open_incidents"] >= 1
     assert payload["platform_status"]["mode"] == "Product"
     assert payload["platform_status"]["runtime_host_relay"]["configured"] is False
+    assert payload["platform_status"]["runtime_host_relay"]["pack_count"] >= 2
+    assert "checkout-python-fastapi-auth-redis-v1" in payload["platform_status"]["runtime_host_relay"]["supported_pack_ids"]
 
 
 def test_primary_screens_hide_dense_details_by_default() -> None:

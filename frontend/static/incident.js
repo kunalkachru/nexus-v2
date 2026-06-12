@@ -533,11 +533,19 @@ function renderEnterprise(data) {
   const runtimeCapability = replica.runtime_capability || {};
   const runtimeProvenance = replica.runtime_provenance || {};
   const traceRuntimeProvenance = trace.runtime_provenance || {};
+  const runtimeCapabilityDetail = [
+    runtimeCapability.host_label ? `Host: ${runtimeCapability.host_label}` : "",
+    runtimeCapability.bounded_pack_available ? "Bounded pack mapped" : "No bounded pack",
+    runtimeCapability.can_execute_replay ? "Replay can be requested now" : "Replay cannot be requested from this host state",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   setText("replicaOutcome", titleCase(String(replica.best_mitigation_outcome_class || replica.baseline_outcome_class || "not_run").replace(/_/g, " ")));
   setText("replicaCapabilityState", runtimeCapability.label || "Unknown");
   setText("replicaCapabilityHost", runtimeCapability.host_label || "Unknown");
   setText("replicaRuntimeHint", replica.runtime_enablement_hint || "Runtime mode details are not available for this incident yet.");
   setText("replicaCapabilityMessage", runtimeCapability.message || "Replay capability details are not available for this incident yet.");
+  setText("replicaCapabilityDetail", runtimeCapabilityDetail || "Runtime capability posture is not available for this incident yet.");
   setText(
     "replicaReplayStatus",
     replica.runtime_executed
@@ -745,6 +753,7 @@ function formatAuditEventLabel(eventType) {
 }
 
 function renderAudit(status, auditLogs, data) {
+  const recentAuditLogs = auditLogs.length ? [...auditLogs].slice(-24) : [];
   setText("workflowSummary", `${data.incident.id} flowing from ${data.incident.source_channel || "webhook"} to verified outcome`);
   setText("workflowSummaryCopy", "The detailed workflow remains available here when you need the system-level trace.");
 
@@ -800,7 +809,7 @@ function renderAudit(status, auditLogs, data) {
 
   renderList(
     "incidentAuditLogs",
-    auditLogs.length ? [...auditLogs].reverse() : [{ event_type: "audit", timestamp: "-", payload: { note: "No audit entries yet." } }],
+    recentAuditLogs.length ? recentAuditLogs.reverse() : [{ event_type: "audit", timestamp: "-", payload: { note: "No audit entries yet." } }],
     (entry) => `
       <article class="audit-entry">
         <div class="audit-entry-top">
@@ -809,6 +818,12 @@ function renderAudit(status, auditLogs, data) {
         </div>
       </article>
     `
+  );
+  setText(
+    "auditSummaryCaption",
+    auditLogs.length > recentAuditLogs.length
+      ? `Showing the latest ${recentAuditLogs.length} audit entries out of ${auditLogs.length}.`
+      : `Showing ${recentAuditLogs.length || 0} audit entries.`
   );
 }
 

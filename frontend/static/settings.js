@@ -7,6 +7,12 @@ function setText(id, value) {
   }
 }
 
+function titleCase(value) {
+  return String(value || "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 async function renderSettingsSummary() {
   const data = await fetchAuthedJson("/api/v1/platform/status").catch(() => loadMetrics());
   const platform = data.platform_status || data || {};
@@ -26,6 +32,40 @@ async function renderSettingsSummary() {
   setText("platformLearningContracts", platform.learning_contracts);
   setText("platformAuditEvents", platform.audit_events);
   setText("platformGuardianReviews", platform.guardian_reviews);
+
+  const runtimeHost = platform.runtime_host_relay || {};
+  setText("runtimeHostState", runtimeHost.status_label || titleCase(runtimeHost.state || "not_configured"));
+  setText(
+    "runtimeHostReachability",
+    runtimeHost.configured
+      ? runtimeHost.reachable
+        ? "Reachable"
+        : "Unreachable"
+      : "Not configured"
+  );
+  setText("runtimeHostPackCount", runtimeHost.pack_count ?? 0);
+  setText("runtimeHostAuth", runtimeHost.auth_configured ? "Configured" : "Missing");
+  setText("runtimeHostMessage", runtimeHost.message || "Runtime host posture is not available.");
+  setText("runtimeHostHealthMessage", runtimeHost.health_message || "Runtime host health details are not available.");
+  setText("runtimeHostBaseUrl", runtimeHost.base_url || "No runtime host relay configured.");
+
+  const runtimeHostPacks = document.getElementById("runtimeHostPacks");
+  if (runtimeHostPacks) {
+    const packs = runtimeHost.supported_packs || [];
+    runtimeHostPacks.innerHTML = packs.length
+      ? packs
+          .map(
+            (pack) => `
+              <li>
+                <strong>${pack.pack_id}</strong><br>
+                <span class="section-note">${(pack.stack || []).join(" · ") || "bounded stack"}</span><br>
+                <span class="section-note">Outage classes: ${(pack.incident_classes || []).join(", ") || "n/a"}</span>
+              </li>
+            `
+          )
+          .join("")
+      : "<li>No bounded runtime packs are published for relay execution yet.</li>";
+  }
 
   const intakeContracts = document.getElementById("platformIntakeContracts");
   const readContracts = document.getElementById("platformReadContracts");

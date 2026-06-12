@@ -357,7 +357,7 @@
     "id": 28,
     "title": "Runtime-host platform status and operator visibility",
     "priority": "highest",
-    "status": "pending",
+    "status": "done",
     "description": "Turn the runtime host from an implicit backend detail into an operator-visible product capability. The packaged app should show whether a runtime host is configured, reachable, healthy, and what bounded packs it can execute, so replay availability feels like product truth instead of an implementation accident.",
     "done_when": [
       "incident and/or platform views show runtime-host configured vs reachable vs unavailable states clearly",

@@ -689,6 +689,9 @@ def test_history_replay_training_and_platform_contracts(client: TestClient, auth
     assert training_payload["artifact_summary"]["learning_contracts"] >= 1
     assert training_payload["reward_evaluation"]["reward_curve_final"] >= 0.65
     assert platform_payload["runtime_host_relay"]["configured"] is False
+    assert platform_payload["runtime_host_relay"]["reachable"] is False
+    assert platform_payload["runtime_host_relay"]["pack_count"] >= 2
+    assert "checkout-python-fastapi-postgres-v1" in platform_payload["runtime_host_relay"]["supported_pack_ids"]
     assert "/api/v1/internal/runtime-host/replica-replay" in platform_payload["contract_surface"]
 
 

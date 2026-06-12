@@ -90,6 +90,33 @@
 
         <section class="section">
             <div class="section-header">
+                <h2>Runtime Host</h2>
+                <div class="section-note">This is the packaged-app truth layer for bounded replay: is a relay configured, is it reachable, and which outage packs can it actually execute.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Relay posture</div>
+                    <div class="hero-stats raw-intake-grid">
+                        <div class="stat"><div class="stat-label">State</div><div class="stat-value" id="runtimeHostState">-</div></div>
+                        <div class="stat"><div class="stat-label">Reachability</div><div class="stat-value" id="runtimeHostReachability">-</div></div>
+                        <div class="stat"><div class="stat-label">Pack coverage</div><div class="stat-value" id="runtimeHostPackCount">-</div></div>
+                        <div class="stat"><div class="stat-label">Auth</div><div class="stat-value" id="runtimeHostAuth">-</div></div>
+                    </div>
+                    <p class="hero-copy" id="runtimeHostMessage">Runtime host visibility will appear here once the platform payload loads.</p>
+                    <p class="section-note" id="runtimeHostHealthMessage">Relay health details will appear here once the platform payload loads.</p>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Relay endpoint</div>
+                    <p class="hero-copy" id="runtimeHostBaseUrl">No runtime host relay configured.</p>
+                    <ul class="simple-list" id="runtimeHostPacks">
+                        <li>No bounded pack catalog loaded yet.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
                 <h2>Environment Controls</h2>
                 <div class="section-note">These controls define how the product behaves in validation, review, and production-like operation.</div>
             </div>

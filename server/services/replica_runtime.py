@@ -7,6 +7,7 @@ import subprocess
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from urllib.error import URLError
 from urllib.request import Request as UrlRequest, urlopen
 
 from server.models import RuntimeHostReplayRequest, RuntimeHostReplayResponse
@@ -93,6 +94,58 @@ def registry() -> dict[str, ReplicaEnvironmentPack]:
                 "checkout.transaction_flow": ("release_db_session",),
             },
         ),
+    }
+
+
+def runtime_host_supported_packs() -> list[dict[str, object]]:
+    packs: list[dict[str, object]] = []
+    for pack in registry().values():
+        packs.append(
+            {
+                "pack_id": pack.pack_id,
+                "incident_classes": list(pack.incident_classes),
+                "services": list(pack.services),
+                "stack": list(pack.stack),
+            }
+        )
+    return packs
+
+
+def probe_runtime_host(base_url: str) -> dict[str, object]:
+    if not base_url:
+        return {
+            "reachable": False,
+            "healthy": False,
+            "health_status": "not_configured",
+            "health_message": "No runtime host relay URL is configured.",
+        }
+
+    health_url = f"{base_url.rstrip('/')}/health"
+    try:
+        request = UrlRequest(health_url, method="GET")
+        with urlopen(request, timeout=2) as response:
+            healthy = response.status == 200
+            return {
+                "reachable": healthy,
+                "healthy": healthy,
+                "health_status": "healthy" if healthy else "unhealthy",
+                "health_message": (
+                    "The packaged app can reach the runtime host relay and its health check is passing."
+                    if healthy
+                    else "The runtime host relay responded, but it did not report a healthy status."
+                ),
+            }
+    except URLError as error:
+        reason = getattr(error, "reason", None)
+        reason_text = str(reason or error).strip() or "connection failed"
+    except Exception as error:  # pragma: no cover - defensive path for packaged networking differences
+        reason_text = str(error).strip() or "connection failed"
+
+    return {
+        "reachable": False,
+        "healthy": False,
+        "health_status": "unreachable",
+        "health_message": f"The packaged app cannot currently reach the runtime host relay: {reason_text}.",
     }
 
 
@@ -399,13 +452,44 @@ def build_runtime_host_relay_status(config: object | None) -> dict[str, object]:
     base_url = str(getattr(config, "runtime_host_base_url", "") or "").strip()
     token = str(getattr(config, "runtime_host_shared_token", "") or "").strip()
     configured = bool(base_url and token)
+    health = probe_runtime_host(base_url) if configured else probe_runtime_host("")
+    supported_packs = runtime_host_supported_packs()
+    state = "healthy" if health["healthy"] else "configured" if configured else "not_configured"
+    if configured and not health["reachable"]:
+        state = "configured_unreachable"
     return {
         "configured": configured,
         "base_url": base_url,
         "auth_configured": bool(token),
+        "reachable": bool(health["reachable"]),
+        "healthy": bool(health["healthy"]),
+        "state": state,
+        "status_label": (
+            "Healthy relay"
+            if state == "healthy"
+            else "Configured but unreachable"
+            if state == "configured_unreachable"
+            else "Configured relay"
+            if state == "configured"
+            else "Not configured"
+        ),
         "mode": "external_relay" if configured else "not_configured",
+        "health_status": str(health["health_status"]),
+        "health_message": str(health["health_message"]),
+        "supported_packs": supported_packs,
+        "supported_pack_ids": [str(pack["pack_id"]) for pack in supported_packs],
+        "supported_incident_classes": sorted(
+            {
+                incident_class
+                for pack in supported_packs
+                for incident_class in pack.get("incident_classes", [])
+            }
+        ),
+        "pack_count": len(supported_packs),
         "message": (
-            "A runtime-host relay is configured for packaged replay delegation."
+            "A runtime-host relay is configured for packaged replay delegation and is reachable from the packaged app."
+            if configured and health["healthy"]
+            else "A runtime-host relay is configured for packaged replay delegation, but the packaged app cannot currently reach it."
             if configured
             else "No external runtime-host relay is configured for packaged replay delegation yet."
         ),
