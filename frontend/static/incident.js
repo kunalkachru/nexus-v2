@@ -50,6 +50,17 @@ function sleep(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function formatTimestamp(value) {
+  if (!value) {
+    return "Unknown time";
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return String(value);
+  }
+  return parsed.toLocaleString();
+}
+
 function getCrewNodes() {
   return Array.from(document.querySelectorAll(".crew-bot"));
 }
@@ -586,6 +597,39 @@ function renderEnterprise(data) {
     outcomeLabel.textContent = titleCase((replica.best_mitigation_outcome_class || "not_run").replace(/_/g, " "));
 
     block.style.display = "block";
+  }
+
+  const comparisonBlock = document.getElementById("runtimeComparisonBlock");
+  let replayHistoryBlock = document.getElementById("replayHistoryBlock");
+  if (comparisonBlock && comparisonBlock.parentElement && !replayHistoryBlock) {
+    replayHistoryBlock = document.createElement("div");
+    replayHistoryBlock.id = "replayHistoryBlock";
+    replayHistoryBlock.style.marginTop = "1em";
+    replayHistoryBlock.innerHTML = `
+      <p class="section-label">Replay history</p>
+      <ul class="simple-list" id="replayHistoryList"></ul>
+    `;
+    comparisonBlock.insertAdjacentElement("afterend", replayHistoryBlock);
+  }
+  if (replayHistoryBlock) {
+    const replayHistory = replica.replay_history || [];
+    if (replayHistory.length) {
+      renderList(
+        "replayHistoryList",
+        replayHistory,
+        (item) => {
+          const provenance = item.runtime_provenance || {};
+          const baseline = item.replay_status_code ? `baseline HTTP ${item.replay_status_code}${item.replay_duration_ms ? ` at ${item.replay_duration_ms}ms` : ""}` : "baseline not captured";
+          const selected = item.best_mitigation_action
+            ? `${item.best_mitigation_action}${item.best_mitigation_status_code ? ` → HTTP ${item.best_mitigation_status_code}` : ""}${item.best_mitigation_duration_ms ? ` at ${item.best_mitigation_duration_ms}ms` : ""}`
+            : "No selected mitigation";
+          return `<li><strong>${item.is_latest ? "Latest replay" : `Prior replay ${item.index}`}</strong><br><span class="section-note">${formatTimestamp(item.recorded_at)} · ${provenance.label || titleCase(provenance.mode || "unknown source")}</span><br><span class="section-note">${baseline}</span><br><span class="section-note">${titleCase(String(item.best_mitigation_outcome_class || "not_run").replace(/_/g, " "))} · ${selected}</span></li>`;
+        }
+      );
+      replayHistoryBlock.style.display = "block";
+    } else {
+      replayHistoryBlock.style.display = "none";
+    }
   }
 
   if (replica.scaffold_ready && (replica.services_seen || []).length) {

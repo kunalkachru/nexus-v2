@@ -59,6 +59,7 @@ from server.services.replica_runtime import ReplicaExecutionResult, invoke_runti
 from training.runner import TrainingForgeClient
 
 logger = logging.getLogger(__name__)
+_REPLAY_HISTORY_LIMIT = 5
 
 
 def _root_cause_from_issue_family(issue_family: str, service: str) -> str:
@@ -141,11 +142,10 @@ class IncidentService:
         runtime_capability: dict[str, object],
         replica_summary: dict[str, object],
         trace_summary: dict[str, object],
-    ) -> None:
+    ) -> dict[str, object] | None:
         if incident is None or not incident.nexus_incident_id.startswith("nxs_"):
-            return
-        normalized_evidence = dict(incident.normalized_evidence or {})
-        normalized_evidence["latest_replay"] = {
+            return None
+        replay_entry = {
             "status": status,
             "message": message,
             "recorded_at": datetime.now(timezone.utc).isoformat(),
@@ -154,10 +154,93 @@ class IncidentService:
             "replica_summary": replica_summary,
             "trace_summary": trace_summary,
         }
-        await self._session.incidents.update_incident_normalized_evidence(
+        append_replay = getattr(self._session.incidents, "append_incident_replay_evidence", None)
+        if callable(append_replay):
+            updated = await append_replay(
+                incident.nexus_incident_id,
+                latest_replay=replay_entry,
+                replay_entry=replay_entry,
+                replay_limit=_REPLAY_HISTORY_LIMIT,
+            )
+            return dict(updated.normalized_evidence or {}) if updated is not None else None
+
+        normalized_evidence = dict(incident.normalized_evidence or {})
+        history = [
+            dict(item)
+            for item in normalized_evidence.get("replay_history", [])
+            if isinstance(normalized_evidence.get("replay_history"), list) and isinstance(item, dict)
+        ]
+        history.insert(0, replay_entry)
+        normalized_evidence["latest_replay"] = replay_entry
+        normalized_evidence["replay_history"] = history[:_REPLAY_HISTORY_LIMIT]
+        updated = await self._session.incidents.update_incident_normalized_evidence(
             incident.nexus_incident_id,
             normalized_evidence=normalized_evidence,
         )
+        return dict(updated.normalized_evidence or normalized_evidence) if updated is not None else normalized_evidence
+
+    def _replay_history_summaries(
+        self,
+        normalized_evidence: dict[str, object] | None,
+    ) -> list[dict[str, object]]:
+        payload = dict(normalized_evidence or {})
+        replay_history = payload.get("replay_history")
+        if isinstance(replay_history, list):
+            source_entries = replay_history
+        else:
+            latest_replay = payload.get("latest_replay")
+            source_entries = [latest_replay] if isinstance(latest_replay, dict) else []
+
+        summaries: list[dict[str, object]] = []
+        for index, entry in enumerate(source_entries):
+            if not isinstance(entry, dict):
+                continue
+            entry_replica = dict(entry.get("replica_summary") or {})
+            entry_trace = dict(entry.get("trace_summary") or {})
+            runtime_provenance = dict(
+                entry.get("runtime_provenance")
+                or entry_replica.get("runtime_provenance")
+                or {}
+            )
+            summaries.append(
+                {
+                    "index": index,
+                    "recorded_at": str(entry.get("recorded_at") or ""),
+                    "status": str(entry.get("status") or ""),
+                    "message": str(entry.get("message") or ""),
+                    "runtime_provenance": runtime_provenance,
+                    "runtime_mode": str(entry_replica.get("runtime_mode") or ""),
+                    "replay_status_code": entry_replica.get("replay_status_code"),
+                    "replay_duration_ms": entry_replica.get("replay_duration_ms"),
+                    "best_mitigation_action": str(entry_replica.get("best_mitigation_action") or ""),
+                    "best_mitigation_outcome_class": str(entry_replica.get("best_mitigation_outcome_class") or ""),
+                    "best_mitigation_status_code": entry_replica.get("best_mitigation_status_code"),
+                    "best_mitigation_duration_ms": entry_replica.get("best_mitigation_duration_ms"),
+                    "trace_status": str(entry_trace.get("trace_status") or ""),
+                    "trace_inspection_point": str(entry_trace.get("inspection_point") or ""),
+                    "is_latest": index == 0,
+                }
+            )
+        return summaries
+
+    def _attach_replay_history(
+        self,
+        *,
+        payload: dict[str, object],
+        normalized_evidence: dict[str, object],
+    ) -> dict[str, object]:
+        replay_history = self._replay_history_summaries(normalized_evidence)
+        if not replay_history:
+            return payload
+
+        replica_summary = payload.get("replica_summary")
+        if isinstance(replica_summary, dict):
+            replica_summary["replay_history"] = replay_history
+        trace_summary = payload.get("trace_summary")
+        if isinstance(trace_summary, dict):
+            trace_summary["replay_history"] = replay_history
+        payload["replay_history"] = replay_history
+        return payload
 
     def _apply_persisted_replay_packet(
         self,
@@ -192,6 +275,7 @@ class IncidentService:
                 )
             )
 
+        self._attach_replay_history(payload=payload, normalized_evidence=normalized_evidence)
         incident_payload = dict(payload.get("incident") or {})
         incident_payload["normalized_evidence"] = normalized_evidence
         payload["incident"] = incident_payload
@@ -1360,7 +1444,7 @@ class IncidentService:
             if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
             else await self._session.incidents.get_incident(nexus_incident_id)
         )
-        await self._persist_latest_replay_packet(
+        normalized_evidence = await self._persist_latest_replay_packet(
             incident=stored_incident,
             status=status,
             message=str(runtime_capability.get("message") or replica_summary.get("runtime_enablement_hint") or "Replay state unavailable."),
@@ -1368,6 +1452,12 @@ class IncidentService:
             replica_summary=replica_summary,
             trace_summary=trace_summary,
         )
+        replay_history = self._replay_history_summaries(
+            normalized_evidence if isinstance(normalized_evidence, dict) else dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
+        )
+        if replay_history:
+            replica_summary["replay_history"] = replay_history
+            trace_summary["replay_history"] = replay_history
 
         return {
             "incident_id": nexus_incident_id,

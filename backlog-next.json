@@ -307,7 +307,7 @@
     "id": 26,
     "title": "Replay history timeline for live incidents",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Right now the live incident keeps only the latest replay packet. Persist a bounded replay history so operators can see whether repeated runs improved confidence, changed runtime provenance, or flipped the winning mitigation. Keep the scope to a short local incident history, not a full analytics subsystem.",
     "done_when": [
       "live incidents retain a bounded list of prior replay packets with timestamps",

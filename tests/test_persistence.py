@@ -130,6 +130,91 @@ def test_incident_repository_persists_normalized_evidence_updates(tmp_path: Path
     asyncio.run(scenario())
 
 
+def test_incident_repository_appends_bounded_replay_history(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        path = tmp_path / "incidents.json"
+        session_factory = create_session_factory(AppConfig(database_path=path))
+        session = session_factory()
+        try:
+            incident = await session.incidents.create_incident(
+                external_id="inc_xyz",
+                title="Payment API timeout",
+                severity="P1",
+                normalized_evidence={"signature": "timeout"},
+            )
+
+            await session.incidents.append_incident_replay_evidence(
+                incident.nexus_incident_id,
+                latest_replay={
+                    "status": "replay_executed",
+                    "recorded_at": "2026-06-12T10:00:00+00:00",
+                    "runtime_provenance": {"mode": "direct_runtime"},
+                },
+                replay_entry={
+                    "status": "replay_executed",
+                    "recorded_at": "2026-06-12T10:00:00+00:00",
+                    "runtime_provenance": {"mode": "direct_runtime"},
+                },
+                replay_limit=2,
+            )
+            await session.incidents.append_incident_replay_evidence(
+                incident.nexus_incident_id,
+                latest_replay={
+                    "status": "relay_executed",
+                    "recorded_at": "2026-06-12T10:05:00+00:00",
+                    "runtime_provenance": {"mode": "delegated_relay"},
+                },
+                replay_entry={
+                    "status": "relay_executed",
+                    "recorded_at": "2026-06-12T10:05:00+00:00",
+                    "runtime_provenance": {"mode": "delegated_relay"},
+                },
+                replay_limit=2,
+            )
+            updated = await session.incidents.append_incident_replay_evidence(
+                incident.nexus_incident_id,
+                latest_replay={
+                    "status": "replay_executed",
+                    "recorded_at": "2026-06-12T10:10:00+00:00",
+                    "runtime_provenance": {"mode": "direct_runtime"},
+                },
+                replay_entry={
+                    "status": "replay_executed",
+                    "recorded_at": "2026-06-12T10:10:00+00:00",
+                    "runtime_provenance": {"mode": "direct_runtime"},
+                },
+                replay_limit=2,
+            )
+
+            assert updated is not None
+            history = updated.normalized_evidence["replay_history"]
+            assert len(history) == 2
+            assert history[0]["recorded_at"] == "2026-06-12T10:10:00+00:00"
+            assert history[1]["recorded_at"] == "2026-06-12T10:05:00+00:00"
+            assert history[0]["runtime_provenance"]["mode"] == "direct_runtime"
+            assert history[1]["runtime_provenance"]["mode"] == "delegated_relay"
+
+            persisted = json.loads(path.read_text())
+            persisted_history = persisted["incidents"][incident.nexus_incident_id]["normalized_evidence"]["replay_history"]
+            assert len(persisted_history) == 2
+        finally:
+            await session.close()
+
+        reloaded_session = create_session_factory(AppConfig(database_path=path))()
+        try:
+            loaded = await reloaded_session.incidents.get_incident(incident.nexus_incident_id)
+            assert loaded is not None
+            history = loaded.normalized_evidence["replay_history"]
+            assert [entry["runtime_provenance"]["mode"] for entry in history] == [
+                "direct_runtime",
+                "delegated_relay",
+            ]
+        finally:
+            await reloaded_session.close()
+
+    asyncio.run(scenario())
+
+
 def test_database_load_recovers_from_corrupted_json(tmp_path: Path) -> None:
     async def scenario() -> None:
         path = tmp_path / "incidents.json"

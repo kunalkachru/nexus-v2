@@ -142,3 +142,38 @@ class IncidentRepository:
             self._incident_store[nexus_incident_id] = incident
             raise
         return updated
+
+    async def append_incident_replay_evidence(
+        self,
+        nexus_incident_id: str,
+        *,
+        latest_replay: dict[str, object],
+        replay_entry: dict[str, object],
+        replay_limit: int = 5,
+    ) -> IncidentRecord | None:
+        incident = self._incident_store.get(nexus_incident_id)
+        if incident is None:
+            return None
+
+        normalized_evidence = dict(incident.normalized_evidence or {})
+        existing_history = normalized_evidence.get("replay_history")
+        history = []
+        if isinstance(existing_history, list):
+            history = [dict(item) for item in existing_history if isinstance(item, dict)]
+        history.insert(0, dict(replay_entry))
+        normalized_evidence["latest_replay"] = dict(latest_replay)
+        normalized_evidence["replay_history"] = history[: max(1, replay_limit)]
+
+        updated = incident.model_copy(
+            update={
+                "normalized_evidence": normalized_evidence,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        self._incident_store[nexus_incident_id] = updated
+        try:
+            await self._flush_callback()
+        except Exception:
+            self._incident_store[nexus_incident_id] = incident
+            raise
+        return updated
