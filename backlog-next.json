@@ -281,7 +281,7 @@
     "id": 25,
     "title": "Replay-aware live overlay recomputation",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Live `nxs_...` incidents now persist replay-backed REPLICA and TRACE packets, but the broader overlay can still refresh from scaffold-only logic for FORGE, GUARDIAN, memory ranking, and task summaries. Recompute those live overlay sections from the persisted replay packet so the entire incident narrative stays coherent after replay, not just the two investigation cards.",
     "done_when": [
       "live incident refresh keeps replay-aware FORGE reasoning and GUARDIAN posture",

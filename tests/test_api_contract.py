@@ -999,6 +999,17 @@ def test_live_raw_text_incident_refresh_uses_persisted_replay_packet(
     assert context_payload["replica_summary"]["runtime_provenance"]["mode"] == "direct_runtime"
     assert context_payload["trace_summary"]["runtime_provenance"]["mode"] == "direct_runtime"
     assert context_payload["trace_summary"]["suspected_files"][0].endswith("checkout_server.py")
+    assert "treated the runtime evidence as resolved" in context_payload["runbook"]["reasoning"]
+    assert context_payload["runbook"]["candidate_fixes"][0]["runtime_outcome_class"] == "resolved"
+    assert "Validated runtime signals" in context_payload["guardian"]["reasoning"]
+    assert "Runtime replay has not executed in this live path." not in context_payload["guardian"]["reasoning"]
+    assert "Runtime alignment:" in context_payload["memory_hits"]["runbooks"][0]["why_now_fit"]
+    task_summaries = {
+        task["id"]: task["summary"]
+        for task in context_payload["task_board"]["tasks"]
+    }
+    assert task_summaries["forge-plan"] == context_payload["runbook"]["reasoning"]
+    assert task_summaries["guardian-policy"] == context_payload["guardian"]["reasoning"]
 
 
 def test_replay_launch_creates_live_incident(client: TestClient, auth_headers) -> None:

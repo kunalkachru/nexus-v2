@@ -177,23 +177,24 @@ class IncidentService:
         if isinstance(trace_summary, dict):
             payload["trace_summary"] = trace_summary
 
+        if isinstance(replica_summary, dict) and isinstance(trace_summary, dict):
+            payload.update(
+                self._enterprise_runtime.refresh_overlay_from_persisted_replay(
+                    runbook=payload.get("runbook") if isinstance(payload.get("runbook"), dict) else None,
+                    guardian=payload.get("guardian") if isinstance(payload.get("guardian"), dict) else None,
+                    memory_hits=payload.get("memory_hits") if isinstance(payload.get("memory_hits"), dict) else None,
+                    task_board=payload.get("task_board") if isinstance(payload.get("task_board"), dict) else None,
+                    agent_metrics=payload.get("agent_metrics") if isinstance(payload.get("agent_metrics"), dict) else None,
+                    triage_summary=payload.get("triage_summary") if isinstance(payload.get("triage_summary"), dict) else None,
+                    replica_summary=replica_summary,
+                    trace_summary=trace_summary,
+                    severity=incident.severity,
+                )
+            )
+
         incident_payload = dict(payload.get("incident") or {})
         incident_payload["normalized_evidence"] = normalized_evidence
         payload["incident"] = incident_payload
-
-        task_board = payload.get("task_board")
-        if isinstance(task_board, dict):
-            tasks = task_board.get("tasks")
-            if isinstance(tasks, list):
-                for task in tasks:
-                    if not isinstance(task, dict):
-                        continue
-                    if task.get("id") == "replica-validate" and isinstance(replica_summary, dict):
-                        task["status"] = str(replica_summary.get("reproduction_status") or task.get("status") or "not_run")
-                        task["summary"] = str(replica_summary.get("reasoning") or task.get("summary") or "")
-                    if task.get("id") == "trace-debug" and isinstance(trace_summary, dict):
-                        task["status"] = str(trace_summary.get("trace_status") or task.get("status") or "not_run")
-                        task["summary"] = str(trace_summary.get("reasoning") or task.get("summary") or "")
         return payload
 
     async def _build_enterprise_overlay(

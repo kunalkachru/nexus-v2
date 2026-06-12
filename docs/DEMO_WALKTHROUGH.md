@@ -171,6 +171,7 @@ The runtime evidence narrative connects three stages, but only part of it is mea
 - when runtime replay is enabled, the proposed mitigation can be measured against the failure signature
 - when the packaged app is running in Docker, the same replay can be delegated to the runtime host instead of failing inside the app container
 - once a live `nxs_...` incident runs replay, the measured REPLICA and TRACE packet persists across refresh instead of collapsing back to scaffold-only inference
+- after that refresh, FORGE reasoning, GUARDIAN posture, memory ranking, and task summaries stay anchored to the persisted replay packet instead of rebuilding from scaffold-only language
 - the selected mitigation can be explained against a visible runner-up instead of feeling arbitrary
 - escalation to a human reviewer includes evidence-backed confidence in the action
 

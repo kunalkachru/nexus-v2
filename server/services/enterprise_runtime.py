@@ -235,12 +235,19 @@ class IncidentKnowledgeService:
             details = get_incident_details(str(item["incident_id"]))
             recommended = details.get("recommended_runbooks", [])
             primary = recommended[0] if isinstance(recommended, list) and recommended else {}
+            forge_details = details.get("forge", {}) if isinstance(details.get("forge"), dict) else {}
+            historical_actions = [
+                str(candidate.get("action") or "").strip()
+                for candidate in forge_details.get("candidate_fixes", [])
+                if isinstance(candidate, dict) and str(candidate.get("action") or "").strip()
+            ]
             runbooks.append(
                 {
                     "incident_id": item["incident_id"],
                     "runbook_summary": str(primary.get("name") or f"Prior mitigation pattern for {item['incident_id']}"),
                     "success_rate": float(primary.get("success_rate", item["success_rate"])),
                     "historical_reason": str(details.get("forge", {}).get("selection_logic", "")).strip(),
+                    "historical_actions": historical_actions,
                     "why_now_fit": str(details.get("triage", {}).get("approval_focus", "")).strip()
                     or "Historical mitigation favored reversible recovery before broad rollback.",
                     "source": "historical_runbook",
@@ -442,6 +449,168 @@ class EnterpriseNexusRuntime:
                 "guardian": self._guardian_contract(guardian, severity=severity),
             },
             "fallback_summary": fallback_summary,
+        }
+
+    def refresh_overlay_from_persisted_replay(
+        self,
+        *,
+        runbook: dict[str, object] | None,
+        guardian: dict[str, object] | None,
+        memory_hits: dict[str, list[dict[str, object]]] | None,
+        task_board: dict[str, object] | None,
+        agent_metrics: dict[str, dict[str, object]] | None,
+        triage_summary: dict[str, object] | None,
+        replica_summary: dict[str, object],
+        trace_summary: dict[str, object],
+        severity: str,
+    ) -> dict[str, object]:
+        updated_runbook = dict(runbook or {})
+        updated_guardian = dict(guardian or {})
+        updated_memory_hits = enrich_memory_with_runtime(memory_hits, replica_summary=replica_summary)
+
+        ranked_candidate_fixes = rank_candidate_fixes_with_runtime(
+            list(updated_runbook.get("candidate_fixes", [])) if isinstance(updated_runbook.get("candidate_fixes"), list) else [],
+            replica_summary=replica_summary,
+        )
+        if ranked_candidate_fixes:
+            updated_runbook["candidate_fixes"] = ranked_candidate_fixes
+            updated_runbook["recommended_runbook"] = str(
+                ranked_candidate_fixes[0].get("action")
+                or updated_runbook.get("recommended_runbook")
+                or ""
+            )
+
+        top_runbook = updated_memory_hits["runbooks"][0] if updated_memory_hits["runbooks"] else {}
+        runner_up = updated_memory_hits["runbooks"][1] if len(updated_memory_hits["runbooks"]) > 1 else {}
+        validated_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "").replace("_", " ")
+        validated_summary = str(replica_summary.get("best_mitigation_summary") or "")
+        runbook_reasoning = (
+            f"{str(updated_runbook.get('reasoning', '')).strip()} "
+            f"Referenced {len(updated_memory_hits['runbooks'])} runbook memories and "
+            f"{len(updated_memory_hits['unresolved_items'])} unresolved service items. "
+            f"Primary historical fit: {top_runbook.get('runbook_summary', 'none')}."
+            f"{' Why now: ' + str(top_runbook.get('why_now_fit')) + '.' if top_runbook.get('why_now_fit') else ''}"
+            f"{' Runner-up: ' + str(runner_up.get('runbook_summary')) + '.' if runner_up else ''} "
+            f"REPLICA: {replica_summary.get('reasoning', '')} "
+            f"{str(replica_summary.get('runtime_comparison_summary') or '')} "
+            f"{validated_summary + ' ' if validated_summary else ''}"
+            f"TRACE: {trace_summary.get('reasoning', '')} "
+            f"FORGE kept the plan biased toward reversible, lower-blast-radius actions first and treated the runtime evidence as {validated_outcome or 'inferred only'}."
+        ).strip()
+        updated_runbook["reasoning"] = " ".join(runbook_reasoning.split())
+
+        guardian_decision = str(updated_guardian.get("decision") or "pending")
+        best_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "")
+        risk_class = "high" if priority_rank(severity) <= 2 else "medium"
+        if best_outcome == "resolved":
+            risk_class = "medium" if risk_class == "high" else "low"
+        elif best_outcome == "improved":
+            risk_class = "high" if priority_rank(severity) <= 1 else "medium"
+        approval_level = "incident_manager" if risk_class == "high" else "operator"
+        rollback_readiness = "ready" if guardian_decision != "reject" else "needs_review"
+        simulation_readiness = "ready" if guardian_decision != "reject" else "manual_review"
+        blocked_controls = list(updated_guardian.get("blocked_controls") or updated_guardian.get("policy_violations") or [])
+        if not blocked_controls and guardian_decision == "reject":
+            blocked_controls = ["destructive_runbook_guard"]
+        if replica_summary.get("runtime_executed") and best_outcome == "resolved":
+            validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation resolved it in the bounded runtime."
+        elif replica_summary.get("runtime_executed") and best_outcome == "improved":
+            validated_clause = "Validated runtime signals: REPLICA reproduced the failure and the leading mitigation improved the runtime behavior without fully clearing the failure."
+        elif replica_summary.get("runtime_executed"):
+            validated_clause = "Validated runtime signals: REPLICA reproduced the failure, but the tested mitigation did not materially improve the bounded runtime."
+        else:
+            validated_clause = (
+                f"Current signals are inferred from the bounded scaffold: REPLICA is {replica_summary.get('reproduction_status', 'not_run')} "
+                f"and TRACE is {trace_summary.get('trace_status', 'not_run')}. Runtime replay has not executed in this live path."
+            )
+        guardian_reasoning = (
+            f"{str(updated_guardian.get('reasoning', '')).strip()} "
+            f"{validated_clause} "
+            f"{str(replica_summary.get('runtime_comparison_summary') or '')} "
+            f"Inferred signals: memory-ranked analogs and diagnosis synthesis still inform the remaining confidence. "
+            f"Risk class {risk_class.upper()} requires {approval_level.replace('_', ' ')} approval. "
+            f"Rollback readiness is {rollback_readiness} and simulation readiness is {simulation_readiness}."
+        ).strip()
+        updated_guardian.update(
+            {
+                "reasoning": " ".join(guardian_reasoning.split()),
+                "risk_class": risk_class,
+                "required_approval_level": approval_level,
+                "blocked_controls": blocked_controls,
+                "rollback_readiness": rollback_readiness,
+                "simulation_readiness": simulation_readiness,
+            }
+        )
+
+        refreshed_task_board = {"tasks": []}
+        task_items = list(task_board.get("tasks", [])) if isinstance(task_board, dict) else []
+        refreshed_task_board["tasks"] = [dict(task) for task in task_items if isinstance(task, dict)]
+        for task in refreshed_task_board["tasks"]:
+            if task.get("id") == "replica-validate":
+                task["status"] = str(replica_summary.get("reproduction_status") or task.get("status") or "not_run")
+                task["summary"] = str(replica_summary.get("reasoning") or task.get("summary") or "")
+            elif task.get("id") == "trace-debug":
+                task["status"] = str(trace_summary.get("trace_status") or task.get("status") or "not_run")
+                task["summary"] = str(trace_summary.get("reasoning") or task.get("summary") or "")
+            elif task.get("id") == "forge-plan":
+                task["status"] = "completed"
+                task["summary"] = updated_runbook["reasoning"]
+            elif task.get("id") == "guardian-policy":
+                task["status"] = "blocked" if guardian_decision in {"reject", "request_modification"} else "completed"
+                task["summary"] = updated_guardian["reasoning"]
+
+        refreshed_agent_metrics = {
+            key: dict(value)
+            for key, value in (agent_metrics or {}).items()
+            if isinstance(value, dict)
+        }
+        if "replica" in refreshed_agent_metrics:
+            refreshed_agent_metrics["replica"].update(
+                {
+                    "status": "completed" if str(replica_summary.get("reproduction_status")) != "not_run" else "fallback",
+                    "confidence": round(max(0.0, min(1.0, 0.5 + float(replica_summary.get("confidence_delta", 0.0) or 0.0))), 2),
+                    "reasoning": str(replica_summary.get("reasoning", "")).strip(),
+                    "fallback_used": str(replica_summary.get("reproduction_status")) == "not_run",
+                }
+            )
+        if "trace" in refreshed_agent_metrics:
+            refreshed_agent_metrics["trace"].update(
+                {
+                    "status": "completed" if str(trace_summary.get("trace_status")) != "not_run" else "fallback",
+                    "confidence": round(float(trace_summary.get("confidence", 0.0) or 0.0), 2),
+                    "reasoning": str(trace_summary.get("reasoning", "")).strip(),
+                    "fallback_used": str(trace_summary.get("trace_status")) == "not_run",
+                }
+            )
+        if "forge" in refreshed_agent_metrics:
+            refreshed_agent_metrics["forge"].update(
+                {
+                    "confidence": round(
+                        max(
+                            max((item.get("success_rate", 0.0) for item in updated_memory_hits["runbooks"]), default=0.84),
+                            _runtime_outcome_score(
+                                str(replica_summary.get("best_mitigation_outcome_class") or ""),
+                                baseline_duration=replica_summary.get("replay_duration_ms") if isinstance(replica_summary.get("replay_duration_ms"), int) else None,
+                                mitigation_duration=replica_summary.get("best_mitigation_duration_ms") if isinstance(replica_summary.get("best_mitigation_duration_ms"), int) else None,
+                            ),
+                        ),
+                        2,
+                    ),
+                    "reasoning": updated_runbook["reasoning"],
+                }
+            )
+        if "guardian" in refreshed_agent_metrics:
+            refreshed_agent_metrics["guardian"] = self._guardian_contract(updated_guardian, severity=severity)
+
+        return {
+            "runbook": updated_runbook,
+            "guardian": updated_guardian,
+            "memory_hits": updated_memory_hits,
+            "task_board": refreshed_task_board,
+            "agent_metrics": refreshed_agent_metrics,
+            "triage_summary": dict(triage_summary or {}),
+            "replica_summary": dict(replica_summary),
+            "trace_summary": dict(trace_summary),
         }
 
     def _build_graph(self):
@@ -2069,7 +2238,13 @@ def enrich_memory_with_runtime(
         return payload
 
     for item in payload["runbooks"]:
-        overlap = _action_overlap(str(item.get("runbook_summary", "")), best_action)
+        overlap_sources = [str(item.get("runbook_summary", ""))]
+        overlap_sources.extend(
+            str(action).strip()
+            for action in item.get("historical_actions", [])
+            if str(action).strip()
+        )
+        overlap = max((_action_overlap(source, best_action) for source in overlap_sources), default=0.0)
         if overlap >= 0.2:
             item["success_rate"] = round(min(0.99, float(item.get("success_rate", 0.0) or 0.0) + 0.04), 2)
             note = f"Runtime alignment: {best_action} tested as {best_outcome} in REPLICA."
