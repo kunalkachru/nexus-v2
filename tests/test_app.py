@@ -44,7 +44,7 @@ def test_dashboard_routes_are_served() -> None:
     assert "FORGE" in queue.text
     assert "GUARDIAN" in queue.text
     assert "Incident Detail" in incident.text
-    assert "Agent Handoff Thread" in incident.text
+    assert "Investigation Summary & Operator Path" in incident.text
     assert "Enterprise Task Board" in incident.text
     assert "Memory-grounded context" in incident.text
     assert "Investigation depth · REPLICA" in incident.text

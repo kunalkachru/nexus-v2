@@ -146,8 +146,8 @@
 
         <section class="section">
             <div class="section-header">
-                <h2>Agent Handoff Thread</h2>
-                <div class="section-note">Read this section like an operator handoff: who looked at what, what they concluded, and why the next agent picked it up.</div>
+                <h2>Investigation Summary & Operator Path</h2>
+                <div class="section-note">The crew's analysis flows from classification through diagnosis, action preparation, and final safety review.</div>
             </div>
             <div class="collaboration-strip">
                 <article class="collaboration-card collaboration-card-lead">
@@ -168,22 +168,22 @@
             <div class="handoff-thread" id="handoffThread">
                 <article class="handoff-entry handoff-entry-active" id="handoffSentinel">
                     <div class="handoff-entry-top"><span class="badge">SENTINEL</span><span class="section-note">Classification bot</span></div>
-                    <h3>SENTINEL framed the incident for the rest of the crew</h3>
+                    <h3>What is the incident?</h3>
                     <p class="hero-copy" id="threadSentinelCopy">Waiting for incident context.</p>
                 </article>
                 <article class="handoff-entry" id="handoffPrism">
                     <div class="handoff-entry-top"><span class="badge">PRISM</span><span class="section-note">Diagnosis bot</span></div>
-                    <h3>PRISM split the issue into smaller investigations</h3>
+                    <h3>What went wrong?</h3>
                     <p class="hero-copy" id="threadPrismCopy">Waiting for correlated evidence.</p>
                 </article>
                 <article class="handoff-entry" id="handoffForge">
                     <div class="handoff-entry-top"><span class="badge">FORGE</span><span class="section-note">Remediation bot</span></div>
-                    <h3>FORGE turned the diagnosis into an actionable plan</h3>
+                    <h3>What should we do?</h3>
                     <p class="hero-copy" id="threadForgeCopy">Waiting to produce a rollback-ready proposal.</p>
                 </article>
                 <article class="handoff-entry" id="handoffGuardian">
                     <div class="handoff-entry-top"><span class="badge">GUARDIAN</span><span class="section-note">Governance Bot</span></div>
-                    <h3>GUARDIAN decided whether the plan was safe to execute</h3>
+                    <h3>Is it safe to execute?</h3>
                     <p class="hero-copy" id="threadGuardianCopy">Waiting for the runbook to clear safety review.</p>
                 </article>
             </div>

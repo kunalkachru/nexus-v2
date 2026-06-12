@@ -46,7 +46,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByRole("heading", { name: /INC001/ })).toBeVisible();
     await expect(page.getByText("Specialist crew")).toBeVisible();
     await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(4);
-    await expect(page.getByRole("heading", { name: "Agent Handoff Thread" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Investigation Summary & Operator Path" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Enterprise Task Board" })).toBeVisible();
     await expect(page.getByText("Investigation depth · REPLICA")).toBeVisible();
     await expect(page.getByText("Investigation depth · TRACE")).toBeVisible();
@@ -59,7 +59,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#replicaTrustSummary")).toContainText("Replay trust packet");
     await expect(page.locator("#traceInspectionPoint")).not.toContainText("TRACE has not narrowed");
     await expect(page.locator("#traceDeveloperHandoff")).toContainText("trace_ownership_map.json");
-    await expect(page.getByRole("heading", { name: "SENTINEL framed the incident for the rest of the crew" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What is the incident?" })).toBeVisible();
     await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
     await expect(page.locator(".byo-key-card .badge")).toHaveText("Bring your own OpenAI key");
     await expect(page.getByText("Memory-grounded context")).toBeVisible();

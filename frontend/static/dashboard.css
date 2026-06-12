@@ -2071,8 +2071,10 @@ h3 {
 }
 
 .handoff-entry h3 {
-  margin-top: 10px;
-  font-size: 1.02rem;
+  margin-top: 12px;
+  font-size: 1.04rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .handoff-entry-active {
