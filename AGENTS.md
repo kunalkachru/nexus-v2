@@ -8,12 +8,17 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
 - Flagship incidents:
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
-- Current validated baseline:
+- Current validated baseline (post items 35–39):
   - `pytest tests/ -q` -> `141 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes
+  - **Premium visual system** across queue, inputs, incident, training, replay
+  - **Improved incident console** with clearer operator story from triage to Guardian approval
+  - **Fresh incident parity** with explicit scaffold-only vs runtime-backed language
+  - **Ordered INC001 debugger flow** with concrete checkpoints and expected state transitions
+  - **Runtime-host visibility** in UI showing which host executed replay
 
 ## What Loops Are For
 

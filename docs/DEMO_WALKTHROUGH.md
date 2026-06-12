@@ -24,15 +24,17 @@ The current validated baseline for this walkthrough is:
 
 The walkthrough is built around one claim:
 
-**NEXUS turns noisy production evidence into a triaged, investigated, remediation-ready case before one final human review point.**
+**NEXUS turns noisy production evidence into a triaged, investigated, remediation-ready case before one final human review point, with optional runtime-backed validation.**
 
 The walkthrough should make these things obvious:
 
 1. a support engineer does not have to manually relay logs across multiple tiers
 2. the system identifies likely issue family and likely ownership
 3. the system retrieves prior operational context
-4. the system prepares a remediation packet
-5. Guardian is the final review point before action
+4. the system optionally validates the hypothesis through bounded runtime replay
+5. the system prepares a remediation packet
+6. Guardian is the final review point before action
+7. operators can see which evidence is runtime-backed vs inferred-only
 
 ## Flagship Use Case
 
@@ -218,10 +220,11 @@ The difference from a true debugger:
 
 Still theoretical / not shipped:
 
-- arbitrary environment reproduction outside the curated packs
-- universal code debugging across any stack or repository
+- arbitrary environment reproduction outside the two curated packs (timeout/retry, DB pool exhaustion)
+- universal code debugging across any stack or repository (the INC001 debugger is bounded to one curated pack)
 - live breakpoint attachment into arbitrary production services
 - autonomous multi-step production remediation without a human review point
+- arbitrary fresh incident runtime replay (fresh incidents use scaffold-only inference until replay is executed)
 
 ### What to validate
 

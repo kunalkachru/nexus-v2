@@ -5,7 +5,8 @@ Short handoff for Codex or Claude sessions. Keep current and compact.
 ## Current Phase
 
 Items `15–34`: **complete**
-Next phase: execute `backlog-35-plus.json`
+Items `35–39`: **complete**
+Next: final docs sync (item 40)
 
 ## App In One Sentence
 
@@ -34,7 +35,11 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 - hypothesis packet for the flagship outages
 - TRACE owner cues and trace-to-code packet for both flagship outages
 - mitigation ladder across REPLICA, FORGE, and GUARDIAN
-- bounded debugger packet for `INC001` only
+- **bounded debugger flow for `INC001` with ordered checkpoints and state transitions**
+- **premium visual system across all core surfaces** (item 35)
+- **improved incident console information architecture** (item 36)
+- **fresh incident runtime-story parity** with clear scaffold-only language (item 37)
+- **runtime-host visibility** in operator UI (item 39)
 
 ## What Is Real Today Vs Still Bounded
 

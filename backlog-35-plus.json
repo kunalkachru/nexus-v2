@@ -145,7 +145,7 @@
     "id": 40,
     "title": "Docs and manual demo sync for the runtime-host product layer",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Once the deeper UI and bounded agent behavior land, update the owner-facing docs so the end-to-end business use case, runtime-host model, debugger boundaries, and manual validation path are easy to follow. The owner should be able to run the Docker flow, open the product, and understand exactly what problem the product solves and what is real versus still bounded.",
     "done_when": [
       "the owner-facing docs describe the business use case, runtime-host model, and bounded debugger story clearly",
