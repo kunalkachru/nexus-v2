@@ -1284,24 +1284,55 @@ window.addEventListener("load", async () => {
     }
   });
 
-  document.getElementById("exportHandoffBtn")?.addEventListener("click", async () => {
-    const button = document.getElementById("exportHandoffBtn");
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Generating export...";
-    }
-    try {
-      const response = await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/handoff-export`);
-      const text = response.handoff_text || "No handoff generated";
-      downloadTextFile(text, `${incidentId}-engineering-handoff.md`);
-    } catch (err) {
-      console.error("Handoff export failed:", err);
-      alert("Failed to generate engineering handoff. See console for details.");
-    } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Export to engineering";
+  const exportDropdown = document.getElementById("exportDropdown");
+  const exportBtn = document.getElementById("exportHandoffBtn");
+  const exportFormatMap = {
+    "markdown": { ext: "md", mime: "text/markdown" },
+    "github": { ext: "md", mime: "text/markdown" },
+    "jira": { ext: "txt", mime: "text/plain" },
+    "slack": { ext: "txt", mime: "text/plain" },
+  };
+
+  if (exportBtn) {
+    exportBtn.addEventListener("click", () => {
+      if (exportDropdown) {
+        exportDropdown.style.display = exportDropdown.style.display === "none" ? "block" : "none";
       }
+    });
+  }
+
+  document.querySelectorAll(".export-option")?.forEach(option => {
+    option.addEventListener("click", async (e) => {
+      const format = e.target.getAttribute("data-format") || "markdown";
+      if (exportDropdown) {
+        exportDropdown.style.display = "none";
+      }
+      if (exportBtn) {
+        exportBtn.disabled = true;
+        exportBtn.textContent = "Generating export...";
+      }
+      try {
+        const response = await fetchAuthedJson(
+          `/api/v1/incidents/${encodeURIComponent(incidentId)}/handoff-export?format=${format}`
+        );
+        const text = response.handoff_text || "No handoff generated";
+        const formatInfo = exportFormatMap[format] || exportFormatMap.markdown;
+        downloadTextFile(text, `${incidentId}-handoff.${formatInfo.ext}`);
+      } catch (err) {
+        console.error("Handoff export failed:", err);
+        alert("Failed to generate engineering handoff. See console for details.");
+      } finally {
+        if (exportBtn) {
+          exportBtn.disabled = false;
+          exportBtn.textContent = "Export to engineering";
+        }
+      }
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (exportDropdown && !e.target.closest("#exportHandoffBtn") && !e.target.closest(".export-dropdown")) {
+      exportDropdown.style.display = "none";
     }
   });
 

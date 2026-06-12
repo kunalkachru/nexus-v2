@@ -3,7 +3,7 @@
     "id": 54,
     "title": "Delivery-target handoff packages",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Extend the engineering handoff export into explicit delivery-target packages. Add bounded export variants for common engineering workflows such as GitHub issue markdown, Jira-style ticket markdown/JSON, and Slack escalation message drafts. The goal is not to build live third-party integrations yet, but to make the exported case package immediately usable in real downstream systems.",
     "done_when": [
       "the product can generate more than one delivery-target handoff format from the same incident packet",

@@ -64,7 +64,15 @@
                     <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
                     <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
                     <button class="nav-link channel-ghost" id="replayRelayBtn" type="button">Replay handoff</button>
-                    <button class="nav-link channel-ghost" id="exportHandoffBtn" type="button">Export to engineering</button>
+                    <div style="position: relative; display: inline-block;">
+                        <button class="nav-link channel-ghost" id="exportHandoffBtn" type="button">Export to engineering</button>
+                        <div class="export-dropdown" id="exportDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: var(--surface-raised); border: 1px solid var(--border-subtle); border-radius: 4px; min-width: 160px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                            <button class="export-option" data-format="markdown" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">Markdown</button>
+                            <button class="export-option" data-format="github" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">GitHub Issue</button>
+                            <button class="export-option" data-format="jira" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">Jira Ticket</button>
+                            <button class="export-option" data-format="slack" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem;">Slack Message</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="relay-banner" id="relayStageBanner">Waiting for the orchestration relay to start.</div>
                 <div class="orchestration-rail" aria-label="Agent relay">

@@ -389,18 +389,22 @@ async def get_audit_logs_v1(
 async def get_engineering_handoff_v1(
     nexus_incident_id: str,
     request: Request,
+    format: str = "markdown",
     service: IncidentService = Depends(get_incident_service),
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
+    if format not in ["markdown", "github", "jira", "slack"]:
+        format = "markdown"
     await request.app.state.rate_limiter.check(auth=auth, route_key="incident_handoff_export")
     handoff = await service.build_engineering_handoff(
         nexus_incident_id,
+        export_format=format,
         tenant_id=auth.tenant_id,
     )
     await write_audit_log(
         "incident.handoff_export.generated",
         auth.tenant_id,
-        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id},
+        {"nexus_incident_id": nexus_incident_id, "format": format, "user_id": auth.user_id},
     )
     return handoff
 
