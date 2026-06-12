@@ -655,7 +655,7 @@ function renderEnterprise(data) {
   setText(
     "traceDeveloperHandoff",
     trace.developer_handoff_summary
-      ? `${trace.developer_handoff_summary}${trace.code_owner_team ? ` Owner: ${trace.code_owner_team}` : ""}${trace.code_owner_slug ? ` (${trace.code_owner_slug})` : ""}.`
+      ? `${trace.developer_handoff_summary}${trace.code_owner_team ? ` Owner: ${trace.code_owner_team}` : ""}${trace.code_owner_slug ? ` (${trace.code_owner_slug})` : ""}${trace.code_owner_source ? ` · Source: ${trace.code_owner_source}` : ""}.`
       : "TRACE has not prepared a developer handoff packet yet."
   );
   renderList(

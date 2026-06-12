@@ -1,0 +1,35 @@
+{
+  "source": "server/services/trace_ownership_map.json",
+  "entries": [
+    {
+      "path_prefix": "replica_packs/checkout-python-fastapi-auth-redis-v1/auth/",
+      "team": "Identity Platform",
+      "slug": "@identity-platform",
+      "source_label": "server/services/trace_ownership_map.json::auth-pack"
+    },
+    {
+      "path_prefix": "replica_packs/checkout-python-fastapi-auth-redis-v1/gateway/",
+      "team": "API Platform",
+      "slug": "@api-platform",
+      "source_label": "server/services/trace_ownership_map.json::gateway-pack"
+    },
+    {
+      "path_prefix": "replica_packs/checkout-python-fastapi-postgres-v1/checkout/",
+      "team": "Checkout Platform",
+      "slug": "@checkout-platform",
+      "source_label": "server/services/trace_ownership_map.json::checkout-pack"
+    },
+    {
+      "path_prefix": "edge/",
+      "team": "Edge Reliability",
+      "slug": "@edge-reliability",
+      "source_label": "server/services/trace_ownership_map.json::edge-pack"
+    },
+    {
+      "path_prefix": "workers/",
+      "team": "Media Runtime",
+      "slug": "@media-runtime",
+      "source_label": "server/services/trace_ownership_map.json::worker-pack"
+    }
+  ]
+}

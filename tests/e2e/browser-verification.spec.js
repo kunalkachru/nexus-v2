@@ -53,6 +53,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByText("Best mitigation")).toBeVisible();
     await expect(page.getByRole("button", { name: /Run bounded replay/i })).toBeVisible();
     await expect(page.locator("#traceInspectionPoint")).not.toContainText("TRACE has not narrowed");
+    await expect(page.locator("#traceDeveloperHandoff")).toContainText("trace_ownership_map.json");
     await expect(page.getByRole("heading", { name: "SENTINEL framed the incident for the rest of the crew" })).toBeVisible();
     await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
     await expect(page.locator(".byo-key-card .badge")).toHaveText("Bring your own OpenAI key");
@@ -200,6 +201,7 @@ test.describe("NEXUS browser verification", () => {
     expect(inspectionText).not.toContain("Wait for REPLICA");
     expect(inspectionText).not.toContain("TRACE has not narrowed");
     expect(/middleware|retry|circuit.?breaker|auth|gateway|timeout/i.test(inspectionText || "")).toBeTruthy();
+    await expect(page.locator("#traceDeveloperHandoff")).toContainText("trace_ownership_map.json");
   });
 
   // Items 9 & 10: FORGE reasoning cites runtime; GUARDIAN posture is non-generic

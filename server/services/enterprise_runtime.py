@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
 import os
 import time
 from collections.abc import Awaitable, Callable
+from functools import lru_cache
+from pathlib import Path
 from statistics import mean
 from typing import Any, NotRequired, TypedDict
 
@@ -25,6 +28,9 @@ from server.models import (
 )
 from server.services.priority import normalize_priority_label, priority_rank
 from server.services.replica_runtime import ReplicaExecutionResult, ReplicaRunner, build_execution_plan, build_runtime_host_relay_status, trace_targets_for_plan
+
+
+TRACE_OWNERSHIP_MAP_PATH = Path(__file__).with_name("trace_ownership_map.json")
 
 
 class RuntimeState(TypedDict):
@@ -2275,6 +2281,55 @@ def enrich_memory_with_runtime(
     return payload
 
 
+@lru_cache(maxsize=1)
+def _load_trace_ownership_map() -> dict[str, object]:
+    try:
+        return json.loads(TRACE_OWNERSHIP_MAP_PATH.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {"source": "trace_ownership_map.json", "entries": []}
+
+
+def _resolve_trace_owner(
+    suspected_files: list[str],
+    *,
+    fallback_team: str,
+    fallback_slug: str,
+) -> dict[str, str]:
+    ownership_map = _load_trace_ownership_map()
+    entries = ownership_map.get("entries", [])
+    best_match: dict[str, object] | None = None
+    best_file = ""
+    best_prefix_length = -1
+
+    for file_path in suspected_files:
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            path_prefix = str(entry.get("path_prefix") or "").strip()
+            if not path_prefix or not file_path.startswith(path_prefix):
+                continue
+            if len(path_prefix) > best_prefix_length:
+                best_match = entry
+                best_file = file_path
+                best_prefix_length = len(path_prefix)
+
+    if best_match is None:
+        return {
+            "team": fallback_team,
+            "slug": fallback_slug,
+            "source": "TRACE fallback owner mapping",
+            "matched_file": suspected_files[0] if suspected_files else "",
+        }
+
+    source_label = str(best_match.get("source_label") or ownership_map.get("source") or "trace_ownership_map.json")
+    return {
+        "team": str(best_match.get("team") or fallback_team),
+        "slug": str(best_match.get("slug") or fallback_slug),
+        "source": f"{source_label} ({best_file})",
+        "matched_file": best_file,
+    }
+
+
 def build_trace_summary(
     *,
     incident_id: str,
@@ -2313,6 +2368,7 @@ def build_trace_summary(
     suspected_service = service
     code_owner_team = "Platform Operations"
     code_owner_slug = "@platform-ops"
+    code_owner_source = "TRACE fallback owner mapping"
     suspected_files: list[str] = []
     inspection_point = "Wait for REPLICA to validate the likely failure path before opening a code investigation."
     replay_evidence_summary = runtime_comparison or "No runtime replay evidence is attached to this incident yet."
@@ -2330,8 +2386,6 @@ def build_trace_summary(
             suspected_modules = [module_name for module_name, _ in mapped_targets] or ["auth.middleware.retry", "gateway.timeout_guard", "auth.circuit_breaker"]
             suspected_functions = [function_name for _, function_name in mapped_targets] or ["apply_retry_policy", "await_upstream_auth", "record_timeout_budget"]
             suspected_service = "auth-svc"
-            code_owner_team = "Identity Platform"
-            code_owner_slug = "@identity-platform"
             suspected_files = [
                 "replica_packs/checkout-python-fastapi-auth-redis-v1/auth/auth_server.py",
                 "replica_packs/checkout-python-fastapi-auth-redis-v1/gateway/gateway_server.py",
@@ -2356,7 +2410,7 @@ def build_trace_summary(
             confidence = 0.74 if "middleware" in deployment_text else 0.69
             reasoning = "TRACE narrowed the issue to the retry middleware path that keeps auth retries alive after the timeout budget is already exhausted."
             developer_handoff_summary = (
-                f"Start with {suspected_files[0]} and hand this packet to {code_owner_team}. "
+                f"Start with {suspected_files[0]} and hand this packet to the mapped owner for that file. "
                 "The bounded replay shows the baseline request timing out until retries are capped or the circuit breaker is opened."
                 f"{f' {comparison_verdict}' if comparison_verdict else ''}"
             )
@@ -2364,8 +2418,6 @@ def build_trace_summary(
             suspected_modules = [module_name for module_name, _ in mapped_targets] or ["checkout.db.session", "checkout.retry_patch", "checkout.transaction_flow"]
             suspected_functions = [function_name for _, function_name in mapped_targets] or ["checkout_session_scope", "retry_checkout_write", "release_db_session"]
             suspected_service = "checkout-svc"
-            code_owner_team = "Checkout Platform"
-            code_owner_slug = "@checkout-platform"
             suspected_files = [
                 "replica_packs/checkout-python-fastapi-postgres-v1/checkout/checkout_server.py",
             ]
@@ -2389,7 +2441,7 @@ def build_trace_summary(
             confidence = 0.76 if "retry" in deployment_text else 0.72
             reasoning = "TRACE narrowed the issue to the checkout retry patch where the session lifecycle no longer closes cleanly after failure."
             developer_handoff_summary = (
-                f"Start with {suspected_files[0]} and hand this packet to {code_owner_team}. "
+                f"Start with {suspected_files[0]} and hand this packet to the mapped owner for that file. "
                 "The bounded replay shows the pool recovering only after the leaking retry path is removed or orphaned sessions are terminated."
                 f"{f' {comparison_verdict}' if comparison_verdict else ''}"
             )
@@ -2397,8 +2449,6 @@ def build_trace_summary(
             suspected_modules = ["edge.cert_loader", "edge.listener_config", "acme.rotation_job"]
             suspected_functions = ["load_public_certificate", "validate_chain_expiry", "reload_edge_listener"]
             suspected_service = "edge-gateway"
-            code_owner_team = "Edge Reliability"
-            code_owner_slug = "@edge-reliability"
             suspected_files = ["edge/cert_loader.py", "edge/listener.py"]
             expected_flow = "Edge listeners should always serve a valid public certificate chain."
             observed_divergence = "Expired certificate chain remained attached to the active listener after rotation was missed."
@@ -2407,13 +2457,11 @@ def build_trace_summary(
             replay_evidence_summary = "Replay evidence shows the edge listener continued to serve the stale certificate chain."
             confidence = 0.63
             reasoning = "TRACE narrowed the issue to the certificate loader and rotation path that failed to refresh the active listener."
-            developer_handoff_summary = "Inspect the certificate loader and listener reload path before any broader edge rollback."
+            developer_handoff_summary = "Inspect the certificate loader and listener reload path before any broader edge rollback, then route the packet to the mapped owner for the active file."
         elif "memory leak" in issue_family:
             suspected_modules = ["image_worker.frame_cache", "image_worker.transform_pipeline", "image_worker.release_hooks"]
             suspected_functions = ["store_frame_buffer", "run_transform_batch", "release_decoded_frames"]
             suspected_service = "image-worker"
-            code_owner_team = "Media Runtime"
-            code_owner_slug = "@media-runtime"
             suspected_files = ["workers/image_worker.py", "workers/frame_cache.py"]
             expected_flow = "Completed image transform batches should release decoded frame buffers before the next queue pull."
             observed_divergence = "Decoded frame buffers remain strongly referenced after batch completion, so heap pressure compounds across replay cycles."
@@ -2424,7 +2472,26 @@ def build_trace_summary(
                 state_anomalies.append("runtime logs already point at a missing release hook after transform completion")
             confidence = 0.67
             reasoning = "TRACE narrowed the issue to the frame-cache release path where completed transform batches retain decoded buffers."
-            developer_handoff_summary = "Inspect the release hook and frame cache ownership path before attempting to recycle workers."
+            developer_handoff_summary = "Inspect the release hook and frame cache ownership path before attempting to recycle workers, then route the packet to the mapped owner for the active file."
+
+    owner_mapping = _resolve_trace_owner(
+        suspected_files,
+        fallback_team=code_owner_team,
+        fallback_slug=code_owner_slug,
+    )
+    code_owner_team = owner_mapping["team"]
+    code_owner_slug = owner_mapping["slug"]
+    code_owner_source = owner_mapping["source"]
+    matched_owner_file = owner_mapping["matched_file"]
+    if suspected_files and "mapped owner" in developer_handoff_summary:
+        developer_handoff_summary = developer_handoff_summary.replace(
+            "mapped owner for that file",
+            f"{code_owner_team} via {code_owner_source}",
+        )
+    elif matched_owner_file:
+        developer_handoff_summary = (
+            f"{developer_handoff_summary} Ownership source: {code_owner_source}."
+        ).strip()
 
     if runtime_provenance["mode"] == "delegated_relay":
         replay_evidence_summary = f"{replay_evidence_summary} Runtime provenance: delegated replay from the external runtime host.".strip()
@@ -2447,6 +2514,7 @@ def build_trace_summary(
         "replay_evidence_summary": replay_evidence_summary,
         "code_owner_team": code_owner_team,
         "code_owner_slug": code_owner_slug,
+        "code_owner_source": code_owner_source,
         "suspected_files": suspected_files,
         "developer_handoff_summary": developer_handoff_summary,
         "runtime_provenance": runtime_provenance,

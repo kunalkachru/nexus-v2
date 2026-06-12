@@ -143,6 +143,7 @@ Open the created incident or use:
 - `PRISM`: evidence correlation, recent change analysis, and prior issue retrieval
 - `REPLICA`: bounded reproduction layer that can validate the diagnosis and mitigation effectiveness when runtime replay is enabled
 - `TRACE`: investigation depth, suspected modules, and developer handoff packet
+  TRACE owner cues are bounded to a checked-in flagship ownership map, not a universal repository index.
 - `FORGE`: action preparation, mitigation comparison weighted by measured runtime evidence when available and scaffold-only inference otherwise
 - `GUARDIAN`: review posture, risk posture that distinguishes validated runtime evidence from scaffold-only inference, and final approval or rejection
 
@@ -172,6 +173,7 @@ The runtime evidence narrative connects three stages, but only part of it is mea
 - when the packaged app is running in Docker, the same replay can be delegated to the runtime host instead of failing inside the app container
 - once a live `nxs_...` incident runs replay, the measured REPLICA and TRACE packet persists across refresh instead of collapsing back to scaffold-only inference
 - after that refresh, FORGE reasoning, GUARDIAN posture, memory ranking, and task summaries stay anchored to the persisted replay packet instead of rebuilding from scaffold-only language
+- TRACE cites the suspected file path and the checked-in ownership-map source that produced the owner handoff for the flagship packs
 - the selected mitigation can be explained against a visible runner-up instead of feeling arbitrary
 - escalation to a human reviewer includes evidence-backed confidence in the action
 

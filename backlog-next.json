@@ -332,7 +332,7 @@
     "id": 27,
     "title": "Bounded repo ownership map from real project metadata",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "TRACE currently uses curated owner and file cues for the flagship packs. Tighten that by reading a bounded ownership map from local project metadata or a checked-in config so the handoff packet references an explicit owner source instead of only hardcoded pack labels. Keep it bounded to the flagship paths rather than promising universal repository indexing.",
     "done_when": [
       "TRACE cites an ownership source for flagship files instead of only static labels",
