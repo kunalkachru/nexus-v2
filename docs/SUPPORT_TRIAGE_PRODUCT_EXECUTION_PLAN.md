@@ -818,4 +818,53 @@ We are ready to start implementation when:
 - `REPLICA` V1 is accepted as Docker-based and curated, not arbitrary VM orchestration
 - `TRACE` V1 is accepted as code-path narrowing and debugging packet generation, not a universal debugger
 
+## Curated Pack Onboarding Contract
+
+To ensure pack expansion remains disciplined and maintainable, all curated environment packs must satisfy the following requirements:
+
+### Required Metadata
+
+Every `ReplicaEnvironmentPack` must specify:
+
+- **pack_id**: Unique identifier (e.g., `checkout-python-fastapi-auth-redis-v1`)
+- **incident_classes**: Tuple of outage patterns the pack can reproduce (e.g., `("timeout_retry_amplification",)`)
+- **services**: Tuple of services in the sandbox (e.g., `("api-gateway", "auth-svc", "checkout-api")`)
+- **stack**: Tuple of technologies (e.g., `("python", "fastapi", "redis")`)
+- **compose_file**: Path to docker-compose.yml defining the sandbox
+- **replay_profile**: Name of the replay entrypoint script (e.g., `checkout_retry_replay_v1`)
+- **mitigation_hooks**: Tuple of mitigation script names (e.g., `("cap_retries", "open_circuit_breaker")`)
+- **hypothesis_summary**: Clear statement of what the pack proves
+- **expected_baseline_status**: HTTP status code expected when failure is reproduced
+- **trace_source_map**: Dict mapping code modules to function entry points for TRACE debugging
+
+### Required Files
+
+Every pack directory must contain:
+
+- `docker-compose.yml` - Sandbox definition
+- `{replay_profile}.sh` - Replay entrypoint script
+- `hooks/{hook_name}.sh` - One script per mitigation hook
+- `runtime/` - Optional: Fixture data for replay scenarios
+
+### Validator
+
+The repo includes an automated `validate_pack()` function in `server/services/replica_runtime.py` that:
+
+1. Checks all required fields are present and non-empty
+2. Verifies all referenced files exist
+3. Reports missing pieces as errors vs. warnings
+4. Categorizes packs as: `ready`, `valid_with_warnings`, or `invalid`
+
+Run `validate_all_packs()` to check all registered packs before committing.
+
+### Expansion Process
+
+When adding a new incident class support:
+
+1. Create a new `ReplicaEnvironmentPack` in the registry with complete metadata
+2. Build the Docker sandbox and scripts in `replica_packs/{pack_id}/`
+3. Run the validator to ensure all requirements are met
+4. Update this document with the new incident class
+5. Commit the pack with complete documentation
+
 Once those decisions hold, implementation should proceed directly from this plan.

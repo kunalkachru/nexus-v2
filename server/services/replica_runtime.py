@@ -143,6 +143,71 @@ def runtime_host_supported_packs() -> list[dict[str, object]]:
     return packs
 
 
+def validate_pack(pack: ReplicaEnvironmentPack) -> dict[str, object]:
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    if not pack.pack_id or not isinstance(pack.pack_id, str):
+        errors.append("pack_id: must be a non-empty string")
+
+    if not pack.incident_classes or len(pack.incident_classes) == 0:
+        errors.append("incident_classes: must contain at least one incident class")
+
+    if not pack.services or len(pack.services) == 0:
+        errors.append("services: must list at least one service in the pack")
+
+    if not pack.stack or len(pack.stack) == 0:
+        errors.append("stack: must specify the technology stack (e.g., python, fastapi, redis)")
+
+    if not pack.compose_file:
+        errors.append("compose_file: must be specified")
+    elif not pack.compose_file.exists():
+        errors.append(f"compose_file: file not found at {pack.compose_file}")
+
+    if not pack.replay_profile or not isinstance(pack.replay_profile, str):
+        errors.append("replay_profile: must be a non-empty string naming the replay hook")
+
+    if not pack.mitigation_hooks or len(pack.mitigation_hooks) == 0:
+        warnings.append("mitigation_hooks: should define at least one mitigation hook")
+
+    if pack.compose_file and pack.compose_file.exists():
+        hooks_dir = pack.compose_file.parent / "hooks"
+        if pack.mitigation_hooks:
+            for hook_name in pack.mitigation_hooks:
+                hook_file = hooks_dir / f"{hook_name}.sh"
+                if not hook_file.exists():
+                    errors.append(f"mitigation_hook '{hook_name}': script not found at {hook_file}")
+
+        replay_hook = pack.compose_file.parent / f"{pack.replay_profile}.sh"
+        if not replay_hook.exists():
+            errors.append(f"replay_profile '{pack.replay_profile}': script not found at {replay_hook}")
+
+    if not pack.hypothesis_summary or not isinstance(pack.hypothesis_summary, str):
+        warnings.append("hypothesis_summary: should contain a clear hypothesis for this pack")
+
+    if pack.expected_baseline_status is None:
+        warnings.append("expected_baseline_status: should specify the expected HTTP status for baseline failure")
+
+    if not pack.trace_source_map or len(pack.trace_source_map) == 0:
+        warnings.append("trace_source_map: should map code paths for TRACE debugging")
+
+    is_valid = len(errors) == 0
+    return {
+        "pack_id": pack.pack_id,
+        "is_valid": is_valid,
+        "errors": errors,
+        "warnings": warnings,
+        "status": "ready" if is_valid and len(warnings) == 0 else ("valid_with_warnings" if is_valid else "invalid"),
+    }
+
+
+def validate_all_packs() -> list[dict[str, object]]:
+    results: list[dict[str, object]] = []
+    for pack in registry().values():
+        results.append(validate_pack(pack))
+    return results
+
+
 def probe_runtime_host(base_url: str) -> dict[str, object]:
     if not base_url:
         return {

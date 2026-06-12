@@ -116,7 +116,7 @@
     "id": 58,
     "title": "Curated pack validator and scaffold tooling",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Turn the onboarding contract from item 51 into something enforceable. Add a validator and minimal scaffold path for new curated outage packs so the repo can check required metadata, replay hooks, debugger checkpoints, and coverage descriptors before a pack is considered supported.",
     "done_when": [
       "the repo contains a bounded validator or scaffold path for new curated packs",
