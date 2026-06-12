@@ -817,8 +817,8 @@ class IncidentService:
                 f"{len(normalized_evidence.get('evidence', []))} evidence line(s) extracted",
             ]
             classification["reasoning"] = (
-                "The pasted logs were normalized into service, severity, and signature before "
-                "routing through the agent flow."
+                "The pasted logs were normalized into service, severity, and signature. "
+                "This context is scaffold-only inference from the raw text, not yet backed by runtime replay."
             )
         issue_family = infer_issue_family(
             " ".join(
@@ -849,10 +849,12 @@ class IncidentService:
                 *diagnosis["supporting_logs"],
             ]
             diagnosis["correlation_analysis"] = (
-                "The raw logs were normalized into service, severity, and signature before being matched to the incident narrative."
+                "The raw logs were normalized into service, severity, and signature before being matched to the incident narrative. "
+                "This analysis is scaffold-only until runtime replay provides measured evidence."
             )
             diagnosis["reasoning"] = (
-                "The console is showing the parsed raw incident text, the extracted evidence, and the inferred incident pattern."
+                "The console is showing the parsed raw incident text and the inferred incident pattern. "
+                "Upgrade to runtime-backed diagnosis by running bounded replay to test the hypothesis."
             )
         runbook = _runtime_aligned_live_runbook(
             issue_family=issue_family,
@@ -860,9 +862,10 @@ class IncidentService:
             reason="The live incident view keeps the remediation contract aligned to the same bounded runtime packs used in the flagship outage demos.",
         )
         if incident.raw_input_text:
-            runbook["summary"] = f"Remediation plan for the pasted {raw_service or 'service'} incident"
+            runbook["summary"] = f"Remediation plan for the pasted {raw_service or 'service'} incident (scaffold-only)"
             runbook["reasoning"] = (
-                "The raw input has been normalized into a concrete issue family, so the remediation path can refer to the same runtime-backed mitigation set used by the seeded outage classes."
+                "The raw input has been normalized into a concrete issue family. This remediation path is scaffold-only inference; "
+                "runtime replay will test whether these candidate fixes actually resolve the failure signature."
             )
         guardian = self._guardian_context(incident)
         guardian_decision = guardian["decision"]

@@ -58,7 +58,7 @@
     "id": 37,
     "title": "Fresh incident runtime-story parity and stronger live intake framing",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen the live `nxs_...` intake path so the operator sees stronger runtime-backed comparison language and a clearer support-triage storyline after submitting new evidence. The goal is not to fake parity with seeded incidents, but to keep the fresh path truthful, specific, and visibly aligned with the flagship product story.",
     "done_when": [
       "fresh incidents show clearer runtime-backed or scaffold-only language that matches what really executed",
