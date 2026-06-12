@@ -6,7 +6,8 @@ Short handoff for Codex or Claude sessions. Keep current and compact.
 
 Items `15–34`: **complete**
 Items `35–40`: **complete**
-Next phase: execute `backlog-41-plus.json`
+Items `41–45`: **complete**
+Next phase: complete item 46 (final demo closure)
 
 ## App In One Sentence
 
@@ -41,6 +42,11 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 - **fresh incident runtime-story parity** with clear scaffold-only language (item 37)
 - **runtime-host visibility** in operator UI (item 39)
 - **owner-facing docs and manual walkthrough synced to current runtime-host product reality** (item 40)
+- **operator-triggered bounded replay for fresh incidents** with live incident console action (item 41)
+- **runtime-host capability matrix and pack coverage visibility** in training page (item 42)
+- **persisted debugger evidence and replay-linked debugging trail** for INC001 (item 43)
+- **developer handoff packet v5** with owner-first inspection brief and replay evidence (item 44)
+- **post-approval outcome capture and memory ingestion** with visible incident UI and training reference (item 45)
 
 ## What Is Real Today Vs Still Bounded
 

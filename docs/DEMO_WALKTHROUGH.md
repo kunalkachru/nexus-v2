@@ -239,14 +239,27 @@ Still theoretical / not shipped:
 
 1. click `Approve runbook`
 2. confirm Guardian changes to approved
-3. confirm execution moves to executed
-4. confirm the outcome is visible without hunting
+3. confirm execution moves to executed and the outcome is visible without hunting
+4. review the execution outcome summary: root cause, selected action, and mitigation result
+5. confirm the outcome captures whether evidence was runtime-backed or inferred-only
+6. navigate back to the training page and confirm the execution outcome is visible in the "Last live triage" section
+
+### Post-approval outcome closure
+
+After approval and execution:
+
+- the incident detail page displays the execution outcome summary immediately below the Guardian gate
+- the outcome includes: execution status, Guardian decision, root cause, selected action, mitigation result class, and whether evidence was runtime-backed
+- the outcome persists in the incident's normalized evidence, so it remains visible even after page refresh
+- the latest triage summary in the training page now includes the execution outcome, making it available for future memory ingestion and reference by subsequent incident investigations
+- this closes the loop from intake → investigation → decision → execution → learning
 
 ### What success looks like
 
 - you can explain the likely issue and likely next action quickly
 - you can explain how the product reduced manual escalation work
-- the screen feels like a real operator workspace, not an architecture demo
+- you can confirm the approval path captures measurable outcomes that improve future incident handling
+- the screen feels like a real operator workspace with visible execution closure, not just a report stop point
 
 ## 3. Training
 
@@ -263,16 +276,19 @@ Open:
 ### What to validate
 
 1. confirm the page shows the latest live triage in this browser when available
-2. confirm the navigation pills work
-3. confirm the runtime summary is understandable
-4. confirm the page distinguishes:
-   - latest live run
+2. confirm the page displays the execution outcome if an approved incident was executed
+3. the outcome shows: execution status, Guardian decision, root cause, selected action, and mitigation result
+4. confirm the navigation pills work
+5. confirm the runtime summary is understandable
+6. confirm the page distinguishes:
+   - latest live run (with execution outcome if available)
    - runtime health
    - broader learning baseline
 
 ### What success looks like
 
-- the page closes the loop between one incident and future improvement
+- the page closes the loop between one incident and future improvement, with execution outcomes visible
+- the page shows that execution outcomes are now part of the learning layer and can inform future incident handling
 - it does not feel like an unrelated analytics screen
 
 ## 4. Queue

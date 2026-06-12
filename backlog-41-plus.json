@@ -143,7 +143,7 @@
     "id": 46,
     "title": "Final operator-to-engineering demo closure",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "After the deeper live replay, runtime-host, debugger, and memory flows are in place, sync the owner-facing docs and manual test path again. The goal is one complete demo story: intake, live replay upgrade, engineering handoff, Guardian approval, outcome capture, and learning loop. The owner should be able to run the Docker flow and explain the exact enterprise problem being solved without improvising.",
     "done_when": [
       "owner-facing docs reflect the post-item-45 product truthfully and end-to-end",

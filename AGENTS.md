@@ -8,7 +8,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
 - Flagship incidents:
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
-- Current validated baseline (post items 35–40):
+- Current validated baseline (post items 41–45):
   - `pytest tests/ -q` -> `141 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes
@@ -19,6 +19,8 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
   - **Fresh incident parity** with explicit scaffold-only vs runtime-backed language
   - **Ordered INC001 debugger flow** with concrete checkpoints and expected state transitions
   - **Runtime-host visibility** in UI showing which host executed replay
+  - **Operator-triggered bounded replay** from the incident console with live refresh
+  - **Post-approval outcome capture** visible in incident detail and training page with memory context
 
 ## What Loops Are For
 
@@ -117,16 +119,20 @@ feat(#<id>): <title>
 
 ## Current Frontier
 
-The `15–40` backlog is complete. New loop runs should target `backlog-41-plus.json`.
+The `15–40` backlog is complete. Items `41–45` from `backlog-41-plus.json` are complete.
 
-The next implementation frontier is:
+Remaining implementation frontier:
 
-1. operator-triggered bounded replay for fresh incidents from the live incident console
-2. runtime-host capability matrix and pack coverage visibility
-3. persisted debugger evidence and replay-linked debugging trail for `INC001`
-4. stronger developer handoff packet tied to code-owner and mitigation evidence
-5. post-approval outcome capture and memory ingestion
-6. final operator-to-engineering demo closure for the flagship support flow
+- **Item 46**: final operator-to-engineering demo closure for the flagship support flow
+
+Completed implementation items:
+
+1. ✓ operator-triggered bounded replay for fresh incidents from the live incident console (item 41)
+2. ✓ runtime-host capability matrix and pack coverage visibility (item 42)
+3. ✓ persisted debugger evidence and replay-linked debugging trail for `INC001` (item 43)
+4. ✓ stronger developer handoff packet tied to code-owner and mitigation evidence (item 44)
+5. ✓ post-approval outcome capture and memory ingestion (item 45)
+6. ⧖ final operator-to-engineering demo closure for the flagship support flow (item 46)
 
 ## Reality Check
 
