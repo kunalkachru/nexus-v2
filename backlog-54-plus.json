@@ -31,7 +31,7 @@
     "id": 55,
     "title": "Replay-driven mitigation matrix",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen the remediation story by showing a bounded side-by-side mitigation matrix for the flagship incidents. The operator should be able to compare baseline, primary mitigation, fallback mitigation, and confidence deltas from replay-backed evidence instead of reading only one winning recommendation. Keep it grounded in the curated packs and measured outcomes where available.",
     "done_when": [
       "the incident UI exposes a clear replay-driven mitigation matrix for the flagship outages",
