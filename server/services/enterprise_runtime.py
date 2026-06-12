@@ -2604,10 +2604,14 @@ def build_trace_summary(
                     else None
                 ),
             }
+            best_mitigation_action = str(replica_summary.get("best_mitigation_action") or mitigation_actions[0] if mitigation_actions else "")
             developer_handoff_summary = (
-                f"Start with {suspected_files[0]} and hand this packet to the mapped owner for that file. "
-                "The bounded replay shows the baseline request timing out until retries are capped or the circuit breaker is opened."
-                f"{f' {comparison_verdict}' if comparison_verdict else ''}"
+                f"Start with {suspected_files[0]} and inspect apply_retry_policy in {suspected_modules[0] or 'auth.middleware.retry'} first. "
+                f"The issue: retries continue past the timeout budget. "
+                f"Expected fix path: {best_mitigation_action or 'cap retries or open circuit breaker'}. "
+                f"Bounded replay validates this fix improves the timeout cascade. "
+                "Scope: This debugging packet applies only to the timeout/retry amplification outage class. "
+                f"Hand this packet to the mapped owner for that file.{f' {comparison_verdict}' if comparison_verdict else ''}"
             )
         elif incident_class == "db_pool_exhaustion" or (
             not incident_class and ("pool exhaustion" in issue_family or "session leak" in issue_family)

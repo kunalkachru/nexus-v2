@@ -90,7 +90,7 @@
     "id": 44,
     "title": "Developer handoff packet v5 with owner-first inspection brief",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen TRACE into a more immediately actionable engineering handoff. Combine code-owner cues, suspected file/function path, replay-linked anomaly, debugger flow summary where available, and the chosen mitigation context into one owner-first brief that can be handed directly to an engineer.",
     "done_when": [
       "TRACE produces a concise owner-first engineering handoff for the flagship outages",
