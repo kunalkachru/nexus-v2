@@ -171,6 +171,8 @@ class IncidentKnowledgeService:
                     "similarity": round(score, 2),
                     "outcome_boost": outcome_boost,
                     "outcome_label": outcome_label,
+                    "memory_source": "seeded_example",
+                    "memory_provenance": "This is a seeded example from bounded incident knowledge, not from tenant-specific history.",
                     "match_reason": self._build_match_reason(
                         service_match=service_overlap,
                         severity_match=severity_match,

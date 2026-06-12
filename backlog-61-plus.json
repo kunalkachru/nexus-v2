@@ -111,7 +111,7 @@
     "id": 64,
     "title": "Live-memory-first ranking and seeded fallback honesty",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Shift the memory layer toward real operational history. When tenant-specific incidents, approvals, outcomes, or reopen signals exist, they should outrank seeded examples. Seeded memories can remain as bounded fallback knowledge, but the product should say when it is leaning on fallback examples rather than the tenant's own history.",
     "implementation_tasks": [
       "prioritize live incident history, execution outcomes, and reopen patterns over seeded examples when ranking similar cases",
