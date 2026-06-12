@@ -138,6 +138,21 @@ class IncidentKnowledgeService:
             )
             if score <= 0.08 and not service_overlap and root_overlap < 2:
                 continue
+
+            # Boost score for outcomes-weighted preference
+            execution_status = str(details.get("execution_result") or "")
+            outcome_boost = 0.0
+            outcome_label = ""
+            if execution_status == "executed":
+                outcome_boost = 0.12
+                outcome_label = "Mitigation was executed successfully"
+            elif str(details.get("guardian", {}).get("decision") or "").lower() == "approve":
+                outcome_boost = 0.08
+                outcome_label = "Mitigation was approved by GUARDIAN"
+
+            base_success_rate = 0.74 + (score * 0.22)
+            final_success_rate = round(min(0.99, base_success_rate + outcome_boost), 2)
+
             similar.append(
                 {
                     "incident_id": candidate_id,
@@ -147,13 +162,16 @@ class IncidentKnowledgeService:
                     "service_match": service_overlap,
                     "severity_match": severity_match,
                     "root_overlap": root_overlap,
-                    "success_rate": round(0.74 + (score * 0.22), 2),
+                    "success_rate": final_success_rate,
                     "similarity": round(score, 2),
+                    "outcome_boost": outcome_boost,
+                    "outcome_label": outcome_label,
                     "match_reason": self._build_match_reason(
                         service_match=service_overlap,
                         severity_match=severity_match,
                         root_overlap=root_overlap,
                         issue_family=str(candidate_triage.get("issue_family") or ""),
+                        outcome_label=outcome_label,
                     ),
                     "prior_action": self._prior_action(details),
                     "remaining_risk": str(details.get("guardian", {}).get("reasoning", "")).strip(),
@@ -162,6 +180,7 @@ class IncidentKnowledgeService:
             )
         similar.sort(
             key=lambda item: (
+                item["outcome_boost"] > 0,
                 item["service_match"],
                 item["severity_match"],
                 item["root_overlap"],
@@ -254,15 +273,33 @@ class IncidentKnowledgeService:
                 for candidate in forge_details.get("candidate_fixes", [])
                 if isinstance(candidate, dict) and str(candidate.get("action") or "").strip()
             ]
+
+            # Boost success rate for executed outcomes
+            base_success = float(primary.get("success_rate", item["success_rate"]))
+            execution_status = str(details.get("execution_result") or "")
+            outcome_note = ""
+            final_success_rate = base_success
+
+            if execution_status == "executed":
+                final_success_rate = min(0.99, base_success + 0.15)
+                outcome_note = "✓ This mitigation was executed and the incident resolved."
+            elif str(details.get("guardian", {}).get("decision") or "").lower() == "approve":
+                final_success_rate = min(0.95, base_success + 0.10)
+                outcome_note = "✓ This mitigation was approved by GUARDIAN."
+
             runbooks.append(
                 {
                     "incident_id": item["incident_id"],
                     "runbook_summary": str(primary.get("name") or f"Prior mitigation pattern for {item['incident_id']}"),
-                    "success_rate": float(primary.get("success_rate", item["success_rate"])),
+                    "success_rate": round(final_success_rate, 2),
                     "historical_reason": str(details.get("forge", {}).get("selection_logic", "")).strip(),
                     "historical_actions": historical_actions,
-                    "why_now_fit": str(details.get("triage", {}).get("approval_focus", "")).strip()
-                    or "Historical mitigation favored reversible recovery before broad rollback.",
+                    "outcome_note": outcome_note,
+                    "why_now_fit": (
+                        (outcome_note + " " if outcome_note else "")
+                        + (str(details.get("triage", {}).get("approval_focus", "")).strip()
+                        or "Historical mitigation favored reversible recovery before broad rollback.")
+                    ),
                     "source": "historical_runbook",
                 }
             )
@@ -272,12 +309,20 @@ class IncidentKnowledgeService:
                     {
                         "incident_id": item["incident_id"],
                         "runbook_summary": f"Guardian-approved execution for {item['incident_id']}",
-                        "success_rate": 0.81,
+                        "success_rate": 0.85,
                         "historical_reason": f"Previously cleared by {item.get('policy_id') or 'GUARDIAN policy'}.",
-                        "why_now_fit": "This pattern already cleared governance for a closely related production incident.",
+                        "outcome_note": "✓ This pattern was approved by GUARDIAN.",
+                        "why_now_fit": "This pattern already cleared governance for a closely related production incident. Outcome-weighted preference.",
                         "source": "guardian_history",
                     }
                 )
+        runbooks.sort(
+            key=lambda item: (
+                bool(item.get("outcome_note")),
+                item.get("success_rate", 0.0),
+            ),
+            reverse=True,
+        )
         return runbooks[:4]
 
     def _build_match_reason(
@@ -287,8 +332,11 @@ class IncidentKnowledgeService:
         severity_match: bool,
         root_overlap: int,
         issue_family: str,
+        outcome_label: str = "",
     ) -> str:
         reasons: list[str] = []
+        if outcome_label:
+            reasons.append(f"✓ {outcome_label}.")
         if issue_family:
             reasons.append(f"Same issue family: {issue_family}.")
         if service_match:

@@ -90,7 +90,7 @@
     "id": 50,
     "title": "Outcome-weighted memory ranking",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Make the memory layer prefer what actually worked. Use approved or executed outcomes to rank similar incidents, mitigations, and learned guidance so that future cases are grounded more in proven actions and less in generic similarity alone.",
     "done_when": [
       "memory ranking gives visible preference to prior cases with successful executed outcomes",
