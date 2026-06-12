@@ -2026,6 +2026,98 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
             return shift_priority_label(normalized)
         return normalized
 
+    async def build_governance_packet(
+        self,
+        nexus_incident_id: str,
+        *,
+        tenant_id: str | None = None,
+    ) -> dict[str, object]:
+        context = await self.get_incident_context_v1(
+            nexus_incident_id,
+            tenant_id=tenant_id,
+            live_reasoning=False,
+            openai_api_key=None,
+        )
+        incident = dict(context.get("incident") or {})
+        diagnosis = dict(context.get("diagnosis") or {})
+        replica_summary = dict(context.get("replica_summary") or {})
+        runbook = dict(context.get("runbook") or {})
+        guardian = dict(context.get("guardian") or {})
+        execution_outcome = context.get("execution_outcome")
+
+        timeline = [
+            {
+                "event": "Incident detected",
+                "timestamp": incident.get("detected_at") or incident.get("created_at") or _utc_now_iso(),
+                "actor": incident.get("source") or "system",
+                "summary": f"{incident.get('name', 'Unknown incident')} detected with severity {incident.get('severity', 'unknown')}",
+            },
+            {
+                "event": "Investigation completed",
+                "timestamp": incident.get("analyzed_at") or _utc_now_iso(),
+                "actor": "PRISM",
+                "summary": f"Root cause hypothesis: {diagnosis.get('root_cause', 'Unknown')} (confidence: {int(float(diagnosis.get('confidence', 0)) * 100)}%)",
+                "evidence_type": "runtime-backed" if replica_summary.get("runtime_executed") else "inferred-only",
+            },
+            {
+                "event": "Replay validation",
+                "timestamp": replica_summary.get("replay_executed_at") or _utc_now_iso() if replica_summary.get("runtime_executed") else None,
+                "actor": "REPLICA",
+                "summary": f"Hypothesis {'confirmed' if replica_summary.get('runtime_executed') else 'not validated'} {'via bounded runtime' if replica_summary.get('runtime_executed') else 'pending execution'}",
+                "outcome_class": replica_summary.get("best_mitigation_outcome_class") if replica_summary.get("runtime_executed") else "pending",
+            } if replica_summary.get("runtime_executed") or True else None,
+            {
+                "event": "Remediation prepared",
+                "timestamp": incident.get("decision_ready_at") or _utc_now_iso(),
+                "actor": "FORGE",
+                "summary": f"Primary action: {runbook.get('recommended_runbook', 'Review and adjust')}",
+            },
+            {
+                "event": "Governance review",
+                "timestamp": incident.get("guardian_reviewed_at") or _utc_now_iso(),
+                "actor": "GUARDIAN",
+                "summary": f"Decision: {str(guardian.get('decision', 'pending')).upper()} · Risk class: {guardian.get('risk_class', 'unknown')}",
+                "decision": guardian.get("decision"),
+                "reasoning": guardian.get("reasoning"),
+            },
+        ]
+
+        if execution_outcome:
+            timeline.append({
+                "event": "Execution completed",
+                "timestamp": execution_outcome.get("executed_at") or _utc_now_iso(),
+                "actor": "operator",
+                "summary": execution_outcome.get("summary", "Action executed"),
+                "status": execution_outcome.get("status", "completed"),
+            })
+
+        timeline = [item for item in timeline if item is not None]
+
+        return {
+            "incident_id": nexus_incident_id,
+            "incident_title": incident.get("name", "Unknown Incident"),
+            "incident_severity": incident.get("severity", "unknown"),
+            "incident_service": incident.get("related_services", ["Unknown"])[0] if incident.get("related_services") else "Unknown",
+            "approval_timeline": timeline,
+            "governance_decisions": {
+                "guardian_decision": str(guardian.get("decision", "pending")).upper(),
+                "guardian_confidence": int(float(guardian.get("confidence", 0)) * 100),
+                "risk_assessment": guardian.get("risk_class", "unknown").upper(),
+                "policy_basis": guardian.get("policy_basis", "standard"),
+            },
+            "evidence_posture": {
+                "root_cause_evidence": "runtime-backed" if replica_summary.get("runtime_executed") else "inferred-only",
+                "mitigation_validated": bool(replica_summary.get("runtime_executed")),
+                "hypothesis_confidence": int(float(diagnosis.get("confidence", 0)) * 100),
+            },
+            "execution_record": {
+                "executed": bool(execution_outcome),
+                "status": execution_outcome.get("status") if execution_outcome else "pending",
+                "summary": execution_outcome.get("summary") if execution_outcome else "Not yet executed",
+            },
+            "generated_at": _utc_now_iso(),
+        }
+
     async def _queue_position_and_eta(
         self,
         nexus_incident_id: str,

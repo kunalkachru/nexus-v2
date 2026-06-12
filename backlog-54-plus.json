@@ -142,7 +142,7 @@
     "id": 59,
     "title": "Approval audit timeline and governance export",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Strengthen the enterprise trust layer by making GUARDIAN decisions and approval history more exportable and auditable. Show who approved what stage, what evidence posture existed at approval time, and what execution or outcome followed. Also provide a bounded exportable governance packet suitable for internal review or change records.",
     "done_when": [
       "the product shows a clearer approval and execution timeline for a flagship incident",

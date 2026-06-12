@@ -1337,6 +1337,54 @@ window.addEventListener("load", async () => {
     }
   });
 
+  document.getElementById("exportGovernanceBtn")?.addEventListener("click", async () => {
+    const button = document.getElementById("exportGovernanceBtn");
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Generating governance packet...";
+    }
+    try {
+      const response = await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/governance-packet`);
+      const govData = response;
+      const govText = `# Governance Packet — ${govData.incident_id}
+
+## Incident Summary
+- Title: ${govData.incident_title}
+- Service: ${govData.incident_service}
+- Severity: ${govData.incident_severity}
+
+## Approval Timeline
+${(govData.approval_timeline || []).map(event => `- **${event.event}** (${event.actor || 'system'}): ${event.summary}`).join('\n')}
+
+## Governance Decisions
+- Decision: ${govData.governance_decisions?.guardian_decision || 'PENDING'}
+- Confidence: ${govData.governance_decisions?.guardian_confidence || 0}%
+- Risk Assessment: ${govData.governance_decisions?.risk_assessment || 'UNKNOWN'}
+
+## Evidence Posture
+- Root Cause Evidence: ${govData.evidence_posture?.root_cause_evidence || 'inferred-only'}
+- Hypothesis Confidence: ${govData.evidence_posture?.hypothesis_confidence || 0}%
+- Mitigation Validated: ${govData.evidence_posture?.mitigation_validated ? 'Yes' : 'No'}
+
+## Execution Record
+- Status: ${govData.execution_record?.status || 'pending'}
+- Summary: ${govData.execution_record?.summary || 'Not executed'}
+
+---
+Generated: ${govData.generated_at}
+`;
+      downloadTextFile(govText, `${incidentId}-governance-packet.txt`);
+    } catch (err) {
+      console.error("Governance packet export failed:", err);
+      alert("Failed to generate governance packet. See console for details.");
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Export governance";
+      }
+    }
+  });
+
   document.getElementById("replicaReplayBtn")?.addEventListener("click", async () => {
     const button = document.getElementById("replicaReplayBtn");
     if (button) {

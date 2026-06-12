@@ -484,6 +484,26 @@ async def get_engineering_handoff_v1(
     return handoff
 
 
+@app.get("/api/v1/incidents/{nexus_incident_id}/governance-packet")
+async def get_governance_packet_v1(
+    nexus_incident_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_governance_export")
+    packet = await service.build_governance_packet(
+        nexus_incident_id,
+        tenant_id=auth.tenant_id,
+    )
+    await write_audit_log(
+        "incident.governance_packet.exported",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id},
+    )
+    return packet
+
+
 @app.post("/api/v1/incidents/{nexus_incident_id}/execute")
 async def execute_incident_v1(
     nexus_incident_id: str,
