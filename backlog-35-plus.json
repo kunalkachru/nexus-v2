@@ -3,7 +3,7 @@
     "id": 35,
     "title": "Product visual system reset across core surfaces",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make NEXUS feel materially different from the earlier baseline by introducing a stronger visual system across the core product surfaces. The goal is not random cosmetic change; it is a clearer, more premium support-triage product identity that makes the value legible without narration. Focus on typography, spacing, color system, shell layout, section hierarchy, and high-signal information cards across queue, inputs, incident, training, and replay.",
     "done_when": [
       "the product shell feels visually distinct from the earlier baseline across the core surfaces",
@@ -32,7 +32,7 @@
     "id": 36,
     "title": "Flagship incident console information architecture v2",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Rework the flagship incident detail experience so an operator can understand the case without narration. Clarify the top summary, evidence flow, mitigation decision, and final approval gate. Make the screen read like a real support investigation console, not a stitched collection of agent outputs.",
     "done_when": [
       "INC001 and INC002 both show a clearer top-down operator story from issue framing to Guardian approval",
