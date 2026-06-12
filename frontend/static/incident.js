@@ -221,6 +221,7 @@ function persistLastTriageSummary(data) {
     incident_title: `${formatIncidentHandle(data.incident?.id)} · ${summarizeIncidentTitle(data.incident?.name)}`,
     guardian_decision: data.guardian?.decision,
     execution_result: data.execution_result,
+    execution_outcome: data.execution_outcome || null,
     required_approval_level: data.guardian?.required_approval_level,
     live_reasoning: Boolean(data.live_reasoning),
     live_reasoning_requested: getLiveReasoningPreference(),
@@ -1042,6 +1043,51 @@ function renderAudit(status, auditLogs, data) {
   );
 }
 
+function renderExecutionOutcome(data) {
+  const outcome = data.execution_outcome;
+  if (!outcome) {
+    setText("executionResult", data.execution_result === "executed" ? "Execution completed after Guardian approval." : "Execution is waiting on a clear governance decision.");
+    return;
+  }
+
+  const decisionLabel = String(outcome.guardian_decision || "").toUpperCase();
+  const statusEmoji = outcome.execution_status === "executed" ? "✓" : outcome.execution_status === "blocked" ? "✗" : "⚠";
+  const runtimeBacking = outcome.runtime_backed ? " (Runtime-backed)" : " (Inferred)";
+
+  let detailsHtml = `
+    <div class="outcome-summary">
+      <div class="outcome-header">
+        <span class="outcome-status">${statusEmoji} ${String(outcome.execution_status || "").toUpperCase()}</span>
+        <span class="outcome-decision">${decisionLabel}</span>
+      </div>
+      <p class="outcome-text">${outcome.summary || "Execution outcome recorded."}</p>
+      <div class="outcome-details">
+        <div class="outcome-detail-row">
+          <span class="outcome-label">Root Cause:</span>
+          <span class="outcome-value">${outcome.root_cause || "Unknown"}</span>
+        </div>
+        <div class="outcome-detail-row">
+          <span class="outcome-label">Action:</span>
+          <span class="outcome-value">${outcome.selected_action || "Pending"}</span>
+        </div>
+        <div class="outcome-detail-row">
+          <span class="outcome-label">Mitigation:</span>
+          <span class="outcome-value">${outcome.mitigation_outcome_class || "inferred_only"}${runtimeBacking}</span>
+        </div>
+        <div class="outcome-detail-row">
+          <span class="outcome-label">Recorded:</span>
+          <span class="outcome-value">${formatTimestamp(outcome.recorded_at)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const executionResultElement = document.getElementById("executionResult");
+  if (executionResultElement) {
+    executionResultElement.innerHTML = detailsHtml;
+  }
+}
+
 function settleRelayState(data) {
   const decision = String(data.guardian?.decision || "").toLowerCase();
   if (data.execution_result === "executed" || ["approve", "reject", "request_modification"].includes(decision)) {
@@ -1072,12 +1118,13 @@ async function loadAndRenderIncident(incidentId, options = {}) {
   renderSourcePayload(data.incident);
   renderEvidence(data);
   renderAudit(status, auditLogs, data);
+  renderExecutionOutcome(data);
   setText(
     "guardianGateState",
     `${data.guardian.reasoning}${data.guardian.required_approval_level ? ` Approval level: ${data.guardian.required_approval_level}.` : ""}${data.guardian.rollback_readiness ? ` Rollback: ${data.guardian.rollback_readiness}.` : ""}`
   );
-  setText("executionResult", data.execution_result === "executed" ? "Execution completed after Guardian approval." : "Execution is waiting on a clear governance decision.");
-  setText("resultBanner", `${formatIncidentHandle(data.incident.id)} · ${String(data.guardian.decision).toUpperCase()} · ${data.execution_time_ms}ms`);
+  const outcomeEmoji = data.execution_outcome ? "✓" : "⧖";
+  setText("resultBanner", `${formatIncidentHandle(data.incident.id)} · ${String(data.guardian.decision).toUpperCase()} · ${data.execution_result === "executed" ? `${outcomeEmoji} EXECUTED` : "PENDING"}`);
   persistLastTriageSummary(data);
   return data;
 }

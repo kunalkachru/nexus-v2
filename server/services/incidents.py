@@ -313,31 +313,39 @@ class IncidentService:
         normalized_evidence = dict(incident.normalized_evidence or {})
         latest_replay = normalized_evidence.get("latest_replay")
         if not isinstance(latest_replay, dict):
-            return payload
+            latest_replay = None
 
-        replica_summary = latest_replay.get("replica_summary")
-        trace_summary = latest_replay.get("trace_summary")
-        if isinstance(replica_summary, dict):
-            payload["replica_summary"] = replica_summary
-        if isinstance(trace_summary, dict):
-            payload["trace_summary"] = trace_summary
+        if latest_replay:
+            replica_summary = latest_replay.get("replica_summary")
+            trace_summary = latest_replay.get("trace_summary")
+            if isinstance(replica_summary, dict):
+                payload["replica_summary"] = replica_summary
+            if isinstance(trace_summary, dict):
+                payload["trace_summary"] = trace_summary
 
-        if isinstance(replica_summary, dict) and isinstance(trace_summary, dict):
-            payload.update(
-                self._enterprise_runtime.refresh_overlay_from_persisted_replay(
-                    runbook=payload.get("runbook") if isinstance(payload.get("runbook"), dict) else None,
-                    guardian=payload.get("guardian") if isinstance(payload.get("guardian"), dict) else None,
-                    memory_hits=payload.get("memory_hits") if isinstance(payload.get("memory_hits"), dict) else None,
-                    task_board=payload.get("task_board") if isinstance(payload.get("task_board"), dict) else None,
-                    agent_metrics=payload.get("agent_metrics") if isinstance(payload.get("agent_metrics"), dict) else None,
-                    triage_summary=payload.get("triage_summary") if isinstance(payload.get("triage_summary"), dict) else None,
-                    replica_summary=replica_summary,
-                    trace_summary=trace_summary,
-                    severity=incident.severity,
+            if isinstance(replica_summary, dict) and isinstance(trace_summary, dict):
+                payload.update(
+                    self._enterprise_runtime.refresh_overlay_from_persisted_replay(
+                        runbook=payload.get("runbook") if isinstance(payload.get("runbook"), dict) else None,
+                        guardian=payload.get("guardian") if isinstance(payload.get("guardian"), dict) else None,
+                        memory_hits=payload.get("memory_hits") if isinstance(payload.get("memory_hits"), dict) else None,
+                        task_board=payload.get("task_board") if isinstance(payload.get("task_board"), dict) else None,
+                        agent_metrics=payload.get("agent_metrics") if isinstance(payload.get("agent_metrics"), dict) else None,
+                        triage_summary=payload.get("triage_summary") if isinstance(payload.get("triage_summary"), dict) else None,
+                        replica_summary=replica_summary,
+                        trace_summary=trace_summary,
+                        severity=incident.severity,
+                    )
                 )
-            )
 
-        self._attach_replay_history(payload=payload, normalized_evidence=normalized_evidence)
+            self._attach_replay_history(payload=payload, normalized_evidence=normalized_evidence)
+
+        execution_outcome = normalized_evidence.get("execution_outcome")
+        if isinstance(execution_outcome, dict):
+            payload["execution_outcome"] = execution_outcome
+            if incident.status == "resolved":
+                payload["execution_result"] = "executed"
+
         incident_payload = dict(payload.get("incident") or {})
         incident_payload["normalized_evidence"] = normalized_evidence
         payload["incident"] = incident_payload
@@ -1412,7 +1420,52 @@ class IncidentService:
             executed = True
         elif guardian_decision in {"reject", "request_modification"}:
             executed = False
+
+        outcome_summary = None
+        if executed or guardian_decision in {"reject", "request_modification"}:
+            context = await self.get_incident_context_v1(
+                nexus_incident_id,
+                tenant_id=tenant_id,
+                live_reasoning=False,
+                openai_api_key=None,
+            )
+            diagnosis = dict(context.get("diagnosis") or {})
+            runbook = dict(context.get("runbook") or {})
+            replica_summary = dict(context.get("replica_summary") or {})
+            outcome_summary = {
+                "recorded_at": _utc_now_iso(),
+                "guardian_decision": guardian_decision,
+                "execution_status": "executed" if executed else "needs_modification" if guardian_decision == "request_modification" else "blocked",
+                "root_cause": str(diagnosis.get("root_cause") or "Unknown cause"),
+                "selected_action": str(runbook.get("recommended_runbook") or "Review and modify runbook"),
+                "summary": (
+                    f"Incident approved and executed: {runbook.get('summary', 'Remediation applied')}. "
+                    f"The proposed action was based on the root cause analysis: {diagnosis.get('root_cause', 'diagnosis pending')}."
+                    if executed
+                    else (
+                        f"Guardian requested modification to the remediation plan. "
+                        f"Current hypothesis: {diagnosis.get('root_cause', 'diagnosis pending')}. "
+                        f"Review the feedback and adjust the proposed action accordingly."
+                        if guardian_decision == "request_modification"
+                        else f"Guardian blocked the remediation plan. Review the policy notes and constraints before proceeding."
+                    )
+                ),
+                "mitigation_outcome_class": str(replica_summary.get("best_mitigation_outcome_class") or "inferred_only"),
+                "runtime_backed": bool(replica_summary.get("runtime_executed")),
+            }
+
         if executed:
+            stored_incident = (
+                await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
+                if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
+                else await self._session.incidents.get_incident(nexus_incident_id)
+            )
+            normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
+            normalized_evidence["execution_outcome"] = outcome_summary
+            await self._session.incidents.update_incident_normalized_evidence(
+                nexus_incident_id,
+                normalized_evidence=normalized_evidence,
+            )
             updated = await self._session.incidents.update_incident_status(
                 nexus_incident_id,
                 status="resolved",
@@ -1423,6 +1476,7 @@ class IncidentService:
                     nexus_incident_id,
                     tenant_id=tenant_id or "tenant-system",
                 )
+
         payload = {
             "incident_id": nexus_incident_id,
             "status": "executed" if executed else "needs_modification" if guardian_decision == "request_modification" else "blocked_by_guardian",
@@ -1433,6 +1487,7 @@ class IncidentService:
             "guardian_policy_id": lifecycle.get("guardian_policy_id") or policy["policy_id"],
             "guardian_policy_name": lifecycle.get("guardian_policy_name") or policy["policy_name"],
             "guardian_policy_basis": lifecycle.get("guardian_policy_basis") or policy["policy_basis"],
+            "execution_outcome": outcome_summary,
         }
         return payload
 

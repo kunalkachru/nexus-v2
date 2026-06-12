@@ -263,6 +263,30 @@ function renderSessionTriage(trainingData) {
       ? (active ? "ON" : "OFF")
       : `requested ${requested ? "ON" : "OFF"} · active ${active ? "ON" : "OFF"}`;
     const incidentHref = `incident?nexus_incident_id=${encodeURIComponent(sessionSummary.incident_id || "INC001")}`;
+    const outcome = sessionSummary.execution_outcome;
+    const outcomeHtml = outcome ? `
+      <div class="outcome-summary" style="margin-top: 12px;">
+        <div class="outcome-header">
+          <span class="outcome-status">${outcome.execution_status === "executed" ? "✓" : "✗"} ${String(outcome.execution_status || "").toUpperCase()}</span>
+          <span class="outcome-decision">${String(outcome.guardian_decision || "").toUpperCase()}</span>
+        </div>
+        <p class="outcome-text">${outcome.summary || "Execution outcome recorded."}</p>
+        <div class="outcome-details">
+          <div class="outcome-detail-row">
+            <span class="outcome-label">Cause:</span>
+            <span class="outcome-value">${outcome.root_cause || "Unknown"}</span>
+          </div>
+          <div class="outcome-detail-row">
+            <span class="outcome-label">Action:</span>
+            <span class="outcome-value">${outcome.selected_action || "Pending"}</span>
+          </div>
+          <div class="outcome-detail-row">
+            <span class="outcome-label">Outcome:</span>
+            <span class="outcome-value">${outcome.mitigation_outcome_class || "inferred_only"}${outcome.runtime_backed ? " (Runtime-backed)" : " (Inferred)"}</span>
+          </div>
+        </div>
+      </div>
+    ` : "";
     summary.innerHTML = `
       <div class="badge">Latest live run</div>
       <div class="summary-card"><div class="label">Incident</div><div class="value">${sessionSummary.incident_id || "-"}</div></div>
@@ -271,6 +295,7 @@ function renderSessionTriage(trainingData) {
       <div class="summary-card"><div class="label">Live reasoning</div><div class="value">${liveReasoningLabel}</div></div>
       <p class="hero-copy"><strong>${sessionSummary.incident_title || sessionSummary.incident_id || "Latest incident"}</strong> is the most recent live triage completed in this browser. The crew completed ${sessionSummary.task_count || 0} visible handoffs, Guardian required ${titleCase(sessionSummary.required_approval_level || "operator")} approval, and the run ended in ${titleCase(sessionSummary.execution_result || "pending")}.</p>
       <p class="section-note">${sessionSummary.runbook_summary ? `Runbook reviewed: ${sessionSummary.runbook_summary}.` : ""} ${sessionSummary.runbook_reasoning ? `Selection basis: ${sessionSummary.runbook_reasoning}` : ""}</p>
+      ${outcomeHtml}
       <a class="inline-link" href="${window.NexusNavigation?.withReturnTo(incidentHref) || incidentHref}">Open the same incident again</a>
     `;
   }

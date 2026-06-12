@@ -2135,6 +2135,72 @@ h3 {
   margin-top: 16px;
 }
 
+.outcome-summary {
+  padding: 16px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.outcome-header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.outcome-status {
+  padding: 6px 12px;
+  border-radius: 4px;
+  background: var(--surface-accent);
+  color: var(--text-on-accent);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.outcome-decision {
+  padding: 6px 12px;
+  border-radius: 4px;
+  background: var(--border-soft);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.outcome-text {
+  margin: 12px 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.outcome-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.outcome-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  font-size: 0.875rem;
+}
+
+.outcome-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 100px;
+}
+
+.outcome-value {
+  color: var(--text);
+  flex: 1;
+}
+
 @media (max-width: 720px) {
   .agent-crew-strip,
   .hero-stats-tight {

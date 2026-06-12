@@ -115,7 +115,7 @@
     "id": 45,
     "title": "Post-approval outcome capture and memory ingestion",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Close the product loop after Guardian approval. Capture what happened after approval or execution, summarize the outcome in operator language, and write the result back into the memory layer so future incidents can cite what actually worked. This should make the system feel more like a learning enterprise product and less like a static demo.",
     "done_when": [
       "approved incidents capture an execution or outcome summary that is visible in the incident UI",
