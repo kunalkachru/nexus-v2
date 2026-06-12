@@ -131,11 +131,11 @@ feat(#<id>): <title>
 
 ## Current Frontier
 
-The `15–60` backlog is complete.
+The `15–68` backlog is complete.
 
-The active next execution backlog is `backlog-61-plus.json`.
+The active next execution backlog is `backlog-69-plus.json`.
 
-This phase is a hardening and truthfulness checkpoint for the bounded support-triage product.
+This phase is a pilot-readiness checkpoint for the bounded support-triage product.
 
 ## Reality Check
 
@@ -155,6 +155,9 @@ Implemented now:
 - end-to-end operator-to-engineering walkthrough that matches the shipped product flow
 - engineering handoff export and operator ROI surface
 - delivery-target export packages, replay-driven mitigation matrix, runtime guardrails, governance export, and pack validator tooling
+- durable replay execution history through the artifact layer
+- shared evidence-posture language across seeded and live incident paths
+- stricter debugger evidence contract and fresh-incident truth gates
 
 Not implemented yet:
 
@@ -162,7 +165,9 @@ Not implemented yet:
 - universal code debugging across arbitrary stacks
 - autonomous multi-step production remediation
 - arbitrary external ticketing or messaging integrations
+- fully durable active runtime queue orchestration beyond app-local in-flight state
 
 ## Reference
 
 See [docs/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOPS_RUNBOOK.md) for the operator-facing guide and prompt templates.
+Use [backlog-69-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-69-plus.json), [docs/POST_68_MARKET_READINESS_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_68_MARKET_READINESS_PLAN.md), and [docs/POST_68_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_68_EXECUTION_MAP.md) for the next active phase.

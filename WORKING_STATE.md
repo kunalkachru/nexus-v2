@@ -10,7 +10,8 @@ Items `41–46`: **complete**
 Items `47–53`: **complete**
 Items `54–60`: **complete**
 Items `61–68`: **complete** (hardening and truthfulness checkpoint)
-Next phase: ready for breadth expansion or production hardening
+Items `69–76`: **planned in `backlog-69-plus.json`**
+Next phase: pilot readiness and market-facing workflow productization
 
 ## App In One Sentence
 
@@ -81,7 +82,7 @@ Still bounded:
 - TRACE is a bounded developer handoff, not a universal debugger
 - the debugger flows are descriptive guidance, not interactive step-through debuggers
 - external delivery targets are still export-oriented rather than full third-party integrations
-- runtime-host execution posture is still process-local state, not durable enterprise job orchestration
+- recent runtime execution history is durable, but active in-flight runtime posture is still app-local rather than full job orchestration
 
 ## Two Code Paths — Critical To Understand
 
@@ -100,11 +101,14 @@ These paths must stay semantically aligned.
 - `backlog-41-plus.json` — completed backlog through item `46`
 - `backlog-47-plus.json` — completed backlog through item `53`
 - `backlog-54-plus.json` — completed backlog through item `60`
-- `backlog-61-plus.json` — active backlog for hardening and truthfulness checkpoint
+- `backlog-61-plus.json` — completed backlog through item `68`
+- `backlog-69-plus.json` — active backlog for pilot readiness and market-facing workflow productization
 - `AGENTS.md` — loop rules and current validated baseline
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
 - `docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md` — broader product strategy and scope
+- `docs/POST_68_MARKET_READINESS_PLAN.md` — readiness ladder and product direction after the hardening phase
+- `docs/POST_68_EXECUTION_MAP.md` — task/subtask execution map for items `69–76`
 
 ## Most Important Files For The Next Phase
 
@@ -123,5 +127,5 @@ These paths must stay semantically aligned.
 
 ## Next Recommended Frontier
 
-The active frontier is `backlog-61-plus.json`.
-This phase should bias toward hardening, truthfulness, and enterprise workflow reliability rather than broadening agent claims.
+The active frontier is `backlog-69-plus.json`.
+This phase should bias toward pilot workflow usability, tenant realism, downstream engineering handoff, and buyer-visible value rather than broadening outage coverage.
