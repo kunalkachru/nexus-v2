@@ -413,7 +413,7 @@
     "id": 30,
     "title": "Runtime-host trust, audit, and failure explanation packet",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "If runtime-host replay is going to sell as an enterprise feature, the operator needs a trust packet: why replay was allowed, what environment executed it, and why it failed when it fails. Keep the scope bounded to auditability and operator explanation, not a full security subsystem.",
     "done_when": [
       "relay-backed replay returns stable operator-facing explanation fields for allowed, denied, and failed executions",

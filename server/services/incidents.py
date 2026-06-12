@@ -55,7 +55,7 @@ from server.services.enterprise_runtime import (
     runtime_aligned_candidate_fixes,
     runbook_score_from_candidates,
 )
-from server.services.replica_runtime import ReplicaExecutionResult, invoke_runtime_host_relay
+from server.services.replica_runtime import ReplicaExecutionResult, build_runtime_trust_packet, invoke_runtime_host_relay
 from training.runner import TrainingForgeClient
 
 logger = logging.getLogger(__name__)
@@ -193,6 +193,7 @@ class IncidentService:
             "runtime_capability": runtime_capability,
             "runtime_provenance": dict(replica_summary.get("runtime_provenance") or {}),
             "replay_lifecycle": dict(replica_summary.get("replay_lifecycle") or {}),
+            "runtime_trust_packet": dict(replica_summary.get("runtime_trust_packet") or {}),
             "replica_summary": replica_summary,
             "trace_summary": trace_summary,
         }
@@ -251,6 +252,11 @@ class IncidentService:
                     "status": str(entry.get("status") or ""),
                     "message": str(entry.get("message") or ""),
                     "runtime_provenance": runtime_provenance,
+                    "runtime_trust_packet": dict(
+                        entry.get("runtime_trust_packet")
+                        or entry_replica.get("runtime_trust_packet")
+                        or {}
+                    ),
                     "lifecycle_state": str(
                         (
                             dict(entry.get("replay_lifecycle") or {}).get("current_state")
@@ -1443,6 +1449,7 @@ class IncidentService:
                 },
             )
             relay_capability = dict(relay_response.get("runtime_capability") or {})
+            relay_trust_packet = dict(relay_response.get("trust_packet") or {})
             relay_execution_result = ReplicaExecutionResult(**dict(relay_response.get("execution_result") or {}))
             relay_capability.update(
                 {
@@ -1452,6 +1459,13 @@ class IncidentService:
                     "can_execute_replay": True,
                 }
             )
+            if relay_trust_packet:
+                relay_trust_packet.update(
+                    {
+                        "execution_mode": "delegated_relay",
+                        "executor": "External runtime host",
+                    }
+                )
             replica_summary = build_replica_summary(
                 incident_id=nexus_incident_id,
                 triage_summary=triage_summary,
@@ -1466,6 +1480,8 @@ class IncidentService:
             )
             runtime_capability = dict(replica_summary.get("runtime_capability") or {})
             capability_state = str(runtime_capability.get("state") or "relay_executed")
+            if relay_trust_packet:
+                replica_summary["runtime_trust_packet"] = relay_trust_packet
 
         trace_summary = build_trace_summary(
             incident_id=nexus_incident_id,
@@ -1494,6 +1510,33 @@ class IncidentService:
             final_message=message,
         )
         replica_summary["replay_lifecycle"] = replay_lifecycle
+        if "runtime_trust_packet" not in replica_summary:
+            execution_mode = (
+                "delegated_relay"
+                if capability_state in {"relay_available", "relay_executed"}
+                else "direct_runtime"
+                if capability_state in {"replay_available", "replay_executed"}
+                else "inferred_only"
+            )
+            runtime_execution = (
+                ReplicaExecutionResult(
+                    pack_id=str(replica_summary.get("environment_pack_id") or ""),
+                    compose_ready=bool(replica_summary.get("scaffold_ready")),
+                    replay_ready=bool(replica_summary.get("scaffold_ready")),
+                    mitigation_hooks_ready=bool(replica_summary.get("tested_mitigations")),
+                    missing_assets=(),
+                    replay_status_code=replica_summary.get("replay_status_code"),
+                    replay_duration_ms=replica_summary.get("replay_duration_ms"),
+                )
+                if replica_summary.get("runtime_executed")
+                else None
+            )
+            replica_summary["runtime_trust_packet"] = build_runtime_trust_packet(
+                runtime_capability=runtime_capability,
+                execution_result=runtime_execution,
+                execution_mode=execution_mode,
+                pack_id=str(replica_summary.get("environment_pack_id") or ""),
+            )
 
         if status in {"replay_executed", "relay_executed"}:
             await record_replay_launch(
@@ -1533,6 +1576,7 @@ class IncidentService:
             "message": message,
             "runtime_capability": runtime_capability,
             "replay_lifecycle": replay_lifecycle,
+            "trust_packet": dict(replica_summary.get("runtime_trust_packet") or {}),
             "replica_summary": replica_summary,
             "trace_summary": trace_summary,
         }

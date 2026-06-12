@@ -50,6 +50,7 @@ def test_dashboard_routes_are_served() -> None:
     assert "Investigation depth · REPLICA" in incident.text
     assert "Investigation depth · TRACE" in incident.text
     assert "Run bounded replay" in incident.text
+    assert "Replay trust packet" in incident.text
     assert "SENTINEL handed evidence to PRISM" in incident.text
     assert "Governance Bot" in incident.text
     assert "Working memory" in incident.text

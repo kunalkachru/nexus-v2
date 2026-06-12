@@ -262,6 +262,7 @@ class RuntimeHostReplayResponse(BaseModel):
     status: str
     message: str
     runtime_capability: dict[str, object] = Field(default_factory=dict)
+    trust_packet: dict[str, object] = Field(default_factory=dict)
     execution_plan: dict[str, object] = Field(default_factory=dict)
     execution_result: dict[str, object] = Field(default_factory=dict)
 

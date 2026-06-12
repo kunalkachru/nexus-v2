@@ -737,6 +737,8 @@ def test_runtime_host_replay_returns_host_unavailable_without_docker(
     payload = response.json()
     assert payload["status"] == "host_unavailable"
     assert payload["runtime_capability"]["state"] == "host_unavailable"
+    assert payload["trust_packet"]["decision"] == "denied"
+    assert payload["trust_packet"]["limiting_factor"] == "docker_unavailable"
     assert payload["execution_result"]["pack_id"] == "checkout-python-fastapi-auth-redis-v1"
 
 
@@ -794,6 +796,9 @@ def test_runtime_host_replay_returns_executed_contract_with_stubbed_runtime(
     payload = response.json()
     assert payload["status"] == "replay_executed"
     assert payload["runtime_capability"]["state"] == "replay_executed"
+    assert payload["trust_packet"]["decision"] == "executed"
+    assert payload["trust_packet"]["evidence_tier"] == "validated_runtime"
+    assert payload["trust_packet"]["execution_mode"] == "runtime_host"
     assert payload["execution_result"]["replay_status_code"] == 503
     assert payload["execution_result"]["mitigation_status_codes"] == [200]
 
@@ -860,6 +865,8 @@ def test_seeded_incident_replica_replay_delegates_to_runtime_host_when_configure
     assert payload["replica_summary"]["runtime_executed"] is True
     assert payload["replica_summary"]["runtime_mode"] == "relay_runtime_scaffold"
     assert payload["replica_summary"]["replay_lifecycle"]["current_state"] == "completed"
+    assert payload["trust_packet"]["execution_mode"] == "delegated_relay"
+    assert payload["replica_summary"]["runtime_trust_packet"]["execution_mode"] == "delegated_relay"
 
 
 def test_live_raw_text_incident_persists_replay_evidence_and_relay_provenance(
@@ -942,6 +949,8 @@ def test_live_raw_text_incident_persists_replay_evidence_and_relay_provenance(
     assert context_payload["replica_summary"]["runtime_mode"] == "relay_runtime_scaffold"
     assert context_payload["replica_summary"]["runtime_provenance"]["mode"] == "delegated_relay"
     assert context_payload["replica_summary"]["runtime_provenance"]["label"] == "Delegated runtime host replay"
+    assert context_payload["replica_summary"]["runtime_trust_packet"]["decision"] == "executed"
+    assert context_payload["replica_summary"]["runtime_trust_packet"]["execution_mode"] == "delegated_relay"
     assert context_payload["trace_summary"]["runtime_provenance"]["mode"] == "delegated_relay"
     assert "runtime host" in context_payload["trace_summary"]["developer_handoff_summary"].lower()
     assert context_payload["incident"]["normalized_evidence"]["latest_replay"]["status"] == "relay_executed"

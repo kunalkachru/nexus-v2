@@ -535,6 +535,7 @@ function renderEnterprise(data) {
   const traceRuntimeProvenance = trace.runtime_provenance || {};
   const replayLifecycle = replica.replay_lifecycle || {};
   const replayLifecycleEvents = replayLifecycle.events || [];
+  const runtimeTrustPacket = replica.runtime_trust_packet || {};
   const runtimeCapabilityDetail = [
     runtimeCapability.host_label ? `Host: ${runtimeCapability.host_label}` : "",
     runtimeCapability.bounded_pack_available ? "Bounded pack mapped" : "No bounded pack",
@@ -565,6 +566,12 @@ function renderEnterprise(data) {
         : "Replay lifecycle: Waiting on runtime availability"
   );
   setText("replicaComparison", replica.runtime_comparison_summary || "Runtime comparison details are not available for this incident yet.");
+  setText(
+    "replicaTrustSummary",
+    runtimeTrustPacket.operator_summary
+      ? `Replay trust packet: ${runtimeTrustPacket.operator_summary}`
+      : "Replay trust packet is not available for this incident yet."
+  );
   renderList(
     "replicaReplayLifecycleEvents",
     replayLifecycleEvents.length
@@ -572,6 +579,20 @@ function renderEnterprise(data) {
       : [{ label: "Ready", recorded_at: "", message: "Replay has not been requested for this incident yet." }],
     (item) =>
       `<li><strong>${item.label || titleCase(item.state || "ready")}</strong>${item.recorded_at ? `<br><span class="section-note">${formatTimestamp(item.recorded_at)}</span>` : ""}<br><span class="section-note">${item.message || ""}</span></li>`
+  );
+  renderList(
+    "replicaTrustChecks",
+    runtimeTrustPacket.decision
+      ? [
+          `Decision: ${titleCase(runtimeTrustPacket.decision)}`,
+          `Evidence tier: ${titleCase(runtimeTrustPacket.evidence_tier || "unknown")}`,
+          `Execution mode: ${titleCase(runtimeTrustPacket.execution_mode || "unknown")}`,
+          `Executor: ${runtimeTrustPacket.executor || "Unknown"}`,
+          runtimeTrustPacket.limiting_factor ? `Limiting factor: ${titleCase(runtimeTrustPacket.limiting_factor)}` : "Limiting factor: none",
+          runtimeTrustPacket.policy_basis ? `Bounded policy: ${runtimeTrustPacket.policy_basis}` : "",
+        ].filter(Boolean)
+      : ["Decision packet pending"],
+    (item) => `<li>${item}</li>`
   );
 
   const replayButton = document.getElementById("replicaReplayBtn");
@@ -645,6 +666,7 @@ function renderEnterprise(data) {
         replayHistory,
         (item) => {
           const provenance = item.runtime_provenance || {};
+          const trustPacket = item.runtime_trust_packet || {};
           const lifecycleState = item.lifecycle_state ? ` · ${titleCase(item.lifecycle_state)}` : "";
           const lifecyclePath = (item.lifecycle_events || [])
             .map((event) => event.label || titleCase(event.state || ""))
@@ -654,7 +676,7 @@ function renderEnterprise(data) {
           const selected = item.best_mitigation_action
             ? `${item.best_mitigation_action}${item.best_mitigation_status_code ? ` → HTTP ${item.best_mitigation_status_code}` : ""}${item.best_mitigation_duration_ms ? ` at ${item.best_mitigation_duration_ms}ms` : ""}`
             : "No selected mitigation";
-          return `<li><strong>${item.is_latest ? "Latest replay" : `Prior replay ${item.index}`}</strong><br><span class="section-note">${formatTimestamp(item.recorded_at)} · ${provenance.label || titleCase(provenance.mode || "unknown source")}${lifecycleState}</span>${lifecyclePath ? `<br><span class="section-note">${lifecyclePath}</span>` : ""}<br><span class="section-note">${baseline}</span><br><span class="section-note">${titleCase(String(item.best_mitigation_outcome_class || "not_run").replace(/_/g, " "))} · ${selected}</span></li>`;
+          return `<li><strong>${item.is_latest ? "Latest replay" : `Prior replay ${item.index}`}</strong><br><span class="section-note">${formatTimestamp(item.recorded_at)} · ${provenance.label || titleCase(provenance.mode || "unknown source")}${lifecycleState}</span>${lifecyclePath ? `<br><span class="section-note">${lifecyclePath}</span>` : ""}${trustPacket.decision ? `<br><span class="section-note">${titleCase(trustPacket.decision)} · ${titleCase(trustPacket.evidence_tier || "unknown")}${trustPacket.limiting_factor ? ` · ${titleCase(trustPacket.limiting_factor)}` : ""}</span>` : ""}<br><span class="section-note">${baseline}</span><br><span class="section-note">${titleCase(String(item.best_mitigation_outcome_class || "not_run").replace(/_/g, " "))} · ${selected}</span></li>`;
         }
       );
       replayHistoryBlock.style.display = "block";

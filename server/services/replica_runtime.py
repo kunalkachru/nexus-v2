@@ -562,6 +562,51 @@ def _runtime_capability_for_host(
     }
 
 
+def build_runtime_trust_packet(
+    *,
+    runtime_capability: dict[str, object],
+    execution_result: ReplicaExecutionResult | None,
+    execution_mode: str,
+    pack_id: str = "",
+) -> dict[str, object]:
+    capability_state = str(runtime_capability.get("state") or "no_pack")
+    host_label = str(runtime_capability.get("host_label") or "Runtime host")
+    limiting_factor = {
+        "host_unavailable": "docker_unavailable",
+        "pack_validation_required": "pack_validation_required",
+        "no_pack": "no_bounded_pack",
+    }.get(capability_state, "")
+    decision = (
+        "executed"
+        if capability_state in {"replay_executed", "relay_executed"}
+        else "allowed"
+        if capability_state in {"replay_available", "relay_available"}
+        else "denied"
+    )
+    evidence_tier = (
+        "validated_runtime"
+        if decision == "executed"
+        else "runtime_ready"
+        if decision == "allowed"
+        else "inferred_only"
+    )
+    status_code = execution_result.replay_status_code if execution_result else None
+    duration_ms = execution_result.replay_duration_ms if execution_result else None
+    return {
+        "decision": decision,
+        "execution_mode": execution_mode,
+        "executor": host_label,
+        "evidence_tier": evidence_tier,
+        "pack_id": pack_id,
+        "bounded_scope": "curated_flagship_packs_only",
+        "limiting_factor": limiting_factor,
+        "status_code": status_code,
+        "duration_ms": duration_ms,
+        "policy_basis": "Only curated bounded runtime packs can be replayed through the runtime host path.",
+        "operator_summary": str(runtime_capability.get("message") or ""),
+    }
+
+
 def execute_runtime_host_replay(payload: RuntimeHostReplayRequest) -> RuntimeHostReplayResponse:
     plan = build_execution_plan(
         issue_family=payload.issue_family,
@@ -575,6 +620,11 @@ def execute_runtime_host_replay(payload: RuntimeHostReplayRequest) -> RuntimeHos
             status="unsupported",
             message=capability["message"],
             runtime_capability=capability,
+            trust_packet=build_runtime_trust_packet(
+                runtime_capability=capability,
+                execution_result=None,
+                execution_mode="inferred_only",
+            ),
             execution_plan={},
             execution_result={},
         )
@@ -598,6 +648,12 @@ def execute_runtime_host_replay(payload: RuntimeHostReplayRequest) -> RuntimeHos
         status=status,
         message=str(capability.get("message") or "Runtime host replay state unavailable."),
         runtime_capability=capability,
+        trust_packet=build_runtime_trust_packet(
+            runtime_capability=capability,
+            execution_result=executed,
+            execution_mode="runtime_host",
+            pack_id=plan.pack.pack_id,
+        ),
         execution_plan={
             "pack_id": plan.pack.pack_id,
             "incident_class": plan.incident_class,

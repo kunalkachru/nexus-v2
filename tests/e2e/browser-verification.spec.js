@@ -54,6 +54,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByRole("button", { name: /Run bounded replay/i })).toBeVisible();
     await expect(page.locator("#replicaCapabilityDetail")).toContainText(/Host:|No bounded pack/);
     await expect(page.locator("#replicaReplayLifecycleState")).toContainText("Replay lifecycle");
+    await expect(page.locator("#replicaTrustSummary")).toContainText("Replay trust packet");
     await expect(page.locator("#traceInspectionPoint")).not.toContainText("TRACE has not narrowed");
     await expect(page.locator("#traceDeveloperHandoff")).toContainText("trace_ownership_map.json");
     await expect(page.getByRole("heading", { name: "SENTINEL framed the incident for the rest of the crew" })).toBeVisible();
