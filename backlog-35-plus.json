@@ -115,7 +115,7 @@
     "id": 39,
     "title": "Runtime-host operator UX and pack visibility",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Productize the runtime-host layer so it is easier for an operator or owner to understand what execution environment exists, which pack was selected, whether runtime replay was delegated, and what the system can and cannot run today. This should reduce hidden mechanics and make the bounded reproduction story more trustworthy.",
     "done_when": [
       "the UI surfaces runtime-host and pack status in a clearer product-facing way",

@@ -619,10 +619,16 @@ function renderEnterprise(data) {
   ]
     .filter(Boolean)
     .join(" · ");
+  const runtimeProvenanceDetail = [
+    runtimeProvenance.summary ? `Runtime: ${runtimeProvenance.summary}` : "",
+    runtimeProvenance.executed_by ? `Executed by: ${runtimeProvenance.executed_by}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ") || "Runtime provenance not available";
   setText("replicaOutcome", titleCase(String(replica.best_mitigation_outcome_class || replica.baseline_outcome_class || "not_run").replace(/_/g, " ")));
   setText("replicaCapabilityState", runtimeCapability.label || "Unknown");
   setText("replicaCapabilityHost", runtimeCapability.host_label || "Unknown");
-  setText("replicaRuntimeHint", replica.runtime_enablement_hint || "Runtime mode details are not available for this incident yet.");
+  setText("replicaRuntimeHint", runtimeProvenanceDetail);
   setText("replicaCapabilityMessage", runtimeCapability.message || "Replay capability details are not available for this incident yet.");
   setText("replicaCapabilityDetail", runtimeCapabilityDetail || "Runtime capability posture is not available for this incident yet.");
   ensureReplicaHypothesisPacket();
