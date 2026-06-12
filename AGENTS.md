@@ -8,7 +8,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
 - Flagship incidents:
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
-- Current validated baseline (post items 47–53):
+- Current validated baseline (post items 54–60):
   - `pytest tests/ -q` -> `141 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes
@@ -25,6 +25,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
   - **Engineering handoff export** for support-to-engineering case packaging
   - **Bounded debugger parity** for both `INC001` and `INC002`
   - **Operator ROI and audit surface** plus the larger visual reinvention pass
+  - **Delivery-target exports, governance packet export, and runtime guardrail surfaces** across the enterprise workflow
 
 ## What Loops Are For
 
@@ -43,7 +44,7 @@ If those are not true, write the backlog first. Do not improvise broad product w
 Before starting, the agent must read:
 
 1. `WORKING_STATE.md`
-2. the active backlog file, currently `backlog-54-plus.json`
+2. the active backlog file for the next execution frontier
 3. any referenced docs for the target phase
 
 ## Required Backlog Shape
@@ -76,6 +77,11 @@ Run this exactly:
 8. If gates fail:
    - debug and retry
    - after repeated failure, mark the item `blocked`, document the blocker, commit the backlog state, then continue only if explicitly allowed by the backlog rules
+9. When the backlog reaches zero pending items:
+   - refresh `AGENTS.md`, `WORKING_STATE.md`, and `docs/LOOPS_RUNBOOK.md`
+   - mark the finished backlog file as completed in `WORKING_STATE.md`
+   - create the next backlog file before starting another loop
+   - do not claim the phase complete until those control docs are current
 
 ## Commit Rules
 
@@ -100,6 +106,7 @@ feat(#<id>): <title>
 - Never overwrite unrelated user work.
 - Any packaged-app runtime claim must be verified through the `:7860` Docker path before the item is marked done.
 - Keep seeded/static and live incident paths semantically aligned.
+- Never leave `AGENTS.md`, `WORKING_STATE.md`, or `docs/LOOPS_RUNBOOK.md` stale after a backlog reaches zero pending items.
 
 ## Current Code Map
 
@@ -123,17 +130,11 @@ feat(#<id>): <title>
 
 ## Current Frontier
 
-The `15–53` backlog is complete. New loop runs should target `backlog-54-plus.json`.
+The `15–60` backlog is complete.
 
-The next implementation frontier is:
+No active execution backlog is defined yet.
 
-1. delivery-target handoff packages for engineering systems
-2. replay-driven mitigation matrix for flagship incidents
-3. runtime-host run queue and execution-guardrail visibility
-4. recurrence-aware outcome memory and reopen signals
-5. curated pack validator and scaffold tooling
-6. approval audit timeline and governance export
-7. final product-design polish and story sync after the new enterprise surfaces
+The next step is to write `backlog-61-plus.json` before starting another loop.
 
 ## Reality Check
 
@@ -152,6 +153,7 @@ Implemented now:
 - post-approval outcome capture and memory-linked execution context
 - end-to-end operator-to-engineering walkthrough that matches the shipped product flow
 - engineering handoff export and operator ROI surface
+- delivery-target export packages, replay-driven mitigation matrix, runtime guardrails, governance export, and pack validator tooling
 
 Not implemented yet:
 

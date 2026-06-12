@@ -8,7 +8,8 @@ Items `15–34`: **complete**
 Items `35–40`: **complete**
 Items `41–46`: **complete**
 Items `47–53`: **complete**
-Next phase: execute `backlog-54-plus.json`
+Items `54–60`: **complete**
+Next phase: define `backlog-61-plus.json` before starting another loop
 
 ## App In One Sentence
 
@@ -17,7 +18,7 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 ## Baseline State
 
 - Branch: `master`
-- Baseline feature slice through item `53`: `fe3572b`
+- Baseline feature slice through item `60`: `beeac7e`
 - `pytest tests/ -q` → **141 passed**
 - `npm run browser:verify` → **11 passed**
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
@@ -56,6 +57,13 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 - **curated pack onboarding contract** for new outage-class support (item 51)
 - **operator ROI and audit surface** showing replay, approval, and reuse value (item 52)
 - **visual system reinvention pass** beyond the item-35 refinement (item 53)
+- **delivery-target handoff packages** for GitHub, Jira-style, and Slack-style workflows (item 54)
+- **replay-driven mitigation matrix** for flagship incidents (item 55)
+- **runtime-host run queue and execution guardrails** with visible training-surface posture (item 56)
+- **recurrence-aware outcome memory and reopen signals** in the memory layer (item 57)
+- **curated pack validator and scaffold tooling** for bounded pack expansion (item 58)
+- **approval audit timeline and governance export** for the flagship flow (item 59)
+- **final product-design polish and story sync** after the enterprise workflow surfaces landed (item 60)
 
 ## What Is Real Today Vs Still Bounded
 
@@ -72,6 +80,7 @@ Still bounded:
 - TRACE is a bounded developer handoff, not a universal debugger
 - the debugger flows are descriptive guidance, not interactive step-through debuggers
 - external delivery targets are still export-oriented rather than full third-party integrations
+- runtime-host execution posture is still process-local state, not durable enterprise job orchestration
 
 ## Two Code Paths — Critical To Understand
 
@@ -89,7 +98,7 @@ These paths must stay semantically aligned.
 - `backlog-35-plus.json` — completed backlog through item `40`
 - `backlog-41-plus.json` — completed backlog through item `46`
 - `backlog-47-plus.json` — completed backlog through item `53`
-- `backlog-54-plus.json` — active backlog for the next frontier
+- `backlog-54-plus.json` — completed backlog through item `60`
 - `AGENTS.md` — loop rules and current validated baseline
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
@@ -99,23 +108,18 @@ These paths must stay semantically aligned.
 
 | File | Why |
 |---|---|
-| `frontend/static/styles.css` | global product visual system and differentiation |
-| `frontend/incident.html` | incident console layout and flagship operator flow |
-| `frontend/static/incident.js` | incident packet rendering and new product affordances |
-| `frontend/static/api.js` | fresh incident parity and fallback synthesis |
-| `server/services/enterprise_runtime.py` | live path runtime, trace, forge, guardian behavior |
-| `server/services/incidents.py` | live incident context assembly and replay persistence |
-| `server/services/replica_runtime.py` | bounded pack execution and debugger/replay substrate |
-| `runtime_host/server/app.py` | runtime-host execution behavior |
+| `server/services/incidents.py` | incident packet assembly, exports, governance, execution outcome |
+| `server/services/enterprise_runtime.py` | live path runtime, trace, forge, guardian, and memory behavior |
+| `server/services/replica_runtime.py` | bounded pack execution, validator, and pack expansion substrate |
+| `server/app.py` | app-side runtime execution posture and exported endpoints |
+| `frontend/static/incident.js` | incident packet rendering, exports, governance, and replay matrix |
+| `frontend/static/training.js` | runtime-host posture and audit/ROI surfaces |
+| `frontend/static/styles.css` | design-system continuity as new product surfaces are added |
+| `tests/test_api_contract.py` | API truthfulness across new enterprise workflow surfaces |
 | `tests/e2e/browser-verification.spec.js` | browser truthfulness and flagship UX |
 | `scripts/local_enterprise_smoke.sh` | Docker-path confidence checks |
 
 ## Next Recommended Frontier
 
-1. delivery-target handoff packages for engineering systems
-2. replay-driven mitigation matrix for flagship incidents
-3. runtime-host run queue and execution-guardrail visibility
-4. recurrence-aware outcome memory and reopen signals
-5. curated pack validator and scaffold tooling
-6. approval audit timeline and governance export
-7. final product-design polish and story sync after the new enterprise surfaces
+Write `backlog-61-plus.json` only after reviewing the real post-60 codebase and product truth.
+The next backlog should bias toward hardening, truthfulness, and enterprise workflow reliability rather than broadening agent claims.

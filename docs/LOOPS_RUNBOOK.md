@@ -26,17 +26,16 @@ Do not start a loop against a vague objective like "improve Nexus more." Write a
 
 ## Current Recommended Scope
 
-The `15–53` backlog is complete.
+The `15–60` backlog is complete.
 
-The active next backlog should be `backlog-54-plus.json`, covering:
+No active next backlog is defined yet.
 
-1. delivery-target handoff packages for engineering systems
-2. replay-driven mitigation matrix
-3. runtime-host run queue and execution-guardrail visibility
-4. recurrence-aware outcome memory and reopen signals
-5. curated pack validator and scaffold tooling
-6. approval audit timeline and governance export
-7. final product-design polish and story sync
+Before another loop starts:
+
+1. review the finished codebase and product truth
+2. write `backlog-61-plus.json`
+3. refresh `AGENTS.md`, `WORKING_STATE.md`, and this runbook
+4. only then begin the next loop
 
 ## Before Starting A Loop
 
@@ -88,6 +87,7 @@ Rules:
 ```
 
 5. Let the agent run until the backlog is done or blocked.
+6. When the backlog reaches zero pending items, the agent must refresh `AGENTS.md`, `WORKING_STATE.md`, and this runbook before claiming the phase complete.
 
 ## How To Start A Loop In Claude
 
@@ -153,6 +153,19 @@ Watch for four failure patterns:
 4. The agent is blurring scaffold-only inference with validated runtime evidence.
 
 If any of those happen, stop the run and reset the backlog item state before resuming.
+
+## Backlog Completion Hygiene
+
+When a backlog reaches zero pending items, do this before calling the phase complete:
+
+1. confirm the backlog file shows every item as `done` or `blocked`
+2. refresh `AGENTS.md` to the new validated baseline
+3. refresh `WORKING_STATE.md` so the completed backlog is no longer listed as active
+4. refresh this runbook so it points to the real next step
+5. commit the cleanup separately if needed
+6. only then create the next backlog file
+
+This is mandatory. A backlog is not fully complete while the control docs still describe it as active.
 
 ## How To Resume After Interruption
 
