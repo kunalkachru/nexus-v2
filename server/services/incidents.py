@@ -62,6 +62,47 @@ logger = logging.getLogger(__name__)
 _REPLAY_HISTORY_LIMIT = 5
 
 
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _build_replay_lifecycle(
+    *,
+    requested_at: str,
+    started_at: str,
+    finished_at: str,
+    final_state: str,
+    final_message: str,
+) -> dict[str, object]:
+    completion_label = "Completed" if final_state == "completed" else "Failed"
+    return {
+        "current_state": final_state,
+        "requested_at": requested_at,
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "events": [
+            {
+                "state": "requested",
+                "label": "Requested",
+                "recorded_at": requested_at,
+                "message": "The operator requested bounded replay from the packaged incident console.",
+            },
+            {
+                "state": "running",
+                "label": "Running",
+                "recorded_at": started_at,
+                "message": "NEXUS dispatched the bounded replay plan to the current app host or configured relay host.",
+            },
+            {
+                "state": final_state,
+                "label": completion_label,
+                "recorded_at": finished_at,
+                "message": final_message,
+            },
+        ],
+    }
+
+
 def _root_cause_from_issue_family(issue_family: str, service: str) -> str:
     issue_family_text = issue_family.lower()
     if "retry amplification" in issue_family_text:
@@ -148,9 +189,10 @@ class IncidentService:
         replay_entry = {
             "status": status,
             "message": message,
-            "recorded_at": datetime.now(timezone.utc).isoformat(),
+            "recorded_at": _utc_now_iso(),
             "runtime_capability": runtime_capability,
             "runtime_provenance": dict(replica_summary.get("runtime_provenance") or {}),
+            "replay_lifecycle": dict(replica_summary.get("replay_lifecycle") or {}),
             "replica_summary": replica_summary,
             "trace_summary": trace_summary,
         }
@@ -209,6 +251,20 @@ class IncidentService:
                     "status": str(entry.get("status") or ""),
                     "message": str(entry.get("message") or ""),
                     "runtime_provenance": runtime_provenance,
+                    "lifecycle_state": str(
+                        (
+                            dict(entry.get("replay_lifecycle") or {}).get("current_state")
+                            or dict(entry_replica.get("replay_lifecycle") or {}).get("current_state")
+                            or ""
+                        )
+                    ),
+                    "lifecycle_events": list(
+                        (
+                            dict(entry.get("replay_lifecycle") or {}).get("events")
+                            or dict(entry_replica.get("replay_lifecycle") or {}).get("events")
+                            or []
+                        )
+                    ),
                     "runtime_mode": str(entry_replica.get("runtime_mode") or ""),
                     "replay_status_code": entry_replica.get("replay_status_code"),
                     "replay_duration_ms": entry_replica.get("replay_duration_ms"),
@@ -1346,6 +1402,7 @@ class IncidentService:
         *,
         tenant_id: str | None = None,
     ) -> dict[str, object]:
+        requested_at = _utc_now_iso()
         context = await self.get_incident_context_v1(
             nexus_incident_id,
             tenant_id=tenant_id,
@@ -1358,6 +1415,7 @@ class IncidentService:
         incident = dict(context.get("incident") or {})
         runbook = dict(context.get("runbook") or {})
         config = AppConfig()
+        started_at = _utc_now_iso()
 
         replica_summary = build_replica_summary(
             incident_id=nexus_incident_id,
@@ -1426,6 +1484,16 @@ class IncidentService:
             "replay_available": "replay_available",
             "no_pack": "unsupported",
         }.get(capability_state, "unsupported")
+        message = str(runtime_capability.get("message") or replica_summary.get("runtime_enablement_hint") or "Replay state unavailable.")
+        final_state = "completed" if status in {"replay_executed", "relay_executed"} else "failed"
+        replay_lifecycle = _build_replay_lifecycle(
+            requested_at=requested_at,
+            started_at=started_at,
+            finished_at=_utc_now_iso(),
+            final_state=final_state,
+            final_message=message,
+        )
+        replica_summary["replay_lifecycle"] = replay_lifecycle
 
         if status in {"replay_executed", "relay_executed"}:
             await record_replay_launch(
@@ -1447,7 +1515,7 @@ class IncidentService:
         normalized_evidence = await self._persist_latest_replay_packet(
             incident=stored_incident,
             status=status,
-            message=str(runtime_capability.get("message") or replica_summary.get("runtime_enablement_hint") or "Replay state unavailable."),
+            message=message,
             runtime_capability=runtime_capability,
             replica_summary=replica_summary,
             trace_summary=trace_summary,
@@ -1462,8 +1530,9 @@ class IncidentService:
         return {
             "incident_id": nexus_incident_id,
             "status": status,
-            "message": runtime_capability.get("message") or replica_summary.get("runtime_enablement_hint") or "Replay state unavailable.",
+            "message": message,
             "runtime_capability": runtime_capability,
+            "replay_lifecycle": replay_lifecycle,
             "replica_summary": replica_summary,
             "trace_summary": trace_summary,
         }

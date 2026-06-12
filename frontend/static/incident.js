@@ -533,6 +533,8 @@ function renderEnterprise(data) {
   const runtimeCapability = replica.runtime_capability || {};
   const runtimeProvenance = replica.runtime_provenance || {};
   const traceRuntimeProvenance = trace.runtime_provenance || {};
+  const replayLifecycle = replica.replay_lifecycle || {};
+  const replayLifecycleEvents = replayLifecycle.events || [];
   const runtimeCapabilityDetail = [
     runtimeCapability.host_label ? `Host: ${runtimeCapability.host_label}` : "",
     runtimeCapability.bounded_pack_available ? "Bounded pack mapped" : "No bounded pack",
@@ -554,7 +556,23 @@ function renderEnterprise(data) {
         ? (runtimeProvenance.summary || "This host can run bounded replay on demand.")
         : (runtimeCapability.message || "Replay is not available for this incident on the current host.")
   );
+  setText(
+    "replicaReplayLifecycleState",
+    replayLifecycle.current_state
+      ? `Replay lifecycle: ${titleCase(replayLifecycle.current_state)}`
+      : runtimeCapability.can_execute_replay
+        ? "Replay lifecycle: Ready to request"
+        : "Replay lifecycle: Waiting on runtime availability"
+  );
   setText("replicaComparison", replica.runtime_comparison_summary || "Runtime comparison details are not available for this incident yet.");
+  renderList(
+    "replicaReplayLifecycleEvents",
+    replayLifecycleEvents.length
+      ? replayLifecycleEvents
+      : [{ label: "Ready", recorded_at: "", message: "Replay has not been requested for this incident yet." }],
+    (item) =>
+      `<li><strong>${item.label || titleCase(item.state || "ready")}</strong>${item.recorded_at ? `<br><span class="section-note">${formatTimestamp(item.recorded_at)}</span>` : ""}<br><span class="section-note">${item.message || ""}</span></li>`
+  );
 
   const replayButton = document.getElementById("replicaReplayBtn");
   if (replayButton) {
@@ -627,11 +645,16 @@ function renderEnterprise(data) {
         replayHistory,
         (item) => {
           const provenance = item.runtime_provenance || {};
+          const lifecycleState = item.lifecycle_state ? ` · ${titleCase(item.lifecycle_state)}` : "";
+          const lifecyclePath = (item.lifecycle_events || [])
+            .map((event) => event.label || titleCase(event.state || ""))
+            .filter(Boolean)
+            .join(" → ");
           const baseline = item.replay_status_code ? `baseline HTTP ${item.replay_status_code}${item.replay_duration_ms ? ` at ${item.replay_duration_ms}ms` : ""}` : "baseline not captured";
           const selected = item.best_mitigation_action
             ? `${item.best_mitigation_action}${item.best_mitigation_status_code ? ` → HTTP ${item.best_mitigation_status_code}` : ""}${item.best_mitigation_duration_ms ? ` at ${item.best_mitigation_duration_ms}ms` : ""}`
             : "No selected mitigation";
-          return `<li><strong>${item.is_latest ? "Latest replay" : `Prior replay ${item.index}`}</strong><br><span class="section-note">${formatTimestamp(item.recorded_at)} · ${provenance.label || titleCase(provenance.mode || "unknown source")}</span><br><span class="section-note">${baseline}</span><br><span class="section-note">${titleCase(String(item.best_mitigation_outcome_class || "not_run").replace(/_/g, " "))} · ${selected}</span></li>`;
+          return `<li><strong>${item.is_latest ? "Latest replay" : `Prior replay ${item.index}`}</strong><br><span class="section-note">${formatTimestamp(item.recorded_at)} · ${provenance.label || titleCase(provenance.mode || "unknown source")}${lifecycleState}</span>${lifecyclePath ? `<br><span class="section-note">${lifecyclePath}</span>` : ""}<br><span class="section-note">${baseline}</span><br><span class="section-note">${titleCase(String(item.best_mitigation_outcome_class || "not_run").replace(/_/g, " "))} · ${selected}</span></li>`;
         }
       );
       replayHistoryBlock.style.display = "block";
@@ -994,13 +1017,46 @@ window.addEventListener("load", async () => {
       button.textContent = "Running bounded replay...";
     }
     setText("replicaReplayStatus", "Requesting bounded replay from the current host...");
+    setText("replicaReplayLifecycleState", "Replay lifecycle: Requested");
+    renderList(
+      "replicaReplayLifecycleEvents",
+      [
+        {
+          label: "Requested",
+          recorded_at: new Date().toISOString(),
+          message: "The operator requested bounded replay from the incident console.",
+        },
+      ],
+      (item) =>
+        `<li><strong>${item.label}</strong><br><span class="section-note">${formatTimestamp(item.recorded_at)}</span><br><span class="section-note">${item.message}</span></li>`
+    );
     try {
+      await sleep(180);
+      setText("replicaReplayLifecycleState", "Replay lifecycle: Running");
+      renderList(
+        "replicaReplayLifecycleEvents",
+        [
+          {
+            label: "Requested",
+            recorded_at: new Date(Date.now() - 180).toISOString(),
+            message: "The operator requested bounded replay from the incident console.",
+          },
+          {
+            label: "Running",
+            recorded_at: new Date().toISOString(),
+            message: "NEXUS is dispatching the bounded runtime plan to the current app host or configured relay host.",
+          },
+        ],
+        (item) =>
+          `<li><strong>${item.label}</strong><br><span class="section-note">${formatTimestamp(item.recorded_at)}</span><br><span class="section-note">${item.message}</span></li>`
+      );
       const response = await postAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/replica-replay`, {});
       if (!currentIncidentData) {
         currentIncidentData = await refreshIncident();
       }
       currentIncidentData = {
         ...currentIncidentData,
+        replay_lifecycle: response.replay_lifecycle || currentIncidentData.replay_lifecycle,
         replica_summary: response.replica_summary || currentIncidentData.replica_summary,
         trace_summary: response.trace_summary || currentIncidentData.trace_summary,
       };
@@ -1009,6 +1065,7 @@ window.addEventListener("load", async () => {
       setText("replicaReplayStatus", response.message || "Replay request completed.");
     } catch (error) {
       setText("replicaReplayStatus", `Replay request failed: ${error.message}`);
+      setText("replicaReplayLifecycleState", "Replay lifecycle: Failed");
     } finally {
       const replayCapability = currentIncidentData?.replica_summary?.runtime_capability || {};
       if (button) {

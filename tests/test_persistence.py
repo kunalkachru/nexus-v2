@@ -149,11 +149,27 @@ def test_incident_repository_appends_bounded_replay_history(tmp_path: Path) -> N
                     "status": "replay_executed",
                     "recorded_at": "2026-06-12T10:00:00+00:00",
                     "runtime_provenance": {"mode": "direct_runtime"},
+                    "replay_lifecycle": {
+                        "current_state": "completed",
+                        "events": [
+                            {"state": "requested"},
+                            {"state": "running"},
+                            {"state": "completed"},
+                        ],
+                    },
                 },
                 replay_entry={
                     "status": "replay_executed",
                     "recorded_at": "2026-06-12T10:00:00+00:00",
                     "runtime_provenance": {"mode": "direct_runtime"},
+                    "replay_lifecycle": {
+                        "current_state": "completed",
+                        "events": [
+                            {"state": "requested"},
+                            {"state": "running"},
+                            {"state": "completed"},
+                        ],
+                    },
                 },
                 replay_limit=2,
             )
@@ -163,11 +179,27 @@ def test_incident_repository_appends_bounded_replay_history(tmp_path: Path) -> N
                     "status": "relay_executed",
                     "recorded_at": "2026-06-12T10:05:00+00:00",
                     "runtime_provenance": {"mode": "delegated_relay"},
+                    "replay_lifecycle": {
+                        "current_state": "completed",
+                        "events": [
+                            {"state": "requested"},
+                            {"state": "running"},
+                            {"state": "completed"},
+                        ],
+                    },
                 },
                 replay_entry={
                     "status": "relay_executed",
                     "recorded_at": "2026-06-12T10:05:00+00:00",
                     "runtime_provenance": {"mode": "delegated_relay"},
+                    "replay_lifecycle": {
+                        "current_state": "completed",
+                        "events": [
+                            {"state": "requested"},
+                            {"state": "running"},
+                            {"state": "completed"},
+                        ],
+                    },
                 },
                 replay_limit=2,
             )
@@ -177,11 +209,27 @@ def test_incident_repository_appends_bounded_replay_history(tmp_path: Path) -> N
                     "status": "replay_executed",
                     "recorded_at": "2026-06-12T10:10:00+00:00",
                     "runtime_provenance": {"mode": "direct_runtime"},
+                    "replay_lifecycle": {
+                        "current_state": "completed",
+                        "events": [
+                            {"state": "requested"},
+                            {"state": "running"},
+                            {"state": "completed"},
+                        ],
+                    },
                 },
                 replay_entry={
                     "status": "replay_executed",
                     "recorded_at": "2026-06-12T10:10:00+00:00",
                     "runtime_provenance": {"mode": "direct_runtime"},
+                    "replay_lifecycle": {
+                        "current_state": "completed",
+                        "events": [
+                            {"state": "requested"},
+                            {"state": "running"},
+                            {"state": "completed"},
+                        ],
+                    },
                 },
                 replay_limit=2,
             )
@@ -193,6 +241,7 @@ def test_incident_repository_appends_bounded_replay_history(tmp_path: Path) -> N
             assert history[1]["recorded_at"] == "2026-06-12T10:05:00+00:00"
             assert history[0]["runtime_provenance"]["mode"] == "direct_runtime"
             assert history[1]["runtime_provenance"]["mode"] == "delegated_relay"
+            assert history[0]["replay_lifecycle"]["current_state"] == "completed"
 
             persisted = json.loads(path.read_text())
             persisted_history = persisted["incidents"][incident.nexus_incident_id]["normalized_evidence"]["replay_history"]

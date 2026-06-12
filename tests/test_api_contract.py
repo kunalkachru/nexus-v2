@@ -853,10 +853,13 @@ def test_seeded_incident_replica_replay_delegates_to_runtime_host_when_configure
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "relay_executed"
+    assert payload["replay_lifecycle"]["current_state"] == "completed"
+    assert [event["state"] for event in payload["replay_lifecycle"]["events"]] == ["requested", "running", "completed"]
     assert payload["runtime_capability"]["state"] == "relay_executed"
     assert payload["replica_summary"]["runtime_capability"]["state"] == "relay_executed"
     assert payload["replica_summary"]["runtime_executed"] is True
     assert payload["replica_summary"]["runtime_mode"] == "relay_runtime_scaffold"
+    assert payload["replica_summary"]["replay_lifecycle"]["current_state"] == "completed"
 
 
 def test_live_raw_text_incident_persists_replay_evidence_and_relay_provenance(
@@ -927,6 +930,7 @@ def test_live_raw_text_incident_persists_replay_evidence_and_relay_provenance(
     assert replay_response.status_code == 200
     replay_payload = replay_response.json()
     assert replay_payload["status"] == "relay_executed"
+    assert replay_payload["replay_lifecycle"]["current_state"] == "completed"
     assert replay_payload["replica_summary"]["runtime_provenance"]["mode"] == "delegated_relay"
     assert replay_payload["trace_summary"]["runtime_provenance"]["mode"] == "delegated_relay"
 
@@ -934,6 +938,7 @@ def test_live_raw_text_incident_persists_replay_evidence_and_relay_provenance(
     assert context_response.status_code == 200
     context_payload = context_response.json()
     assert context_payload["replica_summary"]["runtime_executed"] is True
+    assert context_payload["replica_summary"]["replay_lifecycle"]["current_state"] == "completed"
     assert context_payload["replica_summary"]["runtime_mode"] == "relay_runtime_scaffold"
     assert context_payload["replica_summary"]["runtime_provenance"]["mode"] == "delegated_relay"
     assert context_payload["replica_summary"]["runtime_provenance"]["label"] == "Delegated runtime host replay"
@@ -993,6 +998,7 @@ def test_live_raw_text_incident_refresh_uses_persisted_replay_packet(
 
     replay_response = client.post(f"/api/v1/incidents/{incident_id}/replica-replay", headers=auth_headers())
     assert replay_response.status_code == 200
+    assert replay_response.json()["replica_summary"]["replay_lifecycle"]["current_state"] == "completed"
 
     context_response = client.get(f"/api/v1/incidents/{incident_id}/context", headers=auth_headers())
     assert context_response.status_code == 200
@@ -1140,6 +1146,8 @@ def test_live_raw_text_incident_replay_history_tracks_prior_runs(
     second_payload = second_replay.json()
     history = second_payload["replica_summary"]["replay_history"]
     assert len(history) == 2
+    assert history[0]["lifecycle_state"] == "completed"
+    assert [event["state"] for event in history[0]["lifecycle_events"]] == ["requested", "running", "completed"]
     assert history[0]["runtime_provenance"]["mode"] == "delegated_relay"
     assert history[1]["runtime_provenance"]["mode"] == "direct_runtime"
     assert history[0]["recorded_at"]

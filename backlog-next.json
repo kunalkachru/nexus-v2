@@ -386,7 +386,7 @@
     "id": 29,
     "title": "Replay run lifecycle UX for packaged incidents",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Replay in the packaged app currently behaves like a fire-and-return request. Productize that into a clearer lifecycle with requested, running, completed, and failed states, so operators understand whether they are waiting on a runtime host, reviewing a fresh result, or looking at historical replay evidence.",
     "done_when": [
       "the incident UI shows replay requested/running/completed/failed states explicitly",
