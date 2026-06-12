@@ -118,7 +118,7 @@
     "id": 51,
     "title": "Curated pack onboarding contract",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Define how a new outage class becomes a curated runtime and debugger pack. This should include the minimum required metadata, replay contract, debugging checkpoints, ownership hints, and operator-facing coverage description. The goal is to make NEXUS extensible in a disciplined way instead of growing through ad hoc hardcoding.",
     "done_when": [
       "the repo contains a clear onboarding contract for new curated outage packs",
