@@ -517,7 +517,7 @@
     "id": 34,
     "title": "Flagship bounded debugger packet for one outage class",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Build the first honest debugging-agent step, but only for one outage class. Start with either INC001 or INC002 and generate a debugger-style packet that shows expected variable/state checkpoints, likely divergence location, and what a human engineer should inspect next in code. This is the safe bridge toward a real debugging agent without pretending to support arbitrary stacks.",
     "done_when": [
       "one flagship outage class has a bounded debugger packet that references concrete state checkpoints",

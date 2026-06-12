@@ -2485,6 +2485,15 @@ def build_trace_summary(
     stack_path_summary = "TRACE has not prepared a bounded stack path for this incident yet."
     failure_boundary = "Failure boundary not identified yet."
     runtime_clue = runtime_comparison or "No runtime clue is attached to this trace packet yet."
+    debugger_packet: dict[str, object] = {
+        "supported": False,
+        "scope": "not_available",
+        "summary": "No bounded debugger packet is implemented for this incident class yet.",
+        "target_file": "",
+        "entry_function": "",
+        "state_checkpoints": [],
+        "human_next_step": "Use the TRACE handoff packet for manual debugging.",
+    }
     runtime_provenance = {
         "mode": str(replica_runtime_provenance.get("mode") or "inferred_only"),
         "label": str(replica_runtime_provenance.get("label") or "Inferred only"),
@@ -2552,6 +2561,34 @@ def build_trace_summary(
                 or (f"Baseline replay returned HTTP {replay_status_code} after {replay_duration_ms}ms while the retry-heavy auth path stayed active." if replay_status_code else "")
                 or "Replay reproduced the timeout cascade only while auth retries remained enabled."
             )
+            debugger_packet = {
+                "supported": True,
+                "scope": "checkout-python-fastapi-auth-redis-v1 only",
+                "summary": "Bounded debugger packet for the timeout/retry outage. Follow the retry path while reproducing the curated 504 replay and inspect the checkpoint variables below.",
+                "target_file": suspected_files[0],
+                "entry_function": "apply_retry_policy",
+                "state_checkpoints": [
+                    {
+                        "name": "retry_count",
+                        "location": "auth.middleware.retry.apply_retry_policy",
+                        "expected": "Retry count should stop at the bounded cap before another downstream auth attempt is scheduled.",
+                        "divergence": "Retry count keeps increasing after the timeout budget should already end the request.",
+                    },
+                    {
+                        "name": "timeout_budget_ms_remaining",
+                        "location": "gateway.timeout_guard.await_upstream_auth",
+                        "expected": "The remaining timeout budget should stay positive before a retry is allowed.",
+                        "divergence": "The gateway still waits on another auth attempt even after the remaining timeout budget is zero or negative.",
+                    },
+                    {
+                        "name": "circuit_state",
+                        "location": "auth.circuit_breaker.record_timeout_budget",
+                        "expected": "The breaker should flip open once repeated timeouts cross the bounded threshold.",
+                        "divergence": "The breaker remains closed while the retry storm continues to amplify worker saturation.",
+                    },
+                ],
+                "human_next_step": "Reproduce the 504 path, break first in apply_retry_policy, then confirm gateway timeout budget and circuit state move together before approving a code fix.",
+            }
             developer_handoff_summary = (
                 f"Start with {suspected_files[0]} and hand this packet to the mapped owner for that file. "
                 "The bounded replay shows the baseline request timing out until retries are capped or the circuit breaker is opened."
@@ -2693,6 +2730,7 @@ def build_trace_summary(
         "stack_path_summary": stack_path_summary,
         "failure_boundary": failure_boundary,
         "runtime_clue": runtime_clue,
+        "debugger_packet": debugger_packet,
         "code_owner_team": code_owner_team,
         "code_owner_slug": code_owner_slug,
         "code_owner_source": code_owner_source,

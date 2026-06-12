@@ -135,6 +135,7 @@ Open the created incident or use:
 - severity and issue framing
 - support-triage handoff story
 - memory-grounded investigation
+- bounded debugger packet for the timeout/retry outage
 - proposed action and Guardian posture
 
 ### What the six-agent flow should mean
@@ -177,13 +178,32 @@ The runtime evidence narrative connects three stages, but only part of it is mea
 - the selected mitigation can be explained against a visible runner-up instead of feeling arbitrary
 - escalation to a human reviewer includes evidence-backed confidence in the action
 
+### What is implemented now vs still theoretical
+
+Implemented now:
+
+- `REPLICA` has two real bounded runtime packs for the flagship outage classes
+- `TRACE` has a bounded stack-path packet for both flagship outages
+- `TRACE` also has one real debugger-style packet for `INC001` / timeout-retry amplification only
+  - it references concrete checkpoint variables: `retry_count`, `timeout_budget_ms_remaining`, and `circuit_state`
+  - it is tied to the curated pack `checkout-python-fastapi-auth-redis-v1`
+- the mitigation ladder is visible as primary step, fallback step, and stop condition
+
+Still theoretical / not shipped:
+
+- arbitrary environment reproduction outside the curated packs
+- universal code debugging across any stack or repository
+- live breakpoint attachment into arbitrary production services
+- autonomous multi-step production remediation without a human review point
+
 ### What to validate
 
 1. read the top summary and confirm the screen feels like a triage console
 2. inspect the agent handoff and confirm the workflow is understandable
 3. inspect memory and related history if shown
-4. inspect the proposed action
-5. inspect Guardian’s review language
+4. inspect the bounded debugger packet and confirm it is explicitly limited to the curated timeout/retry pack
+5. inspect the proposed action
+6. inspect Guardian’s review language
 
 ### Approval path
 
@@ -285,7 +305,9 @@ Do say:
 
 - the current product proves the support-triage workflow
 - memory and governance are already visible
-- reproduction and debugging are the next major product expansions
+- bounded reproduction is real today for two flagship outage classes
+- one bounded debugger packet is real today for the timeout/retry outage class
+- broader reproduction and debugging are still the next major product expansions
 
 ## Related Docs
 

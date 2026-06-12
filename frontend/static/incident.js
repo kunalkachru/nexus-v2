@@ -304,6 +304,24 @@ function ensureMitigationLadderPacket() {
   mitigationsList.insertAdjacentElement("beforebegin", wrapper);
 }
 
+function ensureDebuggerPacket() {
+  if (document.getElementById("traceDebuggerSummary")) {
+    return;
+  }
+  const traceAnomalies = document.getElementById("traceAnomalies");
+  if (!traceAnomalies || !traceAnomalies.parentElement) {
+    return;
+  }
+  const wrapper = document.createElement("div");
+  wrapper.id = "traceDebuggerPacket";
+  wrapper.innerHTML = `
+    <p class="section-label">Bounded debugger packet</p>
+    <p class="section-note" id="traceDebuggerSummary">TRACE will surface the bounded debugger packet here once it is available.</p>
+    <ul class="simple-list" id="traceDebuggerChecks"></ul>
+  `;
+  traceAnomalies.insertAdjacentElement("afterend", wrapper);
+}
+
 function setText(id, value) {
   const element = document.getElementById(id);
   if (element && value !== undefined && value !== null) {
@@ -844,6 +862,29 @@ function renderEnterprise(data) {
     (trace.state_anomalies || []).length
       ? trace.state_anomalies
       : [trace.expected_flow || "Expected flow not yet captured."],
+    (item) => `<li>${item}</li>`
+  );
+  const debuggerPacket = trace.debugger_packet || {};
+  ensureDebuggerPacket();
+  setText(
+    "traceDebuggerSummary",
+    debuggerPacket.supported
+      ? `${debuggerPacket.summary} Scope: ${debuggerPacket.scope || "bounded pack only"}.`
+      : debuggerPacket.summary || "No bounded debugger packet is implemented for this incident class yet."
+  );
+  renderList(
+    "traceDebuggerChecks",
+    debuggerPacket.supported
+      ? [
+          `Target file: ${debuggerPacket.target_file || "unknown"}`,
+          `Entry function: ${debuggerPacket.entry_function || "unknown"}`,
+          ...((debuggerPacket.state_checkpoints || []).map(
+            (item) =>
+              `${item.name || "checkpoint"} · ${item.location || "unknown location"} · Expected: ${item.expected || "n/a"} · Divergence: ${item.divergence || "n/a"}`
+          )),
+          `Human next step: ${debuggerPacket.human_next_step || "Use the TRACE packet for manual debugging."}`,
+        ]
+      : ["Debugger packet not implemented for this incident class."],
     (item) => `<li>${item}</li>`
   );
 }

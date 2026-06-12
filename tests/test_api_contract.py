@@ -584,6 +584,8 @@ def test_live_incident_context_contract_returns_backend_evidence(client: TestCli
     assert payload["trace_summary"]["stack_path"]
     assert payload["trace_summary"]["failure_boundary"]
     assert payload["trace_summary"]["runtime_clue"]
+    assert payload["trace_summary"]["debugger_packet"]["supported"] is True
+    assert payload["trace_summary"]["debugger_packet"]["state_checkpoints"]
     assert payload["trace_summary"]["code_owner_team"] is not None
     assert len(payload["workflow"]) >= 1
     assert payload["execution_result"] in {"executed", "blocked", "approved", "pending", "needs_modification"}
@@ -1035,6 +1037,7 @@ def test_live_raw_text_incident_refresh_uses_persisted_replay_packet(
     assert context_payload["trace_summary"]["failure_boundary"]
     assert "direct replay" in context_payload["trace_summary"]["runtime_clue"].lower()
     assert context_payload["trace_summary"]["runtime_provenance"]["mode"] == "direct_runtime"
+    assert context_payload["trace_summary"]["debugger_packet"]["supported"] is False
     assert context_payload["trace_summary"]["suspected_files"][0].endswith("checkout_server.py")
     assert "trace_ownership_map.json" in context_payload["trace_summary"]["code_owner_source"]
     assert "trace_ownership_map.json" in context_payload["trace_summary"]["developer_handoff_summary"]
@@ -1249,6 +1252,7 @@ def test_incident_context_defaults_to_deterministic_without_user_key(client: Tes
     assert payload["replica_summary"]["mitigation_ladder"]["steps"]
     assert payload["trace_summary"]["stack_path"]
     assert payload["trace_summary"]["runtime_clue"]
+    assert payload["trace_summary"]["debugger_packet"]["supported"] is True
     assert payload["trace_summary"]["suspected_modules"] is not None
     assert payload["trace_summary"]["inspection_point"] is not None
     assert payload["trace_summary"]["suspected_files"] is not None

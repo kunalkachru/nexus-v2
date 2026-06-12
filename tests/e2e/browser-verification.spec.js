@@ -224,6 +224,8 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#traceStackSummary")).toContainText(/gateway timeout guard|retry policy|bounded stack/i);
     await expect(page.locator("#traceRuntimeClue")).toContainText(/runtime|replay|504/i);
     await expect(page.locator("#traceStackPath")).toContainText(/gateway\.timeout_guard|auth\.middleware\.retry/);
+    await expect(page.locator("#traceDebuggerSummary")).toContainText(/Bounded debugger packet|timeout\/retry outage|curated 504 replay/i);
+    await expect(page.locator("#traceDebuggerChecks")).toContainText(/retry_count|timeout_budget_ms_remaining|circuit_state/);
   });
 
   // Items 9 & 10: FORGE reasoning cites runtime; GUARDIAN posture is non-generic
