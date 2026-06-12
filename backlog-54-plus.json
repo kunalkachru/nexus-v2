@@ -88,7 +88,7 @@
     "id": 57,
     "title": "Recurrence-aware outcome memory and reopen signals",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Build on outcome-weighted memory by making recurrence visible. The product should surface when a current incident resembles a previously executed case that reappeared, when unresolved risk remained, and when an outcome should be treated as partial rather than final. This keeps the memory layer closer to real operational history instead of one-time wins.",
     "done_when": [
       "memory can distinguish successful prior outcomes from recurring or partially-resolved cases",

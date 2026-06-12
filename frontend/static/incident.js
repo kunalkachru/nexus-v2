@@ -567,7 +567,8 @@ function renderEnterprise(data) {
     memoryHits.similar_incidents || [],
     (item) => {
       const outcomeBadge = item.outcome_label ? `<span class="section-note" style="color: #4a90e2; font-weight: 500;">📊 ${item.outcome_label}</span>` : "";
-      return `<li><strong>${item.incident_id}</strong><br>${item.summary}<br><span class="section-note">Matched at ${percent(item.similarity || 0)} · Success ${percent(item.success_rate || 0)} · ${item.issue_family || "Historical analog"}</span>${outcomeBadge ? `<br>${outcomeBadge}` : ""}${item.match_reason ? `<br><span class="section-note">${item.match_reason}</span>` : ""}${item.prior_action ? `<br><span class="section-note">Prior action: ${item.prior_action}</span>` : ""}${item.remaining_risk ? `<br><span class="section-note">Residual risk: ${item.remaining_risk}</span>` : ""}</li>`;
+      const recurrenceIcon = item.recurrence_indicator === "recurring" ? "🔄 Recurring pattern" : item.recurrence_status === "partial_resolution" ? "⚠️ Partially resolved" : "";
+      return `<li><strong>${item.incident_id}</strong><br>${item.summary}<br><span class="section-note">Matched at ${percent(item.similarity || 0)} · Success ${percent(item.success_rate || 0)} · ${item.issue_family || "Historical analog"}</span>${outcomeBadge ? `<br>${outcomeBadge}` : ""}${recurrenceIcon ? `<br><span class="section-note" style="color: #e07856; font-weight: 500;">${recurrenceIcon}</span>` : ""}${item.match_reason ? `<br><span class="section-note">${item.match_reason}</span>` : ""}${item.prior_action ? `<br><span class="section-note">Prior action: ${item.prior_action}</span>` : ""}${item.remaining_risk ? `<br><span class="section-note">Residual risk: ${item.remaining_risk}</span>` : ""}</li>`;
     }
   );
   renderList(

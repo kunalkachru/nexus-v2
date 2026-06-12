@@ -153,6 +153,10 @@ class IncidentKnowledgeService:
             base_success_rate = 0.74 + (score * 0.22)
             final_success_rate = round(min(0.99, base_success_rate + outcome_boost), 2)
 
+            remaining_risk = str(details.get("guardian", {}).get("reasoning", "")).strip()
+            recurrence_status = "clean_win" if execution_status == "executed" and not remaining_risk else ("partial_resolution" if remaining_risk else "unresolved")
+            recurrence_indicator = "recurring" if recurrence_status in ("partial_resolution", "unresolved") else "resolved"
+
             similar.append(
                 {
                     "incident_id": candidate_id,
@@ -174,7 +178,9 @@ class IncidentKnowledgeService:
                         outcome_label=outcome_label,
                     ),
                     "prior_action": self._prior_action(details),
-                    "remaining_risk": str(details.get("guardian", {}).get("reasoning", "")).strip(),
+                    "remaining_risk": remaining_risk,
+                    "recurrence_status": recurrence_status,
+                    "recurrence_indicator": recurrence_indicator,
                     "source": "incident_history",
                 }
             )
