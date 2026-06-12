@@ -7,7 +7,8 @@ Short handoff for Codex or Claude sessions. Keep current and compact.
 Items `15–34`: **complete**
 Items `35–40`: **complete**
 Items `41–46`: **complete**
-Next phase: execute `backlog-47-plus.json`
+Items `47–53`: **complete**
+Next phase: execute `backlog-54-plus.json`
 
 ## App In One Sentence
 
@@ -16,7 +17,7 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 ## Baseline State
 
 - Branch: `master`
-- Baseline feature slice through item `46`: `23946d7`
+- Baseline feature slice through item `53`: `fe3572b`
 - `pytest tests/ -q` → **141 passed**
 - `npm run browser:verify` → **11 passed**
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
@@ -48,6 +49,13 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 - **developer handoff packet v5** with owner-first inspection brief and replay evidence (item 44)
 - **post-approval outcome capture and memory ingestion** with visible incident UI and training reference (item 45)
 - **final operator-to-engineering demo closure** with updated walkthrough and post-approval flow (item 46)
+- **engineering handoff export and case packaging** for support-to-engineering delivery (item 47)
+- **bounded debugger parity for INC002** with explicit curated-pack scope (item 48)
+- **runtime-host productization v2** with stronger product-facing execution posture (item 49)
+- **outcome-weighted memory ranking** based on executed or approved outcomes (item 50)
+- **curated pack onboarding contract** for new outage-class support (item 51)
+- **operator ROI and audit surface** showing replay, approval, and reuse value (item 52)
+- **visual system reinvention pass** beyond the item-35 refinement (item 53)
 
 ## What Is Real Today Vs Still Bounded
 
@@ -62,8 +70,8 @@ Still bounded:
 
 - REPLICA only supports the curated checkout outage packs
 - TRACE is a bounded developer handoff, not a universal debugger
-- the debugger packet is descriptive guidance, not an interactive step-through debugger
-- the UI is improved from the original baseline but not yet fully redesigned
+- the debugger flows are descriptive guidance, not interactive step-through debuggers
+- external delivery targets are still export-oriented rather than full third-party integrations
 
 ## Two Code Paths — Critical To Understand
 
@@ -80,7 +88,8 @@ These paths must stay semantically aligned.
 - `backlog-next.json` — completed backlog through item `34`
 - `backlog-35-plus.json` — completed backlog through item `40`
 - `backlog-41-plus.json` — completed backlog through item `46`
-- `backlog-47-plus.json` — active backlog for the next frontier
+- `backlog-47-plus.json` — completed backlog through item `53`
+- `backlog-54-plus.json` — active backlog for the next frontier
 - `AGENTS.md` — loop rules and current validated baseline
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
@@ -103,10 +112,10 @@ These paths must stay semantically aligned.
 
 ## Next Recommended Frontier
 
-1. engineering handoff export and case packaging
-2. bounded debugger parity for `INC002`
-3. runtime-host productization v2 beyond the current visibility layer
-4. outcome-weighted memory ranking based on executed outcomes
-5. pack onboarding contract for new curated outage classes
-6. operator ROI and audit surface
-7. larger visual-system reinvention pass beyond item 35
+1. delivery-target handoff packages for engineering systems
+2. replay-driven mitigation matrix for flagship incidents
+3. runtime-host run queue and execution-guardrail visibility
+4. recurrence-aware outcome memory and reopen signals
+5. curated pack validator and scaffold tooling
+6. approval audit timeline and governance export
+7. final product-design polish and story sync after the new enterprise surfaces
