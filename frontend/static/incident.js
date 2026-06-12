@@ -520,6 +520,8 @@ function renderEnterprise(data) {
       : "No validated mitigation"
   );
   const runtimeCapability = replica.runtime_capability || {};
+  const runtimeProvenance = replica.runtime_provenance || {};
+  const traceRuntimeProvenance = trace.runtime_provenance || {};
   setText("replicaOutcome", titleCase(String(replica.best_mitigation_outcome_class || replica.baseline_outcome_class || "not_run").replace(/_/g, " ")));
   setText("replicaCapabilityState", runtimeCapability.label || "Unknown");
   setText("replicaCapabilityHost", runtimeCapability.host_label || "Unknown");
@@ -528,9 +530,9 @@ function renderEnterprise(data) {
   setText(
     "replicaReplayStatus",
     replica.runtime_executed
-      ? "Docker-backed replay executed for this page view."
+      ? (runtimeProvenance.summary || "Docker-backed replay executed for this page view.")
       : runtimeCapability.can_execute_replay
-        ? "This host can run bounded replay on demand."
+        ? (runtimeProvenance.summary || "This host can run bounded replay on demand.")
         : (runtimeCapability.message || "Replay is not available for this incident on the current host.")
   );
   setText("replicaComparison", replica.runtime_comparison_summary || "Runtime comparison details are not available for this incident yet.");
@@ -601,7 +603,10 @@ function renderEnterprise(data) {
   setText("traceSummary", trace.reasoning || "Debugging hints are not available yet.");
   setText("traceStatus", titleCase(trace.trace_status || "not_run"));
   setText("traceConfidence", trace.confidence ? percent(trace.confidence) : "0%");
-  setText("traceReplayEvidence", trace.replay_evidence_summary || "Replay evidence is not available for this incident yet.");
+  setText(
+    "traceReplayEvidence",
+    [trace.replay_evidence_summary, traceRuntimeProvenance.summary].filter(Boolean).join(" ") || "Replay evidence is not available for this incident yet."
+  );
   setText("traceInspectionPoint", trace.inspection_point || "TRACE has not narrowed an inspect-here-first path yet.");
   setText(
     "traceDeveloperHandoff",

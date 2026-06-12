@@ -163,6 +163,49 @@ assert replay["runtime_capability"]["state"] == "relay_executed", replay["runtim
 assert replay["replica_summary"]["runtime_mode"] == "relay_runtime_scaffold", replay["replica_summary"]
 print("    Relay replay check passed.")
 PY
+
+  echo "[9] Fresh nxs incident retains replay evidence and relay provenance after refresh"
+  python3 - "${BASE_URL}" << 'PY'
+import json, sys, urllib.request
+
+base_url = sys.argv[1]
+headers = {"x-user-id": "user-123", "x-tenant-id": "tenant-a", "x-roles": "operator"}
+
+def request(path, *, method="GET", payload=None):
+    body = None if payload is None else json.dumps(payload).encode()
+    req = urllib.request.Request(f"{base_url}{path}", data=body, method=method, headers={
+        **headers,
+        **({"content-type": "application/json"} if payload is not None else {}),
+    })
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.loads(r.read().decode())
+
+created = request(
+    "/api/v1/incidents/raw-text",
+    method="POST",
+    payload={
+        "raw_text": "2026-05-30T10:14:22Z auth-svc ERROR timeout waiting for downstream auth\n2026-05-30T10:14:23Z api-gateway WARN retry budget exhausted\nservice=auth-svc severity=P2",
+        "source_hint": "smoke",
+        "reported_by": "smoke",
+        "team": "identity",
+        "severity_hint": "P2",
+    },
+)
+incident_id = created["nexus_incident_id"]
+
+replay = request(f"/api/v1/incidents/{incident_id}/replica-replay", method="POST", payload={})
+assert replay["status"] == "relay_executed", replay
+assert replay["replica_summary"]["runtime_provenance"]["mode"] == "delegated_relay", replay["replica_summary"]
+assert replay["trace_summary"]["runtime_provenance"]["mode"] == "delegated_relay", replay["trace_summary"]
+
+context = request(f"/api/v1/incidents/{incident_id}/context")
+assert context["replica_summary"]["runtime_executed"] is True, context["replica_summary"]
+assert context["replica_summary"]["runtime_provenance"]["mode"] == "delegated_relay", context["replica_summary"]
+assert context["trace_summary"]["runtime_provenance"]["mode"] == "delegated_relay", context["trace_summary"]
+assert context["incident"]["normalized_evidence"]["latest_replay"]["status"] == "relay_executed", context["incident"]["normalized_evidence"]
+assert "runtime host" in context["trace_summary"]["developer_handoff_summary"].lower(), context["trace_summary"]
+print("    Fresh incident replay persistence check passed.")
+PY
 fi
 
 echo ""

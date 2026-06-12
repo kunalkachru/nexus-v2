@@ -183,6 +183,7 @@ Expected result:
 - replay and mitigation hook output are available in the `replica_summary` payload
 - the incident page exposes a `Run bounded replay` action when the host is capable
 - in the relay-backed Docker profile, the same action routes through the runtime host transparently
+- fresh `nxs_...` incidents persist the last replay packet into incident state so a refresh keeps the measured REPLICA and TRACE findings
 - the runtime comparison becomes explicit:
   - baseline replay status and duration
   - selected mitigation replay status and duration
@@ -280,6 +281,7 @@ Expected:
 - replay completes without a page error
 - runtime capability changes to `relay_executed`
 - runtime mode reads as relay-backed runtime execution
+- a refresh keeps the same replay-backed REPLICA and TRACE packet instead of dropping back to scaffold-only inference
 - baseline vs mitigated comparison appears in the incident panel
 - the same flow also works for `INC002`
 
@@ -317,6 +319,10 @@ Expected:
   - REPLICA should still rank a selected mitigation and runner-up mitigation in scaffold-only mode
   - TRACE should show where engineering should inspect first
   - TRACE should include file-level and code-owner cues instead of generic debugging prose
+- if replay is triggered in the relay-backed Docker profile, a refresh should keep:
+  - the replay-backed runtime comparison
+  - the replay provenance (`delegated_relay` or `direct_runtime`)
+  - the replay-aware developer handoff packet
 - after one load, a manual refresh should show the settled state instead of replaying again
 
 What this demonstrates:

@@ -90,6 +90,46 @@ def test_incident_repository_does_not_mutate_store_if_flush_fails() -> None:
     asyncio.run(scenario())
 
 
+def test_incident_repository_persists_normalized_evidence_updates(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        path = tmp_path / "incidents.json"
+        session_factory = create_session_factory(AppConfig(database_path=path))
+        session = session_factory()
+        try:
+            incident = await session.incidents.create_incident(
+                external_id="inc_xyz",
+                title="Payment API timeout",
+                severity="P1",
+                normalized_evidence={"signature": "timeout"},
+            )
+            updated = await session.incidents.update_incident_normalized_evidence(
+                incident.nexus_incident_id,
+                normalized_evidence={
+                    "signature": "timeout",
+                    "latest_replay": {
+                        "status": "relay_executed",
+                        "runtime_provenance": {"mode": "delegated_relay"},
+                    },
+                },
+            )
+
+            assert updated is not None
+            persisted = json.loads(path.read_text())
+            assert persisted["incidents"][incident.nexus_incident_id]["normalized_evidence"]["latest_replay"]["status"] == "relay_executed"
+        finally:
+            await session.close()
+
+        reloaded_session = create_session_factory(AppConfig(database_path=path))()
+        try:
+            loaded = await reloaded_session.incidents.get_incident(incident.nexus_incident_id)
+            assert loaded is not None
+            assert loaded.normalized_evidence["latest_replay"]["runtime_provenance"]["mode"] == "delegated_relay"
+        finally:
+            await reloaded_session.close()
+
+    asyncio.run(scenario())
+
+
 def test_database_load_recovers_from_corrupted_json(tmp_path: Path) -> None:
     async def scenario() -> None:
         path = tmp_path / "incidents.json"

@@ -1624,6 +1624,56 @@ def _runtime_host_capability(
     }
 
 
+def _runtime_provenance(
+    *,
+    runtime_mode: str,
+    runtime_executed: bool,
+    runtime_capability: dict[str, object],
+) -> dict[str, object]:
+    capability_state = str(runtime_capability.get("state") or "")
+    if runtime_executed and runtime_mode == "relay_runtime_scaffold":
+        return {
+            "mode": "delegated_relay",
+            "label": "Delegated runtime host replay",
+            "summary": "A configured runtime host executed the bounded runtime pack on behalf of the packaged app.",
+            "executed_by": "runtime_host",
+        }
+    if runtime_executed:
+        return {
+            "mode": "direct_runtime",
+            "label": "Direct runtime replay",
+            "summary": "The current app host executed the bounded runtime pack directly.",
+            "executed_by": "current_app_host",
+        }
+    if capability_state == "relay_available":
+        return {
+            "mode": "relay_ready",
+            "label": "Delegated runtime host ready",
+            "summary": "The packaged app can delegate bounded replay to the configured runtime host when requested.",
+            "executed_by": "runtime_host",
+        }
+    if capability_state == "replay_available":
+        return {
+            "mode": "direct_ready",
+            "label": "Direct runtime ready",
+            "summary": "The current app host can execute the bounded runtime pack directly when requested.",
+            "executed_by": "current_app_host",
+        }
+    if capability_state == "host_unavailable":
+        return {
+            "mode": "runtime_unavailable",
+            "label": "Direct runtime unavailable",
+            "summary": "The current app environment cannot execute the bounded runtime pack directly.",
+            "executed_by": "unavailable",
+        }
+    return {
+        "mode": "inferred_only",
+        "label": "Inferred only",
+        "summary": "The current incident view is still using bounded inference rather than measured runtime replay.",
+        "executed_by": "not_run",
+    }
+
+
 def build_replica_summary(
     *,
     incident_id: str,
@@ -1790,6 +1840,11 @@ def build_replica_summary(
         runner_result=runner_result,
         runtime_result=runtime_result,
     )
+    runtime_provenance = _runtime_provenance(
+        runtime_mode=runtime_mode,
+        runtime_executed=bool(runtime_result),
+        runtime_capability=runtime_capability,
+    )
 
     return {
         "incident_id": incident_id,
@@ -1837,6 +1892,7 @@ def build_replica_summary(
             runtime_capability_state=str(runtime_capability.get("state") or ""),
         ),
         "runtime_capability": runtime_capability,
+        "runtime_provenance": runtime_provenance,
         "supporting_conditions": supporting_conditions + ([f"missing scaffold assets: {', '.join(runner_result.missing_assets)}"] if runner_result and runner_result.missing_assets else []),
         "tested_mitigations": runtime_mitigations,
         "reasoning": (
@@ -2062,6 +2118,7 @@ def build_trace_summary(
     replay_duration_ms = replica_summary.get("replay_duration_ms")
     runtime_comparison = str(replica_summary.get("runtime_comparison_summary") or "")
     comparison_verdict = str((replica_summary.get("mitigation_comparison") or {}).get("verdict") or "")
+    replica_runtime_provenance = dict(replica_summary.get("runtime_provenance") or {})
     plan = build_execution_plan(
         issue_family=str(triage_summary.get("issue_family", "")),
         service=service,
@@ -2085,6 +2142,12 @@ def build_trace_summary(
     inspection_point = "Wait for REPLICA to validate the likely failure path before opening a code investigation."
     replay_evidence_summary = runtime_comparison or "No runtime replay evidence is attached to this incident yet."
     developer_handoff_summary = "TRACE has not prepared a developer handoff packet for this incident yet."
+    runtime_provenance = {
+        "mode": str(replica_runtime_provenance.get("mode") or "inferred_only"),
+        "label": str(replica_runtime_provenance.get("label") or "Inferred only"),
+        "summary": str(replica_runtime_provenance.get("summary") or "TRACE is still using bounded inference rather than measured runtime replay."),
+        "executed_by": str(replica_runtime_provenance.get("executed_by") or "not_run"),
+    }
 
     if replica_summary.get("reproduction_status") == "reproduced":
         trace_status = "narrowed"
@@ -2188,6 +2251,13 @@ def build_trace_summary(
             reasoning = "TRACE narrowed the issue to the frame-cache release path where completed transform batches retain decoded buffers."
             developer_handoff_summary = "Inspect the release hook and frame cache ownership path before attempting to recycle workers."
 
+    if runtime_provenance["mode"] == "delegated_relay":
+        replay_evidence_summary = f"{replay_evidence_summary} Runtime provenance: delegated replay from the external runtime host.".strip()
+        developer_handoff_summary = f"{developer_handoff_summary} Runtime evidence came from the external runtime host replay.".strip()
+    elif runtime_provenance["mode"] == "direct_runtime":
+        replay_evidence_summary = f"{replay_evidence_summary} Runtime provenance: direct replay on the current app host.".strip()
+        developer_handoff_summary = f"{developer_handoff_summary} Runtime evidence came from direct replay on the current app host.".strip()
+
     return {
         "incident_id": incident_id,
         "service": service,
@@ -2204,6 +2274,7 @@ def build_trace_summary(
         "code_owner_slug": code_owner_slug,
         "suspected_files": suspected_files,
         "developer_handoff_summary": developer_handoff_summary,
+        "runtime_provenance": runtime_provenance,
         "confidence": confidence,
         "reasoning": reasoning,
     }

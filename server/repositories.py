@@ -118,3 +118,27 @@ class IncidentRepository:
             self._incident_store[nexus_incident_id] = incident
             raise
         return updated
+
+    async def update_incident_normalized_evidence(
+        self,
+        nexus_incident_id: str,
+        *,
+        normalized_evidence: dict[str, object],
+    ) -> IncidentRecord | None:
+        incident = self._incident_store.get(nexus_incident_id)
+        if incident is None:
+            return None
+
+        updated = incident.model_copy(
+            update={
+                "normalized_evidence": normalized_evidence,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        self._incident_store[nexus_incident_id] = updated
+        try:
+            await self._flush_callback()
+        except Exception:
+            self._incident_store[nexus_incident_id] = incident
+            raise
+        return updated

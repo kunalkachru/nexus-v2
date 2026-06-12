@@ -132,6 +132,70 @@ class IncidentService:
     def _guardian_policy(self, decision: str) -> dict[str, str]:
         return self._governance.guardian_policy_for_decision(decision)
 
+    async def _persist_latest_replay_packet(
+        self,
+        *,
+        incident: IncidentRecord | None,
+        status: str,
+        message: str,
+        runtime_capability: dict[str, object],
+        replica_summary: dict[str, object],
+        trace_summary: dict[str, object],
+    ) -> None:
+        if incident is None or not incident.nexus_incident_id.startswith("nxs_"):
+            return
+        normalized_evidence = dict(incident.normalized_evidence or {})
+        normalized_evidence["latest_replay"] = {
+            "status": status,
+            "message": message,
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+            "runtime_capability": runtime_capability,
+            "runtime_provenance": dict(replica_summary.get("runtime_provenance") or {}),
+            "replica_summary": replica_summary,
+            "trace_summary": trace_summary,
+        }
+        await self._session.incidents.update_incident_normalized_evidence(
+            incident.nexus_incident_id,
+            normalized_evidence=normalized_evidence,
+        )
+
+    def _apply_persisted_replay_packet(
+        self,
+        *,
+        incident: IncidentRecord,
+        payload: dict[str, object],
+    ) -> dict[str, object]:
+        normalized_evidence = dict(incident.normalized_evidence or {})
+        latest_replay = normalized_evidence.get("latest_replay")
+        if not isinstance(latest_replay, dict):
+            return payload
+
+        replica_summary = latest_replay.get("replica_summary")
+        trace_summary = latest_replay.get("trace_summary")
+        if isinstance(replica_summary, dict):
+            payload["replica_summary"] = replica_summary
+        if isinstance(trace_summary, dict):
+            payload["trace_summary"] = trace_summary
+
+        incident_payload = dict(payload.get("incident") or {})
+        incident_payload["normalized_evidence"] = normalized_evidence
+        payload["incident"] = incident_payload
+
+        task_board = payload.get("task_board")
+        if isinstance(task_board, dict):
+            tasks = task_board.get("tasks")
+            if isinstance(tasks, list):
+                for task in tasks:
+                    if not isinstance(task, dict):
+                        continue
+                    if task.get("id") == "replica-validate" and isinstance(replica_summary, dict):
+                        task["status"] = str(replica_summary.get("reproduction_status") or task.get("status") or "not_run")
+                        task["summary"] = str(replica_summary.get("reasoning") or task.get("summary") or "")
+                    if task.get("id") == "trace-debug" and isinstance(trace_summary, dict):
+                        task["status"] = str(trace_summary.get("trace_status") or task.get("status") or "not_run")
+                        task["summary"] = str(trace_summary.get("reasoning") or task.get("summary") or "")
+        return payload
+
     async def _build_enterprise_overlay(
         self,
         *,
@@ -778,7 +842,7 @@ class IncidentService:
                 },
             }
         )
-        return payload
+        return self._apply_persisted_replay_packet(incident=incident, payload=payload)
 
     async def record_guardian_decision(
         self,
@@ -1151,7 +1215,7 @@ class IncidentService:
                 },
             }
         )
-        return payload
+        return self._apply_persisted_replay_packet(incident=incident, payload=payload)
 
     async def execute_incident(
         self,
@@ -1289,6 +1353,20 @@ class IncidentService:
                     "launch_label": "Replica relay replay" if status == "relay_executed" else "Replica replay",
                 }
             )
+
+        stored_incident = (
+            await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
+            if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
+            else await self._session.incidents.get_incident(nexus_incident_id)
+        )
+        await self._persist_latest_replay_packet(
+            incident=stored_incident,
+            status=status,
+            message=str(runtime_capability.get("message") or replica_summary.get("runtime_enablement_hint") or "Replay state unavailable."),
+            runtime_capability=runtime_capability,
+            replica_summary=replica_summary,
+            trace_summary=trace_summary,
+        )
 
         return {
             "incident_id": nexus_incident_id,

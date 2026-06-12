@@ -154,6 +154,7 @@ The runtime evidence narrative connects three stages, but only part of it is mea
    - `best_mitigation_outcome_class`: `resolved` / `improved` when replay ran, `inferred_only` otherwise
    - `runtime_comparison_summary`: measured baseline-vs-mitigation text when replay ran, scaffold-only ranking text otherwise
    - `mitigation_comparison`: explicit baseline, selected mitigation, and runner-up mitigation packet for the incident UI and downstream reasoning
+   - `runtime_provenance`: whether evidence came from direct replay on the current host or delegated replay through the runtime host
 
 2. **FORGE** uses the outcome class to weight runbook selection:
    - reasoning cites the mitigation outcome: "resolved," "improved," or "inferred"
@@ -169,6 +170,7 @@ The runtime evidence narrative connects three stages, but only part of it is mea
 - the diagnosis hypothesis maps cleanly into one bounded reproduction path
 - when runtime replay is enabled, the proposed mitigation can be measured against the failure signature
 - when the packaged app is running in Docker, the same replay can be delegated to the runtime host instead of failing inside the app container
+- once a live `nxs_...` incident runs replay, the measured REPLICA and TRACE packet persists across refresh instead of collapsing back to scaffold-only inference
 - the selected mitigation can be explained against a visible runner-up instead of feeling arbitrary
 - escalation to a human reviewer includes evidence-backed confidence in the action
 

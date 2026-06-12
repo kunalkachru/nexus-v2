@@ -229,7 +229,7 @@
     "id": 23,
     "title": "Persist replay evidence on live incidents and surface relay provenance",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Once relay-backed replay works, persist the latest replay evidence for live incidents so operators do not lose runtime findings on refresh. Surface whether replay came from direct host execution or delegated relay execution.",
     "done_when": [
       "live incidents retain the latest replay-backed replica summary after refresh",
@@ -255,7 +255,7 @@
     "id": 24,
     "title": "Repo-aware TRACE ownership cues for flagship packs",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "After relay execution is real, deepen TRACE by making file-level cues more explicit and tying them to pack-aware ownership and replay provenance. Keep this bounded to the curated flagship packs rather than pretending to do universal repository indexing.",
     "done_when": [
       "TRACE cites replay-proven failing path plus bounded file/owner cues for INC001 and INC002",

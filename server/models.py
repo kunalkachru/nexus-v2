@@ -293,6 +293,7 @@ class ReplicaInvestigationResult(BaseModel):
     mitigation_comparison: dict[str, object] = Field(default_factory=dict)
     runtime_enablement_hint: str = ""
     runtime_capability: RuntimeHostCapability = Field(default_factory=RuntimeHostCapability)
+    runtime_provenance: dict[str, object] = Field(default_factory=dict)
     tested_mitigations: list[ReplicaMitigationCheck] = Field(default_factory=list)
     reasoning: str = ""
 
@@ -313,6 +314,7 @@ class TraceInvestigationResult(BaseModel):
     code_owner_slug: str = ""
     suspected_files: list[str] = Field(default_factory=list)
     developer_handoff_summary: str = ""
+    runtime_provenance: dict[str, object] = Field(default_factory=dict)
     confidence: float = Field(ge=0.0, le=1.0, default=0.0)
     reasoning: str = ""
 
