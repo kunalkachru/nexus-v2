@@ -783,7 +783,7 @@ class IncidentService:
             ]
         normalized_evidence = incident.normalized_evidence or {}
         latest_replay = dict(normalized_evidence.get("latest_replay", {})) if isinstance(normalized_evidence.get("latest_replay"), dict) else {}
-        has_runtime_replay = bool(latest_replay and latest_replay.get("status") in {"replay_executed", "relay_executed"})
+        has_runtime_replay = bool(latest_replay and latest_replay.get("status") in {"replay_executed", "relay_executed"} or latest_replay.get("lifecycle_state") == "completed")
         live_payload = await self._build_raw_live_reasoning_payload(
             incident,
             lifecycle=lifecycle,
@@ -1591,6 +1591,13 @@ class IncidentService:
         }.get(capability_state, "unsupported")
         message = str(runtime_capability.get("message") or replica_summary.get("runtime_enablement_hint") or "Replay state unavailable.")
         final_state = "completed" if status in {"replay_executed", "relay_executed"} else "failed"
+
+        if status == "pack_unsupported":
+            message = f"No bounded REPLICA pack is available for this incident class. Runtime replay is not supported; proceeding with inferred-only evidence."
+        elif status == "replay_available":
+            message = f"Bounded REPLICA pack is available but runtime replay was not executed. Proceeding with inferred-only evidence."
+        elif status == "relay_unavailable":
+            message = f"The external runtime host is not currently available or reachable. Proceeding with inferred-only evidence."
         replay_lifecycle = _build_replay_lifecycle(
             requested_at=requested_at,
             started_at=started_at,

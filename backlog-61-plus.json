@@ -39,7 +39,7 @@
     "id": 62,
     "title": "Runtime-host reconciliation and failure semantics",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make runtime-host outcomes explicit and consistent. The product should distinguish relay unreachable, replay unsupported, replay failed, replay partially executed, and replay completed states without collapsing them into generic success or failure language.",
     "implementation_tasks": [
       "define a bounded runtime status vocabulary shared by packaged app, runtime host, UI, and exported evidence",

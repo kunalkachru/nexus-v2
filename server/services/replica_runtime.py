@@ -65,6 +65,7 @@ class ReplicaExecutionResult:
     mitigation_status_codes: tuple[int | None, ...] = ()
     mitigation_duration_ms: tuple[int | None, ...] = ()
     mode: str = "scaffold"
+    reconciliation: dict[str, str] = field(default_factory=dict)
 
 
 def registry() -> dict[str, ReplicaEnvironmentPack]:
@@ -761,6 +762,22 @@ def build_runtime_trust_packet(
     )
     status_code = execution_result.replay_status_code if execution_result else None
     duration_ms = execution_result.replay_duration_ms if execution_result else None
+
+    reconciliation_source = (
+        "runtime_host_relay" if execution_mode == "delegated_relay"
+        else "packaged_app" if execution_mode == "direct_runtime"
+        else "inferred_scaffold"
+    )
+    reconciliation_reason = {
+        "replay_executed": "replay executed successfully on packaged app",
+        "replay_available": "replay execution available but not executed on packaged app",
+        "relay_executed": "replay delegated and executed on external runtime host",
+        "relay_available": "replay delegation available but not executed on external runtime host",
+        "host_unavailable": "external runtime host unavailable or unreachable",
+        "pack_validation_required": "pack validation required on runtime host",
+        "no_pack": "no bounded pack available for this incident class",
+    }.get(capability_state, "unknown")
+
     return {
         "decision": decision,
         "execution_mode": execution_mode,
@@ -773,6 +790,11 @@ def build_runtime_trust_packet(
         "duration_ms": duration_ms,
         "policy_basis": "Only curated bounded runtime packs can be replayed through the runtime host path.",
         "operator_summary": str(runtime_capability.get("message") or ""),
+        "reconciliation": {
+            "source": reconciliation_source,
+            "reason": reconciliation_reason,
+            "timestamp": None,
+        },
     }
 
 
