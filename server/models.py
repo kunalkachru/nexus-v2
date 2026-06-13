@@ -36,6 +36,16 @@ class IncidentRecord(BaseModel):
     title: str
     severity: str
     status: Literal["investigating", "resolved", "blocked_by_guardian", "needs_modification"]
+    case_lifecycle: Literal[
+        "created",
+        "triaged",
+        "investigating",
+        "handoff_prepared",
+        "awaiting_review",
+        "approved",
+        "executed",
+        "closed",
+    ] = "created"
     tenant_id: str = "tenant-system"
     source: Literal[
         "datadog",
@@ -83,6 +93,16 @@ class IncidentLifecycleResponse(BaseModel):
     title: str
     severity: str
     status: Literal["investigating", "resolved", "blocked_by_guardian", "needs_modification"]
+    case_lifecycle: Literal[
+        "created",
+        "triaged",
+        "investigating",
+        "handoff_prepared",
+        "awaiting_review",
+        "approved",
+        "executed",
+        "closed",
+    ] = "created"
     source: Literal[
         "datadog",
         "prometheus",
@@ -121,6 +141,16 @@ class QueueIncidentSummary(BaseModel):
     title: str
     severity: str
     status: Literal["investigating", "resolved", "blocked_by_guardian", "needs_modification"]
+    case_lifecycle: Literal[
+        "created",
+        "triaged",
+        "investigating",
+        "handoff_prepared",
+        "awaiting_review",
+        "approved",
+        "executed",
+        "closed",
+    ] = "created"
     source_channel: Literal["webhook", "raw_text", "manual_form", "slack_command", "stream_anomaly", "batch_import"]
     current_stage: IncidentWorkflowStage
     updated_at: str
