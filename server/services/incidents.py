@@ -932,6 +932,7 @@ class IncidentService:
             root_cause=diagnosis["root_cause"],
             source_channel=self._queue_source_channel(incident.source),
             detected_signals=observability["recent_logs"],
+            tenant_id=tenant_id,
         )
         if has_runtime_replay and latest_replay.get("replica_summary"):
             replica_summary = dict(latest_replay["replica_summary"])
@@ -1238,6 +1239,7 @@ class IncidentService:
             root_cause=prism_output.root_cause,
             source_channel="raw_text",
             detected_signals=live_observability["recent_logs"],
+            tenant_id=tenant_id,
         )
         live_candidate_fixes = runtime_aligned_candidate_fixes(
             str(triage_summary.get("issue_family", "")),

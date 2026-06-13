@@ -1414,6 +1414,7 @@ def build_triage_summary(
     root_cause: str,
     source_channel: str,
     detected_signals: list[object] | None = None,
+    tenant_id: str | None = None,
 ) -> dict[str, object]:
     issue_family = infer_issue_family(root_cause, incident_name)
     service_key = service.lower()
@@ -1445,12 +1446,20 @@ def build_triage_summary(
         blast_radius = "Customer traffic cannot establish trust with the public endpoint."
         approval_focus = "Restore trust boundaries without widening certificate or DNS risk."
 
+    owner_resolution = _resolve_owner_for_service(
+        likely_owner_service,
+        tenant_id=tenant_id,
+        fallback_team=likely_owner_team,
+    )
+
     signal_count = len(detected_signals or [])
     return {
         "issue_family": issue_family,
         "impacted_customer_path": impacted_customer_path,
         "likely_owner_service": likely_owner_service,
-        "likely_owner_team": likely_owner_team,
+        "likely_owner_team": owner_resolution.get("team", likely_owner_team),
+        "owner_provenance": owner_resolution.get("provenance", "system-defaults"),
+        "is_owner_tenant_mapped": owner_resolution.get("is_tenant_mapped", False),
         "responder_team": responder_team,
         "support_queue": support_queue,
         "source_channel": source_channel,
@@ -2440,6 +2449,61 @@ def _load_trace_ownership_map() -> dict[str, object]:
         return json.loads(TRACE_OWNERSHIP_MAP_PATH.read_text())
     except (OSError, json.JSONDecodeError):
         return {"source": "trace_ownership_map.json", "entries": []}
+
+
+def _get_tenant_owner_mappings() -> dict[str, object]:
+    tenant_mappings = {
+        "tenant-a": {
+            "checkout-svc": {
+                "team": "Checkout Platform",
+                "escalation_team": "Platform SRE",
+                "repository": "github.com/company/checkout-service",
+                "code_owner_slug": "@checkout-team",
+                "provenance": "tenant-a-config",
+            },
+            "auth-svc": {
+                "team": "Identity Platform",
+                "escalation_team": "Platform SRE",
+                "repository": "github.com/company/auth-service",
+                "code_owner_slug": "@auth-team",
+                "provenance": "tenant-a-config",
+            },
+        }
+    }
+    return tenant_mappings
+
+
+def _resolve_owner_for_service(
+    service: str,
+    *,
+    tenant_id: str | None = None,
+    fallback_team: str = "Platform Operations",
+    fallback_slug: str = "@platform-ops",
+) -> dict[str, object]:
+    service_key = service.lower().strip()
+
+    if tenant_id:
+        tenant_mappings = _get_tenant_owner_mappings()
+        tenant_mapping = tenant_mappings.get(tenant_id, {})
+        if service_key in tenant_mapping:
+            mapping = tenant_mapping[service_key]
+            return {
+                "team": mapping.get("team", fallback_team),
+                "escalation_team": mapping.get("escalation_team", fallback_team),
+                "repository": mapping.get("repository", ""),
+                "code_owner_slug": mapping.get("code_owner_slug", fallback_slug),
+                "provenance": mapping.get("provenance", "tenant-mapping"),
+                "is_tenant_mapped": True,
+            }
+
+    return {
+        "team": fallback_team,
+        "escalation_team": fallback_team,
+        "repository": "",
+        "code_owner_slug": fallback_slug,
+        "provenance": "system-defaults",
+        "is_tenant_mapped": False,
+    }
 
 
 def _resolve_trace_owner(

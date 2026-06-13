@@ -456,8 +456,12 @@ function renderSummary(data) {
 
   const summary = document.getElementById("incidentSummary");
   if (summary) {
+    const ownerInfo = triage.likely_owner_team || triage.likely_owner_service || "-";
+    const ownerProvenance = triage.owner_provenance || triage.is_owner_tenant_mapped ?
+      `${ownerInfo} (${triage.owner_provenance || "tenant-mapped"})` :
+      ownerInfo;
     summary.innerHTML = [
-      ["Likely owner", triage.likely_owner_team || triage.likely_owner_service || "-"],
+      ["Likely owner", ownerProvenance],
       ["Issue family", triage.issue_family || "-"],
       ["Customer path", triage.impacted_customer_path || "-"],
       ["Approval", titleCase(data.guardian.required_approval_level || "operator")],

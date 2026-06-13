@@ -75,7 +75,7 @@
     "id": 71,
     "title": "Tenant-specific ownership and repository mapping",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Replace more of the generic flagship ownership story with tenant-aware mappings. The product should be able to resolve likely owners, repository paths, and service boundaries from customer-specific configuration rather than leaning mostly on checked-in demo maps.",
     "implementation_tasks": [
       "define a tenant-aware mapping substrate for service ownership, escalation destination, and repo association",
