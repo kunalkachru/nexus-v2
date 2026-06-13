@@ -2072,6 +2072,51 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
                 "failure_reason": str(e),
             }
 
+    async def submit_engineering_feedback(
+        self,
+        nexus_incident_id: str,
+        *,
+        feedback_status: str,
+        feedback_reason: str = "",
+        tenant_id: str | None = None,
+    ) -> dict[str, object]:
+        try:
+            stored_incident = (
+                await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
+                if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
+                else await self._session.incidents.get_incident(nexus_incident_id)
+            )
+
+            normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
+            if "engineering_feedback" not in normalized_evidence:
+                normalized_evidence["engineering_feedback"] = []
+
+            feedback_entry = {
+                "status": feedback_status,
+                "reason": feedback_reason,
+                "recorded_at": _utc_now_iso(),
+            }
+
+            normalized_evidence["engineering_feedback"].append(feedback_entry)
+
+            await self._session.incidents.update_incident_normalized_evidence(
+                nexus_incident_id,
+                normalized_evidence=normalized_evidence,
+            )
+
+            return {
+                "incident_id": nexus_incident_id,
+                "feedback_status": feedback_status,
+                "recorded_at": feedback_entry["recorded_at"],
+            }
+        except Exception as e:
+            logger.error(f"Failed to record engineering feedback for {nexus_incident_id}: {str(e)}")
+            return {
+                "incident_id": nexus_incident_id,
+                "feedback_status": "error",
+                "error": str(e),
+            }
+
     async def get_audit_logs(
         self,
         nexus_incident_id: str,

@@ -538,6 +538,37 @@ async def send_engineering_handoff_v1(
     return response
 
 
+@app.post("/api/v1/incidents/{nexus_incident_id}/engineering-feedback")
+async def submit_engineering_feedback_v1(
+    nexus_incident_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_feedback")
+    body = await request.json()
+    feedback_status = body.get("status", "accepted")
+    feedback_reason = body.get("reason", "")
+
+    response = await service.submit_engineering_feedback(
+        nexus_incident_id,
+        feedback_status=feedback_status,
+        feedback_reason=feedback_reason,
+        tenant_id=auth.tenant_id,
+    )
+
+    await write_audit_log(
+        "incident.engineering_feedback.submitted",
+        auth.tenant_id,
+        {
+            "nexus_incident_id": nexus_incident_id,
+            "feedback_status": feedback_status,
+            "user_id": auth.user_id,
+        },
+    )
+    return response
+
+
 @app.post("/api/v1/incidents/{nexus_incident_id}/execute")
 async def execute_incident_v1(
     nexus_incident_id: str,

@@ -108,7 +108,7 @@
     "id": 72,
     "title": "Engineering feedback loop and outcome ingestion",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make the support-to-engineering handoff bidirectional. Once engineering accepts, edits, rejects, or resolves a handoff, that feedback should come back into NEXUS so memory, outcome history, and ROI reflect what happened in the real workflow.",
     "implementation_tasks": [
       "define a bounded feedback model for accepted, edited, rejected, resolved, and reopened engineering outcomes",

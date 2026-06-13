@@ -1380,3 +1380,44 @@ def test_handoff_send_persists_delivery_status(client: TestClient, seeded_incide
             await session.close()
 
     asyncio.run(verify_persistence())
+
+
+def test_engineering_feedback_endpoint_records_status(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/INC001/engineering-feedback",
+        json={"status": "accepted", "reason": "Fix verified in production"},
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["incident_id"] == "INC001"
+    assert payload["feedback_status"] == "accepted"
+    assert "recorded_at" in payload
+
+
+def test_engineering_feedback_persists_in_incident(client: TestClient, seeded_incident: IncidentRecord, auth_headers) -> None:
+    incident_id = seeded_incident.nexus_incident_id
+
+    response = client.post(
+        f"/api/v1/incidents/{incident_id}/engineering-feedback",
+        json={"status": "resolved", "reason": "Issue closed"},
+        headers=auth_headers(tenant_id="tenant-a"),
+    )
+
+    assert response.status_code == 200
+
+    async def verify_persistence() -> None:
+        session = app.state.db_session_factory()
+        try:
+            incident = await session.incidents.get_incident(incident_id)
+            assert incident is not None
+            normalized_evidence = incident.normalized_evidence or {}
+            feedback = normalized_evidence.get("engineering_feedback", [])
+            assert len(feedback) > 0
+            assert feedback[0]["status"] == "resolved"
+            assert feedback[0]["reason"] == "Issue closed"
+        finally:
+            await session.close()
+
+    asyncio.run(verify_persistence())

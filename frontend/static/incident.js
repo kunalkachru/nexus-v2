@@ -1150,6 +1150,57 @@ function renderDeliveryHistory(data) {
   renderList("deliveryHistory", items, (item) => `<div><strong>${item.label}</strong><br><span class="section-note">${item.detail}</span></div>`);
 }
 
+function renderEngineeringFeedback(data) {
+  const normalized_evidence = data.normalized_evidence || {};
+  const feedback = normalized_evidence.engineering_feedback || [];
+
+  if (!feedback || feedback.length === 0) {
+    setText("engineeringFeedback", "No feedback recorded yet.");
+    return;
+  }
+
+  const items = feedback.map((entry) => {
+    const icon = entry.status === "accepted" ? "✓" : entry.status === "rejected" ? "✗" : entry.status === "resolved" ? "→" : "⧖";
+    const reason = entry.reason ? ` — ${entry.reason}` : "";
+    return {
+      label: `${icon} ${String(entry.status || "pending").toUpperCase()}${reason}`,
+      detail: `Recorded at ${formatTimestamp(entry.recorded_at)}`,
+    };
+  });
+
+  renderList("engineeringFeedback", items, (item) => `<div><strong>${item.label}</strong><br><span class="section-note">${item.detail}</span></div>`);
+}
+
+function setupEngineeringFeedbackHandlers(incidentId) {
+  const submitFeedback = async (status, reason = "") => {
+    const btn = document.getElementById(`feedback${status.charAt(0).toUpperCase() + status.slice(1)}Btn`);
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = `Submitting ${status}...`;
+    }
+    try {
+      await postAuthedJson(
+        `/api/v1/incidents/${encodeURIComponent(incidentId)}/engineering-feedback`,
+        { status, reason }
+      );
+      alert(`Feedback recorded: ${status}`);
+      location.reload();
+    } catch (err) {
+      console.error("Feedback submission failed:", err);
+      alert("Failed to record feedback. See console for details.");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = `Mark as ${status}`;
+      }
+    }
+  };
+
+  document.getElementById("feedbackAcceptedBtn")?.addEventListener("click", () => submitFeedback("accepted"));
+  document.getElementById("feedbackRejectedBtn")?.addEventListener("click", () => submitFeedback("rejected"));
+  document.getElementById("feedbackResolvedBtn")?.addEventListener("click", () => submitFeedback("resolved"));
+}
+
 function settleRelayState(data) {
   const decision = String(data.guardian?.decision || "").toLowerCase();
   if (data.execution_result === "executed" || ["approve", "reject", "request_modification"].includes(decision)) {
@@ -1182,6 +1233,8 @@ async function loadAndRenderIncident(incidentId, options = {}) {
   renderAudit(status, auditLogs, data);
   renderExecutionOutcome(data);
   renderDeliveryHistory(data);
+  renderEngineeringFeedback(data);
+  setupEngineeringFeedbackHandlers(incidentId);
   setText(
     "guardianGateState",
     `${data.guardian.reasoning}${data.guardian.required_approval_level ? ` Approval level: ${data.guardian.required_approval_level}.` : ""}${data.guardian.rollback_readiness ? ` Rollback: ${data.guardian.rollback_readiness}.` : ""}`
