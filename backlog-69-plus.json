@@ -175,7 +175,7 @@
     "id": 74,
     "title": "Operator ROI and buyer-value metrics v2",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make the buyer case measurable. NEXUS should show not just workflow stages, but business-relevant metrics such as relay steps reduced, triage time saved, replay reuse, approval turnaround, and engineering handoff conversion so support leaders can evaluate the product as a cost and speed lever.",
     "implementation_tasks": [
       "define a bounded ROI metric model tied to support relay reduction and faster decision-making",

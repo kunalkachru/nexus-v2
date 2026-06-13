@@ -48,6 +48,7 @@ from server.services.enterprise_runtime import (
     EnterpriseNexusRuntime,
     IncidentKnowledgeService,
     build_replica_summary,
+    build_roi_metrics,
     build_trace_summary,
     build_triage_summary,
     build_training_enterprise_summary,
@@ -2621,6 +2622,7 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
         summary["replay_readiness"] = "Ready"
         summary["training_signal"] = "Derived from live incidents and persisted audit events"
         summary["enterprise_summary"] = build_training_enterprise_summary(payload)
+        summary["roi_metrics"] = build_roi_metrics(payload)
         await record_training_snapshot(
             {
                 "tenant_id": tenant_id,
