@@ -3,7 +3,7 @@
     "id": 69,
     "title": "Pilot intake connectors and durable case lifecycle",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Turn the current bounded intake flow into a pilot-usable case lifecycle. Add one or two real intake entry shapes, preserve durable case state beyond the current demo loop, and make support cases feel like managed work items rather than only demo incidents.",
     "implementation_tasks": [
       "define a pilot-safe intake model for at least two real entry shapes such as webhook-style payloads and structured pasted incident reports",
