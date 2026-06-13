@@ -10,8 +10,8 @@ Items `41–46`: **complete**
 Items `47–53`: **complete**
 Items `54–60`: **complete**
 Items `61–68`: **complete** (hardening and truthfulness checkpoint)
-Items `69–76`: **planned in `backlog-69-plus.json`**
-Next phase: pilot readiness and market-facing workflow productization
+Items `69–76`: **complete** (pilot readiness checkpoint) in `backlog-69-plus.json`
+Next phase: market-ready v1 hardening and deployment preparation
 
 ## App In One Sentence
 

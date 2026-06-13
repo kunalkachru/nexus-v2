@@ -131,11 +131,11 @@ feat(#<id>): <title>
 
 ## Current Frontier
 
-The `15–68` backlog is complete.
+The `15–76` backlog is complete.
 
-The active next execution backlog is `backlog-69-plus.json`.
+The `backlog-69-plus.json` is complete (pilot readiness checkpoint).
 
-This phase is a pilot-readiness checkpoint for the bounded support-triage product.
+The next phase is market-ready v1 hardening and deployment preparation.
 
 ## Reality Check
 

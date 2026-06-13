@@ -26,11 +26,11 @@ Do not start a loop against a vague objective like "improve Nexus more." Write a
 
 ## Current Recommended Scope
 
-The `15–68` backlog is complete.
+The `15–76` backlog is complete.
 
-The active next backlog is `backlog-69-plus.json`.
+The `backlog-69-plus.json` is finished (pilot readiness checkpoint achieved).
 
-This phase is for pilot readiness and market-facing workflow productization, not breadth-first expansion.
+The next phase is market-ready v1 hardening and deployment preparation, not breadth-first expansion.
 
 Before the loop starts:
 
