@@ -141,7 +141,7 @@
     "id": 73,
     "title": "Admin controls for packs, policies, and destinations",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Introduce bounded operator administration so pilot teams do not need code edits for every environment change. Enabled runtime packs, debugger support, approval policies, and delivery targets should be visible and manageable through product-facing controls or configuration surfaces.",
     "implementation_tasks": [
       "define a bounded admin model for enabled packs, approval policies, and delivery destinations",

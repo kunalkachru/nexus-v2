@@ -134,6 +134,43 @@
 
         <section class="section">
             <div class="section-header">
+                <h2>Admin Controls</h2>
+                <div class="section-note">Bounded operator administration for pilot operations. Some controls require code changes.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Enabled packs</div>
+                    <p class="hero-copy">Curated runtime packs available for this tenant environment.</p>
+                    <ul class="simple-list" id="adminEnabledPacks">
+                        <li><code>checkout-python-fastapi-auth-redis-v1</code> — INC001 timeout/retry (enabled)</li>
+                        <li><code>checkout-python-fastapi-postgres-v1</code> — INC002 DB pool (enabled)</li>
+                    </ul>
+                    <p class="section-note" style="margin-top: 1em;">Packs are code-managed. Contact engineering to enable new packs.</p>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Approval policies</div>
+                    <p class="hero-copy">Guardian approval requirements by incident severity.</p>
+                    <ul class="simple-list" id="adminPolicies">
+                        <li>P0 incidents → <code>incident_manager</code> approval</li>
+                        <li>P1-P2 incidents → <code>operator</code> approval</li>
+                        <li>P3-P4 incidents → <code>operator</code> review</li>
+                    </ul>
+                    <p class="section-note" style="margin-top: 1em;">Policies are system-configured. Updates require code change and redeployment.</p>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Delivery destinations</div>
+                    <p class="hero-copy">Downstream targets where investigation packets can be sent.</p>
+                    <ul class="simple-list" id="adminDestinations">
+                        <li>GitHub — ✓ Active (configured but not yet connected)</li>
+                        <li>Slack — ✓ Active (UI support ready)</li>
+                    </ul>
+                    <p class="section-note" style="margin-top: 1em;">Destinations are product-managed. New targets require backend implementation.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
                 <h2>Backend Contract Surface</h2>
                 <div class="section-note">This is the contract surface the product grows from as reproduction, debugging, and deeper integration work come online.</div>
             </div>
