@@ -208,7 +208,7 @@
     "id": 75,
     "title": "One repo-aware debugger handoff for the pilot environment",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Upgrade the bounded debugger story from generic curated-pack guidance to one real pilot environment handoff. For one outage class and one repository mapping, the debugger packet should point to a believable owner, file path, and inspection path that an engineering team could act on directly.",
     "implementation_tasks": [
       "choose one pilot outage class and one repository mapping as the first real debugger target",
@@ -243,7 +243,7 @@
     "id": 76,
     "title": "One tenant-specific runtime pack upgrade for the pilot environment",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen REPLICA for one real pilot environment. Instead of broadening to many more packs, upgrade one flagship runtime pack to reflect one tenant's real stack or operating conditions closely enough that reproduction becomes materially more convincing for the pilot workflow.",
     "implementation_tasks": [
       "choose one flagship outage and define the tenant-specific runtime differences that matter for replay credibility",
