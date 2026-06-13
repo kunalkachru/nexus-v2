@@ -42,7 +42,7 @@
     "id": 70,
     "title": "Real downstream handoff actions for engineering workflows",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Move past export-only artifacts and support at least one real downstream handoff path. The operator should be able to send a bounded engineering-ready packet into a real workflow target such as GitHub, Jira, or Slack while preserving truth labels and governance context.",
     "implementation_tasks": [
       "choose one primary downstream target and one secondary target for real pilot delivery",

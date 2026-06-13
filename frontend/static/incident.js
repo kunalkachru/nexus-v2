@@ -1124,6 +1124,28 @@ function renderExecutionOutcome(data) {
   }
 }
 
+function renderDeliveryHistory(data) {
+  const normalized_evidence = data.normalized_evidence || {};
+  const delivery_history = normalized_evidence.delivery_history || [];
+
+  if (!delivery_history || delivery_history.length === 0) {
+    setText("deliveryHistory", "No deliveries yet.");
+    return;
+  }
+
+  const items = delivery_history.map((entry) => {
+    const icon = entry.status === "delivered" ? "✓" : entry.status === "failed" ? "✗" : "⧖";
+    const backing = entry.evidence_backing ? ` (${entry.evidence_backing})` : "";
+    const reason = entry.failure_reason ? ` — ${entry.failure_reason}` : "";
+    return {
+      label: `${icon} ${String(entry.target || "unknown").toUpperCase()} — ${entry.status || "pending"}${backing}${reason}`,
+      detail: `Sent at ${formatTimestamp(entry.sent_at)}`,
+    };
+  });
+
+  renderList("deliveryHistory", items, (item) => `<div><strong>${item.label}</strong><br><span class="section-note">${item.detail}</span></div>`);
+}
+
 function settleRelayState(data) {
   const decision = String(data.guardian?.decision || "").toLowerCase();
   if (data.execution_result === "executed" || ["approve", "reject", "request_modification"].includes(decision)) {
@@ -1155,6 +1177,7 @@ async function loadAndRenderIncident(incidentId, options = {}) {
   renderEvidence(data);
   renderAudit(status, auditLogs, data);
   renderExecutionOutcome(data);
+  renderDeliveryHistory(data);
   setText(
     "guardianGateState",
     `${data.guardian.reasoning}${data.guardian.required_approval_level ? ` Approval level: ${data.guardian.required_approval_level}.` : ""}${data.guardian.rollback_readiness ? ` Rollback: ${data.guardian.rollback_readiness}.` : ""}`
@@ -1382,6 +1405,55 @@ Generated: ${govData.generated_at}
         button.disabled = false;
         button.textContent = "Export governance";
       }
+    }
+  });
+
+  const sendDropdown = document.getElementById("sendDropdown");
+  const sendBtn = document.getElementById("sendHandoffBtn");
+
+  if (sendBtn) {
+    sendBtn.addEventListener("click", () => {
+      if (sendDropdown) {
+        sendDropdown.style.display = sendDropdown.style.display === "none" ? "block" : "none";
+      }
+    });
+  }
+
+  document.querySelectorAll(".send-option")?.forEach(option => {
+    option.addEventListener("click", async (e) => {
+      const target = e.target.getAttribute("data-target") || "github";
+      if (sendDropdown) {
+        sendDropdown.style.display = "none";
+      }
+      if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.textContent = `Sending to ${target}...`;
+      }
+      try {
+        const response = await postAuthedJson(
+          `/api/v1/incidents/${encodeURIComponent(incidentId)}/handoff-send`,
+          { target }
+        );
+        if (response.status === "delivered") {
+          alert(`Successfully sent to ${target}!`);
+        } else {
+          alert(`Send failed: ${response.failure_reason || 'Unknown error'}`);
+        }
+      } catch (err) {
+        console.error("Handoff send failed:", err);
+        alert("Failed to send engineering handoff. See console for details.");
+      } finally {
+        if (sendBtn) {
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Send to engineering";
+        }
+      }
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (sendDropdown && !e.target.closest("#sendHandoffBtn") && !e.target.closest(".send-dropdown")) {
+      sendDropdown.style.display = "none";
     }
   });
 

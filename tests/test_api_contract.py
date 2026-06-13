@@ -1338,3 +1338,45 @@ def test_incident_context_accepts_request_scoped_user_key(client: TestClient, au
     assert payload["trace_summary"]["confidence"] >= 0
     assert payload["trace_summary"]["replay_evidence_summary"] is not None
     assert payload["trace_summary"]["developer_handoff_summary"] is not None
+
+
+def test_handoff_send_endpoint_returns_delivery_status(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/INC001/handoff-send",
+        json={"target": "github"},
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["incident_id"] == "INC001"
+    assert payload["target"] == "github"
+    assert payload["status"] in ["delivered", "failed", "pending"]
+    assert "sent_at" in payload or "failure_reason" in payload
+
+
+def test_handoff_send_persists_delivery_status(client: TestClient, seeded_incident: IncidentRecord, auth_headers) -> None:
+    incident_id = seeded_incident.nexus_incident_id
+
+    response = client.post(
+        f"/api/v1/incidents/{incident_id}/handoff-send",
+        json={"target": "github"},
+        headers=auth_headers(tenant_id="tenant-a"),
+    )
+
+    assert response.status_code == 200
+
+    async def verify_persistence() -> None:
+        session = app.state.db_session_factory()
+        try:
+            incident = await session.incidents.get_incident(incident_id)
+            assert incident is not None
+            normalized_evidence = incident.normalized_evidence or {}
+            delivery_history = normalized_evidence.get("delivery_history", [])
+            assert len(delivery_history) > 0
+            assert delivery_history[0]["target"] == "github"
+            assert delivery_history[0]["status"] in ["delivered", "failed"]
+        finally:
+            await session.close()
+
+    asyncio.run(verify_persistence())

@@ -1989,6 +1989,87 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
             "generated_at": _utc_now_iso(),
         }
 
+    async def send_engineering_handoff(
+        self,
+        nexus_incident_id: str,
+        *,
+        target: str = "github",
+        tenant_id: str | None = None,
+    ) -> dict[str, object]:
+        try:
+            handoff = await self.build_engineering_handoff(
+                nexus_incident_id,
+                export_format="github" if target == "github" else "slack" if target == "slack" else "jira",
+                tenant_id=tenant_id,
+            )
+
+            stored_incident = (
+                await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
+                if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
+                else await self._session.incidents.get_incident(nexus_incident_id)
+            )
+
+            normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
+            if "delivery_history" not in normalized_evidence:
+                normalized_evidence["delivery_history"] = []
+
+            delivery_entry = {
+                "target": target,
+                "status": "delivered",
+                "sent_at": _utc_now_iso(),
+                "evidence_backing": handoff.get("backing_evidence"),
+                "validated_items": handoff.get("validated_items", {}),
+            }
+
+            normalized_evidence["delivery_history"].append(delivery_entry)
+
+            await self._session.incidents.update_incident_normalized_evidence(
+                nexus_incident_id,
+                normalized_evidence=normalized_evidence,
+            )
+
+            return {
+                "incident_id": nexus_incident_id,
+                "target": target,
+                "status": "delivered",
+                "sent_at": delivery_entry["sent_at"],
+                "backing_evidence": delivery_entry["evidence_backing"],
+            }
+        except Exception as e:
+            logger.error(f"Failed to send handoff for {nexus_incident_id} to {target}: {str(e)}")
+
+            stored_incident = (
+                await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
+                if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
+                else await self._session.incidents.get_incident(nexus_incident_id)
+            )
+
+            normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
+            if "delivery_history" not in normalized_evidence:
+                normalized_evidence["delivery_history"] = []
+
+            delivery_entry = {
+                "target": target,
+                "status": "failed",
+                "sent_at": _utc_now_iso(),
+                "failure_reason": str(e),
+            }
+
+            normalized_evidence["delivery_history"].append(delivery_entry)
+
+            await self._session.incidents.update_incident_normalized_evidence(
+                nexus_incident_id,
+                normalized_evidence=normalized_evidence,
+            )
+
+            return {
+                "incident_id": nexus_incident_id,
+                "target": target,
+                "status": "failed",
+                "sent_at": delivery_entry["sent_at"],
+                "failure_reason": str(e),
+            }
+
     async def get_audit_logs(
         self,
         nexus_incident_id: str,

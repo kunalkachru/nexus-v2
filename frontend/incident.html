@@ -73,6 +73,13 @@
                             <button class="export-option" data-format="slack" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem;">Slack Message</button>
                         </div>
                     </div>
+                    <div style="position: relative; display: inline-block;">
+                        <button class="nav-link channel-ghost" id="sendHandoffBtn" type="button">Send to engineering</button>
+                        <div class="send-dropdown" id="sendDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: var(--surface-raised); border: 1px solid var(--border-subtle); border-radius: 4px; min-width: 160px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                            <button class="send-option" data-target="github" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">Send to GitHub</button>
+                            <button class="send-option" data-target="slack" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem;">Send to Slack</button>
+                        </div>
+                    </div>
                     <button class="nav-link channel-ghost" id="exportGovernanceBtn" type="button">Export governance</button>
                 </div>
                 <div class="relay-banner" id="relayStageBanner">Waiting for the orchestration relay to start.</div>
@@ -412,6 +419,9 @@
                             <div class="badge">Execute path</div>
                             <p class="hero-copy">Execution remains behind an explicit Guardian approval or block choice.</p>
                             <div class="result-banner" id="executionResult">Awaiting a Guardian decision.</div>
+                            <div class="badge" style="margin-top: 1.5em;">Delivery history</div>
+                            <p class="hero-copy">Track when and where the investigation packet was sent downstream.</p>
+                            <ul class="simple-list" id="deliveryHistory"></ul>
                         </div>
                     </div>
                 </section>

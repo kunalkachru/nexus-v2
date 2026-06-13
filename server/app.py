@@ -508,6 +508,36 @@ async def get_governance_packet_v1(
     return packet
 
 
+@app.post("/api/v1/incidents/{nexus_incident_id}/handoff-send")
+async def send_engineering_handoff_v1(
+    nexus_incident_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_handoff_send")
+    body = await request.json()
+    target = body.get("target", "github")
+
+    response = await service.send_engineering_handoff(
+        nexus_incident_id,
+        target=target,
+        tenant_id=auth.tenant_id,
+    )
+
+    await write_audit_log(
+        "incident.handoff_send.attempted",
+        auth.tenant_id,
+        {
+            "nexus_incident_id": nexus_incident_id,
+            "target": target,
+            "status": response.get("status"),
+            "user_id": auth.user_id,
+        },
+    )
+    return response
+
+
 @app.post("/api/v1/incidents/{nexus_incident_id}/execute")
 async def execute_incident_v1(
     nexus_incident_id: str,
