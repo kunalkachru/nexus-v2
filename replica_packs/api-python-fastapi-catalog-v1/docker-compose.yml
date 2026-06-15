@@ -1,0 +1,31 @@
+services:
+  api:
+    build:
+      context: ./api
+    command: ["python", "/app/api_server.py"]
+    environment:
+      CATALOG_DB_URL: "postgresql://postgres:postgres@catalog-db:5432/catalog"
+      ENABLE_QUERY_OPTIMIZATION: "true"
+    volumes:
+      - ./runtime:/runtime
+    ports:
+      - "18080:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  catalog-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: catalog
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./runtime/catalog_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

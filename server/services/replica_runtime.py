@@ -177,6 +177,34 @@ def registry() -> dict[str, ReplicaEnvironmentPack]:
                 "checkout.transaction_flow": ("release_db_session",),
             },
         ),
+        "api-python-fastapi-catalog-v1": ReplicaEnvironmentPack(
+            pack_id="api-python-fastapi-catalog-v1",
+            incident_classes=("deploy_regression", "query_null_pointer"),
+            services=("api-service", "catalog-db"),
+            stack=("python", "fastapi", "postgres"),
+            compose_file=packs_root / "api-python-fastapi-catalog-v1" / "docker-compose.yml",
+            replay_profile="api_catalog_replay_v1",
+            mitigation_hooks=("rollback_catalog_optimization", "deploy_null_check_hotfix"),
+            hypothesis_summary=(
+                "Prove that the catalog query optimization deployment introduces a null-pointer bug in the filter logic causing 5xx errors until the optimization is rolled back or the hotfix is deployed."
+            ),
+            expected_baseline_status=500,
+            triggering_conditions=(
+                "The catalog query optimization is enabled on the API service.",
+                "Search queries hit the optimized filter path with the null-pointer regression.",
+                "API returns 5xx errors until optimization is disabled or hotfixed.",
+            ),
+            expected_failure_signature=(
+                "Baseline replay returns HTTP 500 due to null-pointer in query filter.",
+                "Query optimization feature correlates with 5xx spike in logs.",
+                "Runtime clears when optimization is rolled back or null-check hotfix is deployed.",
+            ),
+            trace_source_map={
+                "api.catalog.query": ("_apply_optimized_filter",),
+                "api.search.endpoint": ("search_products",),
+                "api.filter.logic": ("_apply_optimized_filter",),
+            },
+        ),
     }
 
 
@@ -320,6 +348,10 @@ def select_environment_pack(
         return packs["checkout-python-fastapi-postgres-v1"]
     if any(token in text for token in ("retry", "timeout", "worker saturation", "circuit breaker")):
         return packs["checkout-python-fastapi-auth-redis-v1"]
+    if any(token in issue_family_text for token in ("deploy regression", "5xx spike")) or any(
+        token in text for token in ("api-service", "query optimization", "null pointer")
+    ):
+        return packs.get("api-python-fastapi-catalog-v1")
     return None
 
 
@@ -345,6 +377,15 @@ def build_execution_plan(
             startup_timeout_seconds=45,
             healthcheck_targets=("gateway", "auth", "redis"),
             replay_entrypoint="scripts/replay_checkout_retry.sh",
+            mitigation_sequence=pack.mitigation_hooks,
+        )
+    if pack.pack_id == "api-python-fastapi-catalog-v1":
+        return ReplicaExecutionPlan(
+            pack=pack,
+            incident_class="deploy_regression",
+            startup_timeout_seconds=45,
+            healthcheck_targets=("api", "catalog-db"),
+            replay_entrypoint="scripts/api_catalog_replay_v1.sh",
             mitigation_sequence=pack.mitigation_hooks,
         )
     return ReplicaExecutionPlan(
