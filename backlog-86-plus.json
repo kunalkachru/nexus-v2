@@ -38,7 +38,7 @@
     "id": 87,
     "title": "Bounded REPLICA and TRACE support for INC003",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen the new deploy-regression outage family so it is not just another packet shape. Add a bounded runtime pack and bounded debugging handoff for INC003 so the product can reproduce a 5xx deploy regression, compare at least one mitigation path, and hand engineering a trace-oriented debugging packet consistent with the existing truthfulness model.",
     "implementation_tasks": [
       "add a curated runtime pack for deploy-regression replay and at least one mitigation comparison path",

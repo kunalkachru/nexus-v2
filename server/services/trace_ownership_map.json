@@ -20,6 +20,12 @@
       "source_label": "server/services/trace_ownership_map.json::checkout-pack"
     },
     {
+      "path_prefix": "replica_packs/api-python-fastapi-catalog-v1/api/",
+      "team": "Backend Platform",
+      "slug": "@backend-platform",
+      "source_label": "server/services/trace_ownership_map.json::catalog-pack"
+    },
+    {
       "path_prefix": "edge/",
       "team": "Edge Reliability",
       "slug": "@edge-reliability",
