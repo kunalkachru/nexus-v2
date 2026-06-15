@@ -147,7 +147,7 @@
     "id": 90,
     "title": "Pilot conversion kit for the three-outage wedge",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Turn the expanded three-outage wedge into a stronger pilot conversation package. The product and supporting docs should make it easy to explain outage-family coverage, runtime-backed support state, engineering handoff quality, and why this wedge is commercially useful before any broader platform ambition is attempted.",
     "implementation_tasks": [
       "update buyer-proof, training, and presentation surfaces for the three supported outage families",
@@ -181,7 +181,7 @@
     "id": 91,
     "title": "Final wow-effect UI completion across core surfaces",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Finish the remaining premium product polish so the core surfaces feel presentation-ready and visually intentional. The pass should focus on intake, incident, training, and handoff/export surfaces, with stronger hierarchy, continuity, and motion while preserving readability and evidence truthfulness.",
     "implementation_tasks": [
       "complete the premium visual pass on the most buyer-visible product surfaces",
