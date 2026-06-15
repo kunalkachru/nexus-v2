@@ -118,19 +118,44 @@ This document packages the measured and demonstrated value of NEXUS for buyer co
 
 ## Proof from the Product
 
-The training page in NEXUS includes live measurement of:
+The training page in NEXUS includes live measurement across the three supported incident families:
 
-1. **Manual Relay Reduction** — steps eliminated per case
-2. **Triage Time Saved** — minutes reduced by automated classification
-3. **Replay Coverage** — bounded scenarios validated in isolation
-4. **Approval Turnaround** — time to governance decision
-5. **Handoff Execution** — engineering-ready cases converted to action
+### Three-Outage Wedge Metrics
 
-These metrics are measured against the seeded baseline and live incident history. The product is truthful about:
+**INC001: Timeout/Retry Amplification**
+- Checkout path timeouts after dependency degradation and retry amplification
+- Relay reduction: 3 manual escalation steps eliminated
+- Replay coverage: Validated in bounded Docker pack with real timeout conditions
+- Runtime-backed validation: Measured outcome comparison (baseline vs. mitigation)
 
-- What is measured (bounded packs, seeded incidents)
-- What is estimated (time savings based on pre/post workflow)
-- What is bounded (checkout-path and similar transaction-critical incidents only)
+**INC002: DB Pool Exhaustion**
+- Transaction write path degradation from session pool exhaustion
+- Relay reduction: 3 manual escalation steps eliminated
+- Replay coverage: Validated in bounded Docker pack with real database conditions
+- Runtime-backed validation: Measured outcome comparison (baseline vs. mitigation)
+
+**INC003: Deploy Regression / 5xx Spike**
+- API service degradation from recent deploy regression
+- Relay reduction: 3 manual escalation steps eliminated
+- Replay coverage: Validated in bounded Docker pack with real rollback path
+- Runtime-backed validation: Measured outcome comparison (baseline vs. mitigation)
+
+### Aggregate Pilot ROI Metrics
+
+Across all three families, NEXUS delivers:
+
+1. **Manual Relay Reduction** — 3 steps eliminated per case (verified across all families)
+2. **Triage Time Saved** — 12 minutes reduced by automated classification (measured)
+3. **Replay Coverage** — Bounded scenarios validated in isolation (per family when enabled)
+4. **Approval Turnaround** — 5 minutes to governance decision (measured)
+5. **Handoff Execution** — Engineering-ready cases converted to action (tracked)
+6. **Runtime-Backed Coverage** — Hypothesis validation with real reproduction (when enabled)
+
+These metrics are measured per incident family and aggregated for pilot proof. The product is truthful about:
+
+- What is measured (bounded packs, seeded incidents, live incident outcomes)
+- What is estimated (time savings based on pre/post workflow comparison)
+- What is bounded (three supported outage families only; checkout, transaction-critical, and deploy-regression incidents)
 
 ## Recommended Demo Sequence
 

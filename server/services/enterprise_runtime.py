@@ -1385,12 +1385,43 @@ def build_roi_metrics(payload: dict[str, object]) -> dict[str, object]:
     execution_outcome = payload.get("execution_outcome")
     replica_summary = payload.get("replica_summary", {})
     triage_summary = payload.get("triage_summary", {})
+    issue_family = triage_summary.get("issue_family", "Unknown")
 
     relay_reduction = 3
     triage_time_saved_minutes = 12
     replay_reuse = 1 if replica_summary.get("runtime_executed") else 0
     approval_turnaround_minutes = 5
     handoff_conversion = 1 if execution_outcome and execution_outcome.get("execution_status") == "executed" else 0
+
+    # Map issue family to supported outage classes
+    family_to_class = {
+        "Timeout cascade / retry amplification": "timeout_retry_amplification",
+        "Database pool exhaustion / session leak": "db_pool_exhaustion",
+        "Deploy regression / 5xx spike": "deploy_regression_5xx",
+    }
+    incident_class = family_to_class.get(issue_family, "unknown")
+
+    # Per-family ROI metrics (normalized evidence: measured when replay executed)
+    family_metrics = {
+        "timeout_retry_amplification": {
+            "family_name": "INC001: Timeout/Retry Amplification",
+            "relay_reduction": relay_reduction if "timeout" in issue_family.lower() and "retry" in issue_family.lower() else 0,
+            "replay_executed": 1 if replay_reuse > 0 and "timeout" in issue_family.lower() else 0,
+            "runtime_backed": 1 if replica_summary.get("runtime_executed") and incident_class == "timeout_retry_amplification" else 0,
+        },
+        "db_pool_exhaustion": {
+            "family_name": "INC002: DB Pool Exhaustion",
+            "relay_reduction": relay_reduction if "pool" in issue_family.lower() or "session" in issue_family.lower() else 0,
+            "replay_executed": 1 if replay_reuse > 0 and ("pool" in issue_family.lower() or "session" in issue_family.lower()) else 0,
+            "runtime_backed": 1 if replica_summary.get("runtime_executed") and incident_class == "db_pool_exhaustion" else 0,
+        },
+        "deploy_regression_5xx": {
+            "family_name": "INC003: Deploy Regression / 5xx Spike",
+            "relay_reduction": relay_reduction if "deploy" in issue_family.lower() or "5xx" in issue_family.lower() else 0,
+            "replay_executed": 1 if replay_reuse > 0 and ("deploy" in issue_family.lower() or "5xx" in issue_family.lower()) else 0,
+            "runtime_backed": 1 if replica_summary.get("runtime_executed") and incident_class == "deploy_regression_5xx" else 0,
+        },
+    }
 
     return {
         "relay_steps_reduced": {
@@ -1423,7 +1454,14 @@ def build_roi_metrics(payload: dict[str, object]) -> dict[str, object]:
             "label": f"Engineering handoff executed",
             "measured": True,
         },
-        "summary": f"NEXUS reduced manual relay work by {relay_reduction} steps and triage time by {triage_time_saved_minutes} min per case.",
+        "runtime_backed_coverage": {
+            "value": replay_reuse,
+            "unit": "validations",
+            "label": "Runtime-backed incident validations",
+            "measured": True,
+        },
+        "per_family_metrics": family_metrics,
+        "summary": f"NEXUS reduced manual relay work by {relay_reduction} steps and triage time by {triage_time_saved_minutes} min per case. Runtime replay provided validation for {replay_reuse} case{'s' if replay_reuse != 1 else ''}.",
     }
 
 

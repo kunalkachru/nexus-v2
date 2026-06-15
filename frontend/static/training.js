@@ -444,6 +444,27 @@ function renderOperatorROI(trainingData) {
   setText("memoryHitCount", `${trainingData.summary?.memory_reuse_count || 0} cases`);
   setText("recurrentIssueClasses", `${trainingData.summary?.recurrent_issue_count || 2}`);
   setText("memoryOutcomeWeight", "Outcome-weighted");
+
+  // Per-family metrics from the three-outage wedge
+  const familyMetrics = roiMetrics.per_family_metrics || {};
+  const inc001 = familyMetrics.timeout_retry_amplification || {};
+  const inc002 = familyMetrics.db_pool_exhaustion || {};
+  const inc003 = familyMetrics.deploy_regression_5xx || {};
+
+  // INC001 metrics
+  setText("inc001RelayReduction", inc001.relay_reduction > 0 ? `${inc001.relay_reduction} steps` : "Not in scope");
+  setText("inc001ReplayExecuted", inc001.replay_executed > 0 ? "✓ Yes" : "✗ No");
+  setText("inc001RuntimeBacked", inc001.runtime_backed > 0 ? "✓ Validated" : "✗ None yet");
+
+  // INC002 metrics
+  setText("inc002RelayReduction", inc002.relay_reduction > 0 ? `${inc002.relay_reduction} steps` : "Not in scope");
+  setText("inc002ReplayExecuted", inc002.replay_executed > 0 ? "✓ Yes" : "✗ No");
+  setText("inc002RuntimeBacked", inc002.runtime_backed > 0 ? "✓ Validated" : "✗ None yet");
+
+  // INC003 metrics
+  setText("inc003RelayReduction", inc003.relay_reduction > 0 ? `${inc003.relay_reduction} steps` : "Not in scope");
+  setText("inc003ReplayExecuted", inc003.replay_executed > 0 ? "✓ Yes" : "✗ No");
+  setText("inc003RuntimeBacked", inc003.runtime_backed > 0 ? "✓ Validated" : "✗ None yet");
 }
 
 function renderProductHealth(healthData) {
