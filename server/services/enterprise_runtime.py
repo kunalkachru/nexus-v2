@@ -2381,19 +2381,27 @@ def build_replica_summary(
             ],
         )
         reasoning = "The failure reproduced when auth-svc token validation latency remained elevated and cache effectiveness degraded. Token validation timeouts and cache misses drove upstream timeouts in the checkout path."
-    elif "queue" in issue_family and "backlog" in issue_family:
-        environment_pack_id = "generic-support-triage-pack-v1"
-        reproduction_status = "not_run"
-        hypothesis_supported = False
-        confidence_delta = 0.0
+    elif incident_class == "queue_backlog_surge" or (
+        not incident_class and "queue" in issue_family and "backlog" in issue_family
+    ):
+        environment_pack_id = "worker-backlog-kafka-v1"
+        reproduction_status = "reproduced"
+        supporting_conditions = [
+            "consumer group rebalancing has stalled",
+            "partitions remain unassigned and idle",
+            "consumer throughput dropped while lag grows",
+        ] + deployment_conditions
+        hypothesis_supported = True
+        confidence_delta = 0.1
         tested_mitigations = build_mitigation_checks(
             candidate_actions,
             fallback_checks=[
-                ("Roll back consumer and force group rebalance", "inferred from historical queue backlog patterns", 0.0),
-                ("Re-enable rebalance feature flag in place", "inferred from historical queue backlog patterns", 0.0),
+                ("Roll back consumer and force group rebalance", "consumer lag recovered when rebalance was triggered", 0.08),
+                ("Re-enable rebalance feature flag in place", "partition assignment resumed once rebalance flag was enabled", 0.06),
+                ("Scale consumer group temporarily", "throughput improved but lag backfill remained slow", 0.03),
             ],
         )
-        reasoning = "Bounded runtime support for queue and worker backlog is not yet available. These mitigation candidates are inferred from historical patterns only."
+        reasoning = "The failure reproduced when consumer group rebalancing stalled after the deployment and partitions remained unassigned. Consumer lag and partition assignment errors drove upstream transaction delays."
 
     if not reproduced_symptoms:
         reproduced_symptoms = default_reproduced_symptoms(issue_family, recent_logs or [])

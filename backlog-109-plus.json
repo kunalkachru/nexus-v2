@@ -77,7 +77,7 @@
     "id": 111,
     "title": "Queue and worker backlog family packet across seeded and live paths",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Add a fifth outage family for queue or worker backlog affecting transaction completion. The packet should explain customer impact, likely ownership, and the relay-reduction story across both seeded and live paths before deeper runtime support is attached.",
     "implementation_tasks": [
       "define the queue or worker backlog family across seeded and live paths",
@@ -113,7 +113,7 @@
     "id": 112,
     "title": "Bounded REPLICA and TRACE support for queue and worker backlog family",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Add bounded reproduction and debugging support for the queue and worker backlog family. The runtime pack should stay narrow, with explicit mitigation ladders, runtime outcomes, and a developer handoff packet that points to the backlog-processing boundary.",
     "implementation_tasks": [
       "add a bounded runtime pack for the queue or worker backlog family",

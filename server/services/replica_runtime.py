@@ -233,6 +233,34 @@ def registry() -> dict[str, ReplicaEnvironmentPack]:
                 "auth.certificate_check": ("verify_certificate",),
             },
         ),
+        "worker-backlog-kafka-v1": ReplicaEnvironmentPack(
+            pack_id="worker-backlog-kafka-v1",
+            incident_classes=("queue_backlog_surge", "consumer_lag"),
+            services=("billing-consumer", "kafka-cluster", "ledger-writer"),
+            stack=("go", "kafka", "postgres"),
+            compose_file=packs_root / "worker-backlog-kafka-v1" / "docker-compose.yml",
+            replay_profile="checkout_write_replay_v1",
+            mitigation_hooks=("force_rebalance", "enable_rebalance_flag", "scale_consumer_group"),
+            hypothesis_summary=(
+                "Prove that consumer backlog grows only when partition assignment fails and partitions remain unassigned after rebalancing."
+            ),
+            expected_baseline_status=503,
+            triggering_conditions=(
+                "Consumer group rebalancing has stalled after the latest rollout.",
+                "Partitions remain unassigned and idle.",
+                "Consumer throughput dropped while lag grows unbounded.",
+            ),
+            expected_failure_signature=(
+                "Baseline replay returns HTTP 503 once backlog saturates.",
+                "Consumer lag and partition assignment errors appear in logs.",
+                "Runtime clears only after rebalance is forced or partition assignment is fixed.",
+            ),
+            trace_source_map={
+                "consumer.rebalance": ("on_rebalance_callback",),
+                "consumer.assignment": ("assign_partitions",),
+                "consumer.lag": ("get_consumer_lag",),
+            },
+        ),
     }
 
 
@@ -370,6 +398,8 @@ def select_environment_pack(
         ]
     )
     packs = registry()
+    if "queue" in issue_family_text and ("backlog" in issue_family_text or "lag" in issue_family_text):
+        return packs.get("worker-backlog-kafka-v1")
     if "auth" in issue_family_text and ("dependency" in issue_family_text or "validation" in issue_family_text) and "timeout" not in issue_family_text:
         return packs.get("checkout-python-fastapi-auth-validation-v1")
     if any(token in issue_family_text for token in ("pool exhaustion", "session leak", "database")) or any(
@@ -400,6 +430,15 @@ def build_execution_plan(
     )
     if pack is None:
         return None
+    if pack.pack_id == "worker-backlog-kafka-v1":
+        return ReplicaExecutionPlan(
+            pack=pack,
+            incident_class="queue_backlog_surge",
+            startup_timeout_seconds=45,
+            healthcheck_targets=("kafka", "consumer"),
+            replay_entrypoint="scripts/replay_checkout_pool.sh",
+            mitigation_sequence=pack.mitigation_hooks,
+        )
     if pack.pack_id == "checkout-python-fastapi-auth-validation-v1":
         return ReplicaExecutionPlan(
             pack=pack,
