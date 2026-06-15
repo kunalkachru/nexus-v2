@@ -71,7 +71,7 @@
     "id": 79,
     "title": "Integration reliability and delivery guarantees",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Move downstream handoff integrations from first working state toward reliable workflow plumbing. Delivery attempts, retries, failures, and operator recovery should be visible and auditable so GitHub or Slack handoffs feel trustworthy enough for repeat use.",
     "implementation_tasks": [
       "define delivery-attempt lifecycle states for downstream sends",

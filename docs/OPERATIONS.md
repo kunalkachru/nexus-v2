@@ -91,6 +91,47 @@ The product automatically hides or disables controls based on the user's assigne
 - **Guardian approval buttons**: Hidden for users without `approve_action` capability
 - **Bootstrap config endpoints**: Restricted to `admin` role only
 
+## Delivery Lifecycle and Reliability
+
+### Delivery States
+
+Each handoff send attempt goes through the following lifecycle states:
+
+| State | Meaning | Retryable |
+|-------|---------|-----------|
+| **queued** | Delivery is waiting to be sent | ✓ |
+| **sent** | Successfully sent to the target | ✗ |
+| **retrying** | Previous attempt failed but is retryable (e.g., timeout, connection error) | ✓ |
+| **failed** | Temporary failure (deprecated; see terminal_failure or retrying) | ✓ |
+| **terminal_failure** | Permanent failure (e.g., invalid credentials, target not found) | ✗ |
+
+### Retry Behavior
+
+- **Automatic retry**: The system automatically classifies failures as retryable (timeout/connection errors) vs. terminal (auth/validation errors)
+- **Manual retry**: Operators can manually retry failed deliveries from the incident detail page
+- **Retry limits**: Automatic retries are limited to 2 attempts before marking as terminal_failure
+- **Auditing**: All retry attempts are tracked in the delivery history with timestamps and error details
+
+### Viewing Delivery Status
+
+Navigate to the incident detail page and scroll to the **Delivery History** section to see:
+
+- Target (GitHub, Slack, etc.)
+- Current delivery state (sent, retrying, terminal_failure, etc.)
+- Attempt count for failed/retrying deliveries
+- Failure reason (if applicable)
+- Timestamp of the attempt
+- Manual retry button (if applicable)
+
+### Operator Recovery Steps
+
+If a delivery fails:
+
+1. Check the failure reason in the delivery history
+2. Verify the target configuration (credentials, permissions, etc.)
+3. If it looks like a temporary issue, click the **Retry** button
+4. If it's a terminal failure, update the target configuration and try a new send
+
 ## Tenant Onboarding and Bootstrap
 
 ### Required Bootstrap Fields

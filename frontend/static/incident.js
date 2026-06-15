@@ -1138,16 +1138,56 @@ function renderDeliveryHistory(data) {
   }
 
   const items = delivery_history.map((entry) => {
-    const icon = entry.status === "delivered" ? "✓" : entry.status === "failed" ? "✗" : "⧖";
+    const icons = {
+      "delivered": "✓",
+      "queued": "⧗",
+      "retrying": "↻",
+      "failed": "✗",
+      "terminal_failure": "✗✗",
+    };
+    const icon = icons[entry.status] || "⧖";
     const backing = entry.evidence_backing ? ` (${entry.evidence_backing})` : "";
     const reason = entry.failure_reason ? ` — ${entry.failure_reason}` : "";
+    const attemptInfo = entry.attempt_count ? ` [attempt ${entry.attempt_count}]` : "";
+    const statusLabel = entry.status;
     return {
-      label: `${icon} ${String(entry.target || "unknown").toUpperCase()} — ${entry.status || "pending"}${backing}${reason}`,
+      label: `${icon} ${String(entry.target || "unknown").toUpperCase()} — ${statusLabel}${attemptInfo}${backing}${reason}`,
       detail: `Sent at ${formatTimestamp(entry.sent_at)}`,
+      entry: entry,
     };
   });
 
-  renderList("deliveryHistory", items, (item) => `<div><strong>${item.label}</strong><br><span class="section-note">${item.detail}</span></div>`);
+  renderList("deliveryHistory", items, (item) => {
+    const retryBtn = item.entry.status === "retrying" || item.entry.status === "failed" ?
+      ` <button class="small-action-btn" data-delivery-retry="${item.entry.target}">Retry</button>` : "";
+    return `<div><strong>${item.label}</strong><br><span class="section-note">${item.detail}</span>${retryBtn}</div>`;
+  });
+
+  document.querySelectorAll("[data-delivery-retry]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const target = btn.getAttribute("data-delivery-retry");
+      btn.disabled = true;
+      btn.textContent = "Retrying...";
+      try {
+        const response = await postAuthedJson(`/api/v1/incidents/${encodeURIComponent(window.getIncidentId?.() || getIncidentId())}/handoff-retry`, {
+          target: target,
+        });
+        if (response.status === "sent" || response.status === "retrying") {
+          btn.textContent = "✓ Sent";
+        } else if (response.status === "terminal_failure") {
+          btn.textContent = "✗ Terminal failure";
+        }
+      } catch (error) {
+        btn.textContent = "✗ Retry failed";
+        console.error("Retry failed:", error);
+      } finally {
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    });
+  });
 }
 
 function renderEngineeringFeedback(data) {

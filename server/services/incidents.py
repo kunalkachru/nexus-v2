@@ -1992,6 +1992,17 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
             "generated_at": _utc_now_iso(),
         }
 
+    def _get_or_init_delivery_history(self, normalized_evidence: dict) -> list[dict]:
+        if "delivery_history" not in normalized_evidence:
+            normalized_evidence["delivery_history"] = []
+        return normalized_evidence["delivery_history"]
+
+    def _find_delivery_attempt(self, delivery_history: list[dict], target: str) -> dict | None:
+        for attempt in reversed(delivery_history):
+            if attempt.get("target") == target:
+                return attempt
+        return None
+
     async def send_engineering_handoff(
         self,
         nexus_incident_id: str,
@@ -2013,8 +2024,7 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
             )
 
             normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
-            if "delivery_history" not in normalized_evidence:
-                normalized_evidence["delivery_history"] = []
+            delivery_history = self._get_or_init_delivery_history(normalized_evidence)
 
             delivery_entry = {
                 "target": target,
@@ -2022,9 +2032,11 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
                 "sent_at": _utc_now_iso(),
                 "evidence_backing": handoff.get("backing_evidence"),
                 "validated_items": handoff.get("validated_items", {}),
+                "attempt_count": len([a for a in delivery_history if a.get("target") == target]) + 1,
             }
 
-            normalized_evidence["delivery_history"].append(delivery_entry)
+            delivery_history.append(delivery_entry)
+            normalized_evidence["delivery_history"] = delivery_history
 
             await self._session.incidents.update_incident_normalized_evidence(
                 nexus_incident_id,
@@ -2037,6 +2049,7 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
                 "status": "delivered",
                 "sent_at": delivery_entry["sent_at"],
                 "backing_evidence": delivery_entry["evidence_backing"],
+                "attempt_count": delivery_entry["attempt_count"],
             }
         except Exception as e:
             logger.error(f"Failed to send handoff for {nexus_incident_id} to {target}: {str(e)}")
@@ -2048,17 +2061,22 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
             )
 
             normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
-            if "delivery_history" not in normalized_evidence:
-                normalized_evidence["delivery_history"] = []
+            delivery_history = self._get_or_init_delivery_history(normalized_evidence)
+
+            is_retryable = "timeout" in str(e).lower() or "connection" in str(e).lower()
+            attempt_count = len([a for a in delivery_history if a.get("target") == target]) + 1
 
             delivery_entry = {
                 "target": target,
-                "status": "failed",
+                "status": "retrying" if is_retryable and attempt_count < 3 else "terminal_failure",
                 "sent_at": _utc_now_iso(),
                 "failure_reason": str(e),
+                "attempt_count": attempt_count,
+                "retryable": is_retryable,
             }
 
-            normalized_evidence["delivery_history"].append(delivery_entry)
+            delivery_history.append(delivery_entry)
+            normalized_evidence["delivery_history"] = delivery_history
 
             await self._session.incidents.update_incident_normalized_evidence(
                 nexus_incident_id,
@@ -2068,10 +2086,40 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
             return {
                 "incident_id": nexus_incident_id,
                 "target": target,
-                "status": "failed",
+                "status": delivery_entry["status"],
                 "sent_at": delivery_entry["sent_at"],
                 "failure_reason": str(e),
+                "attempt_count": attempt_count,
+                "retryable": is_retryable,
             }
+
+    async def retry_delivery_handoff(
+        self,
+        nexus_incident_id: str,
+        *,
+        target: str = "github",
+        tenant_id: str | None = None,
+    ) -> dict[str, object]:
+        stored_incident = (
+            await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
+            if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
+            else await self._session.incidents.get_incident(nexus_incident_id)
+        )
+
+        if not stored_incident:
+            raise ValueError(f"Incident {nexus_incident_id} not found")
+
+        normalized_evidence = dict(stored_incident.normalized_evidence or {})
+        delivery_history = self._get_or_init_delivery_history(normalized_evidence)
+        last_attempt = self._find_delivery_attempt(delivery_history, target)
+
+        if not last_attempt:
+            raise ValueError(f"No previous delivery attempt found for target {target}")
+
+        if last_attempt.get("status") == "terminal_failure":
+            raise ValueError(f"Cannot retry terminal failure for target {target}")
+
+        return await self.send_engineering_handoff(nexus_incident_id, target=target, tenant_id=tenant_id)
 
     async def submit_engineering_feedback(
         self,
