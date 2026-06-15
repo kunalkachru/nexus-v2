@@ -302,6 +302,82 @@ If a delivery fails:
 3. If it looks like a temporary issue, click the **Retry** button
 4. If it's a terminal failure, update the target configuration and try a new send
 
+## Post-Handoff Workflow and Feedback Closure
+
+### Handoff Lifecycle
+
+Once a case is handed off to engineering, NEXUS tracks the workflow through these stages:
+
+1. **Delivered**: Handoff sent to GitHub, Slack, or other target
+2. **Acknowledged**: Engineering team received and acknowledged the case
+3. **Acted On**: Engineering took action based on the handoff
+4. **Rejected**: Engineering decided not to act on the suggested mitigation
+5. **Follow-up Needed**: Case requires additional investigation before action
+
+### Recording Engineering Feedback
+
+Operators and managers can record engineering feedback to close the loop:
+
+**Option 1: Manual Feedback Entry**
+- Navigate to the incident detail page
+- Scroll to the **Engineering Feedback** section
+- Click **Add Feedback**
+- Select the feedback state: acknowledged, acted_on, rejected, follow_up_needed
+- Add an optional comment explaining the decision
+- Click **Submit**
+
+**Option 2: Webhook Integration**
+- Engineering team can post feedback via webhook: `POST /api/v1/incidents/{incident_id}/engineering-feedback`
+- Payload:
+  ```json
+  {
+    "status": "acted_on",
+    "reason": "Mitigation deployed to production at 2026-06-15 14:32:00"
+  }
+  ```
+- This automatically updates the delivery history with the feedback state
+
+### Viewing Delivery Closure
+
+The **Delivery History** section on the incident detail page shows:
+
+- **Sent**: When and where the handoff was delivered
+- **Attempt count**: How many times delivery was attempted
+- **Status**: Current delivery state (delivered, retrying, terminal_failure, etc.)
+- **Feedback recorded**: Whether engineering provided feedback
+- **Feedback state**: What feedback was provided (acknowledged, acted_on, rejected, follow_up_needed)
+- **Feedback recorded at**: When engineering provided the feedback
+
+### Feedback Impact on Learning
+
+Delivery feedback feeds back into the learning system:
+
+- **Acted On cases**: Outcomes increase memory ranking for similar future cases
+- **Rejected cases**: Reasoning for rejection is captured for process improvement
+- **Follow-up cases**: Flagged for manual review and potential escalation
+- **Acknowledged cases**: Confirm successful delivery and baseline understanding
+
+### Operator Guidance for Feedback Closure
+
+**If engineering acknowledged the case:**
+- Monitor for feedback updates on whether action was taken
+- Proceed to follow-up step if no action taken within expected timeframe
+
+**If engineering acted on the case:**
+- Capture the action taken and outcome (rollback successful, fix deployed, etc.)
+- Update case status to "resolved" if fully resolved, otherwise keep as "investigating"
+- This feedback improves similar case handling in the future
+
+**If engineering rejected the case:**
+- Understand why (false positive detection, already fixed, not a priority, etc.)
+- Use feedback to improve future triage for this incident family
+- Consider whether the NEXUS hypothesis was incorrect or the engineering assessment was
+
+**If follow-up is needed:**
+- Schedule additional investigation (more logs needed, reproduction conditions unclear, etc.)
+- Engineering may provide specific questions or requirements for next iteration
+- Re-run triage once additional information is available
+
 ## Security and Secrets Handling
 
 NEXUS handles authentication credentials, API keys, and integration secrets. This section documents the security posture for market-ready v1.

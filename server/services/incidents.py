@@ -2140,13 +2140,31 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
             if "engineering_feedback" not in normalized_evidence:
                 normalized_evidence["engineering_feedback"] = []
 
+            # Map feedback status to delivery state
+            delivery_state_map = {
+                "acknowledged": "acknowledged",
+                "acted_on": "acted_on",
+                "rejected": "rejected",
+                "follow_up_needed": "follow_up_needed",
+            }
+            delivery_state = delivery_state_map.get(feedback_status, "acknowledged")
+
             feedback_entry = {
                 "status": feedback_status,
                 "reason": feedback_reason,
                 "recorded_at": _utc_now_iso(),
+                "delivery_state": delivery_state,
             }
 
             normalized_evidence["engineering_feedback"].append(feedback_entry)
+
+            # Update the most recent delivery entry with feedback state
+            delivery_history = self._get_or_init_delivery_history(normalized_evidence)
+            if delivery_history:
+                delivery_history[-1]["feedback_recorded"] = True
+                delivery_history[-1]["feedback_state"] = delivery_state
+                delivery_history[-1]["feedback_recorded_at"] = feedback_entry["recorded_at"]
+                normalized_evidence["delivery_history"] = delivery_history
 
             await self._session.incidents.update_incident_normalized_evidence(
                 nexus_incident_id,
@@ -2156,6 +2174,7 @@ Full incident details: NEXUS v2 | {incident.get('id', 'unknown')}
             return {
                 "incident_id": nexus_incident_id,
                 "feedback_status": feedback_status,
+                "delivery_state": delivery_state,
                 "recorded_at": feedback_entry["recorded_at"],
             }
         except Exception as e:
