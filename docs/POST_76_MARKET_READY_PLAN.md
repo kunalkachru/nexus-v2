@@ -90,6 +90,7 @@ The next phase should contain:
 - security and secrets handling
 - operator onboarding and runbooks
 - buyer proof package
+- a market-facing wow-effect UI and presentation polish pass
 - explicit release-readiness checkpoint
 
 ## What This Phase Should Not Do
@@ -134,7 +135,7 @@ The product is close to market-ready v1 only when all of these are true:
 
 ## Recommended Phase Boundary
 
-Use `77–84` for market-ready v1 hardening.
+Use `77–85` for market-ready v1 hardening.
 
 Only after `84` is complete should the repo consider:
 
@@ -145,7 +146,7 @@ Only after `84` is complete should the repo consider:
 
 ## Recommendation
 
-Treat `77–84` as the **market-ready v1 checkpoint**.
+Treat `77–85` as the **market-ready v1 checkpoint**.
 
 If this phase lands cleanly, the product should be able to present itself as:
 

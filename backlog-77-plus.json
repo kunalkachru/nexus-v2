@@ -234,6 +234,42 @@
   },
   {
     "id": 84,
+    "title": "Market-facing wow-effect UI revamp and conversion polish",
+    "priority": "high",
+    "status": "pending",
+    "description": "Give NEXUS a clearly more premium, memorable, customer-attracting presentation layer without breaking the support-triage truthfulness of the product. This is not a random redesign; it is a deliberate visual and information-design pass so the product creates a stronger first impression for buyers, operators, and demo viewers.",
+    "implementation_tasks": [
+      "define a stronger market-facing visual direction for the core product surfaces while preserving the established product narrative",
+      "upgrade the most buyer-visible screens with more distinctive typography, spacing, hierarchy, motion, and presentation polish",
+      "make the flagship incident flow feel premium and legible without hiding evidence quality or bounded-product limitations",
+      "ensure the wow-effect polish still supports usability, responsiveness, and truthful workflow comprehension"
+    ],
+    "done_when": [
+      "the product feels materially more premium and memorable on first impression",
+      "the flagship queue, incident, training, and handoff surfaces present a stronger buyer-facing visual identity",
+      "the UI polish improves clarity and attraction without regressing product truthfulness or workflow legibility"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "frontend/queue.html",
+      "frontend/incident.html",
+      "frontend/training.html",
+      "frontend/replay.html",
+      "frontend/static/styles.css",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/PRESENTATION_PACK.md"
+    ]
+  },
+  {
+    "id": 85,
     "title": "Market-ready v1 checkpoint and release readiness",
     "priority": "high",
     "status": "pending",

@@ -190,7 +190,31 @@ For each backlog item:
 - update GTM and presentation docs
 - add flagship before/after proof summaries
 
-## Item 84: Market-Ready v1 Checkpoint And Release Readiness
+## Item 84: Market-Facing Wow-Effect UI Revamp And Conversion Polish
+
+### Backend tasks
+
+- usually minimal backend work unless presentation surfaces need small supporting payload additions
+
+### UI tasks
+
+- define a stronger premium visual direction for the core buyer-facing surfaces
+- upgrade queue, incident, training, and replay presentation with clearer hierarchy and stronger visual identity
+- improve typography, spacing, surface treatment, and motion so the product feels more intentional and differentiated
+- ensure the visual pass strengthens comprehension instead of masking evidence posture or bounded behavior
+
+### Validation tasks
+
+- verify the flagship screens remain readable and honest in browser tests
+- check mobile and desktop responsiveness for the most visible screens
+- run demo flow to ensure the visual changes support the product story rather than distracting from it
+
+### Documentation tasks
+
+- update `docs/PRESENTATION_PACK.md`
+- refresh any screenshots or presentation-facing notes that depend on the older visual system
+
+## Item 85: Market-Ready v1 Checkpoint And Release Readiness
 
 ### Backend tasks
 
@@ -235,6 +259,7 @@ For each backlog item:
 
 - `83`
 - `84`
+- `85`
 
 ## Suggested Future Loop Prompt Add-On
 
