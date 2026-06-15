@@ -31,6 +31,7 @@ from server.models import RuntimeHostReplayRequest
 from server.openai_keys import extract_request_openai_api_key
 from server.rate_limit import RateLimiter
 from server.services.deployment_readiness import DeploymentReadiness
+from server.services.governance import GovernanceService
 from server.services.incidents import IncidentService
 from server.services.live_demo import build_demo_payload
 from server.services.observability import ObservabilityService
@@ -537,6 +538,16 @@ async def get_user_context(
         "role_descriptions": role_descriptions,
         "capabilities": capabilities,
     }
+
+
+@app.get("/api/v1/governance/visibility")
+async def get_governance_visibility(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="governance_visibility")
+    governance_service = GovernanceService()
+    return governance_service.get_governance_visibility(auth.tenant_id)
 
 
 @app.post("/api/v1/internal/runtime-host/replica-replay")
