@@ -5,6 +5,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 from server.artifacts import record_audit_event
 
@@ -16,11 +17,20 @@ _AUDIT_CACHE: list[dict[str, object]] | None = None
 logger = logging.getLogger(__name__)
 
 
-async def write_audit_log(event_type: str, tenant_id: str, payload: dict[str, object]) -> None:
+async def write_audit_log(
+    event_type: str,
+    tenant_id: str,
+    payload: dict[str, object],
+    actor_user_id: Optional[str] = None,
+    actor_roles: Optional[list[str]] = None,
+) -> None:
+    """Write audit log with optional actor context for governance traceability."""
     entry = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "event_type": event_type,
         "tenant_id": tenant_id,
+        "actor_user_id": actor_user_id,
+        "actor_roles": actor_roles or [],
         "payload": payload,
     }
     async with _AUDIT_LOCK:
@@ -28,7 +38,14 @@ async def write_audit_log(event_type: str, tenant_id: str, payload: dict[str, ob
         logs.append(entry)
         _persist_audit_logs(logs)
     await record_audit_event(entry)
-    logger.info("audit event=%s tenant=%s payload=%s", event_type, tenant_id, payload)
+    logger.info(
+        "audit event=%s tenant=%s actor=%s roles=%s payload=%s",
+        event_type,
+        tenant_id,
+        actor_user_id,
+        actor_roles,
+        payload,
+    )
 
 
 def get_audit_logs(incident_id: str | None = None) -> list[dict[str, object]]:
