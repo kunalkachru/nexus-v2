@@ -1439,6 +1439,8 @@ def _duration_for_incident(incident: IncidentDefinition, *, executed: bool) -> f
 
 def infer_issue_family(root_cause: str, incident_name: str) -> str:
     text = f"{root_cause} {incident_name}".lower()
+    if "deploy" in text and ("5xx" in text or "regression" in text or "error" in text or "null" in text):
+        return "Deploy regression / 5xx spike"
     if "retry" in text and "timeout" in text:
         return "Timeout cascade / retry amplification"
     if "timeout" in text and any(token in text for token in ("checkout", "auth", "payment", "gateway")):
@@ -1484,6 +1486,14 @@ def build_triage_summary(
         elif "database" in issue_family.lower() or "pool" in issue_family.lower():
             blast_radius = "Checkout write traffic stalls while database connections remain saturated."
             approval_focus = "Recover connection capacity first, then remove the leaking build."
+    elif "deploy regression" in issue_family.lower() or "5xx spike" in issue_family.lower():
+        impacted_customer_path = "Product search and customer-facing API paths"
+        likely_owner_service = "api-service"
+        likely_owner_team = "Backend Platform"
+        responder_team = "Backend Platform incident command with deployment team on-call"
+        support_queue = "API service degradation"
+        blast_radius = "Customer-facing API requests return 5xx errors; product search is degraded and checkout flow experiences elevated latency."
+        approval_focus = "Deploy rollback is the fastest safe recovery path due to tight deploy window."
     elif "certificate" in issue_family.lower():
         impacted_customer_path = "Public API and browser entrypoint"
         likely_owner_team = "Edge Reliability"
@@ -1556,6 +1566,11 @@ def default_reproduced_symptoms(issue_family: str, recent_logs: list[object]) ->
         return [
             "Worker memory keeps climbing across repeated task replay cycles.",
             "Garbage-collection pauses stretch as retained buffers accumulate.",
+        ]
+    if "deploy regression" in issue_family or "5xx spike" in issue_family:
+        return [
+            "The replayed path produced elevated 5xx responses after the regression deploy.",
+            "API latency spiked once the query optimization was applied to the search path.",
         ]
     return extract_reproduced_symptoms(recent_logs) or ["REPLICA did not find a reusable reproduction signature yet."]
 

@@ -76,7 +76,7 @@
     "id": 88,
     "title": "LLM-driven triage reasoning upgrade",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Strengthen the triage layer so the product feels more genuinely LLM-driven and less like it is selecting from a fixed incident script. Raw logs and live incidents should produce stronger issue framing, likely subsystem, likely owner, customer impact, and next investigation steps while remaining explicit about what is LLM-inferred, memory-backed, or runtime-backed.",
     "implementation_tasks": [
       "improve triage outputs for seeded and fresh incidents with stronger adaptive framing and uncertainty language",
