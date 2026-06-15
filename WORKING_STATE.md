@@ -129,12 +129,12 @@ These paths must stay semantically aligned.
 
 ## Next Recommended Frontier
 
-There is no active implementation backlog right now.
+The active frontier is `backlog-86-plus.json`.
 
-The next frontier should be written as a post-85 backlog after reviewing:
+Use these documents together:
 
-- [docs/RELEASE_READINESS.md](/Users/kunalkachru/Documents/nexus-v3/docs/RELEASE_READINESS.md)
-- [docs/BUYER_PROOF_PACKAGE.md](/Users/kunalkachru/Documents/nexus-v3/docs/BUYER_PROOF_PACKAGE.md)
-- [docs/NOW_NEXT_LATER_GTM_LADDER.md](/Users/kunalkachru/Documents/nexus-v3/docs/NOW_NEXT_LATER_GTM_LADDER.md)
+- [docs/POST_85_WEDGE_STRENGTHENING_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_WEDGE_STRENGTHENING_PLAN.md)
+- [docs/POST_85_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_EXECUTION_MAP.md)
+- [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json)
 
-That next phase should strengthen the narrow wedge rather than broaden into a universal platform.
+This phase should strengthen the narrow wedge rather than broaden into a universal platform.

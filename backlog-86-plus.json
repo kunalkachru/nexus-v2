@@ -1,0 +1,252 @@
+[
+  {
+    "id": 86,
+    "title": "Third outage family: deploy regression / 5xx spike",
+    "priority": "high",
+    "status": "pending",
+    "description": "Expand the current wedge beyond INC001 and INC002 by adding a third canonical outage family centered on a deploy regression causing 5xx spikes on a customer-facing path. This should feel like a real support-to-engineering case with deploy-window suspicion, likely owner routing, and rollback-aware framing while staying truthful about what is inferred versus validated.",
+    "implementation_tasks": [
+      "add a third canonical incident across seeded and live paths with clear customer impact, likely owner, suspected deploy window, and likely regression surface",
+      "keep seeded/static and live incident semantics aligned so the new incident reads consistently across queue, incident, and training flows",
+      "add regression-specific evidence cues such as deploy timing, rollback consideration, and service ownership without overclaiming runtime validation",
+      "update the walkthrough and flagship incident references so INC003 becomes part of the core demo story"
+    ],
+    "done_when": [
+      "INC003 exists as a coherent third outage family across seeded and live product paths",
+      "operators can understand why the new incident is a deploy-regression class rather than a timeout or DB-pool class",
+      "the new outage family strengthens the wedge without broadening the product category"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/incident_payloads.py",
+      "server/services/surface_payloads.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/DEMO_WALKTHROUGH.md"
+    ]
+  },
+  {
+    "id": 87,
+    "title": "Bounded REPLICA and TRACE support for INC003",
+    "priority": "high",
+    "status": "pending",
+    "description": "Deepen the new deploy-regression outage family so it is not just another packet shape. Add a bounded runtime pack and bounded debugging handoff for INC003 so the product can reproduce a 5xx deploy regression, compare at least one mitigation path, and hand engineering a trace-oriented debugging packet consistent with the existing truthfulness model.",
+    "implementation_tasks": [
+      "add a curated runtime pack for deploy-regression replay and at least one mitigation comparison path",
+      "add bounded TRACE guidance for the likely failing request path, module, or regression window",
+      "surface runtime-backed versus inferred evidence clearly for the new outage family",
+      "verify the packaged-app runtime path for the new pack through Docker and the runtime-host relay"
+    ],
+    "done_when": [
+      "INC003 has bounded reproduction support consistent with the current REPLICA model",
+      "INC003 has bounded debugging guidance consistent with the current TRACE model",
+      "the product can demo a third runtime-backed outage family without breaking truthfulness"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/replica_runtime.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "runtime_host/server/app.py",
+      "frontend/static/incident.js",
+      "tests/test_replica_runtime.py",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh",
+      "docs/DEMO_WALKTHROUGH.md"
+    ]
+  },
+  {
+    "id": 88,
+    "title": "LLM-driven triage reasoning upgrade",
+    "priority": "high",
+    "status": "pending",
+    "description": "Strengthen the triage layer so the product feels more genuinely LLM-driven and less like it is selecting from a fixed incident script. Raw logs and live incidents should produce stronger issue framing, likely subsystem, likely owner, customer impact, and next investigation steps while remaining explicit about what is LLM-inferred, memory-backed, or runtime-backed.",
+    "implementation_tasks": [
+      "improve triage outputs for seeded and fresh incidents with stronger adaptive framing and uncertainty language",
+      "add or tighten a stable evidence-posture contract that distinguishes inferred, memory-backed, and runtime-backed reasoning",
+      "reduce canned-feeling summaries on fresh incidents where the current product already has enough evidence to say more",
+      "keep the stronger LLM contribution truthful and reviewable in API and UI surfaces"
+    ],
+    "done_when": [
+      "fresh and seeded incidents show stronger adaptive triage reasoning rather than fixed-feeling summaries",
+      "operators can see confidence and uncertainty without losing trust in the product",
+      "the product remains explicit about what is inferred versus validated"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "server/app.py",
+      "frontend/static/incident.js",
+      "frontend/static/api.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/DEMO_WALKTHROUGH.md",
+      "docs/PRODUCT_STRATEGY_AND_GTM.md"
+    ]
+  },
+  {
+    "id": 89,
+    "title": "Agent deliberation visibility and reasoning timeline",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make the multi-agent investigation workflow easier to understand by showing what each agent contributed and which evidence shifted the case. The goal is not to expose raw chain-of-thought, but to make the operator and buyer experience feel like a real coordinated investigation rather than a stack of static panels.",
+    "implementation_tasks": [
+      "define a safe, concise reasoning-timeline or contribution contract for SENTINEL, PRISM, REPLICA, TRACE, FORGE, and GUARDIAN",
+      "render the agent contribution flow in the incident surface with clear turning points and evidence references",
+      "make the timeline work for seeded incidents, runtime-backed incidents, and fresh live incidents",
+      "update demo-facing docs so presenters can explain the agent interaction cleanly"
+    ],
+    "done_when": [
+      "operators can see what each agent contributed and why the case evolved",
+      "the product feels more like a coordinated agent system and less like a static report",
+      "the reasoning visibility remains concise and truthful rather than speculative"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "frontend/static/styles.css",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/LIVE_DEMO_SPEAKER_NOTES.md",
+      "docs/PRESENTATION_PACK.md"
+    ]
+  },
+  {
+    "id": 90,
+    "title": "Pilot conversion kit for the three-outage wedge",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Turn the expanded three-outage wedge into a stronger pilot conversation package. The product and supporting docs should make it easy to explain outage-family coverage, runtime-backed support state, engineering handoff quality, and why this wedge is commercially useful before any broader platform ambition is attempted.",
+    "implementation_tasks": [
+      "update buyer-proof, training, and presentation surfaces for the three supported outage families",
+      "tighten the operator and buyer narrative around where NEXUS is runtime-backed versus inference-first",
+      "strengthen demo and onboarding materials so the pilot motion is easier to repeat without founder-only explanation",
+      "keep all pilot-conversion claims aligned with measured or honestly estimated product evidence"
+    ],
+    "done_when": [
+      "the three-outage wedge is easy to explain to buyers and pilot users",
+      "training and proof surfaces reflect the expanded support state cleanly",
+      "the product is more ready for real pilot conversations without changing the category story"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "frontend/training.html",
+      "frontend/static/training.js",
+      "docs/BUYER_PROOF_PACKAGE.md",
+      "docs/PRESENTATION_PACK.md",
+      "docs/DEMO_WALKTHROUGH.md",
+      "docs/OPERATOR_RUNBOOK.md",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 91,
+    "title": "Final wow-effect UI completion across core surfaces",
+    "priority": "high",
+    "status": "pending",
+    "description": "Finish the remaining premium product polish so the core surfaces feel presentation-ready and visually intentional. The pass should focus on intake, incident, training, and handoff/export surfaces, with stronger hierarchy, continuity, and motion while preserving readability and evidence truthfulness.",
+    "implementation_tasks": [
+      "complete the premium visual pass on the most buyer-visible product surfaces",
+      "improve hierarchy, spacing, motion, and continuity for intake, incident, training, and export flows",
+      "make the strongest demo path feel more impressive without making it less legible or less honest",
+      "keep desktop and mobile presentation quality within the existing product shell"
+    ],
+    "done_when": [
+      "the product feels materially more polished on the key demo and buyer-facing screens",
+      "the wow-effect pass is visibly complete rather than partially landed",
+      "the visual changes strengthen presentation quality without weakening workflow comprehension"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "frontend/incident.html",
+      "frontend/training.html",
+      "frontend/inputs.html",
+      "frontend/static/styles.css",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "frontend/static/inputs.js",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/PRESENTATION_PACK.md"
+    ]
+  },
+  {
+    "id": 92,
+    "title": "Post-85 wedge-strengthening checkpoint and control-doc refresh",
+    "priority": "high",
+    "status": "pending",
+    "description": "Close the post-85 wedge-strengthening phase with a deliberate checkpoint. Confirm the product now supports three flagship outage families, stronger LLM-driven triage, clearer agent visibility, stronger pilot proof, and a finished UI polish pass while remaining bounded and truthful.",
+    "implementation_tasks": [
+      "run the full validation stack across tests, browser flows, demo flow, and packaged-app Docker path",
+      "refresh owner-facing docs so the new wedge strength, boundaries, and pilot readiness are current",
+      "refresh control docs so the next frontier is accurate and the completed backlog is no longer treated as active",
+      "write a concise checkpoint summary before any broader post-92 roadmap work starts"
+    ],
+    "done_when": [
+      "the repo ends the phase with a clean validated checkpoint",
+      "owner-facing docs clearly describe the three-outage wedge and stronger LLM triage posture",
+      "control docs are current and ready for the next planning phase"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/LOOPS_RUNBOOK.md",
+      "docs/POST_85_WEDGE_STRENGTHENING_PLAN.md",
+      "docs/POST_85_EXECUTION_MAP.md",
+      "docs/DEMO_WALKTHROUGH.md",
+      "docs/BUYER_PROOF_PACKAGE.md",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  }
+]

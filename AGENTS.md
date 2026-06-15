@@ -139,6 +139,17 @@ The `backlog-77-plus.json` is complete (market-ready v1 hardening and deployment
 
 All items through 85 are complete. The product is market-ready v1 for narrow support-triage workflow.
 
+The next active backlog is `backlog-86-plus.json`.
+
+This phase is a short wedge-strengthening and pilot-conversion sprint:
+
+- add a third outage family (`INC003` deploy regression / 5xx spike)
+- add bounded REPLICA and TRACE support for it
+- strengthen LLM-driven triage quality
+- improve agent deliberation visibility
+- tighten buyer/pilot proof
+- complete the remaining wow-effect UI polish
+
 ## Reality Check
 
 Implemented now:
@@ -175,4 +186,4 @@ Not implemented yet:
 ## Reference
 
 See [docs/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOPS_RUNBOOK.md) for the operator-facing guide and prompt templates.
-The next active backlog is not written yet. Use [docs/RELEASE_READINESS.md](/Users/kunalkachru/Documents/nexus-v3/docs/RELEASE_READINESS.md), [docs/BUYER_PROOF_PACKAGE.md](/Users/kunalkachru/Documents/nexus-v3/docs/BUYER_PROOF_PACKAGE.md), and [docs/NOW_NEXT_LATER_GTM_LADDER.md](/Users/kunalkachru/Documents/nexus-v3/docs/NOW_NEXT_LATER_GTM_LADDER.md) to define the post-85 frontier before starting another loop.
+Use [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json), [docs/POST_85_WEDGE_STRENGTHENING_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_WEDGE_STRENGTHENING_PLAN.md), and [docs/POST_85_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_EXECUTION_MAP.md) for the next active phase.

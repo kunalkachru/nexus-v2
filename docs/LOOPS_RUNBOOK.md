@@ -34,12 +34,16 @@ The product is ready for narrow support-triage workflow use and buyer presentati
 
 The backlog-77-plus.json is complete (items 77–85 finished).
 
-The next frontier should be written after reviewing:
+The active next frontier is `backlog-86-plus.json`.
 
-1. the release-readiness summary for v1 boundaries
-2. the buyer proof package for what is sellable
-3. the product's measured and estimated capabilities
-4. the competitive narrowness (support-triage only, not universal incident platform)
+Use the next frontier to strengthen the wedge without broadening the category:
+
+1. add `INC003` deploy regression / 5xx spike
+2. deepen bounded REPLICA and TRACE support
+3. improve LLM-driven triage quality
+4. improve agent reasoning visibility
+5. strengthen pilot-conversion proof
+6. finish the remaining wow-effect UI polish
 
 ## Before Starting A Loop
 
@@ -47,9 +51,9 @@ Make sure the agent reads:
 
 1. [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
 2. [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
-3. the currently active backlog file
-4. the phase-planning doc for that backlog
-5. the execution map for that backlog, if one exists
+3. [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json)
+4. [docs/POST_85_WEDGE_STRENGTHENING_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_WEDGE_STRENGTHENING_PLAN.md)
+5. [docs/POST_85_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_EXECUTION_MAP.md)
 6. [docs/DEMO_WALKTHROUGH.md](/Users/kunalkachru/Documents/nexus-v3/docs/DEMO_WALKTHROUGH.md)
 
 Recommended local checks before starting:
@@ -76,7 +80,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 4. Paste a prompt like this:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, the active phase-planning doc, the active execution-map doc if present, docs/DEMO_WALKTHROUGH.md, and the active backlog file.
+Read AGENTS.md, WORKING_STATE.md, docs/POST_85_WEDGE_STRENGTHENING_PLAN.md, docs/POST_85_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-86-plus.json.
 Run a commit-and-continue loop against the backlog.
 
 Rules:
@@ -100,7 +104,7 @@ Rules:
 Use the same flow, but keep the grounding stricter:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, the active phase-planning doc, the active execution-map doc if present, docs/DEMO_WALKTHROUGH.md, and the active backlog file completely before coding.
+Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/POST_85_WEDGE_STRENGTHENING_PLAN.md, docs/POST_85_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-86-plus.json completely before coding.
 Resume from the first pending backlog item.
 Drain the backlog top to bottom in a build-test-commit loop.
 Do not invent scope outside the backlog.
@@ -209,4 +213,4 @@ As of the completion of items 77–85:
 
 The product is ready for v1 release as a narrow, credible support-triage system for recurring checkout and transaction-critical incidents.
 
-No post-85 implementation backlog is active yet. Write the next backlog before starting another loop.
+The active next backlog is [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json), which strengthens the wedge before any broader platform work.
