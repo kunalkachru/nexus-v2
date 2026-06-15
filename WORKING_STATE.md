@@ -113,11 +113,10 @@ These paths must stay semantically aligned.
 - `backlog-101-plus.json` — completed backlog through item `108` (FR2 repeatable enterprise pilot checkpoint)
 - `backlog-109-plus.json` — next backlog for five-family selective wedge expansion
 - `AGENTS.md` — loop rules and current validated baseline
+- `docs/README.md` — active documentation map
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
-- `docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md` — broader product strategy and scope
-- `docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md` — FR2 direction after pilot conversion and technical proof deepening
-- `docs/POST_100_EXECUTION_MAP.md` — task/subtask execution map for items `101–108`
+- `docs/PRODUCT_STRATEGY_AND_GTM.md` — broader product strategy and scope
 - `docs/POST_108_SELECTIVE_EXPANSION_PLAN.md` — post-FR2 five-family wedge plan
 - `docs/POST_108_EXECUTION_MAP.md` — task/subtask execution map for items `109–116`
 

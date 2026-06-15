@@ -1,41 +1,18 @@
 # Design Docs Guide
 
-Current as of 2026-05-31.
+Current as of 2026-06-15.
 
-This folder now contains the minimal design-docs entrypoint for the final submission branch.
+This folder is now just a pointer into the active documentation set.
 
-The older long-form product, enterprise, and roadmap documents were intentionally removed from the latest branch so the repo surface stays clean for judges and reviewers.
+## Use These First
 
-## How To Read This Folder
+- [README.md](/Users/kunalkachru/Documents/nexus-v3/README.md)
+- [docs/README.md](/Users/kunalkachru/Documents/nexus-v3/docs/README.md)
+- [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](/Users/kunalkachru/Documents/nexus-v3/docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
+- [docs/POST_108_SELECTIVE_EXPANSION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_SELECTIVE_EXPANSION_PLAN.md)
 
-### Best for current submission context
+## Historical Material
 
-- [docs/FINAL_SUBMISSION_GUIDE.md](../docs/FINAL_SUBMISSION_GUIDE.md)
-- [README.md](../README.md)
+Superseded design and planning material has been moved to:
 
-Those files describe the current shipped state.
-
-### What this means
-
-- the repo now prioritizes clarity over historical completeness
-- the current code and docs describe the shipped product directly
-- reviewers do not have to sort through outdated or aspirational material
-
-## Important Warning
-
-If anything outside the current shipped app conflicts with:
-
-- [README.md](../README.md)
-- [docs/FINAL_SUBMISSION_GUIDE.md](../docs/FINAL_SUBMISSION_GUIDE.md)
-- the current frontend/backend behavior
-
-then trust the current code and the submission guide.
-
-## Practical Rule
-
-Use `docs/` and the app itself to explain:
-
-- what is shipping now
-- how to run it
-- how to validate it
-- how to present it to judges
+- [archive/README.md](/Users/kunalkachru/Documents/nexus-v3/archive/README.md)

@@ -205,6 +205,34 @@ def registry() -> dict[str, ReplicaEnvironmentPack]:
                 "api.filter.logic": ("_apply_optimized_filter",),
             },
         ),
+        "checkout-python-fastapi-auth-validation-v1": ReplicaEnvironmentPack(
+            pack_id="checkout-python-fastapi-auth-validation-v1",
+            incident_classes=("auth_dependency_slowdown", "token_validation_failure"),
+            services=("api-gateway", "auth-svc", "checkout-api"),
+            stack=("python", "fastapi", "redis"),
+            compose_file=packs_root / "checkout-python-fastapi-auth-validation-v1" / "docker-compose.yml",
+            replay_profile="checkout_retry_replay_v1",
+            mitigation_hooks=("reset_circuit_breaker", "invalidate_token_cache", "increase_auth_timeout"),
+            hypothesis_summary=(
+                "Prove that checkout requests timeout only when auth-svc token validation slows down and cache effectiveness degrades."
+            ),
+            expected_baseline_status=504,
+            triggering_conditions=(
+                "Auth-svc token validation latency is above 500ms per request.",
+                "Token cache hit rate has dropped below 50%.",
+                "Upstream identity provider latency is elevated.",
+            ),
+            expected_failure_signature=(
+                "Baseline replay returns HTTP 504 on the checkout path.",
+                "Token validation timeouts and cache misses appear in logs.",
+                "Runtime improves when circuit breaker resets or token cache is invalidated.",
+            ),
+            trace_source_map={
+                "auth.token_validation": ("validate_token",),
+                "auth.token_cache": ("get_cached_token",),
+                "auth.certificate_check": ("verify_certificate",),
+            },
+        ),
     }
 
 
@@ -342,6 +370,8 @@ def select_environment_pack(
         ]
     )
     packs = registry()
+    if "auth" in issue_family_text and ("dependency" in issue_family_text or "validation" in issue_family_text) and "timeout" not in issue_family_text:
+        return packs.get("checkout-python-fastapi-auth-validation-v1")
     if any(token in issue_family_text for token in ("pool exhaustion", "session leak", "database")) or any(
         token in text for token in ("queuepool", "pool exhaustion", "session leak", "max_connections", "leaked session")
     ):
@@ -370,6 +400,15 @@ def build_execution_plan(
     )
     if pack is None:
         return None
+    if pack.pack_id == "checkout-python-fastapi-auth-validation-v1":
+        return ReplicaExecutionPlan(
+            pack=pack,
+            incident_class="auth_dependency_slowdown",
+            startup_timeout_seconds=45,
+            healthcheck_targets=("gateway", "auth", "redis"),
+            replay_entrypoint="scripts/replay_checkout_retry.sh",
+            mitigation_sequence=pack.mitigation_hooks,
+        )
     if pack.pack_id == "checkout-python-fastapi-auth-redis-v1":
         return ReplicaExecutionPlan(
             pack=pack,

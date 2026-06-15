@@ -1,8 +1,8 @@
-# NEXUS v2 Visual Architecture And Flows
+# NEXUS Visual Architecture And Flows
 
-Current as of 2026-06-05.
+Current as of 2026-06-15.
 
-This document explains what the product looks like, how the current shipped workflow works, and how the architecture expands into reproduction and debugging.
+This document explains what the product shows on screen and how the current bounded workflow operates.
 
 ## Product Screenshots
 
@@ -22,227 +22,100 @@ This document explains what the product looks like, how the current shipped work
 
 ![Learning and Controls](/Users/kunalkachru/Documents/nexus-v3/docs/assets/screenshots/learning-controls.png)
 
-## What The Product Is Designed To Show
+## What The Product Must Answer
 
-NEXUS is not a generic AI-for-incidents surface.
-
-It is a support triage and incident investigation product designed to reduce manual relay work before one final human review point.
-
-The product should answer these questions on screen:
+Every major surface should help the operator answer:
 
 1. what is most likely happening?
-2. who likely owns the issue?
+2. who likely owns it?
 3. what prior cases matter?
-4. what should happen next?
-5. who approves it?
+4. what is supported versus bounded?
+5. what should happen next?
+6. who approves the action?
 
-## Current Shipped Product Flow
-
-```mermaid
-flowchart LR
-    A["Raw logs or queue incident"] --> B["Normalize incident context"]
-    B --> C["SENTINEL triage"]
-    C --> D["PRISM investigation"]
-    D --> E["FORGE action preparation"]
-    E --> F["GUARDIAN final review"]
-    F --> G["Execution outcome"]
-    G --> H["Learning and memory update"]
-```
-
-### Why this flow matters
-
-- intake becomes one structured case
-- investigation becomes visible
-- action preparation becomes explicit
-- governance becomes a product feature rather than a hidden rule
-
-## Target Product Flow
+## Current Workflow
 
 ```mermaid
 flowchart LR
-    A["Raw logs, alerts, tickets"] --> B["SENTINEL triage"]
-    B --> C["PRISM investigation and memory"]
-    C --> D["REPLICA reproduction"]
-    D --> E["TRACE debugging"]
-    E --> F["FORGE remediation packet"]
-    F --> G["GUARDIAN approval"]
-    G --> H["Execution or escalation"]
-    H --> I["Learning and retrieval update"]
+    A["Raw logs or queue incident"] --> B["SENTINEL framing"]
+    B --> C["PRISM diagnosis and memory"]
+    C --> D["REPLICA bounded replay"]
+    D --> E["TRACE bounded debugger and handoff"]
+    E --> F["FORGE mitigation ranking"]
+    F --> G["GUARDIAN review"]
+    G --> H["Execution outcome and memory update"]
 ```
 
-This is the full product direction:
+This is the shipped bounded workflow, not just a target state.
 
-- triage
-- investigation
-- reproduction
-- debugging
-- remediation
-- governance
+## Why The Architecture Works
 
-## Why The Architecture Is Shaped This Way
+- intake becomes a structured case quickly
+- diagnosis is visible instead of opaque
+- replay posture is explicit
+- debugging guidance is attached to the incident
+- approval is part of the product, not a side conversation
 
-### Why FastAPI
-
-- compact backend
-- serves both HTML and JSON contracts
-- easy single-container public deployment
-
-### Why a multi-page frontend
-
-- easier to reason about screen by screen
-- easier to demo and validate route by route
-- lower failure surface than a full SPA rewrite
-
-### Why deterministic-by-default
-
-- safe public demo
-- reproducible judging flow
-- live reasoning remains optional, not required
-
-### Why visible agent roles
-
-- the product needs to show work, not just answer
-- support organizations care about traceability and trust
-
-## System Architecture
+## System Shape
 
 ```mermaid
 flowchart TD
     A["Frontend experience layer"] --> B["FastAPI orchestration layer"]
-    B --> C["Triage and investigation services"]
-    B --> D["Training and learning surfaces"]
-    C --> E["Incident persistence and audit"]
-    C --> F["Deterministic reasoning path"]
-    C --> G["Optional BYO-key live reasoning path"]
-    C --> H["Incident memory and retrieval"]
-    C --> I["Future reproduction sandboxes"]
-    C --> J["Future debugging and source analysis"]
+    B --> C["Incident runtime and payload assembly"]
+    B --> D["Memory, scorecard, and operator surfaces"]
+    C --> E["Bounded REPLICA runtime packs"]
+    C --> F["TRACE handoff packets"]
+    C --> G["Audit and execution outcome persistence"]
+    E --> H["Current host Docker path"]
+    E --> I["Runtime-host relay path"]
 ```
 
-## Architecture Layers
+## Screen Roles
 
-### Frontend experience layer
+### Command Center
 
-The user-facing surfaces:
+- shows the live incident queue
+- establishes the current operator focus
+- introduces the specialist crew
 
-- `Command Center`
-- `Inputs`
-- `Incident Detail`
-- `Training`
-- `History`
-- `Replay`
+### Inputs
 
-Their job is to present one coherent support-triage product, not backend fragments.
+- accepts noisy raw evidence
+- shows intake quality and normalization posture
+- creates the first structured case
 
-### Orchestration layer
+### Incident Detail
 
-This layer:
+- is the main support-to-engineering investigation surface
+- shows the incident story, task board, replay posture, debugging cues, and Guardian gate
 
-- receives normalized incident requests
-- serves the queue and incident surfaces
-- coordinates the visible agent flow
-- handles Guardian review actions
+### Learning & Controls
 
-### Persistence and audit layer
+- connects the latest incident to health, scorecard, and value proof
+- keeps runtime, governance, and pilot posture visible
 
-This layer stores:
-
-- incident records
-- audit history
-- execution outcomes
-- retrieval and learning artifacts
-
-### Memory layer
-
-This layer is already visible in the product through:
-
-- similar incidents
-- runbook memories
-- unresolved follow-ups
-
-It becomes even more important as the product moves toward support-triage specialization.
-
-### Future reproduction layer
-
-This is the `REPLICA` direction.
-
-Its job is to:
-
-- recreate likely failure conditions
-- validate or reject hypotheses
-- test likely mitigations in a controlled environment
-
-### Future debugging layer
-
-This is the `TRACE` direction.
-
-Its job is to:
-
-- narrow likely code paths
-- identify state or control-flow anomalies
-- prepare developer-ready debugging context
-
-## End-To-End Data Flow
-
-```mermaid
-sequenceDiagram
-    participant U as Support engineer or operator
-    participant I as Inputs or Queue
-    participant S as SENTINEL
-    participant P as PRISM
-    participant F as FORGE
-    participant G as GUARDIAN
-    participant L as Learning and memory
-
-    U->>I: provide raw logs or open a case
-    I->>S: normalized incident context
-    S->>P: severity, ownership, issue family
-    P->>F: investigation packet and memory
-    F->>G: prepared action packet
-    G-->>U: approve, reject, or request modification
-    G-->>L: persist outcome for future retrieval
-```
-
-## Agent Design
-
-### SENTINEL
-
-- job: triage the incident and frame the case
-- output: severity, likely service, likely team, issue family, confidence
-
-### PRISM
-
-- job: investigate likely cause and historical context
-- output: root-cause hypothesis, evidence summary, deploy analysis, memory hits
-
-### FORGE
-
-- job: prepare the remediation path
-- output: proposed action, alternatives, rollback context, rationale
-
-### GUARDIAN
-
-- job: govern the final review point
-- output: approve, reject, or request modification with policy posture
+## Bounded Layers
 
 ### REPLICA
 
-- product-direction job: reproduce the issue in a production-like environment
-- output: reproduction result, validation notes, confidence shift
+REPLICA is:
+
+- a bounded replay system for curated packs
+- capable of comparing baseline and mitigation outcomes when runtime is available
+
+REPLICA is not:
+
+- arbitrary VM orchestration
+- universal reproduction across all stacks
 
 ### TRACE
 
-- product-direction job: narrow likely code path and debugging state
-- output: suspected modules, divergence summary, debugging notes
+TRACE is:
 
-## What Makes This Production-Shaped
+- a bounded developer handoff and debugger guidance layer
+- capable of pointing engineers to likely modules, functions, and checkpoints for curated families
 
-Even in its current shipped form, NEXUS already has:
+TRACE is not:
 
-- explicit human review before action
-- deterministic fallback for public stability
-- visible memory and history
-- auditable decisions
-- a credible path from triage into deeper investigation
-
-That is what makes it feel closer to a real product than a generic model wrapper.
+- a universal live debugger
+- arbitrary codebase introspection across unknown systems

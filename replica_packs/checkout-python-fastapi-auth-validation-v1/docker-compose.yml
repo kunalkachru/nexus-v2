@@ -1,0 +1,38 @@
+services:
+  gateway:
+    build:
+      context: ./gateway
+    command: ["python", "/app/gateway_server.py"]
+    environment:
+      AUTH_URL: "http://auth:8001/authorize"
+    volumes:
+      - ./runtime:/runtime
+    ports:
+      - "18080:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  auth:
+    build:
+      context: ./auth
+    command: ["python", "/app/auth_server.py"]
+    volumes:
+      - ./runtime:/runtime
+    ports:
+      - "18081:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

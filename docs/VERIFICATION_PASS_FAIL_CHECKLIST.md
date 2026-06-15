@@ -1,66 +1,42 @@
 # NEXUS Verification Pass/Fail Checklist
 
-Use this as the short yes/no list for manual verification.
+Use this as the short manual go/no-go list.
 
 ## Startup
 
-- [ ] `./scripts/docker_fresh.sh` completes successfully
+- [ ] `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` completes
 - [ ] `/health` returns `ok`
-- [ ] `/` loads successfully
-- [ ] The top nav shows only `Command Center`, `Incident Detail`, and `Learning & Controls`
+- [ ] `/queue` loads
+- [ ] the primary nav shows `Command Center`, `Incident Detail`, and `Learning & Controls`
 
-## Command Center
+## Fresh Incident Flow
 
-- [ ] The landing page reads as a command center, not a dense queue dashboard
-- [ ] One live incident is clearly the focal point
-- [ ] `SENTINEL`, `PRISM`, `FORGE`, and `GUARDIAN` are visible above the fold
-- [ ] Each bot shows role, task, and handoff
-- [ ] The queue is present but secondary
-- [ ] Deep queue metadata is hidden behind `Expand queue internals`
-- [ ] `History` and `Replay` are linked contextually, not as primary nav items
+- [ ] `/inputs` loads
+- [ ] `Load example logs` works
+- [ ] `Submit raw logs` redirects into a populated `nxs_...` incident
+- [ ] the new incident shows issue framing, memory, and operator next step
 
-## Incident Detail
+## Incident Console
 
-- [ ] The page title reads `Incident Detail`
-- [ ] The default live-reasoning state is `OFF`
-- [ ] `Bring your own OpenAI key` is visible
-- [ ] Saving a key masks it in the UI and does not reveal the full secret
-- [ ] `Agent Handoff Thread` is visible
-- [ ] `SENTINEL handed evidence to PRISM` is visible
-- [ ] `Governance Bot` is visible and clearly refers to `GUARDIAN`
-- [ ] Guardian actions are visible but not visually dominant
-- [ ] `Working memory` is visible
-- [ ] Technical details are hidden behind `Expand technical detail`
-- [ ] Source payload, system evidence, workflow internals, and audit ledger become visible only after expansion
+- [ ] `Investigation Summary & Operator Path` is visible
+- [ ] `Enterprise Task Board` is visible
+- [ ] replay capability and replay host fields are populated
+- [ ] bounded debugger or trace packet is visible for a supported incident
+- [ ] Guardian controls are visible
 
-## Learning & Controls
+## Approval And Outcome
 
-- [ ] The page title reads `Learning & Controls`
-- [ ] `Learning tab`, `Governance tab`, and `Advanced Artifacts` are visible
-- [ ] Reward curve is visible without opening advanced artifacts
-- [ ] Agent improvement summary is visible without opening advanced artifacts
-- [ ] Governance summary is visible without opening advanced artifacts
-- [ ] Deep RL records are hidden behind `Advanced Artifacts`
+- [ ] `Approve runbook` changes Guardian state
+- [ ] execution outcome becomes visible
+- [ ] `/training` reflects the latest live triage and outcome
 
-## Advanced Routes
+## Runtime Truth
 
-- [ ] `/inputs` loads directly
-- [ ] `/history` loads directly
-- [ ] `/replay` loads directly
-- [ ] `/settings` loads directly
-- [ ] None of those routes reintroduce a 7-item primary nav
+- [ ] runtime-backed versus inference-first wording is explicit
+- [ ] unsupported or bounded behavior is clearly labeled when applicable
+- [ ] no screen implies replay executed if it did not
 
-## Critical Incident Flows
+## Final Decision
 
-- [ ] Clicking the first incident from `/queue` opens a populated incident console
-- [ ] Submitting logs from `/inputs` redirects into a populated `nxs_...` incident
-- [ ] `Approve runbook` changes Guardian to approved and execution to executed
-- [ ] No incident screen shows `Incident unavailable`
-- [ ] No incident screen shows `Waiting for incident context.`
-
-## Final Pass Criteria
-
-- [ ] The product feels less cluttered than before
-- [ ] The UI reads as autonomous AI bots collaborating on incidents
-- [ ] Only 3 screens are primary in the default journey
-- [ ] Dense data is hidden by default and still reachable when expanded
+- [ ] the product feels coherent end to end
+- [ ] the demo story matches the actual product boundaries

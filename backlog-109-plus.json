@@ -39,7 +39,7 @@
     "id": 110,
     "title": "Bounded REPLICA and TRACE support for auth dependency family",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Add bounded reproduction and debugging support for the auth dependency family. The pack should stay narrow and curated, with explicit runtime-backed versus inferred-only behavior and a clear debugger packet that points engineering to the likely dependency boundary.",
     "implementation_tasks": [
       "add a bounded runtime pack for the auth dependency family",

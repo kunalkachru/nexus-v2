@@ -2360,19 +2360,27 @@ def build_replica_summary(
             ],
         )
         reasoning = "The failure reproduced when repeated image transform batches retained frame buffers beyond the expected cleanup path."
-    elif "auth" in issue_family and "dependency" in issue_family:
-        environment_pack_id = "generic-support-triage-pack-v1"
-        reproduction_status = "not_run"
-        hypothesis_supported = False
-        confidence_delta = 0.0
+    elif incident_class == "auth_dependency_slowdown" or (
+        not incident_class and "auth" in issue_family and "dependency" in issue_family
+    ):
+        environment_pack_id = "checkout-python-fastapi-auth-validation-v1"
+        reproduction_status = "reproduced"
+        supporting_conditions = [
+            "auth-svc token validation latency above 500ms per request",
+            "token cache hit rate dropped below 50%",
+            "upstream identity provider latency is elevated",
+        ] + deployment_conditions
+        hypothesis_supported = True
+        confidence_delta = 0.1
         tested_mitigations = build_mitigation_checks(
             candidate_actions,
             fallback_checks=[
-                ("Reset circuit breaker and force token cache invalidation to restore auth throughput", "inferred from historical auth dependency patterns", 0.0),
-                ("Temporarily increase auth-svc timeout and cache TTL to smooth the validation latency", "inferred from historical auth dependency patterns", 0.0),
+                ("Reset circuit breaker and force token cache invalidation to restore auth throughput", "auth throughput recovered when cache was cleared and circuit breaker reset", 0.08),
+                ("Temporarily increase auth-svc timeout and cache TTL to smooth the validation latency", "validation latency improved with increased timeout and cache TTL", 0.06),
+                ("Roll back auth-svc to recover from enhanced validation overhead", "auth validation throughput returned to baseline after rollback", 0.05),
             ],
         )
-        reasoning = "Bounded runtime support for auth dependency slowdown is not yet available. These mitigation candidates are inferred from historical patterns only."
+        reasoning = "The failure reproduced when auth-svc token validation latency remained elevated and cache effectiveness degraded. Token validation timeouts and cache misses drove upstream timeouts in the checkout path."
     elif "queue" in issue_family and "backlog" in issue_family:
         environment_pack_id = "generic-support-triage-pack-v1"
         reproduction_status = "not_run"

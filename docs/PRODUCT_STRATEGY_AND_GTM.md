@@ -1,259 +1,153 @@
-# NEXUS v2 Product Strategy And GTM
+# NEXUS Product Strategy And GTM
 
-Current as of 2026-06-05.
+Current as of 2026-06-15.
 
-This document reframes NEXUS as a support triage and incident investigation product, not a generic incident AI platform.
+NEXUS should be presented as a narrow, sellable product:
 
-For the implementation-grade execution sequence, agent contracts, and demo acceptance criteria, use:
+**AI-assisted support-to-engineering investigation for recurring customer-facing application outages.**
 
-- [SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md)
-- [NOW_NEXT_LATER_GTM_LADDER.md](/Users/kunalkachru/Documents/nexus-v3/docs/NOW_NEXT_LATER_GTM_LADDER.md)
+## Exact Product Category
 
-## Product Category
+Use this category language:
 
-NEXUS should be positioned as:
+- primary: `AI-assisted support triage and incident investigation`
+- sharper: `support-to-engineering investigation workflow for recurring customer-facing outages`
 
-**an AI-assisted support triage, reproduction, and debugging system for production incidents**
+Do not position NEXUS as:
 
-Its core purpose is to reduce the repetitive manual relay work that happens before a confident remediation decision exists.
+- a universal incident-response platform
+- a universal debugger
+- a general AI ops control plane
 
-That means the product is not primarily selling:
+## Exact Problem
 
-- “multi-agent AI”
-- “AI ops”
-- “RL for incident response”
+The problem is not that incidents exist.
 
-It is selling:
+The problem is that too many expensive humans touch the same incident before a confident next action exists.
 
-- less manual evidence gathering
-- faster triage and ownership routing
-- issue reproduction when needed
-- code-aware debugging support
-- one governed human approval point
+Typical pain pattern:
 
-## The Real Market Problem
+- support receives noisy logs
+- triage guesses ownership
+- engineers manually search for prior incidents
+- someone recreates the issue from scratch
+- the same case is re-investigated across multiple handoffs
 
-Production support and triage teams still spend too much time on repetitive investigation work:
+That creates slower triage, weak escalations, and wasted engineering time.
 
-- collecting logs from multiple systems
-- matching error patterns against prior incidents
-- checking recent deploys or environment differences
-- escalating between support tiers and engineering teams
-- reproducing issues manually
-- drafting remediation paths without enough context
+## Exact Audience
 
-The pain is not only that incidents happen.
+Primary buyers:
 
-The pain is that too many expensive engineers touch the same case before anyone has a confident next action.
+- Heads of Support Engineering
+- Support or Technical Operations leaders
+- CTOs / engineering heads at smaller product companies
 
-## Product Vision
-
-NEXUS is designed to compress the support escalation chain into one coordinated workflow.
-
-### Current shipped workflow
-
-- `SENTINEL` classifies the case
-- `PRISM` investigates likely cause and historical context
-- `FORGE` prepares the remediation path
-- `GUARDIAN` governs the final decision
-
-### Expanded target workflow
-
-- `SENTINEL` triages the incident
-- `PRISM` investigates logs, metrics, deploys, and memory
-- `REPLICA` recreates production-like failure conditions
-- `TRACE` debugs code flow and captures state deviations
-- `FORGE` proposes the safest remediation
-- `GUARDIAN` gates execution behind explicit approval
-
-The long-term product promise is:
-
-**human reviewers step in after the case is already structured, reproduced if needed, debugged if needed, and prepared for safe action.**
-
-## Where NEXUS Creates Value
-
-### 1. Triage value
-
-- classify severity and likely ownership quickly
-- reduce noisy ticket and log handling
-- create a structured incident packet early
-
-### 2. Investigation value
-
-- correlate evidence across systems
-- retrieve similar incidents and prior runbooks
-- reproduce failures in production-like environments
-- trace likely code paths and variable/state anomalies
-
-### 3. Action value
-
-- draft remediation and rollback-aware runbooks
-- explain why a plan was selected
-- keep unsafe or low-confidence actions behind approval
-
-### 4. Organizational value
-
-- fewer manual escalations
-- less duplicated investigation work
-- better reuse of institutional knowledge
-- more auditable decision-making
-
-## What Kind Of Problems Fit Best
-
-The best fit is not every IT issue. It is high-friction support and production incidents where the early work is repetitive and evidence-heavy.
-
-Strong examples:
-
-- checkout timeout cascades
-- deploy regressions causing 500s
-- queue backlog and worker degradation
-- certificate expiry or edge access failures
-- auth and dependency failures
-- database pool exhaustion
-
-These cases fit because they benefit from:
-
-- evidence normalization
-- prior issue retrieval
-- reproduction in controlled environments
-- debugging assistance
-- governed remediation
-
-## Buyer And User
-
-### Primary users
+Primary users:
 
 - support engineers
-- production triage teams
-- NOC / incident command
-- SRE / platform operations
-- on-call engineers
+- support-triage engineers
+- incident coordinators
+- incident managers
 
-### Economic buyers
+## Exact Wedge
 
-- heads of support engineering
-- platform engineering managers
-- SRE managers
-- operations leadership
-- engineering leaders responsible for uptime and support cost
+The product wedge should stay inside recurring customer-facing application outages.
 
-## Why Buyers Would Pay
+Current supported incident families at the active baseline:
 
-They will not buy NEXUS because it has agents.
+1. checkout timeout / retry amplification
+2. checkout DB pool exhaustion / session leak
+3. deploy regression / 5xx spike
 
-They will buy it if it reduces:
+These are good first-family problems because they are:
 
-- manual triage labor
-- escalation churn
-- time to first confident action
-- repeated investigation of known failure patterns
-- manual environment recreation effort
-- unclear approval and audit flows
+- understandable to buyers
+- expensive when repeated
+- strong fits for prior-incident reuse
+- compatible with bounded reproduction and debugging guidance
 
-The business case is:
+## Product Promise
 
-**replace multi-step manual support escalation with AI-prepared, human-reviewed incident packets.**
+NEXUS compresses the support escalation chain into one workspace:
 
-## Product Differentiation
+- `SENTINEL` frames the incident
+- `PRISM` builds the diagnosis and memory-backed context
+- `REPLICA` validates bounded hypotheses when a curated pack exists
+- `TRACE` prepares bounded debugging and developer handoff context
+- `FORGE` ranks mitigations using the available evidence
+- `GUARDIAN` keeps the final action behind explicit review
 
-Most tools stop at one of these layers:
+The promise is not autonomous remediation.
 
-- log summarization
-- alert triage
-- ticket classification
-- generic incident dashboards
+The promise is:
 
-NEXUS aims to connect the full pre-remediation chain:
+**support and triage teams reach a better, more review-ready case before engineering starts from raw evidence.**
 
-- triage
-- investigation
-- memory retrieval
-- reproduction
-- debugging
-- runbook preparation
-- governed approval
+## What Makes Buyers Care
 
-That makes it a stronger enterprise workflow product than a pure assistant or dashboard.
+Buyers will care if NEXUS reduces:
 
-## Reproduction Agent: What It Means
+- manual relay steps
+- weak first-pass escalations
+- repeated investigation of known issue families
+- time spent guessing ownership and likely next action
 
-The reproduction capability should be described as:
+They will not care just because it uses agents.
 
-**a production-like validation agent that recreates likely failure conditions before remediation is approved**
+## What Is Real Today
 
-Its purpose:
+Real today:
 
-- spawn the right environment shape
-- replay the issue pattern
-- confirm or reject hypotheses
-- validate whether a proposed fix changes the outcome
+- fresh log intake with normalization posture
+- structured incident packet generation
+- memory-backed triage and investigation
+- bounded REPLICA runtime validation for curated packs
+- bounded TRACE debugging packets and developer handoff
+- runtime-aware mitigation weighting
+- explicit approval and audit surfaces
+- engineering export and delivery surfaces
+- pilot reporting and scorecard surfaces
 
-This is especially valuable when logs alone are not enough.
+Still bounded:
 
-## Debugging Agent: What It Means
-
-The debugging capability should be described as:
-
-**a code-aware investigation agent that narrows the likely failing path and explains where execution diverges from the expected flow**
-
-Its purpose:
-
-- map incidents to likely code paths
-- inspect runtime state and variable behavior
-- identify suspect branches or modules
-- produce developer-ready debugging context
-
-This reduces the support-to-engineering handoff burden.
-
-## Product Narrative In One Line
-
-NEXUS reduces manual support escalation work by turning noisy production incidents into triaged, investigated, reproducible, debuggable, and remediation-ready cases before one final human review point.
+- reproduction only for curated runtime packs
+- debugging only for curated outage families and known checkpoints
+- no arbitrary environment recreation
+- no arbitrary repo-wide debugging
 
 ## Go-To-Market Motion
 
-The cleanest first GTM path is:
+Lead with a support cost and escalation quality story:
 
-1. target support engineering and production triage teams
-2. lead with repetitive escalation pain, not AI language
-3. prove value on one recurring outage category
-4. expand from triage into reproduction and debugging workflows
+1. show the raw intake problem
+2. show how NEXUS structures the case
+3. show memory and runtime-backed investigation
+4. show the engineering-ready handoff
+5. prove the ROI with relay reduction, triage time, and approval speed
 
-## Recommended Flagship Use Case
+The first commercial motion should stay inside 2–3 bounded pilots where the tenant’s recurring outages overlap with the supported families.
 
-The strongest product demo is:
+## Demo Story
 
-**customer-facing checkout outage caused by timeout and retry amplification after dependency degradation and recent deploy ambiguity**
+The cleanest demo is:
 
-Why this works:
+1. a customer-facing outage enters via raw logs
+2. NEXUS classifies the likely issue family and owner
+3. prior incidents and runbooks are surfaced
+4. REPLICA validates the bounded failure when a pack is available
+5. TRACE shows where an engineer should inspect first
+6. FORGE recommends the best mitigation
+7. GUARDIAN governs the final decision
+8. the case is exported downstream in engineering-ready form
 
-- strong business impact
-- messy logs and evidence
-- known but risky remediation path
-- meaningful room for memory, reproduction, and debugging
-- clear human approval need
+## Current Roadmap Discipline
 
-## Roadmap Direction
+The current roadmap should remain inside the same category:
 
-### Near term
+- strengthen fresh-incident handling
+- widen the bounded outage-family wedge carefully
+- improve tenant repeatability and proof of value
+- harden pilot operations
 
-- deepen memory and RAG on prior incidents
-- improve support-triage-specific incident scenarios
-- enrich owner-routing and remediation context
-
-### Next layer
-
-- add reproducibility environments
-- add debugging-oriented code flow analysis
-- add richer MCP/tool connectivity into logs, deploys, tickets, and runtime systems
-
-### Long term
-
-- build a production-grade support investigation control plane
-- validate fixes before proposed release
-- measure triage throughput and escalation reduction
-
-## Relationship To Other Docs
-
-- [docs/VISUAL_ARCHITECTURE_AND_FLOWS.md](VISUAL_ARCHITECTURE_AND_FLOWS.md) explains the current system shape
-- [docs/FINAL_SUBMISSION_GUIDE.md](FINAL_SUBMISSION_GUIDE.md) explains the shipped demo surface
-- [docs/TECHNICAL_ROADMAP.md](TECHNICAL_ROADMAP.md) should carry the implementation sequence
+If a feature does not make that wedge stronger, it should not be prioritized.
