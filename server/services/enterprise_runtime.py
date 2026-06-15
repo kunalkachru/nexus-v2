@@ -1465,6 +1465,92 @@ def build_roi_metrics(payload: dict[str, object]) -> dict[str, object]:
     }
 
 
+def build_pilot_scorecard(
+    *,
+    incidents_handled: int = 0,
+    incidents_runtime_backed: int = 0,
+    incidents_inferred: int = 0,
+    total_triage_time_saved_minutes: int = 0,
+    handoff_completion_count: int = 0,
+    repeat_incident_reuse_count: int = 0,
+    tenant_id: str = "tenant-system",
+) -> dict[str, object]:
+    total_incidents = incidents_handled + incidents_inferred
+    runtime_backed_ratio = (
+        (incidents_runtime_backed / total_incidents * 100) if total_incidents > 0 else 0
+    )
+    inference_ratio = (
+        (incidents_inferred / total_incidents * 100) if total_incidents > 0 else 0
+    )
+    handoff_completion_rate = (
+        (handoff_completion_count / incidents_handled * 100)
+        if incidents_handled > 0
+        else 0
+    )
+    avg_triage_time_saved = (
+        (total_triage_time_saved_minutes / incidents_handled)
+        if incidents_handled > 0
+        else 0
+    )
+
+    value_proposition = []
+    if incidents_handled > 0:
+        value_proposition.append(
+            f"Processed {incidents_handled} incidents with {round(runtime_backed_ratio)}% runtime-backed validation"
+        )
+    if total_triage_time_saved_minutes > 0:
+        value_proposition.append(
+            f"Saved {round(total_triage_time_saved_minutes)} minutes of triage work"
+        )
+    if handoff_completion_rate > 0:
+        value_proposition.append(
+            f"{round(handoff_completion_rate)}% of investigated cases completed with engineering handoff"
+        )
+    if repeat_incident_reuse_count > 0:
+        value_proposition.append(
+            f"Reused solutions from {repeat_incident_reuse_count} prior incidents"
+        )
+
+    return {
+        "tenant_id": tenant_id,
+        "scorecard_period": "pilot",
+        "incidents_handled": {
+            "value": incidents_handled,
+            "label": "Incidents handled",
+            "measurement": "count",
+        },
+        "runtime_backed_ratio": {
+            "value": round(runtime_backed_ratio, 1),
+            "label": "Runtime-backed validation rate",
+            "measurement": "percent",
+        },
+        "inference_ratio": {
+            "value": round(inference_ratio, 1),
+            "label": "Inference-first triage rate",
+            "measurement": "percent",
+        },
+        "triage_time_saved": {
+            "value": round(avg_triage_time_saved, 1),
+            "label": "Average triage time saved per incident",
+            "measurement": "minutes",
+            "total_saved": total_triage_time_saved_minutes,
+        },
+        "handoff_completion": {
+            "value": round(handoff_completion_rate, 1),
+            "label": "Engineering handoff completion rate",
+            "measurement": "percent",
+        },
+        "repeat_incident_reuse": {
+            "value": repeat_incident_reuse_count,
+            "label": "Prior incident solutions reused",
+            "measurement": "count",
+        },
+        "value_summary": " · ".join(value_proposition)
+        or "Pilot scorecard is available once incidents are processed through NEXUS.",
+        "readiness": "baseline" if incidents_handled == 0 else "active",
+    }
+
+
 def _duration_for_incident(incident: IncidentDefinition, *, executed: bool) -> float:
     base_duration = {
         "Easy": 6.0,

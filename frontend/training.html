@@ -87,6 +87,32 @@
             </div>
         </section>
 
+        <section class="section" id="pilotScorecardSection">
+            <div class="section-header">
+                <h2>Pilot scorecard dashboard</h2>
+                <div class="section-note">Per-tenant pilot value metrics for operational and buyer-facing conversations.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Pilot value summary</div>
+                    <p class="hero-copy" id="scorecardValueSummary">Loading pilot scorecard metrics...</p>
+                    <div class="hero-stats raw-intake-grid">
+                        <div class="stat"><div class="stat-label">Incidents handled</div><div class="stat-value" id="scorecardIncidentsHandled">-</div></div>
+                        <div class="stat"><div class="stat-label">Runtime-backed</div><div class="stat-value" id="scorecardRuntimeBacked">-</div></div>
+                        <div class="stat"><div class="stat-label">Inference-first</div><div class="stat-value" id="scorecardInference">-</div></div>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Operational impact</div>
+                    <div class="hero-stats raw-intake-grid">
+                        <div class="stat"><div class="stat-label">Triage time saved</div><div class="stat-value" id="scorecardTriageTime">-</div></div>
+                        <div class="stat"><div class="stat-label">Handoff completion</div><div class="stat-value" id="scorecardHandoffCompletion">-</div></div>
+                        <div class="stat"><div class="stat-label">Repeat reuse</div><div class="stat-value" id="scorecardRepeatReuse">-</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="section" id="productHealthSection">
             <div class="section-header">
                 <h2>Product health and observability</h2>

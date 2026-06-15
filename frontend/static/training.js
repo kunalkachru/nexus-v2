@@ -490,6 +490,24 @@ function renderOperatorROI(trainingData) {
   setText("inc003RuntimeBacked", inc003.runtime_backed > 0 ? "✓ Validated" : "✗ None yet");
 }
 
+async function renderPilotScorecard() {
+  try {
+    const scorecard = await fetchAuthedJson("/api/v1/tenant/pilot-scorecard");
+    setText("scorecardValueSummary", scorecard.value_summary || "Pilot scorecard loading...");
+    setText("scorecardIncidentsHandled", String(scorecard.incidents_handled?.value || 0));
+    setText("scorecardRuntimeBacked", `${scorecard.runtime_backed_ratio?.value || 0}%`);
+    setText("scorecardInference", `${scorecard.inference_ratio?.value || 0}%`);
+    setText("scorecardTriageTime", `${scorecard.triage_time_saved?.value || 0} min/incident`);
+    setText("scorecardHandoffCompletion", `${scorecard.handoff_completion?.value || 0}%`);
+    setText("scorecardRepeatReuse", String(scorecard.repeat_incident_reuse?.value || 0));
+  } catch (error) {
+    const summary = document.getElementById("scorecardValueSummary");
+    if (summary) {
+      summary.textContent = `Unable to load pilot scorecard: ${error.message}`;
+    }
+  }
+}
+
 function renderProductHealth(healthData) {
   const health = healthData || {};
   const status = health.status || "unknown";
@@ -531,4 +549,7 @@ window.addEventListener("load", async () => {
   renderRuntimeCapabilities(capabilitiesData);
   renderExecutionState(executionStateData);
   renderProductHealth(healthData);
+  renderPilotScorecard().catch((error) => {
+    console.debug("Pilot scorecard load error:", error.message);
+  });
 });

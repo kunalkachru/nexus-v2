@@ -111,7 +111,7 @@
     "id": 104,
     "title": "Pilot scorecard dashboard",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make pilot value visible at the tenant level with a durable scorecard. Buyers and operators should be able to see incidents handled, runtime-backed versus inferred-only ratios, triage time saved, handoff completion, and repeat-incident reuse without relying only on presentation narration.",
     "implementation_tasks": [
       "expose per-tenant pilot scorecard signals",

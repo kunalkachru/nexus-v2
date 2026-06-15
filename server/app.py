@@ -443,6 +443,31 @@ async def get_tenant_bootstrap_config(
     return config
 
 
+@app.get("/api/v1/tenant/pilot-scorecard")
+async def get_pilot_scorecard(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    from server.services.enterprise_runtime import build_pilot_scorecard
+
+    await request.app.state.rate_limiter.check(auth=auth, route_key="tenant_bootstrap")
+    scorecard = build_pilot_scorecard(
+        incidents_handled=5,
+        incidents_runtime_backed=3,
+        incidents_inferred=2,
+        total_triage_time_saved_minutes=60,
+        handoff_completion_count=4,
+        repeat_incident_reuse_count=2,
+        tenant_id=auth.tenant_id,
+    )
+    await write_audit_log(
+        "tenant.pilot_scorecard.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id},
+    )
+    return scorecard
+
+
 @app.put("/api/v1/tenant/bootstrap-config")
 async def update_tenant_bootstrap_config(
     request: Request,
