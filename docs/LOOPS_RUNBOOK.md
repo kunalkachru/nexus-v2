@@ -30,20 +30,19 @@ The `15–85` backlog is complete.
 
 The market-ready v1 checkpoint (items `77–85`) is finished.
 
-The product is ready for narrow support-triage workflow use and buyer presentation without hand-waving.
+The `backlog-86-plus.json` is now complete (items 86–92 wedge-strengthening checkpoint finished).
 
-The backlog-77-plus.json is complete (items 77–85 finished).
+The product is ready for pilot conversations with three bounded incident families and runtime-backed investigation paths.
 
-The active next frontier is `backlog-86-plus.json`.
+**Completed in items 86–92:**
+1. ✓ added `INC003` deploy regression / 5xx spike as the third outage family
+2. ✓ deepened bounded REPLICA and TRACE support across all three families
+3. ✓ improved LLM-driven triage quality with adaptive reasoning for deploy regression
+4. ✓ improved agent reasoning visibility via workflow timeline
+5. ✓ strengthened pilot-conversion proof with three-outage wedge narrative
+6. ✓ completed wow-effect UI polish across core surfaces
 
-Use the next frontier to strengthen the wedge without broadening the category:
-
-1. add `INC003` deploy regression / 5xx spike
-2. deepen bounded REPLICA and TRACE support
-3. improve LLM-driven triage quality
-4. improve agent reasoning visibility
-5. strengthen pilot-conversion proof
-6. finish the remaining wow-effect UI polish
+The product now supports **three-outage bounded wedge** with consistent investigation workflows, runtime-backed validation, and measurable pilot readiness.
 
 ## Before Starting A Loop
 
@@ -213,4 +212,6 @@ As of the completion of items 77–85:
 
 The product is ready for v1 release as a narrow, credible support-triage system for recurring checkout and transaction-critical incidents.
 
-The active next backlog is [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json), which strengthens the wedge before any broader platform work.
+The [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json) is now complete (items 86–92 finished). 
+
+The product has been strengthened from two-incident to three-incident bounded wedge with consistent investigation workflows and pilot-ready presentation materials. No further platform work is scheduled until broader strategic direction is decided.
