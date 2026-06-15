@@ -47,9 +47,9 @@ Make sure the agent reads:
 
 1. [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
 2. [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
-3. [backlog-77-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-77-plus.json)
-4. [docs/POST_76_MARKET_READY_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_76_MARKET_READY_PLAN.md)
-5. [docs/POST_76_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_76_EXECUTION_MAP.md)
+3. the currently active backlog file
+4. the phase-planning doc for that backlog
+5. the execution map for that backlog, if one exists
 6. [docs/DEMO_WALKTHROUGH.md](/Users/kunalkachru/Documents/nexus-v3/docs/DEMO_WALKTHROUGH.md)
 
 Recommended local checks before starting:
@@ -76,7 +76,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 4. Paste a prompt like this:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/POST_76_MARKET_READY_PLAN.md, docs/POST_76_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-77-plus.json.
+Read AGENTS.md, WORKING_STATE.md, the active phase-planning doc, the active execution-map doc if present, docs/DEMO_WALKTHROUGH.md, and the active backlog file.
 Run a commit-and-continue loop against the backlog.
 
 Rules:
@@ -100,7 +100,7 @@ Rules:
 Use the same flow, but keep the grounding stricter:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/POST_76_MARKET_READY_PLAN.md, docs/POST_76_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-77-plus.json completely before coding.
+Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, the active phase-planning doc, the active execution-map doc if present, docs/DEMO_WALKTHROUGH.md, and the active backlog file completely before coding.
 Resume from the first pending backlog item.
 Drain the backlog top to bottom in a build-test-commit loop.
 Do not invent scope outside the backlog.
@@ -208,3 +208,5 @@ As of the completion of items 77–85:
 - **Product boundaries:** Narrow support-triage workflow, curated incident families, explicit human approval, no autonomous production remediation
 
 The product is ready for v1 release as a narrow, credible support-triage system for recurring checkout and transaction-critical incidents.
+
+No post-85 implementation backlog is active yet. Write the next backlog before starting another loop.

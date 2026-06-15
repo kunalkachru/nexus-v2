@@ -20,7 +20,7 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 ## Baseline State
 
 - Branch: `master`
-- Baseline feature slice through item `76` (pilot readiness complete): latest commit
+- Baseline feature slice through item `85` (market-ready v1 release complete): latest commit
 - `pytest tests/ -q` → **145 passed**
 - `npm run browser:verify` → **11 passed**
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
@@ -129,5 +129,12 @@ These paths must stay semantically aligned.
 
 ## Next Recommended Frontier
 
-The active frontier is `backlog-77-plus.json`.
-This phase should bias toward deployment readiness, control hardening, integration reliability, self-observability, security posture, onboarding, and release credibility rather than adding new outage breadth.
+There is no active implementation backlog right now.
+
+The next frontier should be written as a post-85 backlog after reviewing:
+
+- [docs/RELEASE_READINESS.md](/Users/kunalkachru/Documents/nexus-v3/docs/RELEASE_READINESS.md)
+- [docs/BUYER_PROOF_PACKAGE.md](/Users/kunalkachru/Documents/nexus-v3/docs/BUYER_PROOF_PACKAGE.md)
+- [docs/NOW_NEXT_LATER_GTM_LADDER.md](/Users/kunalkachru/Documents/nexus-v3/docs/NOW_NEXT_LATER_GTM_LADDER.md)
+
+That next phase should strengthen the narrow wedge rather than broaden into a universal platform.

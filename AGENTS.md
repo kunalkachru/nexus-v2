@@ -8,7 +8,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
 - Flagship incidents:
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
-- Current validated baseline (post items 69–76 pilot-readiness phase):
+- Current validated baseline (post items 77–85 market-ready v1 checkpoint):
   - `pytest tests/ -q` -> `145 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes
@@ -169,10 +169,10 @@ Not implemented yet:
 - autonomous multi-step production remediation
 - broad third-party workflow coverage beyond the current bounded integrations
 - fully durable active runtime queue orchestration beyond app-local in-flight state
-- full market-ready deployment and onboarding hardening
-- hardened auth, security, observability, and operator onboarding polish for v1 release
+- multi-tenant production hardening beyond the current narrow v1 release baseline
+- enterprise-grade auth, security, observability, and onboarding maturity beyond the current v1 checkpoint
 
 ## Reference
 
 See [docs/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOPS_RUNBOOK.md) for the operator-facing guide and prompt templates.
-Use [backlog-77-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-77-plus.json), [docs/POST_76_MARKET_READY_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_76_MARKET_READY_PLAN.md), and [docs/POST_76_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_76_EXECUTION_MAP.md) for the next active phase.
+The next active backlog is not written yet. Use [docs/RELEASE_READINESS.md](/Users/kunalkachru/Documents/nexus-v3/docs/RELEASE_READINESS.md), [docs/BUYER_PROOF_PACKAGE.md](/Users/kunalkachru/Documents/nexus-v3/docs/BUYER_PROOF_PACKAGE.md), and [docs/NOW_NEXT_LATER_GTM_LADDER.md](/Users/kunalkachru/Documents/nexus-v3/docs/NOW_NEXT_LATER_GTM_LADDER.md) to define the post-85 frontier before starting another loop.
