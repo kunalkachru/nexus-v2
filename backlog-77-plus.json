@@ -236,7 +236,7 @@
     "id": 84,
     "title": "Market-facing wow-effect UI revamp and conversion polish",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Give NEXUS a clearly more premium, memorable, customer-attracting presentation layer without breaking the support-triage truthfulness of the product. This is not a random redesign; it is a deliberate visual and information-design pass so the product creates a stronger first impression for buyers, operators, and demo viewers.",
     "implementation_tasks": [
       "define a stronger market-facing visual direction for the core product surfaces while preserving the established product narrative",
@@ -272,7 +272,7 @@
     "id": 85,
     "title": "Market-ready v1 checkpoint and release readiness",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Close the market-ready hardening phase with a deliberate release-readiness checkpoint. Confirm the bounded support-triage product is truthful, operable, buyer-explainable, and deployment-ready for a narrow v1 without drifting into unsupported claims.",
     "implementation_tasks": [
       "run a full validation pass across backend tests, browser flows, demo flow, and deployment path",

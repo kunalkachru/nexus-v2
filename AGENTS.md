@@ -135,9 +135,9 @@ The `15–76` backlog is complete.
 
 The `backlog-69-plus.json` is complete (pilot readiness checkpoint).
 
-The active next execution backlog is `backlog-77-plus.json`.
+The `backlog-77-plus.json` is complete (market-ready v1 hardening and deployment preparation).
 
-This phase is a market-ready v1 hardening and deployment-preparation checkpoint.
+All items through 85 are complete. The product is market-ready v1 for narrow support-triage workflow.
 
 ## Reality Check
 

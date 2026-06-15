@@ -11,8 +11,7 @@ Items `47–53`: **complete**
 Items `54–60`: **complete**
 Items `61–68`: **complete** (hardening and truthfulness checkpoint)
 Items `69–76`: **complete** (pilot readiness checkpoint) in `backlog-69-plus.json`
-Items `77–82`: **complete** (market-ready v1 deployment/control/integration/observability/security/onboarding hardening) in `backlog-77-plus.json`
-Items `83–85`: **pending** (buyer proof, UI wow-effect, release checkpoint) in `backlog-77-plus.json`
+Items `77–85`: **complete** (market-ready v1 hardening, deployment preparation, buyer proof, UI polish, release checkpoint) in `backlog-77-plus.json`
 
 ## App In One Sentence
 
@@ -105,15 +104,13 @@ These paths must stay semantically aligned.
 - `backlog-54-plus.json` — completed backlog through item `60`
 - `backlog-61-plus.json` — completed backlog through item `68`
 - `backlog-69-plus.json` — completed backlog through item `76`
-- `backlog-77-plus.json` — active backlog for market-ready v1 hardening and deployment preparation
+- `backlog-77-plus.json` — completed backlog through item `85` (market-ready v1 release)
 - `AGENTS.md` — loop rules and current validated baseline
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
 - `docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md` — broader product strategy and scope
-- `docs/POST_68_MARKET_READINESS_PLAN.md` — readiness ladder and product direction after the hardening phase
-- `docs/POST_68_EXECUTION_MAP.md` — task/subtask execution map for items `69–76`
 - `docs/POST_76_MARKET_READY_PLAN.md` — market-ready v1 hardening direction after pilot readiness
-- `docs/POST_76_EXECUTION_MAP.md` — task/subtask execution map for items `77–84`
+- `docs/POST_76_EXECUTION_MAP.md` — task/subtask execution map for items `77–85`
 
 ## Most Important Files For The Next Phase
 

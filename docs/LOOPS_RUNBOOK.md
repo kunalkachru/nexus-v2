@@ -26,20 +26,20 @@ Do not start a loop against a vague objective like "improve Nexus more." Write a
 
 ## Current Recommended Scope
 
-The `15–76` backlog is complete.
+The `15–85` backlog is complete.
 
-The active next backlog is `backlog-77-plus.json`.
+The market-ready v1 checkpoint (items `77–85`) is finished.
 
-This phase is market-ready v1 hardening and deployment preparation, not breadth-first expansion.
+The product is ready for narrow support-triage workflow use and buyer presentation without hand-waving.
 
-Before the loop starts:
+The backlog-77-plus.json is complete (items 77–85 finished).
 
-1. read the finished codebase control docs
-2. read `backlog-77-plus.json`
-3. read `docs/POST_76_MARKET_READY_PLAN.md`
-4. read `docs/POST_76_EXECUTION_MAP.md`
-5. keep the work bounded to the listed items
-6. only then begin the loop
+The next frontier should be written after reviewing:
+
+1. the release-readiness summary for v1 boundaries
+2. the buyer proof package for what is sellable
+3. the product's measured and estimated capabilities
+4. the competitive narrowness (support-triage only, not universal incident platform)
 
 ## Before Starting A Loop
 
@@ -193,14 +193,18 @@ Resume from the first pending backlog item. Do not repeat completed items.
 - Fresh `nxs_...` incidents can be simpler, but they must not contradict the flagship runtime story.
 - Do not describe the debugger as universal or interactive unless a backlog item truly implements that.
 
-## Current Reality
+## Market-Ready v1 Release State
 
-As of the latest validated state:
+As of the completion of items 77–85:
 
-- seeded and live incident narratives distinguish scaffold-only versus runtime-backed evidence
-- browser verification is green
-- Docker smoke is green through the packaged app on `:7860`
-- runtime replay can be delegated to a Docker-capable runtime host
-- the debugger is still bounded to the two curated flagship outage classes
-- recent replay execution history is durable, while active in-flight runtime posture remains app-local
-- the next real frontier is market-ready v1 hardening: deployment readiness, role boundaries, delivery reliability, observability, security posture, operator onboarding, and buyer-proof packaging
+- **Architecture:** SENTINEL → PRISM → FORGE → GUARDIAN with REPLICA and TRACE bounded to curated packs
+- **Seeded and live paths:** Both distinguish scaffold-only versus runtime-backed evidence
+- **Deployment:** Docker packaged app on `:7860` with runtime-host relay delegation
+- **Testing:** 145 pytest cases pass, 11 browser verification cases pass, demo.py passes, Docker smoke passes
+- **Incidents:** INC001 (checkout timeout/retry) and INC002 (DB pool exhaustion) are fully bounded with reproduction and debugging
+- **Operator experience:** Training page shows ROI metrics, replay evidence, memory reuse, governance posture
+- **Buyer proof:** Before/after narrative with measured relay reduction, triage time savings, approval turnaround
+- **Visual design:** Market-facing premium UI with gradient typography, sophisticated shadows, strong hierarchy
+- **Product boundaries:** Narrow support-triage workflow, curated incident families, explicit human approval, no autonomous production remediation
+
+The product is ready for v1 release as a narrow, credible support-triage system for recurring checkout and transaction-critical incidents.
