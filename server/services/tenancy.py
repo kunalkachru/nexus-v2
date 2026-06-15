@@ -121,3 +121,77 @@ class TenancyService:
         configs[tenant_id] = current
         self._save_bootstrap_configs(configs)
         return current
+
+    def get_incident_support_state(
+        self,
+        tenant_id: str,
+        issue_family: str,
+    ) -> dict[str, Any]:
+        from server.services.replica_runtime import runtime_host_supported_packs
+
+        configs = self._load_bootstrap_configs()
+        config = configs.get(tenant_id, {})
+        enabled_packs = config.get("enabled_packs", [])
+        enabled_pack_set = set(enabled_packs) if isinstance(enabled_packs, list) else set()
+
+        # Map issue families to incident classes
+        family_to_classes = {
+            "Timeout cascade / retry amplification": ["timeout_retry_amplification", "checkout_timeout_cascade"],
+            "Database pool exhaustion / session leak": ["db_pool_exhaustion", "session_leak"],
+            "Deploy regression / 5xx spike": ["deploy_regression", "query_null_pointer"],
+            "Certificate expiry / trust boundary outage": [],
+            "Memory leak / runtime degradation": [],
+            "Production incident investigation": [],
+        }
+
+        incident_classes = family_to_classes.get(issue_family, [])
+
+        # Check if tenant has a pack that supports this incident
+        all_packs = runtime_host_supported_packs()
+        pack_supports_incident = False
+        supporting_packs = []
+
+        for pack in all_packs:
+            pack_id = pack.get("pack_id")
+            pack_classes = pack.get("incident_classes", [])
+
+            # Check if this pack supports the incident
+            has_match = any(ic in pack_classes for ic in incident_classes)
+            if has_match:
+                if pack_id in enabled_pack_set:
+                    pack_supports_incident = True
+                    supporting_packs.append(pack_id)
+
+        if pack_supports_incident:
+            support_state = "runtime-backed"
+        elif incident_classes:  # Has known incident classes but no enabled pack
+            support_state = "inference-first"
+        else:  # Unknown incident family
+            support_state = "unsupported"
+
+        status = self.get_bootstrap_status(tenant_id)
+        return {
+            "support_state": support_state,
+            "issue_family": issue_family,
+            "tenant_id": tenant_id,
+            "supported_packs": supporting_packs,
+            "all_supported_families": status.get("supported_outage_families", []),
+            "downgrade_guidance": self._downgrade_guidance_for_state(support_state, issue_family),
+        }
+
+    def _downgrade_guidance_for_state(self, support_state: str, issue_family: str) -> str:
+        if support_state == "runtime-backed":
+            return "This incident is fully supported with runtime-backed reproduction and validation."
+        elif support_state == "inference-first":
+            return (
+                f"This incident family ('{issue_family}') can be triaged with inference, "
+                "but runtime-backed validation is not yet available. "
+                "Contact your administrator to enable the required runtime pack for full support."
+            )
+        else:
+            return (
+                f"This incident family ('{issue_family}') is not yet supported by NEXUS. "
+                "NEXUS will provide triage guidance based on inference only. "
+                "For production incidents outside the supported wedge, rely on your team's established runbooks. "
+                "Contact your administrator or the NEXUS team to discuss adding support for this incident family."
+            )

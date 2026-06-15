@@ -39,7 +39,7 @@
     "id": 102,
     "title": "Coverage matrix and unsupported-incident downgrade path",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make support coverage explicit per tenant and per incident family. The product should clearly distinguish runtime-backed support, inference-first support, and unsupported cases, and it should downgrade gracefully instead of bluffing when a case falls outside the current wedge.",
     "implementation_tasks": [
       "define per-tenant support-state representation for runtime-backed, inference-first, and unsupported cases",

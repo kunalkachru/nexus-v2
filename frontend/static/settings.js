@@ -39,8 +39,15 @@ async function renderBootstrapStatus() {
 
     // Show supported outage families
     const supportedFamilies = status.supported_outage_families || [];
+    const packCoverage = status.pack_coverage || {};
     const familiesHtml = supportedFamilies.length > 0
-      ? supportedFamilies.map(family => `<li>${family}</li>`).join("")
+      ? supportedFamilies.map(family => {
+          const packList = Object.entries(packCoverage)
+            .filter(([_, coverage]) => coverage.incident_classes && coverage.incident_classes.some(cls => family.toLowerCase().includes(cls.split('_').join(' '))))
+            .map(([packId, _]) => packId);
+          const supportLabel = packList.length > 0 ? "✓ Runtime-backed" : "◐ Inference-first";
+          return `<li><strong>${family}</strong> — ${supportLabel}</li>`;
+        }).join("")
       : "<li>No outage families are currently enabled. Configure enabled_packs to add coverage.</li>";
     setHtml("supportedFamilies", familiesHtml);
   } catch (error) {

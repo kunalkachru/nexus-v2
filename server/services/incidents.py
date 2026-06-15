@@ -887,6 +887,10 @@ class IncidentService:
             ),
             incident.title,
         )
+        support_state_info = self._tenancy_service.get_incident_support_state(
+            tenant_id or incident.tenant_id,
+            issue_family,
+        )
         diagnosis = {
             "root_cause": _root_cause_from_issue_family(issue_family, raw_service or incident.service or incident.nexus_incident_id),
             "confidence": 0.75,
@@ -1040,6 +1044,14 @@ class IncidentService:
                 "raw_input_text": incident.raw_input_text,
                 "normalized_evidence": incident.normalized_evidence,
                 "input_quality": input_quality,
+                "support_state": support_state_info["support_state"],
+                "issue_family": issue_family,
+            },
+            "tenant_support": {
+                "support_state": support_state_info["support_state"],
+                "downgrade_guidance": support_state_info["downgrade_guidance"],
+                "all_supported_families": support_state_info["all_supported_families"],
+                "supporting_packs": support_state_info["supported_packs"],
             },
             "observability": observability,
             "classification": classification,

@@ -438,9 +438,14 @@ function renderSummary(data) {
   setText("incidentHeroSeverity", incident.severity);
   setText("incidentHeroGuardian", String(data.guardian.decision || "").toUpperCase());
   setText("incidentHeroExecution", String(data.execution_result || "").toUpperCase());
+  const tenantSupport = data.tenant_support || {};
+  const supportState = data.incident?.support_state || tenantSupport.support_state || "-";
+  const downgradeGuidance = supportState === "unsupported" || supportState === "inference-first"
+    ? ` ⚠ Support coverage note: ${tenantSupport.downgrade_guidance || ""}`
+    : "";
   setText(
     "incidentOverviewNote",
-    `Detected ${incident.detected_at} via ${incident.source_channel || "webhook"} and active for ${incident.duration_minutes} minutes. Likely owner: ${triage.likely_owner_team || triage.likely_owner_service || "Platform Operations"}. Support queue: ${triage.support_queue || "Production escalation"}.`
+    `Detected ${incident.detected_at} via ${incident.source_channel || "webhook"} and active for ${incident.duration_minutes} minutes. Likely owner: ${triage.likely_owner_team || triage.likely_owner_service || "Platform Operations"}. Support queue: ${triage.support_queue || "Production escalation"}.${downgradeGuidance}`
   );
   const runtimeHint = data.replica_summary?.runtime_enablement_hint || "";
   setText("operatorNextStep", `${nextStep} ${triage.manual_relay_removed || ""}${runtimeHint ? ` ${runtimeHint}` : ""}`);
@@ -460,9 +465,15 @@ function renderSummary(data) {
     const ownerProvenance = triage.owner_provenance || triage.is_owner_tenant_mapped ?
       `${ownerInfo} (${triage.owner_provenance || "tenant-mapped"})` :
       ownerInfo;
+    const supportState = data.incident?.support_state || data.tenant_support?.support_state || "-";
+    const supportStateLabel = supportState === "runtime-backed" ? "✓ Runtime-backed" :
+                             supportState === "inference-first" ? "◐ Inference-first" :
+                             supportState === "unsupported" ? "⊘ Unsupported" :
+                             "-";
     summary.innerHTML = [
       ["Likely owner", ownerProvenance],
       ["Issue family", triage.issue_family || "-"],
+      ["Support coverage", supportStateLabel],
       ["Customer path", triage.impacted_customer_path || "-"],
       ["Approval", titleCase(data.guardian.required_approval_level || "operator")],
       ["Proposed fix", data.structured_result?.proposed_fix || data.runbook.recommended_runbook],
