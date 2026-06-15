@@ -68,7 +68,7 @@ def main() -> None:
     print("NEXUS v3 End-to-End Demo: All 6 Workflow Stages")
     print("="*70)
 
-    for incident_id in ["INC001", "INC002"]:
+    for incident_id in ["INC001", "INC002", "INC003"]:
         print(f"\n{'─'*70}")
         print(f"Incident: {incident_id}")
         print(f"{'─'*70}\n")

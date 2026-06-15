@@ -15,8 +15,9 @@ Use it when you want to:
 
 The current validated baseline for this walkthrough is:
 
-- `pytest tests/ -q` -> `145 passed`
-- `npm run browser:verify` -> `11 passed`
+- `pytest tests/ -q` -> `145 passed` (with three incident families)
+- `npm run browser:verify` -> `11 passed` (INC001 and INC002 runtime comparison blocks tested)
+- `python demo.py` -> all three incidents (INC001, INC002, INC003) workflow complete
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
 - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes
 
@@ -36,9 +37,15 @@ The walkthrough should make these things obvious:
 6. Guardian is the final review point before action
 7. operators can see which evidence is runtime-backed vs inferred-only
 
-## Flagship Use Case
+## Flagship Use Cases
 
-Use this scenario as the anchor for the walkthrough:
+The product now supports three incident families:
+
+1. **INC001**: customer-facing checkout outage caused by timeout and retry amplification (strong investigation path)
+2. **INC002**: checkout write path degradation caused by database pool exhaustion (database-layer investigation)
+3. **INC003**: API service degradation caused by deploy regression with 5xx spikes (rollback-driven recovery path)
+
+Use INC001 as the anchor for the initial walkthrough:
 
 **customer-facing checkout outage caused by timeout and retry amplification after dependency degradation and recent deploy ambiguity**
 

@@ -3,7 +3,7 @@
     "id": 86,
     "title": "Third outage family: deploy regression / 5xx spike",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Expand the current wedge beyond INC001 and INC002 by adding a third canonical outage family centered on a deploy regression causing 5xx spikes on a customer-facing path. This should feel like a real support-to-engineering case with deploy-window suspicion, likely owner routing, and rollback-aware framing while staying truthful about what is inferred versus validated.",
     "implementation_tasks": [
       "add a third canonical incident across seeded and live paths with clear customer impact, likely owner, suspected deploy window, and likely regression surface",
