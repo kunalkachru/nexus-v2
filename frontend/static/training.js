@@ -264,6 +264,21 @@ function renderSessionTriage(trainingData) {
       : `requested ${requested ? "ON" : "OFF"} · active ${active ? "ON" : "OFF"}`;
     const incidentHref = `incident?nexus_incident_id=${encodeURIComponent(sessionSummary.incident_id || "INC001")}`;
     const outcome = sessionSummary.execution_outcome;
+    const qualityEval = sessionSummary.quality_evaluation;
+    const qualityHtml = qualityEval ? `
+      <div class="quality-evaluation" style="margin-top: 12px; padding: 1em; background-color: rgba(74, 144, 226, 0.05); border-radius: 4px;">
+        <div class="outcome-header">
+          <span class="outcome-status">Fresh Incident Quality</span>
+          <span class="outcome-decision">${Math.round(qualityEval.overall_quality_score * 100)}%</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5em; margin-top: 0.75em; font-size: 0.9rem;">
+          <div><span class="outcome-label">Framing:</span> <span class="outcome-value">${qualityEval.issue_framing.label}</span></div>
+          <div><span class="outcome-label">Owner:</span> <span class="outcome-value">${qualityEval.owner_routing.label}</span></div>
+          <div><span class="outcome-label">Next-steps:</span> <span class="outcome-value">${qualityEval.next_step_quality.label}</span></div>
+          <div><span class="outcome-label">Confidence:</span> <span class="outcome-value">${qualityEval.uncertainty_quality.label}</span></div>
+        </div>
+      </div>
+    ` : "";
     const outcomeHtml = outcome ? `
       <div class="outcome-summary" style="margin-top: 12px;">
         <div class="outcome-header">
@@ -295,6 +310,7 @@ function renderSessionTriage(trainingData) {
       <div class="summary-card"><div class="label">Live reasoning</div><div class="value">${liveReasoningLabel}</div></div>
       <p class="hero-copy"><strong>${sessionSummary.incident_title || sessionSummary.incident_id || "Latest incident"}</strong> is the most recent live triage completed in this browser. The crew completed ${sessionSummary.task_count || 0} visible handoffs, Guardian required ${titleCase(sessionSummary.required_approval_level || "operator")} approval, and the run ended in ${titleCase(sessionSummary.execution_result || "pending")}.</p>
       <p class="section-note">${sessionSummary.runbook_summary ? `Runbook reviewed: ${sessionSummary.runbook_summary}.` : ""} ${sessionSummary.runbook_reasoning ? `Selection basis: ${sessionSummary.runbook_reasoning}` : ""}</p>
+      ${qualityHtml}
       ${outcomeHtml}
       <a class="inline-link" href="${window.NexusNavigation?.withReturnTo(incidentHref) || incidentHref}">Open the same incident again</a>
     `;
@@ -303,11 +319,18 @@ function renderSessionTriage(trainingData) {
   const impact = document.getElementById("sessionTriageImpact");
   if (impact) {
     const latestEpisode = trainingData.latest_episode || {};
-    impact.innerHTML = [
+    const qualityEval = sessionSummary.quality_evaluation;
+    const impactLines = [
       `Read the enterprise runtime summary next. It is the operational health view for this triage style: orchestration success, fallback use, branch completion, and governed execution.`,
       `For this incident, the crew referenced ${sessionSummary.memory_similar_count || 0} similar incidents and ${sessionSummary.memory_runbook_count || 0} prior runbook memories before choosing an action plan.`,
       `Branch completion for this run landed at ${percent(sessionSummary.branch_completion_rate || 0)}. The learning summary below remains the broader seeded baseline${latestEpisode.incident_id ? `, whose latest stored episode is ${latestEpisode.incident_id}.` : "."}`,
-    ]
+    ];
+    if (qualityEval) {
+      impactLines.push(
+        `Fresh incident quality evaluation: ${qualityEval.evaluation_summary}`
+      );
+    }
+    impact.innerHTML = impactLines
       .map((line) => `<div class="episode-step">${line}</div>`)
       .join("");
   }

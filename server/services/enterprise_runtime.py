@@ -3106,3 +3106,78 @@ def build_trace_summary(
         "confidence": confidence,
         "reasoning": reasoning,
     }
+
+
+def build_quality_evaluation(
+    *,
+    incident_id: str,
+    classification_confidence: float,
+    diagnosis_confidence: float,
+    triage_summary: dict[str, object] | None = None,
+    input_quality: dict[str, object] | None = None,
+    has_runtime_replay: bool = False,
+) -> dict[str, object]:
+    input_quality = input_quality or {}
+    triage_summary = triage_summary or {}
+    normalization_posture = str(input_quality.get("normalization_posture", "")).lower()
+
+    issue_framing_score = 0.0
+    issue_framing_label = "weak"
+    if normalization_posture == "strong":
+        issue_framing_score = 0.9
+        issue_framing_label = "strong"
+    elif normalization_posture == "partial":
+        issue_framing_score = 0.65
+        issue_framing_label = "partial"
+    elif normalization_posture == "weak":
+        issue_framing_score = 0.35
+        issue_framing_label = "weak"
+    else:
+        issue_framing_score = classification_confidence * 0.8
+        issue_framing_label = "scaffold-only"
+
+    owner_routing_score = 0.8 if triage_summary.get("likely_owner_team") else 0.5
+    owner_routing_label = "high confidence" if owner_routing_score > 0.75 else "estimated"
+
+    next_step_quality_score = 0.75 if triage_summary.get("approval_focus") else 0.5
+    next_step_quality_label = "clear" if next_step_quality_score > 0.65 else "provisional"
+
+    uncertainty_quality_score = 0.5
+    uncertainty_quality_label = "low confidence"
+    if classification_confidence < 0.6:
+        uncertainty_quality_score = 0.3
+        uncertainty_quality_label = "high uncertainty"
+    elif classification_confidence > 0.8:
+        uncertainty_quality_score = 0.85
+        uncertainty_quality_label = "well-grounded"
+    elif has_runtime_replay:
+        uncertainty_quality_score = 0.9
+        uncertainty_quality_label = "runtime-validated"
+
+    overall_quality_score = (issue_framing_score + owner_routing_score + next_step_quality_score + uncertainty_quality_score) / 4.0
+
+    return {
+        "incident_id": incident_id,
+        "overall_quality_score": round(overall_quality_score, 2),
+        "issue_framing": {
+            "score": round(issue_framing_score, 2),
+            "label": issue_framing_label,
+            "reasoning": f"Input normalization posture is {normalization_posture or 'unknown'}, affecting frame completeness.",
+        },
+        "owner_routing": {
+            "score": round(owner_routing_score, 2),
+            "label": owner_routing_label,
+            "reasoning": f"Owner assignment is {'mapped from tenant config' if triage_summary.get('is_owner_tenant_mapped') else 'inferred from issue family'}.",
+        },
+        "next_step_quality": {
+            "score": round(next_step_quality_score, 2),
+            "label": next_step_quality_label,
+            "reasoning": f"Next-step guidance is {'explicitly scoped for this issue family' if triage_summary.get('approval_focus') else 'generic guidance for issue class'}.",
+        },
+        "uncertainty_quality": {
+            "score": round(uncertainty_quality_score, 2),
+            "label": uncertainty_quality_label,
+            "reasoning": f"Confidence is {round(classification_confidence * 100)}%, {'boosted by runtime replay validation' if has_runtime_replay else 'from inference only'}.",
+        },
+        "evaluation_summary": f"Fresh incident '{incident_id}' quality: overall {round(overall_quality_score * 100)}%. Frame is {issue_framing_label}, owner routing is {owner_routing_label}, next-steps are {next_step_quality_label}, and confidence is {uncertainty_quality_label}.",
+    }

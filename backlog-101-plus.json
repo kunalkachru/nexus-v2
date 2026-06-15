@@ -75,7 +75,7 @@
     "id": 103,
     "title": "Fresh-incident quality evaluation harness",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Add a bounded evaluation harness so the team can assess how good NEXUS is on fresh incidents during pilots. The product should make it possible to review issue framing, owner routing, next-step quality, and uncertainty language instead of only trusting informal impressions.",
     "implementation_tasks": [
       "add a bounded fresh-incident review and scoring structure",

@@ -48,6 +48,7 @@ from server.services.tenancy import TenancyService
 from server.services.enterprise_runtime import (
     EnterpriseNexusRuntime,
     IncidentKnowledgeService,
+    build_quality_evaluation,
     build_replica_summary,
     build_roi_metrics,
     build_trace_summary,
@@ -810,6 +811,7 @@ class IncidentService:
         input_quality = self._raw_input_quality(normalized_evidence)
         latest_replay = dict(normalized_evidence.get("latest_replay", {})) if isinstance(normalized_evidence.get("latest_replay"), dict) else {}
         has_runtime_replay = bool(latest_replay and latest_replay.get("status") in {"replay_executed", "relay_executed"} or latest_replay.get("lifecycle_state") == "completed")
+        is_fresh_incident = bool(incident.raw_input_text)
         live_payload = await self._build_raw_live_reasoning_payload(
             incident,
             tenant_id=tenant_id or incident.tenant_id,
@@ -1029,6 +1031,17 @@ class IncidentService:
                 recent_logs=observability["recent_logs"],
             )
 
+        quality_evaluation = None
+        if is_fresh_incident:
+            quality_evaluation = build_quality_evaluation(
+                incident_id=incident.nexus_incident_id,
+                classification_confidence=float(classification.get("confidence", 0.8)),
+                diagnosis_confidence=float(diagnosis.get("confidence", 0.75)),
+                triage_summary=triage_summary,
+                input_quality=input_quality,
+                has_runtime_replay=has_runtime_replay,
+            )
+
         payload = {
             "incident": {
                 "id": incident.nexus_incident_id,
@@ -1053,6 +1066,7 @@ class IncidentService:
                 "all_supported_families": support_state_info["all_supported_families"],
                 "supporting_packs": support_state_info["supported_packs"],
             },
+            "quality_evaluation": quality_evaluation,
             "observability": observability,
             "classification": classification,
             "diagnosis": diagnosis,

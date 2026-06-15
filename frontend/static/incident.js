@@ -227,6 +227,7 @@ function markRelaySeen(incidentId) {
 }
 
 function persistLastTriageSummary(data) {
+  const qualityEvaluation = data.quality_evaluation || null;
   const summary = {
     incident_id: data.incident?.id,
     incident_name: data.incident?.name,
@@ -244,6 +245,7 @@ function persistLastTriageSummary(data) {
     branch_completion_rate: data.orchestration?.branch_completion_rate || 0,
     runbook_summary: data.runbook?.summary || data.runbook?.recommended_runbook || "",
     runbook_reasoning: data.runbook?.selection_logic || data.runbook?.reasoning || "",
+    quality_evaluation: qualityEvaluation,
     updated_at: new Date().toISOString(),
   };
   try {
