@@ -151,7 +151,7 @@
     "id": 113,
     "title": "Coverage matrix and pilot scorecard extension for the five-family wedge",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Extend the tenant coverage matrix, scorecard, and proof surfaces so the five-family wedge is visible and bounded. Buyers and operators should be able to see exactly what is runtime-backed, inference-first, or unsupported across the expanded wedge.",
     "implementation_tasks": [
       "extend coverage matrix for five-family support state",
@@ -186,7 +186,7 @@
     "id": 114,
     "title": "Fresh-incident routing and owner inference calibration across the five-family wedge",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Calibrate fresh-incident framing, owner routing, and uncertainty posture now that the wedge covers five bounded families. The goal is better live routing quality without slipping into overconfident generic triage.",
     "implementation_tasks": [
       "calibrate live routing and owner inference across five families",
@@ -221,7 +221,7 @@
     "id": 115,
     "title": "Buyer and demo material refresh for the five supported outage families",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Refresh the buyer-facing, owner-facing, and demo materials so the product can present the five-family wedge clearly. The demo story should stay narrow and legible while showing broader coverage and stronger runtime-backed reasoning.",
     "implementation_tasks": [
       "refresh buyer proof and presentation material for five-family support",
@@ -252,13 +252,13 @@
     "id": 116,
     "title": "Five-family wedge checkpoint and control-doc refresh",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Close the selective expansion phase with a deliberate checkpoint. Validate the five-family wedge end-to-end, confirm seeded and live truthfulness, and refresh the control docs so the repo ends the phase with a clear bounded-wedge posture before ops maturity work begins.",
     "implementation_tasks": [
       "run the full validation stack across tests, browser, demo, and Docker path",
       "verify all five families remain bounded and truthful in seeded and live paths",
       "refresh owner-facing control docs so the next active frontier is the ops-maturity phase",
-      "close the backlog cleanly before any 117–124 work begins"
+      "close the backlog cleanly before any 117\u2013124 work begins"
     ],
     "done_when": [
       "the five-family wedge is validated end-to-end",
