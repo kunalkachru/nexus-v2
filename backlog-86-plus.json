@@ -112,7 +112,7 @@
     "id": 89,
     "title": "Agent deliberation visibility and reasoning timeline",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make the multi-agent investigation workflow easier to understand by showing what each agent contributed and which evidence shifted the case. The goal is not to expose raw chain-of-thought, but to make the operator and buyer experience feel like a real coordinated investigation rather than a stack of static panels.",
     "implementation_tasks": [
       "define a safe, concise reasoning-timeline or contribution contract for SENTINEL, PRISM, REPLICA, TRACE, FORGE, and GUARDIAN",
