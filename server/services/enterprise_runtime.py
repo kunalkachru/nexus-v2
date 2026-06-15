@@ -2536,6 +2536,68 @@ def _runtime_comparison_summary(
     return f"Baseline replay returned {baseline_status}{f' at {baseline_duration}ms' if baseline_duration is not None else ''}."
 
 
+def _explain_evidence_weighting(
+    *,
+    action: str,
+    base_success_rate: float,
+    runtime_alignment: float,
+    runtime_outcome: str,
+    runtime_executed: bool,
+    memory_weight: float = 0.0,
+) -> dict[str, object]:
+    """Build explicit evidence weighting explanation showing how different evidence sources drove the recommendation."""
+    if not runtime_executed:
+        return {
+            "primary_evidence": "inference",
+            "evidence_posture": "inferred_only",
+            "confidence_boost": 0.0,
+            "weighting_summary": "This recommendation is based on historical incident patterns and memory (no runtime validation).",
+            "residual_risk": "unvalidated" if base_success_rate < 0.85 else "moderate",
+        }
+
+    runtime_weight = _runtime_outcome_score(
+        runtime_outcome,
+        baseline_duration=None,
+        mitigation_duration=None,
+    ) * runtime_alignment
+
+    if runtime_weight >= 0.6:
+        primary = "runtime-backed"
+        posture = "validated_runtime"
+        risk = "low" if runtime_outcome == "resolved" else "moderate"
+        boost = runtime_weight - base_success_rate
+    elif runtime_alignment >= 0.25:
+        primary = "runtime-informed"
+        posture = "runtime_validated"
+        risk = "moderate"
+        boost = max(0.0, runtime_weight - base_success_rate)
+    else:
+        primary = "inference"
+        posture = "inferred_only"
+        risk = "unvalidated" if base_success_rate < 0.85 else "moderate"
+        boost = 0.0
+
+    weighting_parts = []
+    if base_success_rate > 0:
+        weighting_parts.append(f"inference ({round(base_success_rate * 100)}%)")
+    if memory_weight > 0:
+        weighting_parts.append(f"historical patterns ({round(memory_weight * 100)}%)")
+    if runtime_weight > 0:
+        weighting_parts.append(f"runtime validation ({round(runtime_weight * 100)}%)")
+
+    return {
+        "primary_evidence": primary,
+        "evidence_posture": posture,
+        "confidence_boost": round(boost, 2),
+        "weighting_summary": (
+            f"{action} is ranked based on {', '.join(weighting_parts) or 'multiple evidence sources'}. "
+            f"Runtime validation {'confirmed' if runtime_outcome == 'resolved' else 'improved' if runtime_outcome == 'improved' else 'showed'} "
+            f"the mitigation {'resolved the failure.' if runtime_outcome == 'resolved' else 'improved the failure.' if runtime_outcome == 'improved' else 'did not fully resolve it.'}"
+        ),
+        "residual_risk": risk,
+    }
+
+
 def rank_candidate_fixes_with_runtime(
     candidate_fixes: list[dict[str, object]] | None,
     *,
@@ -2546,6 +2608,8 @@ def rank_candidate_fixes_with_runtime(
     best_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "")
     best_duration = replica_summary.get("best_mitigation_duration_ms")
     baseline_duration = replica_summary.get("replay_duration_ms")
+    runtime_executed = bool(replica_summary.get("runtime_executed", False))
+
     for item in candidate_fixes or []:
         if not isinstance(item, dict):
             continue
@@ -2557,11 +2621,30 @@ def rank_candidate_fixes_with_runtime(
             baseline_duration=baseline_duration if isinstance(baseline_duration, int) else None,
             mitigation_duration=best_duration if isinstance(best_duration, int) else None,
         ) * overlap
+
+        weighting = _explain_evidence_weighting(
+            action=action,
+            base_success_rate=base_success,
+            runtime_alignment=overlap,
+            runtime_outcome=best_outcome,
+            runtime_executed=runtime_executed and overlap >= 0.25,
+            memory_weight=0.0,
+        )
+
         ranked_item = dict(item)
         ranked_item["runtime_alignment"] = round(overlap, 2)
         ranked_item["runtime_score"] = round(runtime_score, 2)
         ranked_item["runtime_outcome_class"] = best_outcome if overlap >= 0.25 else ""
         ranked_item["success_rate"] = round(max(base_success, runtime_score), 2)
+        ranked_item["evidence_posture"] = weighting["evidence_posture"]
+        ranked_item["confidence_boost"] = weighting["confidence_boost"]
+        ranked_item["weighting_summary"] = weighting["weighting_summary"]
+        ranked_item["residual_risk"] = weighting["residual_risk"]
+        ranked_item["why_action_won"] = _build_why_action_won(
+            ranked_item=ranked_item,
+            runtime_executed=runtime_executed,
+            best_outcome=best_outcome,
+        )
         ranked.append(ranked_item)
     ranked.sort(
         key=lambda item: (
@@ -2571,6 +2654,29 @@ def rank_candidate_fixes_with_runtime(
         reverse=True,
     )
     return ranked
+
+
+def _build_why_action_won(
+    *,
+    ranked_item: dict[str, object],
+    runtime_executed: bool,
+    best_outcome: str,
+) -> str:
+    """Build a clear explanation of why this action ranked highest."""
+    action = str(ranked_item.get("action", "")).strip()
+    alignment = float(ranked_item.get("runtime_alignment", 0.0) or 0.0)
+    runtime_score = float(ranked_item.get("runtime_score", 0.0) or 0.0)
+    posture = str(ranked_item.get("evidence_posture") or "")
+
+    if not runtime_executed or alignment < 0.25:
+        return f"{action}: Selected based on historical success rate and current diagnosis pattern match."
+
+    if best_outcome == "resolved":
+        return f"{action}: Runtime validation in REPLICA showed this action fully resolved the failure condition."
+    elif best_outcome == "improved":
+        return f"{action}: Runtime validation in REPLICA demonstrated this action improved performance without full resolution."
+    else:
+        return f"{action}: Ranked highest despite runtime validation not resolving the failure, due to mitigating risk vectors."
 
 
 def enrich_memory_with_runtime(
@@ -2587,6 +2693,7 @@ def enrich_memory_with_runtime(
     best_action = str(replica_summary.get("best_mitigation_action") or "")
     best_outcome = str(replica_summary.get("best_mitigation_outcome_class") or "").replace("_", " ")
     best_summary = str(replica_summary.get("best_mitigation_summary") or "")
+    runtime_executed = bool(replica_summary.get("runtime_executed", False))
     if not best_action:
         return payload
 
@@ -2600,15 +2707,33 @@ def enrich_memory_with_runtime(
         overlap = max((_action_overlap(source, best_action) for source in overlap_sources), default=0.0)
         if overlap >= 0.2:
             item["success_rate"] = round(min(0.99, float(item.get("success_rate", 0.0) or 0.0) + 0.04), 2)
-            note = f"Runtime alignment: {best_action} tested as {best_outcome} in REPLICA."
+            if runtime_executed:
+                note = f"Runtime alignment: {best_action} tested as {best_outcome} in REPLICA. Memory + runtime combination strengthens confidence."
+            else:
+                note = f"Action alignment: {best_action} aligns with the historical pattern from this runbook."
             item["why_now_fit"] = f"{str(item.get('why_now_fit', '')).strip()} {note}".strip()
+            item["evidence_tier"] = "runtime_backed" if runtime_executed else "inference_grounded"
     payload["runbooks"].sort(key=lambda item: float(item.get("success_rate", 0.0) or 0.0), reverse=True)
 
     for item in payload["similar_incidents"]:
         overlap = _action_overlap(str(item.get("prior_action", "")), best_action)
         if overlap >= 0.2:
+            prior_success = float(item.get("success_rate", 0.0) or 0.0)
             item["similarity"] = round(min(0.99, float(item.get("similarity", 0.0) or 0.0) + 0.04), 2)
-            item["match_reason"] = f"{str(item.get('match_reason', '')).strip()} Runtime overlap: the prior action aligns with {best_action}."
+            if runtime_executed and best_outcome in ("resolved", "improved"):
+                runtime_boost = 0.06
+                item["similarity"] = round(min(0.99, item["similarity"] + runtime_boost), 2)
+                item["match_reason"] = (
+                    f"{str(item.get('match_reason', '')).strip()} "
+                    f"Runtime alignment: the prior action aligns with tested mitigation ({best_outcome})."
+                )
+                item["evidence_tier"] = "runtime_confirmed"
+            else:
+                item["match_reason"] = (
+                    f"{str(item.get('match_reason', '')).strip()} "
+                    f"Action pattern match: the prior action aligns with inferred next step."
+                )
+                item["evidence_tier"] = "pattern_aligned"
     payload["similar_incidents"].sort(
         key=lambda item: (
             bool(item.get("service_match")),
@@ -2620,10 +2745,18 @@ def enrich_memory_with_runtime(
     )
 
     for item in payload["unresolved_items"]:
-        item["follow_up_reason"] = (
-            f"{str(item.get('follow_up_reason', '')).strip()} "
-            f"Current runtime outcome: {best_summary or f'{best_action} validated as {best_outcome}.'}"
-        ).strip()
+        if runtime_executed:
+            follow_reason = (
+                f"{str(item.get('follow_up_reason', '')).strip()} "
+                f"Current runtime outcome: {best_action} was {best_outcome} in REPLICA. "
+                f"This informs next steps: {'incident resolution is confirmed' if best_outcome == 'resolved' else 'partial progress made' if best_outcome == 'improved' else 'further investigation needed'}."
+            )
+        else:
+            follow_reason = (
+                f"{str(item.get('follow_up_reason', '')).strip()} "
+                f"Current inferred outcome: {best_summary or f'{best_action} is inferred as next step.'}"
+            )
+        item["follow_up_reason"] = follow_reason.strip()
 
     return payload
 

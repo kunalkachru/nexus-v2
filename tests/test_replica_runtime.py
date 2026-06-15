@@ -327,9 +327,70 @@ def test_runtime_memory_enrichment_links_validated_mitigation() -> None:
             "best_mitigation_action": "Enable auth-svc circuit breaker and cap retries to 1",
             "best_mitigation_outcome_class": "resolved",
             "best_mitigation_summary": "Enable auth-svc circuit breaker and cap retries to 1 finished in state resolved.",
+            "runtime_executed": True,
         },
     )
 
-    assert "Runtime overlap" in memory_hits["similar_incidents"][0]["match_reason"]
+    assert "Runtime alignment" in memory_hits["similar_incidents"][0]["match_reason"]
     assert "Runtime alignment" in memory_hits["runbooks"][0]["why_now_fit"]
     assert "Current runtime outcome" in memory_hits["unresolved_items"][0]["follow_up_reason"]
+
+
+def test_deepened_weighting_shows_resolved_outcome() -> None:
+    ranked = rank_candidate_fixes_with_runtime(
+        [
+            {"action": "Enable auth-svc circuit breaker and cap retries to 1", "success_rate": 0.84},
+            {"action": "Drain hot gateway pods and scale replicas +2", "success_rate": 0.88},
+        ],
+        replica_summary={
+            "best_mitigation_action": "Enable auth-svc circuit breaker and cap retries to 1",
+            "best_mitigation_outcome_class": "resolved",
+            "best_mitigation_duration_ms": 420,
+            "replay_duration_ms": 1640,
+            "runtime_executed": True,
+        },
+    )
+
+    assert ranked[0]["action"] == "Enable auth-svc circuit breaker and cap retries to 1"
+    assert ranked[0]["evidence_posture"] in ("runtime_backed", "validated_runtime")
+    assert "resolved" in ranked[0]["weighting_summary"].lower() or "fully resolved" in ranked[0]["why_action_won"].lower()
+    assert ranked[0]["residual_risk"] == "low"
+    assert ranked[0]["confidence_boost"] > 0
+
+
+def test_deepened_weighting_shows_improved_outcome() -> None:
+    ranked = rank_candidate_fixes_with_runtime(
+        [
+            {"action": "Scale replicas +2", "success_rate": 0.75},
+        ],
+        replica_summary={
+            "best_mitigation_action": "Scale replicas +2",
+            "best_mitigation_outcome_class": "improved",
+            "best_mitigation_duration_ms": 1200,
+            "replay_duration_ms": 2100,
+            "runtime_executed": True,
+        },
+    )
+
+    assert ranked[0]["action"] == "Scale replicas +2"
+    assert "improved" in ranked[0]["weighting_summary"].lower()
+    assert "improved" in ranked[0]["why_action_won"].lower()
+    assert ranked[0]["residual_risk"] == "moderate"
+
+
+def test_deepened_weighting_shows_inferred_when_no_runtime() -> None:
+    ranked = rank_candidate_fixes_with_runtime(
+        [
+            {"action": "Enable circuit breaker", "success_rate": 0.82},
+        ],
+        replica_summary={
+            "best_mitigation_action": "",
+            "best_mitigation_outcome_class": "",
+            "runtime_executed": False,
+        },
+    )
+
+    assert ranked[0]["action"] == "Enable circuit breaker"
+    assert ranked[0]["evidence_posture"] == "inferred_only"
+    assert "based on historical" in ranked[0]["why_action_won"].lower()
+    assert ranked[0]["confidence_boost"] == 0.0
