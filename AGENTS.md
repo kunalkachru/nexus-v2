@@ -1,18 +1,20 @@
-# NEXUS Agent Loop Instructions
+# NEXUS Agent Control Instructions
 
-Use this file when running Codex or Claude in a commit-and-continue loop against a written backlog.
+Use this file as the top-level control surface for Codex or Claude working in this repo.
 
 ## Current Product State
 
 - Product shape: support triage and incident investigation workspace
-- Flagship incidents (three-outage wedge):
+- Flagship incidents (five-family wedge):
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
   - `INC003` deploy regression / 5xx spike
-- Current validated baseline (post item 108 FR2 checkpoint):
+  - `INC005` queue / worker backlog affecting transaction completion
+  - `INC007` auth dependency slowdown / token validation failures
+- Current validated baseline:
   - `pytest tests/ -q` -> `150 passed`
   - `npm run browser:verify` -> `11 passed`
-  - `python demo.py` -> passes (all three incidents complete)
+  - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
   - **Premium visual system** across queue, inputs, incident, training, replay
@@ -84,7 +86,7 @@ Run this exactly:
    - debug and retry
    - after repeated failure, mark the item `blocked`, document the blocker, commit the backlog state, then continue only if explicitly allowed by the backlog rules
 9. When the backlog reaches zero pending items:
-   - refresh `AGENTS.md`, `WORKING_STATE.md`, and `docs/LOOPS_RUNBOOK.md`
+   - refresh `AGENTS.md`, `WORKING_STATE.md`, and `docs/internal/LOOPS_RUNBOOK.md`
    - mark the finished backlog file as completed in `WORKING_STATE.md`
    - create the next backlog file before starting another loop
    - do not claim the phase complete until those control docs are current
@@ -112,7 +114,7 @@ feat(#<id>): <title>
 - Never overwrite unrelated user work.
 - Any packaged-app runtime claim must be verified through the `:7860` Docker path before the item is marked done.
 - Keep seeded/static and live incident paths semantically aligned.
-- Never leave `AGENTS.md`, `WORKING_STATE.md`, or `docs/LOOPS_RUNBOOK.md` stale after a backlog reaches zero pending items.
+- Never leave `AGENTS.md`, `WORKING_STATE.md`, or `docs/internal/LOOPS_RUNBOOK.md` stale after a backlog reaches zero pending items.
 
 ## Current Code Map
 
@@ -136,41 +138,23 @@ feat(#<id>): <title>
 
 ## Current Frontier
 
-The `15–76` backlog is complete.
+Active backlog:
 
-The `backlog-69-plus.json` is complete (pilot readiness checkpoint).
+- `backlog-117-plus.json`
 
-The `backlog-77-plus.json` is complete (market-ready v1 hardening and deployment preparation).
+Current phase:
 
-All items through 85 are complete. The product is market-ready v1 for narrow support-triage workflow.
+- near-production ops maturity for the five-family wedge
 
-The `backlog-86-plus.json` is complete (items 86–92, wedge-strengthening and pilot-conversion checkpoint).
+The current shipped baseline is:
 
-The `backlog-93-plus.json` is complete (items 93–100, pilot conversion and technical proof deepening).
+- five bounded outage families
+- bounded REPLICA runtime packs
+- bounded TRACE debugging and handoff packets
+- packaged runtime-host relay
+- operator, pilot, and buyer proof surfaces
 
-The `backlog-101-plus.json` phase is complete.
-
-The next active backlog is `backlog-109-plus.json`.
-
-This phase is selective expansion inside the same support-triage wedge.
-
-It should:
-
-- add the auth dependency slowdown / token validation failure family
-- add the queue / worker backlog affecting transaction completion family
-- attach bounded REPLICA and TRACE support for both new families
-- extend coverage, scorecard, proof, and routing calibration across the five-family wedge
-- close with a five-family checkpoint before ops maturity work begins
-
-Completed in this phase:
-- improved customer log intake normalization with quality posture and tenant-aware hints
-- per-tenant coverage matrix and unsupported-case downgrade guidance
-- fresh-incident quality evaluation harness
-- pilot scorecard dashboard and case-based proof export
-- engineering handoff trust v3 and runtime evidence weighting v3
-- pilot operations kit and FR2 checkpoint closure
-
-The product now supports three bounded incident families with a repeatable enterprise-pilot workflow and is ready to widen to five families without changing category.
+The next loop should resume from the first `pending` item in `backlog-117-plus.json`.
 
 ## Reality Check
 
@@ -208,5 +192,4 @@ Not implemented yet:
 
 ## Reference
 
-See [docs/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOPS_RUNBOOK.md) for the operator-facing guide and prompt templates.
-Use [backlog-109-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-109-plus.json), [docs/POST_108_SELECTIVE_EXPANSION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_SELECTIVE_EXPANSION_PLAN.md), and [docs/POST_108_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_EXECUTION_MAP.md) for the next active phase.
+See [docs/internal/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/internal/LOOPS_RUNBOOK.md) for the operator-facing loop guide.

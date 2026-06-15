@@ -16,14 +16,14 @@
             }
         })();
     </script>
-    <title>NEXUS v2 | Settings</title>
+    <title>NEXUS | Settings</title>
     <link rel="stylesheet" href="static/dashboard.css">
 </head>
 <body>
     <div class="container">
         <header class="app-shell">
                 <div>
-                    <div class="brand">NEXUS v2</div>
+                    <div class="brand">NEXUS</div>
                     <div class="brand-copy">Trust posture, contracts, and deployment controls</div>
                 </div>
             <nav class="app-nav" aria-label="Primary">
@@ -178,6 +178,9 @@
                     <ul class="simple-list" id="adminEnabledPacks">
                         <li><code>checkout-python-fastapi-auth-redis-v1</code> — INC001 timeout/retry (enabled)</li>
                         <li><code>checkout-python-fastapi-postgres-v1</code> — INC002 DB pool (enabled)</li>
+                        <li><code>api-python-fastapi-catalog-v1</code> — INC003 deploy regression (enabled)</li>
+                        <li><code>worker-backlog-kafka-v1</code> — INC005 queue backlog (enabled)</li>
+                        <li><code>checkout-python-fastapi-auth-validation-v1</code> — INC007 auth dependency (enabled)</li>
                     </ul>
                     <p class="section-note" style="margin-top: 1em;">Packs are code-managed. Contact engineering to enable new packs.</p>
                 </div>

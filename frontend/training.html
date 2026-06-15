@@ -16,14 +16,14 @@
             }
         })();
     </script>
-    <title>NEXUS v2 | Learning & Controls</title>
+    <title>NEXUS | Learning & Controls</title>
     <link rel="stylesheet" href="static/dashboard.css">
 </head>
 <body>
     <div class="container">
         <header class="app-shell">
                 <div>
-                    <div class="brand">NEXUS v2</div>
+                    <div class="brand">NEXUS</div>
                     <div class="brand-copy">Operational memory, runtime posture, and learning</div>
                 </div>
             <nav class="app-nav" aria-label="Primary">
@@ -275,8 +275,8 @@
                 </div>
             </div>
             <div class="detail-card" style="margin-top: 14px;">
-                <div class="badge">Three-outage wedge coverage</div>
-                <p class="hero-copy">NEXUS supports three core incident families for production support triage. This section tracks pilot-readiness proof across each family.</p>
+                <div class="badge">Five-family wedge coverage</div>
+                <p class="hero-copy">NEXUS supports five bounded incident families for production support triage. This section tracks pilot-readiness proof across each family.</p>
                 <div class="story-grid" style="margin-top: 1em;" id="familyCoverageGrid">
                     <div class="detail-card">
                         <div class="family-name">INC001: Timeout/Retry Amplification</div>
@@ -304,6 +304,24 @@
                             <div class="summary-card"><div class="label">Runtime-backed</div><div class="value" id="inc003RuntimeBacked">✗ None yet</div></div>
                         </div>
                         <p class="section-note">API service degradation and rollback path from recent deploy regression.</p>
+                    </div>
+                    <div class="detail-card">
+                        <div class="family-name">INC005: Queue / Worker Backlog</div>
+                        <div class="kpi-grid">
+                            <div class="summary-card"><div class="label">Manual relay steps</div><div class="value" id="inc005RelayReduction">-</div></div>
+                            <div class="summary-card"><div class="label">Replay executed</div><div class="value" id="inc005ReplayExecuted">-</div></div>
+                            <div class="summary-card"><div class="label">Runtime-backed</div><div class="value" id="inc005RuntimeBacked">✗ None yet</div></div>
+                        </div>
+                        <p class="section-note">Transaction completion degrades as queue or worker backlog builds and processing stalls.</p>
+                    </div>
+                    <div class="detail-card">
+                        <div class="family-name">INC007: Auth Dependency Slowdown</div>
+                        <div class="kpi-grid">
+                            <div class="summary-card"><div class="label">Manual relay steps</div><div class="value" id="inc007RelayReduction">-</div></div>
+                            <div class="summary-card"><div class="label">Replay executed</div><div class="value" id="inc007ReplayExecuted">-</div></div>
+                            <div class="summary-card"><div class="label">Runtime-backed</div><div class="value" id="inc007RuntimeBacked">✗ None yet</div></div>
+                        </div>
+                        <p class="section-note">Authenticated requests degrade as token validation latency rises and cache effectiveness collapses.</p>
                     </div>
                 </div>
             </div>
@@ -376,6 +394,9 @@
                     <div class="kpi-grid">
                         <div class="summary-card"><div class="label">Timeout/retry amplification</div><div class="value" id="coverageTimeoutRetry">-</div></div>
                         <div class="summary-card"><div class="label">DB pool exhaustion</div><div class="value" id="coverageDbPool">-</div></div>
+                        <div class="summary-card"><div class="label">Deploy regression</div><div class="value" id="coverageDeployRegression">-</div></div>
+                        <div class="summary-card"><div class="label">Queue backlog</div><div class="value" id="coverageQueueBacklog">-</div></div>
+                        <div class="summary-card"><div class="label">Auth dependency</div><div class="value" id="coverageAuthDependency">-</div></div>
                     </div>
                     <p class="section-note" id="runtimeHostStatus">Runtime-host relay status will appear here once capabilities load.</p>
                 </div>

@@ -2,51 +2,53 @@
 
 NEXUS is an AI-assisted support-to-engineering investigation product for recurring customer-facing application outages.
 
-The product is intentionally narrow:
+It is built to reduce the manual relay between support and engineering:
 
-- noisy logs and support evidence go in
+- noisy logs and incident evidence go in
 - a structured investigation packet comes out
 - one governed human review point remains before action
 
-Today the shipped product is a bounded six-stage workflow:
+The shipped workflow is:
 
 `SENTINEL -> PRISM -> REPLICA -> TRACE -> FORGE -> GUARDIAN`
 
-It is not a universal incident platform, universal debugger, or arbitrary environment reproduction system.
+NEXUS is not a universal incident platform, universal debugger, or arbitrary environment reproduction system.
 
 ## What Problem It Solves
 
-Support and triage teams still waste too much time:
+Support and triage teams still lose time on:
 
-- collecting logs from multiple places
-- checking prior incidents manually
+- collecting logs from multiple systems
 - guessing likely owners
-- escalating incomplete cases to engineering
+- searching old incidents manually
+- escalating weak cases to engineering
 - repeating the same investigation work on recurring outages
 
-NEXUS reduces that relay work by preparing a review-ready case before engineering has to start from raw evidence.
+NEXUS compresses that relay into one support-to-engineering investigation workflow.
 
 ## Current Product Boundary
 
-The current bounded wedge is recurring customer-facing application incidents with clear business impact and repeatable failure patterns.
+The current bounded wedge is recurring customer-facing application incidents with strong business impact and repeatable failure patterns.
 
-Shipped incident families at the current baseline:
+Supported bounded outage families:
 
 1. `INC001` checkout timeout / retry amplification
 2. `INC002` checkout DB pool exhaustion / session leak
 3. `INC003` deploy regression / 5xx spike
+4. `INC005` queue / worker backlog affecting transaction completion
+5. `INC007` auth dependency slowdown / token validation failures
 
-What is real today:
+Real today:
 
-- structured intake for fresh incidents
+- fresh incident intake and normalization posture
 - memory-backed triage and investigation
-- bounded REPLICA runtime replay for the curated outage packs
-- bounded TRACE developer handoff and debugger-style guidance
-- runtime-weighted remediation selection
+- bounded REPLICA runtime replay for curated packs
+- bounded TRACE developer handoff and debugger guidance
+- runtime-aware mitigation ranking
 - explicit Guardian approval
-- engineering handoff export, delivery, and pilot reporting surfaces
+- engineering handoff export and pilot proof surfaces
 
-What is still bounded:
+Still bounded:
 
 - reproduction only works for curated packs
 - debugging is packet-based, not a universal live debugger
@@ -54,23 +56,16 @@ What is still bounded:
 
 ## Start Here
 
-- [Current documentation map](/Users/kunalkachru/Documents/nexus-v3/docs/README.md)
-- [Product strategy and GTM](/Users/kunalkachru/Documents/nexus-v3/docs/PRODUCT_STRATEGY_AND_GTM.md)
-- [Full manual walkthrough](/Users/kunalkachru/Documents/nexus-v3/docs/DEMO_WALKTHROUGH.md)
-- [Operations guide](/Users/kunalkachru/Documents/nexus-v3/docs/OPERATIONS.md)
-- [Pilot operations runbook](/Users/kunalkachru/Documents/nexus-v3/docs/PILOT_OPERATIONS_RUNBOOK.md)
-- [Buyer proof package](/Users/kunalkachru/Documents/nexus-v3/docs/BUYER_PROOF_PACKAGE.md)
-- [Working state / current validated baseline](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
+- [Documentation index](/Users/kunalkachru/Documents/nexus-v3/docs/README.md)
+- [Public docs](/Users/kunalkachru/Documents/nexus-v3/docs/public/README.md)
+- [Internal docs](/Users/kunalkachru/Documents/nexus-v3/docs/internal/README.md)
+- [Current working state](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
 
 ## Local Run
 
-Preferred local path:
+Set `OPENAI_API_KEY` when you want live model-backed reasoning instead of fallback-only behavior.
 
-```bash
-./scripts/docker_fresh.sh
-```
-
-If you want packaged-app replay delegated through the runtime host:
+Preferred packaged path:
 
 ```bash
 ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
@@ -86,17 +81,7 @@ Direct server path:
 uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
-## Live Reasoning And Keys
-
-NEXUS stays deterministic by default.
-
-- local or hosted users can optionally provide `OPENAI_API_KEY`-backed live reasoning through the request-scoped BYO-key flow
-- if no key is attached, the product remains fully usable in deterministic mode
-- the public contract does not require a server-side key to keep the product operable
-
 ## Validation
-
-Use the current validated baseline recorded in [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md).
 
 Core validation commands:
 
@@ -110,16 +95,8 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 
 ## Repository Shape
 
-- `server/` FastAPI backend, incident pipeline, runtime packs, and APIs
+- `server/` backend APIs, incident pipeline, and runtime pack orchestration
 - `frontend/` operator UI
 - `runtime_host/` Docker-capable replay host for packaged demos
-- `docs/` active product, demo, ops, and roadmap docs
-- `archive/` historical plans, submission-era assets, and superseded materials
-
-## Current Planning Frontier
-
-The current active expansion frontier is tracked in:
-
-- [docs/POST_108_SELECTIVE_EXPANSION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_SELECTIVE_EXPANSION_PLAN.md)
-- [docs/POST_108_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_EXECUTION_MAP.md)
-- [backlog-109-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-109-plus.json)
+- `docs/public/` market, buyer, demo, and presentation-facing material
+- `docs/internal/` operator, pilot, verification, and control docs

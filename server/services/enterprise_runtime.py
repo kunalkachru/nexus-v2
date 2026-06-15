@@ -1398,6 +1398,8 @@ def build_roi_metrics(payload: dict[str, object]) -> dict[str, object]:
         "Timeout cascade / retry amplification": "timeout_retry_amplification",
         "Database pool exhaustion / session leak": "db_pool_exhaustion",
         "Deploy regression / 5xx spike": "deploy_regression_5xx",
+        "Queue / worker backlog affecting transaction completion": "queue_worker_backlog",
+        "Auth dependency slowdown / token validation failures": "auth_dependency_slowdown",
     }
     incident_class = family_to_class.get(issue_family, "unknown")
 
@@ -1420,6 +1422,18 @@ def build_roi_metrics(payload: dict[str, object]) -> dict[str, object]:
             "relay_reduction": relay_reduction if "deploy" in issue_family.lower() or "5xx" in issue_family.lower() else 0,
             "replay_executed": 1 if replay_reuse > 0 and ("deploy" in issue_family.lower() or "5xx" in issue_family.lower()) else 0,
             "runtime_backed": 1 if replica_summary.get("runtime_executed") and incident_class == "deploy_regression_5xx" else 0,
+        },
+        "queue_worker_backlog": {
+            "family_name": "INC005: Queue / Worker Backlog",
+            "relay_reduction": relay_reduction if "queue" in issue_family.lower() or "worker" in issue_family.lower() else 0,
+            "replay_executed": 1 if replay_reuse > 0 and ("queue" in issue_family.lower() or "worker" in issue_family.lower()) else 0,
+            "runtime_backed": 1 if replica_summary.get("runtime_executed") and incident_class == "queue_worker_backlog" else 0,
+        },
+        "auth_dependency_slowdown": {
+            "family_name": "INC007: Auth Dependency Slowdown / Token Validation Failures",
+            "relay_reduction": relay_reduction if "auth" in issue_family.lower() or "token" in issue_family.lower() else 0,
+            "replay_executed": 1 if replay_reuse > 0 and ("auth" in issue_family.lower() or "token" in issue_family.lower()) else 0,
+            "runtime_backed": 1 if replica_summary.get("runtime_executed") and incident_class == "auth_dependency_slowdown" else 0,
         },
     }
 

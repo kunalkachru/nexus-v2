@@ -61,8 +61,15 @@ class TenancyService:
         # Map incident classes to human-readable family names
         incident_family_map = {
             "timeout_retry_amplification": "INC001: Timeout/Retry Amplification",
+            "checkout_timeout_cascade": "INC001: Timeout/Retry Amplification",
             "db_pool_exhaustion": "INC002: DB Pool Exhaustion",
-            "deploy_regression_5xx": "INC003: Deploy Regression / 5xx Spike",
+            "session_leak": "INC002: DB Pool Exhaustion",
+            "deploy_regression": "INC003: Deploy Regression / 5xx Spike",
+            "query_null_pointer": "INC003: Deploy Regression / 5xx Spike",
+            "auth_dependency_slowdown": "INC007: Auth Dependency Slowdown / Token Validation Failures",
+            "token_validation_failures": "INC007: Auth Dependency Slowdown / Token Validation Failures",
+            "queue_worker_backlog": "INC005: Queue / Worker Backlog",
+            "worker_stall": "INC005: Queue / Worker Backlog",
         }
 
         supported_families = set()
@@ -139,6 +146,8 @@ class TenancyService:
             "Timeout cascade / retry amplification": ["timeout_retry_amplification", "checkout_timeout_cascade"],
             "Database pool exhaustion / session leak": ["db_pool_exhaustion", "session_leak"],
             "Deploy regression / 5xx spike": ["deploy_regression", "query_null_pointer"],
+            "Auth dependency slowdown / token validation failures": ["auth_dependency_slowdown", "token_validation_failures"],
+            "Queue / worker backlog affecting transaction completion": ["queue_worker_backlog", "worker_stall"],
             "Certificate expiry / trust boundary outage": [],
             "Memory leak / runtime degradation": [],
             "Production incident investigation": [],

@@ -1,0 +1,274 @@
+[
+  {
+    "id": 117,
+    "title": "Runtime queue durability and recovery semantics",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make runtime-host execution more durable and legible across retries, restarts, and operator review. The product should persist run queue state, expose recovery posture, and make it obvious which replay jobs are active, completed, retried, or stranded.",
+    "implementation_tasks": [
+      "Persist runtime-host queue entries and terminal outcomes in the artifact or state layer rather than only app-local memory.",
+      "Define explicit queue states for queued, running, retrying, recovered, failed, and abandoned executions.",
+      "Surface runtime queue recovery posture in the settings or training UI so operators can see when the host recovered or dropped work.",
+      "Ensure fresh and seeded incident flows render the same queue-state vocabulary where runtime replay is shown.",
+      "Document operator meaning and expected recovery behavior in the internal ops docs."
+    ],
+    "done_when": [
+      "runtime-host jobs survive app refresh and recovery boundaries with explicit state transitions",
+      "the operator can see runtime queue posture and recovery outcome without reading logs",
+      "seeded and live paths use the same state vocabulary for replay lifecycle"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "runtime_host/server/app.py",
+      "frontend/settings.html",
+      "frontend/training.html",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "docs/internal/OPERATIONS.md",
+      "docs/internal/PILOT_OPERATIONS_RUNBOOK.md",
+      "tests/test_app.py",
+      "tests/test_api_contract.py"
+    ]
+  },
+  {
+    "id": 118,
+    "title": "Deployment reliability and environment-readiness checks",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make packaged deployment behavior more honest and operable. The app should show readiness posture for the main service, runtime host, pack root, and required environment variables, with clear degraded-mode guidance instead of hidden failures.",
+    "implementation_tasks": [
+      "Add a deployment readiness contract that checks critical runtime-host and app dependencies.",
+      "Expose readiness and degraded-mode results through a small API surface and operator-visible UI.",
+      "Make failures explicit when Docker relay, pack source path, or required secrets are missing.",
+      "Align docs and setup instructions with the readiness contract and degraded-mode behavior."
+    ],
+    "done_when": [
+      "operators can see if packaged runtime claims are fully available, partially available, or unavailable",
+      "the UI and docs agree on what degrades when environment requirements are not met",
+      "fresh and seeded demos remain truthful under missing-dependency conditions"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/incidents.py",
+      "runtime_host/server/app.py",
+      "frontend/settings.html",
+      "frontend/static/settings.js",
+      "docs/internal/OPERATIONS.md",
+      "docs/public/SETUP_AND_DEMO.md",
+      "tests/test_app.py",
+      "tests/test_deployment.py"
+    ]
+  },
+  {
+    "id": 119,
+    "title": "Auth and governance hardening v2 for multi-tenant pilot operation",
+    "priority": "high",
+    "status": "pending",
+    "description": "Deepen the current role and approval model so repeated pilot operation is safer across tenants. The product should make it clear who can approve, retry, export, administer packs, and send downstream handoffs.",
+    "implementation_tasks": [
+      "Tighten capability checks across operator, incident manager, guardian, and admin actions.",
+      "Make tenant-aware governance rules visible in the settings or admin surface.",
+      "Ensure approval, replay, export, and delivery actions record actor and role semantics consistently.",
+      "Update runbooks and pilot docs with the hardened role model."
+    ],
+    "done_when": [
+      "governance-sensitive actions have explicit capability boundaries",
+      "audit surfaces reflect actor, tenant, and role context consistently",
+      "pilot docs explain who can perform each critical action"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/services/tenancy.py",
+      "frontend/settings.html",
+      "frontend/static/settings.js",
+      "frontend/static/incident.js",
+      "docs/internal/OPERATIONS.md",
+      "docs/internal/OPERATOR_RUNBOOK.md",
+      "tests/test_app.py",
+      "tests/test_api_contract.py"
+    ]
+  },
+  {
+    "id": 120,
+    "title": "Observability and pilot-safe alerting surfaces",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Turn the existing health and runtime status views into a clearer pilot operations surface. The product should show whether replay, delivery, queue, and memory services are healthy enough for pilot use and what needs operator attention.",
+    "implementation_tasks": [
+      "Extend health reporting with operator-meaningful status categories and alert cues.",
+      "Show degraded subsystems and suggested next checks in the training or settings surfaces.",
+      "Keep the alert language bounded and truthful so it does not imply autonomous operations."
+    ],
+    "done_when": [
+      "operators can identify degraded replay, delivery, or memory surfaces without reading server logs",
+      "the product provides bounded next-step guidance for pilot-safe operations",
+      "observability wording stays aligned with public product boundaries"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/training.html",
+      "frontend/settings.html",
+      "frontend/static/training.js",
+      "docs/internal/OPERATIONS.md",
+      "tests/test_app.py"
+    ]
+  },
+  {
+    "id": 121,
+    "title": "Audit and export maturity with reviewer traceability",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Make audit and export artifacts stronger for customer review. Approval history, replay state, evidence posture, and downstream actions should be traceable in exports without overstating what was runtime-validated.",
+    "implementation_tasks": [
+      "Extend export payloads with clearer reviewer and replay traceability fields.",
+      "Ensure audit timeline renders evidence posture and actor semantics consistently.",
+      "Improve governance packet wording so runtime-backed, inference-first, and unsupported states are unmistakable."
+    ],
+    "done_when": [
+      "review packets and exports can be used in customer review conversations without manual annotation",
+      "reviewer traceability is visible in both UI and export surfaces",
+      "evidence posture remains explicit and strict in all export formats"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "docs/public/BUYER_PROOF_PACKAGE.md",
+      "docs/internal/PILOT_CLOSEOUT_TEMPLATE.md",
+      "tests/test_api_contract.py",
+      "tests/test_app.py"
+    ]
+  },
+  {
+    "id": 122,
+    "title": "Operational resilience for downstream delivery, replay, and feedback loops",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Make downstream sends, replay submission, and engineering feedback more resilient. The product should handle transient delivery failures, duplicate sends, and partial feedback gracefully, with clear retry posture and honest status.",
+    "implementation_tasks": [
+      "Deepen delivery lifecycle semantics for manual retry, duplicate prevention, and terminal failure visibility.",
+      "Make replay and feedback flows show partial-success versus failed states clearly.",
+      "Keep audit and weekly review surfaces synchronized with the stronger resilience model."
+    ],
+    "done_when": [
+      "operators can distinguish retryable failures from terminal failures across delivery and replay actions",
+      "feedback ingestion and downstream state remain coherent after partial failures",
+      "status surfaces and docs use one shared failure vocabulary"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "frontend/training.html",
+      "frontend/static/training.js",
+      "docs/internal/PILOT_OPERATIONS_RUNBOOK.md",
+      "docs/internal/WEEKLY_PILOT_REVIEW_CHECKLIST.md",
+      "tests/test_api_contract.py",
+      "tests/test_app.py"
+    ]
+  },
+  {
+    "id": 123,
+    "title": "Weekly pilot review package and closeout automation",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Automate the weekly pilot review and closeout packet so operators do not have to assemble proof and governance state by hand. This should pull together scorecards, outcome summaries, coverage posture, and unresolved risks.",
+    "implementation_tasks": [
+      "Generate a bounded weekly review package from the existing pilot metrics and audit surfaces.",
+      "Generate a bounded closeout packet using current proof, coverage, and residual-risk fields.",
+      "Reflect the automation entry points and resulting packets in the training or settings UI.",
+      "Refresh the internal weekly review and closeout docs to match the product flow."
+    ],
+    "done_when": [
+      "weekly pilot review and closeout packets can be produced from the product without manual stitching",
+      "review outputs summarize coverage, outcomes, residual risk, and value proof coherently",
+      "the internal docs match the shipped packet generation flow"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "frontend/training.html",
+      "frontend/settings.html",
+      "frontend/static/training.js",
+      "docs/internal/WEEKLY_PILOT_REVIEW_CHECKLIST.md",
+      "docs/internal/PILOT_CLOSEOUT_TEMPLATE.md",
+      "tests/test_app.py"
+    ]
+  },
+  {
+    "id": 124,
+    "title": "Near-production ops checkpoint and final control-doc refresh",
+    "priority": "high",
+    "status": "pending",
+    "description": "Close the current product roadmap for the five-family strategy. Refresh the control docs, validation docs, and market-facing truth surfaces so the repo ends in a clear, market-ready state without roadmap ambiguity.",
+    "implementation_tasks": [
+      "Run the full validation gate set after items 117-123 land.",
+      "Refresh AGENTS, WORKING_STATE, loop docs, and the public/internal doc index to reflect the post-124 state.",
+      "Write the final checkpoint note that declares the current product objectives wrapped for the present strategy.",
+      "Leave one clean next-step note for bugfixes or narrowly scoped follow-ups only."
+    ],
+    "done_when": [
+      "control docs are synchronized to the post-124 baseline",
+      "validation docs and public truth surfaces match the shipped product accurately",
+      "the repo communicates that the current major roadmap is wrapped"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "README.md",
+      "docs/README.md",
+      "docs/internal/LOOPS_RUNBOOK.md",
+      "docs/internal/POST_116_OPS_MATURITY_PLAN.md",
+      "docs/internal/README.md",
+      "docs/public/README.md"
+    ]
+  }
+]

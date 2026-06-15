@@ -26,7 +26,7 @@ def run_demo(*, incident_id: str = "INC001", print_output: bool = False) -> dict
         memory_hits = result.get("memory_hits", {})
         agent_metrics = result.get("agent_metrics", {})
         fallback_summary = result.get("fallback_summary", [])
-        print("NEXUS v2 Judge Demo")
+        print("NEXUS Product Demo")
         print(f"Incident: {result['incident']['id']} - {result['incident']['name']}")
         print(f"Checkpoint: {result['checkpoint_path']}")
         print(f"Classification: {result['classification']}")
@@ -65,10 +65,10 @@ def run_demo(*, incident_id: str = "INC001", print_output: bool = False) -> dict
 
 def main() -> None:
     print("\n" + "="*70)
-    print("NEXUS v3 End-to-End Demo: All 6 Workflow Stages")
+    print("NEXUS End-to-End Demo: Five-Family Seeded Walkthrough + Live Graph")
     print("="*70)
 
-    for incident_id in ["INC001", "INC002", "INC003"]:
+    for incident_id in ["INC001", "INC002", "INC003", "INC005", "INC007"]:
         print(f"\n{'─'*70}")
         print(f"Incident: {incident_id}")
         print(f"{'─'*70}\n")

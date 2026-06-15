@@ -370,6 +370,9 @@ function renderRuntimeCapabilities(capabilitiesData) {
 
   setText("coverageTimeoutRetry", coverage.timeout_retry_amplification ? "✓ Covered" : "Not yet");
   setText("coverageDbPool", coverage.db_pool_exhaustion ? "✓ Covered" : "Not yet");
+  setText("coverageDeployRegression", coverage.deploy_regression ? "✓ Covered" : coverage.deploy_regression_5xx ? "✓ Covered" : "Not yet");
+  setText("coverageQueueBacklog", coverage.queue_worker_backlog ? "✓ Covered" : "Not yet");
+  setText("coverageAuthDependency", coverage.auth_dependency_slowdown ? "✓ Covered" : "Not yet");
 
   // Populate runtime-host section
   const relayStatusText = relayStatus.configured
@@ -468,11 +471,13 @@ function renderOperatorROI(trainingData) {
   setText("recurrentIssueClasses", `${trainingData.summary?.recurrent_issue_count || 2}`);
   setText("memoryOutcomeWeight", "Outcome-weighted");
 
-  // Per-family metrics from the three-outage wedge
+  // Per-family metrics from the five-family wedge
   const familyMetrics = roiMetrics.per_family_metrics || {};
   const inc001 = familyMetrics.timeout_retry_amplification || {};
   const inc002 = familyMetrics.db_pool_exhaustion || {};
   const inc003 = familyMetrics.deploy_regression_5xx || {};
+  const inc005 = familyMetrics.queue_worker_backlog || {};
+  const inc007 = familyMetrics.auth_dependency_slowdown || {};
 
   // INC001 metrics
   setText("inc001RelayReduction", inc001.relay_reduction > 0 ? `${inc001.relay_reduction} steps` : "Not in scope");
@@ -488,6 +493,16 @@ function renderOperatorROI(trainingData) {
   setText("inc003RelayReduction", inc003.relay_reduction > 0 ? `${inc003.relay_reduction} steps` : "Not in scope");
   setText("inc003ReplayExecuted", inc003.replay_executed > 0 ? "✓ Yes" : "✗ No");
   setText("inc003RuntimeBacked", inc003.runtime_backed > 0 ? "✓ Validated" : "✗ None yet");
+
+  // INC005 metrics
+  setText("inc005RelayReduction", inc005.relay_reduction > 0 ? `${inc005.relay_reduction} steps` : "Not in scope");
+  setText("inc005ReplayExecuted", inc005.replay_executed > 0 ? "✓ Yes" : "✗ No");
+  setText("inc005RuntimeBacked", inc005.runtime_backed > 0 ? "✓ Validated" : "✗ None yet");
+
+  // INC007 metrics
+  setText("inc007RelayReduction", inc007.relay_reduction > 0 ? `${inc007.relay_reduction} steps` : "Not in scope");
+  setText("inc007ReplayExecuted", inc007.replay_executed > 0 ? "✓ Yes" : "✗ No");
+  setText("inc007RuntimeBacked", inc007.runtime_backed > 0 ? "✓ Validated" : "✗ None yet");
 }
 
 async function renderPilotScorecard() {

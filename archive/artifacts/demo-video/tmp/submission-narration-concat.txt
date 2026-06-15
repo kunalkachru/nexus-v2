@@ -1,4 +1,0 @@
-file '/Users/kunalkachru/Documents/nexus-v3/artifacts/demo-video/tmp/submission_narration_segments/01-problem-command-center.aiff'
-file '/Users/kunalkachru/Documents/nexus-v3/artifacts/demo-video/tmp/submission_narration_segments/02-inputs-user-workflow.aiff'
-file '/Users/kunalkachru/Documents/nexus-v3/artifacts/demo-video/tmp/submission_narration_segments/03-incident-detail-governance.aiff'
-file '/Users/kunalkachru/Documents/nexus-v3/artifacts/demo-video/tmp/submission_narration_segments/04-learning-rl.aiff'

@@ -34,7 +34,7 @@ def test_dashboard_routes_are_served() -> None:
     assert replay.status_code == 200
     assert training.status_code == 200
     assert settings.status_code == 200
-    assert "NEXUS v2" in root.text
+    assert "NEXUS" in root.text
     assert 'static/app-shell.js' in root.text
     assert "Command Center" in dashboard.text
     assert "Command Center" in queue.text

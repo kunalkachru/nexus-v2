@@ -9,7 +9,9 @@ def test_deployment_artifacts_exist() -> None:
         Path("requirements.txt"),
         Path(".gitignore"),
         Path("README.md"),
-        Path("docs/OPERATIONS.md"),
+        Path("docs/internal/OPERATIONS.md"),
+        Path("docs/internal/OPERATOR_RUNBOOK.md"),
+        Path("docs/internal/README.md"),
         Path("frontend/dashboard.html"),
         Path("frontend/queue.html"),
         Path("frontend/incident.html"),
@@ -26,7 +28,6 @@ def test_deployment_artifacts_exist() -> None:
         Path("frontend/static/api.js"),
         Path("ops/kubernetes/deployment.yaml"),
         Path("ops/kubernetes/configmap.yaml"),
-        Path("ops/runbooks/README.md"),
     ]:
         assert path.exists(), f"missing {path}"
 
