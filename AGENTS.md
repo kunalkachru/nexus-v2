@@ -140,7 +140,9 @@ The `backlog-77-plus.json` is complete (market-ready v1 hardening and deployment
 
 All items through 85 are complete. The product is market-ready v1 for narrow support-triage workflow.
 
-The `backlog-86-plus.json` is now complete (items 86–92, wedge-strengthening and pilot-conversion checkpoint).
+The `backlog-86-plus.json` is complete (items 86–92, wedge-strengthening and pilot-conversion checkpoint).
+
+The `backlog-93-plus.json` is now complete (items 93–100, pilot conversion and technical proof deepening).
 
 Completed in this phase:
 - Added a third outage family: `INC003` deploy regression / 5xx spike

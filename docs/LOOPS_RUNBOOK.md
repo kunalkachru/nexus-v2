@@ -30,9 +30,11 @@ The `15–85` backlog is complete.
 
 The market-ready v1 checkpoint (items `77–85`) is finished.
 
-The `backlog-86-plus.json` is now complete (items 86–92 wedge-strengthening checkpoint finished).
+The `backlog-86-plus.json` is complete (items 86–92 wedge-strengthening checkpoint).
 
-The product is ready for pilot conversations with three bounded incident families and runtime-backed investigation paths.
+The `backlog-93-plus.json` is now complete (items 93–100 pilot conversion and technical proof deepening).
+
+The product is ready for real pilot evaluation with three bounded incident families, runtime-backed investigation paths, and strengthened pilot conversion surfaces.
 
 **Completed in items 86–92:**
 1. ✓ added `INC003` deploy regression / 5xx spike as the third outage family
