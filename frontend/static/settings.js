@@ -143,6 +143,44 @@ async function renderRuntimeQueueRecovery() {
   }
 }
 
+async function renderDeploymentReadiness() {
+  try {
+    const health = await fetchAuthedJson("/api/v1/platform/health").catch(() => ({}));
+    const readiness = health.deployment_readiness || {};
+
+    const readinessLabel =
+      readiness.readiness === "fully_available" ? "✓ Fully Available" :
+      readiness.readiness === "partially_available" ? "◐ Partially Available" :
+      readiness.readiness === "unavailable" ? "✗ Unavailable" :
+      "Unknown";
+
+    const dockerLabel = readiness.docker?.available ? "✓ Available" : "✗ Not available";
+    const hostLabel = readiness.runtime_host_relay?.complete ? "✓ Configured" : readiness.runtime_host_relay?.configured ? "⚠ Configured" : "✗ Not configured";
+    const packLabel = readiness.pack_root?.accessible ? `✓ Ready (${readiness.pack_root?.pack_count ?? 0} pack(s))` : "✗ Not accessible";
+
+    setText("deploymentReadiness", readinessLabel);
+    setText("deploymentDocker", dockerLabel);
+    setText("deploymentRuntimeHost", hostLabel);
+    setText("deploymentPackRoot", packLabel);
+    setText("deploymentMessage", readiness.message || "Deployment readiness data not available.");
+
+    const degradedList = document.getElementById("degradedFeaturesList");
+    const degradedFeatures = readiness.degraded_features || [];
+    if (degradedList) {
+      if (degradedFeatures.length === 0) {
+        degradedList.innerHTML = "<li>All features are available.</li>";
+      } else {
+        degradedList.innerHTML = degradedFeatures
+          .map((feature) => `<li>⚠ ${feature}</li>`)
+          .join("");
+      }
+    }
+  } catch (error) {
+    setText("deploymentReadiness", "Error");
+    setText("deploymentMessage", `Unable to load deployment readiness: ${error.message}`);
+  }
+}
+
 window.addEventListener("load", () => {
   renderBootstrapStatus().catch((error) => {
     const missingFields = document.getElementById("bootstrapMissingFields");
@@ -159,5 +197,9 @@ window.addEventListener("load", () => {
   renderRuntimeQueueRecovery().catch((error) => {
     setText("runtimeQueueRecoveryStatus", "Error");
     setText("runtimeQueueMessage", `Error loading runtime queue: ${error.message}`);
+  });
+  renderDeploymentReadiness().catch((error) => {
+    setText("deploymentReadiness", "Error");
+    setText("deploymentMessage", `Error loading deployment readiness: ${error.message}`);
   });
 });

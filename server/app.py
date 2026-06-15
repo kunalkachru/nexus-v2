@@ -30,6 +30,7 @@ from server.integrations.models import (
 from server.models import RuntimeHostReplayRequest
 from server.openai_keys import extract_request_openai_api_key
 from server.rate_limit import RateLimiter
+from server.services.deployment_readiness import DeploymentReadiness
 from server.services.incidents import IncidentService
 from server.services.live_demo import build_demo_payload
 from server.services.observability import ObservabilityService
@@ -203,6 +204,7 @@ async def get_product_health(
 
         execution_health = "idle" if execution_state.current_state == "idle" else "running"
         runtime_recovery = RuntimeQueueManager.get_runtime_recovery_posture()
+        deployment_readiness = DeploymentReadiness.get_deployment_readiness()
 
         return {
             "status": "ok",
@@ -229,6 +231,16 @@ async def get_product_health(
                 "failed_jobs": runtime_recovery.get("failed_jobs"),
                 "total_jobs": runtime_recovery.get("total_jobs"),
                 "message": runtime_recovery.get("message"),
+            },
+            "deployment_readiness": {
+                "readiness": deployment_readiness.get("readiness"),
+                "fully_available": deployment_readiness.get("fully_available"),
+                "partially_available": deployment_readiness.get("partially_available"),
+                "docker": deployment_readiness.get("docker"),
+                "runtime_host_relay": {k: v for k, v in deployment_readiness.get("runtime_host_relay", {}).items() if k != "base_url"},
+                "pack_root": {k: v for k, v in deployment_readiness.get("pack_root", {}).items() if k != "path"},
+                "degraded_features": deployment_readiness.get("degraded_features"),
+                "message": deployment_readiness.get("message"),
             },
             "downstream_integrations": {
                 "status": "healthy",

@@ -3,7 +3,7 @@
     "id": 117,
     "title": "Runtime queue durability and recovery semantics",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make runtime-host execution more durable and legible across retries, restarts, and operator review. The product should persist run queue state, expose recovery posture, and make it obvious which replay jobs are active, completed, retried, or stranded.",
     "implementation_tasks": [
       "Persist runtime-host queue entries and terminal outcomes in the artifact or state layer rather than only app-local memory.",
@@ -42,7 +42,7 @@
     "id": 118,
     "title": "Deployment reliability and environment-readiness checks",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make packaged deployment behavior more honest and operable. The app should show readiness posture for the main service, runtime host, pack root, and required environment variables, with clear degraded-mode guidance instead of hidden failures.",
     "implementation_tasks": [
       "Add a deployment readiness contract that checks critical runtime-host and app dependencies.",

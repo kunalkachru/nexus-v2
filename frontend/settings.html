@@ -171,6 +171,31 @@
 
         <section class="section">
             <div class="section-header">
+                <h2>Deployment Readiness</h2>
+                <div class="section-note">Verify the deployment environment is ready for bounded replay and investigate degraded features.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Readiness posture</div>
+                    <div class="hero-stats raw-intake-grid">
+                        <div class="stat"><div class="stat-label">Overall</div><div class="stat-value" id="deploymentReadiness">-</div></div>
+                        <div class="stat"><div class="stat-label">Docker</div><div class="stat-value" id="deploymentDocker">-</div></div>
+                        <div class="stat"><div class="stat-label">Runtime host</div><div class="stat-value" id="deploymentRuntimeHost">-</div></div>
+                        <div class="stat"><div class="stat-label">Pack root</div><div class="stat-value" id="deploymentPackRoot">-</div></div>
+                    </div>
+                    <p class="hero-copy" id="deploymentMessage">Deployment readiness will appear here once the platform loads.</p>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Degraded features</div>
+                    <ul class="simple-list" id="degradedFeaturesList">
+                        <li>Feature degradation details will appear here once the platform loads.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
                 <h2>Environment Controls</h2>
                 <div class="section-note">These controls define how the product behaves in validation, review, and production-like operation.</div>
             </div>
