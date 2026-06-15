@@ -122,6 +122,7 @@ class IncidentLifecycleResponse(BaseModel):
     guardian_policy_id: str = ""
     guardian_policy_name: str = ""
     guardian_policy_basis: str = ""
+    intake_summary: dict[str, object] = Field(default_factory=dict)
 
 
 class IncidentWorkflowStage(str, Enum):

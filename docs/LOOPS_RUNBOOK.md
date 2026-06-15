@@ -2,6 +2,8 @@
 
 This document explains how to run Codex or Claude in a controlled implementation loop against NEXUS.
 
+Use it together with [docs/LOOP_MEMORY.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOP_MEMORY.md), which defines the only safe kind of loop carry-forward allowed in this repo.
+
 ## What A Loop Means Here
 
 A loop is a disciplined backlog drain:
@@ -53,10 +55,11 @@ Make sure the agent reads:
 
 1. [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
 2. [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
-3. [backlog-101-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-101-plus.json)
-4. [docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md)
-5. [docs/POST_100_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_EXECUTION_MAP.md)
-6. [docs/DEMO_WALKTHROUGH.md](/Users/kunalkachru/Documents/nexus-v3/docs/DEMO_WALKTHROUGH.md)
+3. [docs/LOOP_MEMORY.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOP_MEMORY.md)
+4. [backlog-101-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-101-plus.json)
+5. [docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md)
+6. [docs/POST_100_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_EXECUTION_MAP.md)
+7. [docs/DEMO_WALKTHROUGH.md](/Users/kunalkachru/Documents/nexus-v3/docs/DEMO_WALKTHROUGH.md)
 
 Recommended local checks before starting:
 
@@ -82,7 +85,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 4. Paste a prompt like this:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md, docs/POST_100_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-101-plus.json.
+Read AGENTS.md, WORKING_STATE.md, docs/LOOP_MEMORY.md, docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md, docs/POST_100_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-101-plus.json.
 Run a commit-and-continue loop against the backlog.
 
 Rules:
@@ -95,6 +98,7 @@ Rules:
 - if blocked after repeated attempts, mark the item blocked and explain why
 - keep seeded/static and live incident paths semantically aligned
 - do not treat scaffold-only evidence as runtime validation
+- use docs/LOOP_MEMORY.md only for evidence-backed execution carry-forward, not for inventing scope or strategy
 - any packaged-app runtime claim must be verified through the :7860 Docker path before the item is marked done
 ```
 
@@ -106,10 +110,11 @@ Rules:
 Use the same flow, but keep the grounding stricter:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md, docs/POST_100_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-101-plus.json completely before coding.
+Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/LOOP_MEMORY.md, docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md, docs/POST_100_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-101-plus.json completely before coding.
 Resume from the first pending backlog item.
 Drain the backlog top to bottom in a build-test-commit loop.
 Do not invent scope outside the backlog.
+Use docs/LOOP_MEMORY.md only for evidence-backed execution rules. Do not create pseudo-learnings, scope changes, or strategy changes from the loop itself.
 Do not treat scaffold-only evidence as runtime validation.
 Commit after each completed item with the item id in the message.
 ```
@@ -154,6 +159,25 @@ For documentation-only loop infrastructure updates:
 ```text
 docs: refresh loop control docs for current frontier
 ```
+
+## Safe Loop Carry-Forward
+
+Loops may improve their own execution only in bounded ways:
+
+- remembering verified repo-specific safety rules
+- remembering which tests and verification gates are mandatory
+- remembering backlog hygiene needed for clean resume behavior
+- recording repeated failure patterns only when they were observed and evidenced
+
+Loops must not:
+
+- self-author roadmap changes
+- create new scope without a backlog item
+- claim strategy changes as "learning"
+- treat prior generated prose as proof
+- add speculative entries to loop memory
+
+If you want future loops to carry something forward, put it in [docs/LOOP_MEMORY.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOP_MEMORY.md) only if it is concrete, short, and evidence-backed.
 
 ## How To Monitor A Running Loop
 

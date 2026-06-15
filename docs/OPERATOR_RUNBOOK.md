@@ -23,6 +23,14 @@ Quick reference for support operators triaging and managing incidents through NE
 - **Do**: Read the summary, then scroll to **Guardian Gate**
 - **Your choice**: Approve (execute), Reject (don't act), or Modify (request changes)
 
+### In Input Channels
+- **See**: Browser parse, normalization posture, missing signals, and operator read
+- **Do**: Paste the logs first and check whether the intake posture is `Strong`, `Partial`, or `Weak`
+- **Use it this way**:
+  - `Strong` means the packet is shaped well enough for bounded triage
+  - `Partial` means routing is usable but you should confirm the missing fields before approval
+  - `Weak` means ask for the service name, severity, and 2-3 concrete log lines before treating the case as decision-ready
+
 ### If You Approve
 - **See**: Action executes and results appear below Guardian
 - **Do**: Review execution outcome

@@ -57,6 +57,8 @@ def test_dashboard_routes_are_served() -> None:
     assert "Expand technical detail" in incident.text
     assert "Input Channels" in inputs.text
     assert "Paste Raw Logs" in inputs.text
+    assert "Normalization posture" in inputs.text
+    assert "Missing signals" in inputs.text
     assert "Incident archive" in history.text
     assert "Scenario validation and triage rehearsal" in replay.text
     assert "certificate expiry" in replay.text.lower()

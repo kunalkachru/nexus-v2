@@ -7,6 +7,7 @@ service=checkout-api severity=P1`;
 
 const WEBHOOK_SECRET = "nexus-demo-webhook-secret";
 const FRESH_TRIAGE_STORAGE_KEY = "nexus.fresh_triage_incident_id";
+let tenantServiceHints = [];
 
 const CHANNELS = {
   raw_text: {
@@ -117,6 +118,67 @@ function updateInputField(id, value) {
   }
 }
 
+function matchTenantServiceHints(rawText, hints) {
+  const lowered = String(rawText || "").toLowerCase();
+  return (hints || []).filter((hint) => {
+    const normalized = String(hint || "").trim().toLowerCase();
+    return normalized && new RegExp(`(^|[^a-z0-9._-])${normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9._-]|$)`, "i").test(lowered);
+  });
+}
+
+function computePreviewQuality({ service, severity, signature, lines, serviceSource, severitySource, tenantMatches }) {
+  const missingSignals = [];
+  const weakSignals = [];
+  let score = 0.2;
+
+  if (serviceSource === "defaulted") {
+    missingSignals.push("service");
+    weakSignals.push("service");
+  } else {
+    score += 0.25;
+  }
+
+  if (severitySource === "default") {
+    missingSignals.push("severity");
+    weakSignals.push("severity");
+  } else {
+    score += 0.2;
+  }
+
+  if ((lines || []).length >= 2) {
+    score += 0.15;
+  } else {
+    weakSignals.push("multi-line logs");
+  }
+
+  if (signature !== "General incident") {
+    score += 0.15;
+  } else {
+    weakSignals.push("specific signature");
+  }
+
+  if (tenantMatches.length) {
+    score += 0.05;
+  }
+
+  const posture = score >= 0.8 && missingSignals.length === 0
+    ? "Strong"
+    : score >= 0.45
+      ? "Partial"
+      : "Weak";
+
+  return {
+    posture,
+    missingSignals,
+    hintSource: tenantMatches.length ? "Tenant bootstrap hints" : "Browser preview",
+    operatorRead: posture === "Strong"
+      ? "Ready for bounded triage"
+      : posture === "Partial"
+        ? "Route now, confirm gaps before approval"
+        : "Ask for service, severity, and 2-3 raw lines",
+  };
+}
+
 function parseRawLogText(rawText) {
   const text = String(rawText || "").trim();
   if (!text) {
@@ -126,12 +188,17 @@ function parseRawLogText(rawText) {
       signature: "Paste logs to preview",
       action: "Load example logs or paste raw incident text",
       summary: "Paste raw incident text to preview the parsed evidence.",
+      posture: "Awaiting input",
+      missingSignals: ["Add logs"],
+      hintSource: "Browser preview",
+      operatorRead: "Paste logs to shape the case",
     };
   }
   const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
   const joined = lines.join(" ").toLowerCase();
   const serviceMatch = text.match(/(?:service|svc|app)\s*[:=]\s*([a-z0-9._-]+)/i) || text.match(/\b([a-z0-9._-]+-api|[a-z0-9._-]+-worker)\b/i);
   const severityMatch = text.match(/\b(P\d+)\b/i) || text.match(/\b(critical|urgent|high|medium|normal|low|info)\b/i);
+  const tenantMatches = matchTenantServiceHints(text, tenantServiceHints);
 
   let signature = "General incident";
   if (joined.includes("timeout")) {
@@ -146,12 +213,30 @@ function parseRawLogText(rawText) {
     signature = "Unhandled exception";
   }
 
+  const service = serviceMatch?.[1] || tenantMatches[0] || "checkout-api";
+  const serviceSource = serviceMatch?.[1] ? "explicit" : tenantMatches[0] ? "tenant_hint" : "defaulted";
+  const severity = severityMatch?.[1]?.toUpperCase() || "P2";
+  const severitySource = severityMatch?.[1] ? "explicit" : "default";
+  const quality = computePreviewQuality({
+    service,
+    severity,
+    signature,
+    lines,
+    serviceSource,
+    severitySource,
+    tenantMatches,
+  });
+
   return {
-    service: serviceMatch?.[1] || "checkout-api",
-    severity: severityMatch?.[1]?.toUpperCase() || "P2",
+    service,
+    severity,
     signature,
     action: "Open incident workspace",
     summary: lines[0] || "Paste raw incident text to preview the parsed evidence.",
+    posture: quality.posture,
+    missingSignals: quality.missingSignals.length ? quality.missingSignals : ["None"],
+    hintSource: quality.hintSource,
+    operatorRead: quality.operatorRead,
   };
 }
 
@@ -255,12 +340,26 @@ function renderRawLogPreview(rawText) {
   updateField("rawDetectedSeverity", parsed.severity);
   updateField("rawDetectedSignature", parsed.signature);
   updateField("rawDetectedAction", parsed.action);
+  updateField("rawDetectedPosture", parsed.posture);
+  updateField("rawMissingSignals", parsed.missingSignals.join(", "));
+  updateField("rawHintSource", parsed.hintSource);
+  updateField("rawOperatorRead", parsed.operatorRead);
 
   const result = document.getElementById("channelResult");
   if (result) {
     result.textContent = parsed.service === "-"
       ? "Paste raw logs or click Load example logs to preview parsed evidence."
-      : `Parsed ${parsed.service} as ${parsed.severity} with ${parsed.signature.toLowerCase()}. Runtime-backed replay becomes available when NEXUS_ENABLE_REPLICA_RUNTIME=1 is enabled.`;
+      : `Parsed ${parsed.service} as ${parsed.severity} with ${parsed.signature.toLowerCase()}. Intake posture is ${parsed.posture.toLowerCase()}. Runtime-backed replay becomes available when NEXUS_ENABLE_REPLICA_RUNTIME=1 is enabled.`;
+  }
+}
+
+async function loadTenantInputHints() {
+  try {
+    const config = await fetchAuthedJson("/api/v1/tenant/bootstrap-config");
+    const repos = config?.repos && typeof config.repos === "object" ? Object.keys(config.repos) : [];
+    tenantServiceHints = repos.filter(Boolean);
+  } catch {
+    tenantServiceHints = [];
   }
 }
 
@@ -451,5 +550,9 @@ window.addEventListener("DOMContentLoaded", () => {
     } finally {
       setSubmissionPending(false);
     }
+  });
+
+  loadTenantInputHints().then(() => {
+    renderRawLogPreview(rawLogInput?.value || "");
   });
 });

@@ -3,7 +3,7 @@
     "id": 101,
     "title": "Customer log intake normalization v2",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Improve how NEXUS handles noisy real customer incidents by deepening log normalization, partial-input handling, and tenant-aware intake hints. The goal is to make fresh tenant incidents more usable before triage quality and proof expectations are evaluated.",
     "implementation_tasks": [
       "improve parsing and normalization for messier tenant-provided logs",

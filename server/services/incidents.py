@@ -44,6 +44,7 @@ from server.services.governance import GovernanceService
 from server.services.priority import normalize_priority_label, priority_rank, priority_snapshot, shift_priority_label
 from server.services.observability import ObservabilityService
 from server.services.result_contracts import build_structured_result
+from server.services.tenancy import TenancyService
 from server.services.enterprise_runtime import (
     EnterpriseNexusRuntime,
     IncidentKnowledgeService,
@@ -154,6 +155,7 @@ class IncidentService:
         self._observability = observability
         self._governance = GovernanceService()
         self._raw_parser = RawIncidentParser()
+        self._tenancy_service = TenancyService()
         self._enterprise_runtime = EnterpriseNexusRuntime(
             observability=observability,
             sentinel=SentinelAgent(),
@@ -174,6 +176,18 @@ class IncidentService:
 
     def _guardian_policy(self, decision: str) -> dict[str, str]:
         return self._governance.guardian_policy_for_decision(decision)
+
+    def _tenant_service_hints(self, tenant_id: str) -> list[str]:
+        config = self._tenancy_service.get_bootstrap_config(tenant_id)
+        repos = config.get("repos", {}) if isinstance(config, dict) else {}
+        if not isinstance(repos, dict):
+            return []
+        hints = [str(service).strip() for service in repos.keys() if str(service).strip()]
+        return list(dict.fromkeys(hints))
+
+    def _raw_input_quality(self, normalized_evidence: dict[str, object]) -> dict[str, object]:
+        quality = normalized_evidence.get("input_quality", {})
+        return dict(quality) if isinstance(quality, dict) else {}
 
     async def _persist_latest_replay_packet(
         self,
@@ -560,7 +574,11 @@ class IncidentService:
         *,
         tenant_id: str = "tenant-system",
     ) -> dict[str, object]:
-        parsed = self._raw_parser.parse(payload.raw_text, severity_hint=payload.severity_hint)
+        parsed = self._raw_parser.parse(
+            payload.raw_text,
+            severity_hint=payload.severity_hint,
+            tenant_service_hints=self._tenant_service_hints(tenant_id),
+        )
         created = await self._session.incidents.create_incident(
             external_id=f"raw_{parsed.service}_{uuid4().hex[:8]}",
             title=parsed.title,
@@ -575,6 +593,7 @@ class IncidentService:
                 "signature": parsed.signature,
                 "evidence": parsed.evidence,
                 "symptoms": parsed.symptoms,
+                "input_quality": parsed.input_quality,
                 "source_hint": payload.source_hint,
                 "reported_by": payload.reported_by,
                 "team": payload.team,
@@ -600,6 +619,7 @@ class IncidentService:
             guardian_decision=incident.guardian_decision,
             guardian_reasoning=incident.guardian_reasoning,
             guardian_reviewed_at=incident.guardian_reviewed_at,
+            intake_summary=parsed.input_quality,
         )
         return response.model_dump(mode="json")
 
@@ -787,10 +807,12 @@ class IncidentService:
                 *observability["recent_logs"],
             ]
         normalized_evidence = incident.normalized_evidence or {}
+        input_quality = self._raw_input_quality(normalized_evidence)
         latest_replay = dict(normalized_evidence.get("latest_replay", {})) if isinstance(normalized_evidence.get("latest_replay"), dict) else {}
         has_runtime_replay = bool(latest_replay and latest_replay.get("status") in {"replay_executed", "relay_executed"} or latest_replay.get("lifecycle_state") == "completed")
         live_payload = await self._build_raw_live_reasoning_payload(
             incident,
+            tenant_id=tenant_id or incident.tenant_id,
             lifecycle=lifecycle,
             audit_logs=audit_logs,
             recent_deployments=recent_deployments,
@@ -831,7 +853,20 @@ class IncidentService:
                 f"Signature: {raw_signature or 'General incident'}",
                 f"{len(normalized_evidence.get('evidence', []))} evidence line(s) extracted",
             ]
-            if has_runtime_replay:
+            posture = str(input_quality.get("normalization_posture", "")).lower()
+            if posture == "weak":
+                classification["confidence"] = 0.58
+                classification["reasoning"] = (
+                    "The pasted logs were only weakly normalized into a provisional incident packet. "
+                    "Service and severity signals are incomplete, so this context should be treated as scaffold-only intake shaping until stronger evidence arrives."
+                )
+            elif posture == "partial":
+                classification["confidence"] = 0.72 if not has_runtime_replay else 0.8
+                classification["reasoning"] = (
+                    "The pasted logs were partially normalized into service, severity, and signature. "
+                    "Routing is usable, but missing signals should be confirmed before execution."
+                )
+            elif has_runtime_replay:
                 classification["reasoning"] = (
                     "The pasted logs were normalized into service, severity, and signature, then validated by bounded runtime replay. "
                     "This classification is now backed by measured runtime evidence."
@@ -864,12 +899,31 @@ class IncidentService:
             ),
         }
         if incident.raw_input_text:
+            posture = str(input_quality.get("normalization_posture", "")).lower()
             diagnosis["confidence"] = 0.8 if not has_runtime_replay else 0.88
             diagnosis["supporting_logs"] = [
                 raw_signature or "Raw input normalized from pasted logs",
                 *diagnosis["supporting_logs"],
             ]
-            if has_runtime_replay:
+            if posture == "weak":
+                diagnosis["confidence"] = 0.55
+                diagnosis["correlation_analysis"] = (
+                    "The raw text was normalized into only a weak packet. NEXUS can still suggest an initial incident frame, "
+                    "but service ownership and mitigation choice remain provisional until stronger logs arrive."
+                )
+                diagnosis["reasoning"] = (
+                    "This diagnosis is intentionally conservative because the intake is weak and runtime replay has not validated a concrete family yet."
+                )
+            elif posture == "partial":
+                diagnosis["confidence"] = 0.69 if not has_runtime_replay else 0.82
+                diagnosis["correlation_analysis"] = (
+                    "The raw text was normalized into a partial packet. The likely incident family is usable for routing, "
+                    "but the missing signals should be confirmed before approval."
+                )
+                diagnosis["reasoning"] = (
+                    "This diagnosis is partially grounded in the raw text. Treat it as a bounded routing aid until stronger logs or replay evidence arrive."
+                )
+            elif has_runtime_replay:
                 diagnosis["correlation_analysis"] = (
                     "The raw logs were normalized into service, severity, and signature, then validated through bounded runtime replay. "
                     "This analysis is now backed by measured evidence from the replay execution."
@@ -893,7 +947,20 @@ class IncidentService:
             reason="The live incident view keeps the remediation contract aligned to the same bounded runtime packs used in the flagship outage demos.",
         )
         if incident.raw_input_text:
-            if has_runtime_replay:
+            posture = str(input_quality.get("normalization_posture", "")).lower()
+            if posture == "weak":
+                runbook["summary"] = f"Remediation plan for the pasted {raw_service or 'service'} incident (weak intake)"
+                runbook["reasoning"] = (
+                    "The raw input was only weakly normalized into a provisional issue family. "
+                    "This plan is scaffold-only guidance and should not be treated as decision-ready until stronger evidence is attached."
+                )
+            elif posture == "partial":
+                runbook["summary"] = f"Remediation plan for the pasted {raw_service or 'service'} incident (partial intake)"
+                runbook["reasoning"] = (
+                    "The raw input normalized into a usable but partial packet. "
+                    "This path is suitable for routing and initial handoff, but the missing signals should be confirmed before approval."
+                )
+            elif has_runtime_replay:
                 runbook["summary"] = f"Remediation plan for the pasted {raw_service or 'service'} incident (runtime-backed)"
                 runbook["reasoning"] = (
                     "The raw input has been normalized and validated through bounded runtime replay. This remediation path is backed by measured evidence; "
@@ -972,6 +1039,7 @@ class IncidentService:
                 "source_channel": self._queue_source_channel(incident.source),
                 "raw_input_text": incident.raw_input_text,
                 "normalized_evidence": incident.normalized_evidence,
+                "input_quality": input_quality,
             },
             "observability": observability,
             "classification": classification,
@@ -1118,6 +1186,7 @@ class IncidentService:
         self,
         incident: IncidentRecord,
         *,
+        tenant_id: str,
         lifecycle: dict[str, object],
         audit_logs: list[dict[str, object]],
         recent_deployments: list[dict[str, object]],
@@ -1138,6 +1207,7 @@ class IncidentService:
         try:
             raw_lines = [line.strip() for line in incident.raw_input_text.splitlines() if line.strip()]
             raw_service = str(raw_evidence.get("service", incident.service or "service")).strip() or "service"
+            input_quality = self._raw_input_quality(raw_evidence)
             priority = priority_snapshot(incident.severity)
             system_context = SystemContext(
                 service=raw_service,
@@ -1282,6 +1352,7 @@ class IncidentService:
                 "source_channel": "raw_text",
                 "raw_input_text": incident.raw_input_text,
                 "normalized_evidence": raw_evidence,
+                "input_quality": input_quality,
             },
             "observability": live_observability,
             "classification": {
@@ -1384,6 +1455,21 @@ class IncidentService:
                 },
             },
         }
+        posture = str(input_quality.get("normalization_posture", "")).lower()
+        if posture == "weak":
+            payload["classification"]["confidence"] = min(float(payload["classification"]["confidence"]), 0.58)
+            payload["classification"]["reasoning"] = (
+                "Live reasoning shaped a provisional packet from weak raw input. Service and severity signals remain incomplete, so this should be treated as routing guidance rather than a decision-ready diagnosis."
+            )
+            payload["diagnosis"]["confidence"] = min(float(payload["diagnosis"]["confidence"]), 0.56)
+            payload["diagnosis"]["reasoning"] = (
+                "The live model produced a conservative diagnosis because the pasted evidence is weak and still missing core service or severity signals."
+            )
+        elif posture == "partial":
+            payload["classification"]["confidence"] = min(float(payload["classification"]["confidence"]), 0.78)
+            payload["classification"]["reasoning"] = (
+                "Live reasoning shaped a usable but partial packet from the pasted logs. Routing is credible, but the missing signals should be confirmed before approval."
+            )
         payload.update(
             await self._build_enterprise_overlay(
                 incident_id=incident.nexus_incident_id,

@@ -464,6 +464,11 @@ def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth
     assert payload["severity"] == "P4"
     assert payload["queue_position"] == 1
     assert payload["eta_sec"] == 30
+    assert payload["intake_summary"]["normalization_posture"] == "strong"
+    assert payload["intake_summary"]["service_source"] == "explicit"
+    assert payload["intake_summary"]["severity_source"] == "hint"
+    assert payload["intake_summary"]["missing_signals"] == []
+    assert payload["intake_summary"]["quality_score"] >= 0.8
 
     context_response = client.get(
         f'/api/v1/incidents/{payload["nexus_incident_id"]}/context',
@@ -475,6 +480,8 @@ def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth
     assert context_payload["incident"]["severity"] == "P4"
     assert context_payload["incident"]["raw_input_text"]
     assert context_payload["incident"]["normalized_evidence"]
+    assert context_payload["incident"]["input_quality"]["normalization_posture"] == "strong"
+    assert context_payload["incident"]["input_quality"]["tenant_hints_applied"] == []
     assert context_payload["observability"]["evidence_sources"][0]["source"] == "raw input"
     assert context_payload["observability"]["recent_logs"][0].startswith("Raw input normalized")
     assert context_payload["guardian"]["policy_id"]
@@ -495,6 +502,83 @@ def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth
     audit_log_path = Path.cwd() / ".nexus_audit_log.json"
     assert audit_log_path.exists()
     assert "incident.raw_text.accepted" in audit_log_path.read_text()
+
+
+def test_raw_text_contract_surfaces_weak_partial_input_quality(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": "customers report checkout broken after deploy",
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "platform",
+        },
+    )
+
+    assert response.status_code == 202
+    payload = response.json()
+    assert payload["intake_summary"]["normalization_posture"] == "weak"
+    assert payload["intake_summary"]["service_source"] == "defaulted"
+    assert payload["intake_summary"]["severity_source"] == "default"
+    assert "service" in payload["intake_summary"]["missing_signals"]
+    assert "severity" in payload["intake_summary"]["missing_signals"]
+    assert payload["intake_summary"]["quality_score"] < 0.5
+    assert payload["intake_summary"]["operator_guidance"]
+
+    context_response = client.get(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/context',
+        headers=auth_headers(),
+    )
+    assert context_response.status_code == 200
+    context_payload = context_response.json()
+    assert context_payload["incident"]["input_quality"]["normalization_posture"] == "weak"
+    assert "service" in context_payload["incident"]["input_quality"]["missing_signals"]
+    assert "severity" in context_payload["incident"]["input_quality"]["missing_signals"]
+    assert "scaffold-only" in context_payload["classification"]["reasoning"].lower()
+
+
+def test_raw_text_contract_uses_tenant_bootstrap_service_hints(
+    client: TestClient,
+    auth_headers,
+) -> None:
+    bootstrap_response = client.put(
+        "/api/v1/tenant/bootstrap-config",
+        headers=auth_headers(roles="admin"),
+        json={
+            "repos": {
+                "payment-service": "https://github.com/acme/payment",
+                "checkout-service": "https://github.com/acme/checkout",
+            }
+        },
+    )
+    assert bootstrap_response.status_code == 200
+
+    response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": "2026-05-30T10:14:22Z token validation failed for payment-service downstream\ncustomer impact rising after auth retries",
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "identity",
+        },
+    )
+
+    assert response.status_code == 202
+    payload = response.json()
+    assert payload["intake_summary"]["service_source"] == "tenant_hint"
+    assert "payment-service" in payload["intake_summary"]["tenant_hints_applied"]
+    assert payload["intake_summary"]["normalization_posture"] in {"partial", "strong"}
+
+    context_response = client.get(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/context',
+        headers=auth_headers(),
+    )
+    assert context_response.status_code == 200
+    context_payload = context_response.json()
+    assert context_payload["incident"]["normalized_evidence"]["service"] == "payment-service"
+    assert "payment-service" in context_payload["incident"]["input_quality"]["tenant_hints_applied"]
 
 
 def test_raw_text_contract_accepts_arbitrary_priority_labels(client: TestClient, auth_headers) -> None:

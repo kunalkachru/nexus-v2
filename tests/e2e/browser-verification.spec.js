@@ -163,7 +163,12 @@ test.describe("NEXUS browser verification", () => {
     await page.goto("/inputs");
     await page.waitForLoadState("networkidle");
 
+    await expect(page.locator("#rawDetectedPosture")).toContainText("Awaiting input");
+    await expect(page.locator("#rawMissingSignals")).toContainText("Add logs");
+
     await page.getByRole("button", { name: "Load example logs" }).click();
+    await expect(page.locator("#rawDetectedPosture")).toContainText(/Strong|Partial/);
+    await expect(page.locator("#rawMissingSignals")).toContainText(/None|Explicit/);
     await page.getByRole("button", { name: "Submit raw logs" }).click();
 
     await expect(page).toHaveURL(/\/incident\?[^#]*nexus_incident_id=nxs_[a-z0-9]+/i, { timeout: 10000 });
