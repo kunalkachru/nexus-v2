@@ -2921,6 +2921,108 @@ def build_trace_summary(
                 "The bounded replay shows the pool recovering only after the leaking retry path is removed or orphaned sessions are terminated."
                 f"{f' {comparison_verdict}' if comparison_verdict else ''}"
             )
+        elif incident_class == "deploy_regression_5xx" or (
+            not incident_class and ("deploy regression" in issue_family or "5xx spike" in issue_family)
+        ):
+            suspected_modules = [module_name for module_name, _ in mapped_targets] or ["service.api_routes", "service.query_handler", "service.response_serializer"]
+            suspected_functions = [function_name for _, function_name in mapped_targets] or ["handle_request", "execute_query", "serialize_response"]
+            suspected_service = "api-svc"
+            suspected_files = [
+                "replica_packs/api-python-fastapi-catalog-v1/service/api_routes.py",
+                "replica_packs/api-python-fastapi-catalog-v1/service/query_handler.py",
+            ]
+            expected_flow = "API requests should handle query execution and serialization without raising 5xx errors."
+            observed_divergence = "Recent deploy introduced a regression causing query handler or serializer to fail systematically."
+            state_anomalies = ["5xx error rate spiked at deploy boundary", "request latency increased after deploy"]
+            inspection_point = (
+                "Bounded debugger flow for deploy regression / 5xx spike:\n"
+                "1. Break in handle_request and confirm request routing still reaches query handler\n"
+                "2. Step to execute_query and verify query execution completes without throwing\n"
+                "3. Inspect serialize_response and confirm response serialization handles the query result\n"
+                "Expected recovery: rollback deploy or fix the regression in query execution path"
+            )
+            replay_evidence_summary = runtime_comparison or "Replay confirmed the 5xx spike reproduces with the new deploy and resolves with rollback."
+            if "deploy" in deployment_text or "version" in deployment_text:
+                state_anomalies.append("recent deploy aligns with the 5xx spike onset")
+            if any("rollback" in action.lower() for action in mitigation_actions):
+                state_anomalies.append("rollback mitigation confirms the deploy introduced the regression")
+            if "query" in logs_text or "serializ" in logs_text:
+                state_anomalies.append("runtime logs point to query execution or response serialization as the failure point")
+            if replay_status_code and replay_status_code >= 500:
+                state_anomalies.append(f"runtime replay reproduced the 5xx error at status {replay_status_code}")
+            if runtime_comparison:
+                state_anomalies.append(runtime_comparison)
+            if comparison_verdict:
+                state_anomalies.append(comparison_verdict)
+            confidence = 0.78 if "deploy" in deployment_text else 0.71
+            reasoning = "TRACE narrowed the issue to the query execution or response serialization path where the recent deploy introduced a regression."
+            stack_path = [
+                {
+                    "service": "api-svc",
+                    "module": "service.api_routes",
+                    "function": "handle_request",
+                    "file": suspected_files[0],
+                    "checkpoint": "Verify the request reaches the query handler without being rejected at the route level.",
+                },
+                {
+                    "service": "api-svc",
+                    "module": "service.query_handler",
+                    "function": "execute_query",
+                    "file": suspected_files[1],
+                    "checkpoint": "Confirm the query execution completes without throwing an exception on the new deploy.",
+                },
+                {
+                    "service": "api-svc",
+                    "module": "service.response_serializer",
+                    "function": "serialize_response",
+                    "file": suspected_files[0],
+                    "checkpoint": "Verify response serialization handles the query result without encoding errors.",
+                },
+            ]
+            stack_path_summary = "Trace the request from the route handler into query execution and finally response serialization."
+            failure_boundary = "The failure boundary is in the query handler or response serializer introduced in the recent deploy."
+            runtime_clue = (
+                runtime_comparison
+                or (f"Baseline replay returned HTTP {replay_status_code} consistently until rollback was applied." if replay_status_code else "")
+                or "Replay confirmed the 5xx spike reproduces with the new deploy and resolves after rollback."
+            )
+            debugger_packet = {
+                "supported": True,
+                "bounded_to_pack": "api-python-fastapi-catalog-v1",
+                "scope": "Deploy regression / 5xx spike only — not a universal API debugger",
+                "summary": "Ordered debugging flow for this curated pack. This debugger is bounded to the deploy regression outage and applies only to the checked-in FastAPI/Catalog environment pack.",
+                "ordered_checkpoints": [
+                    {
+                        "order": 1,
+                        "function": "handle_request",
+                        "module": "service.api_routes",
+                        "expected_state": "request reaches query handler without route-level rejection",
+                        "inspect": "Confirm routing logic has not changed to reject the incoming request schema.",
+                    },
+                    {
+                        "order": 2,
+                        "function": "execute_query",
+                        "module": "service.query_handler",
+                        "expected_state": "query execution completes without exception",
+                        "inspect": "Verify the query handler does not throw exceptions on the new deploy version.",
+                    },
+                    {
+                        "order": 3,
+                        "function": "serialize_response",
+                        "module": "service.response_serializer",
+                        "expected_state": "response serialization succeeds without encoding error",
+                        "inspect": "Check that the serializer can encode the query result without throwing an exception.",
+                    },
+                ],
+                "failure_signature": "HTTP 5xx errors appear consistently at deployment boundary after the recent code change.",
+                "validation_method": runtime_comparison or "Bounded replay validates whether the 5xx errors correlate with deploy rollback.",
+                "recovery_path": "Rollback the deploy or apply a hotfix to the regression in the query handler or serializer.",
+            }
+            developer_handoff_summary = (
+                f"Start with the recent deploy diff and inspect {suspected_files[1]}. "
+                "The bounded replay shows the 5xx errors resolving only after the regression is fixed or the deploy is rolled back. "
+                f"Hand this packet to the mapped owner for that file.{f' {comparison_verdict}' if comparison_verdict else ''}"
+            )
         elif "certificate expiry" in issue_family:
             suspected_modules = ["edge.cert_loader", "edge.listener_config", "acme.rotation_job"]
             suspected_functions = ["load_public_certificate", "validate_chain_expiry", "reload_edge_listener"]
