@@ -36,9 +36,17 @@ async function renderBootstrapStatus() {
       ? missingFields.map(field => `<li>Configure <strong>${titleCase(field)}</strong></li>`).join("")
       : "<li>All required fields are configured. Environment is ready for use.</li>";
     setHtml("bootstrapMissingFields", missingHtml);
+
+    // Show supported outage families
+    const supportedFamilies = status.supported_outage_families || [];
+    const familiesHtml = supportedFamilies.length > 0
+      ? supportedFamilies.map(family => `<li>${family}</li>`).join("")
+      : "<li>No outage families are currently enabled. Configure enabled_packs to add coverage.</li>";
+    setHtml("supportedFamilies", familiesHtml);
   } catch (error) {
     setText("bootstrapStatus", "Error");
     setHtml("bootstrapMissingFields", `<li>Unable to load bootstrap status: ${error.message}</li>`);
+    setHtml("supportedFamilies", `<li>Unable to load supported families: ${error.message}</li>`);
   }
 }
 

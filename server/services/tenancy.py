@@ -48,8 +48,36 @@ class TenancyService:
             json.dump(configs, f, indent=2)
 
     def get_bootstrap_status(self, tenant_id: str) -> dict[str, Any]:
+        from server.services.replica_runtime import runtime_host_supported_packs
+
         configs = self._load_bootstrap_configs()
         config = configs.get(tenant_id, {})
+
+        # Build outage family coverage based on enabled packs
+        enabled_packs = config.get("enabled_packs", [])
+        all_packs = runtime_host_supported_packs()
+        enabled_pack_set = set(enabled_packs) if isinstance(enabled_packs, list) else set()
+
+        # Map incident classes to human-readable family names
+        incident_family_map = {
+            "timeout_retry_amplification": "INC001: Timeout/Retry Amplification",
+            "db_pool_exhaustion": "INC002: DB Pool Exhaustion",
+            "deploy_regression_5xx": "INC003: Deploy Regression / 5xx Spike",
+        }
+
+        supported_families = set()
+        pack_coverage = {}
+        for pack in all_packs:
+            if pack.get("pack_id") in enabled_pack_set:
+                pack_id = pack.get("pack_id")
+                classes = pack.get("incident_classes", [])
+                pack_coverage[pack_id] = {
+                    "incident_classes": classes,
+                    "stack": pack.get("stack", []),
+                }
+                for cls in classes:
+                    if cls in incident_family_map:
+                        supported_families.add(incident_family_map[cls])
 
         return {
             "tenant_id": tenant_id,
@@ -69,6 +97,8 @@ class TenancyService:
                 field for field in ["owners", "repos", "delivery_targets", "approval_policy", "enabled_packs"]
                 if not config.get(field)
             ],
+            "supported_outage_families": sorted(list(supported_families)),
+            "pack_coverage": pack_coverage,
             "last_updated_at": config.get("last_updated_at"),
         }
 

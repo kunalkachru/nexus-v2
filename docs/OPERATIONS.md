@@ -58,6 +58,104 @@ Characteristics:
 - same frontend and backend served together
 - easy rebuild path
 
+### 3. Pilot deployment mode
+
+Used for:
+
+- real customer evaluation
+- bounded operational testing
+- support team enablement
+
+Characteristics:
+
+- same product as local development, deployed to production infrastructure
+- authentication required for all API endpoints
+- audit logging of all operations
+- runtime host relay enabled for bounded replay
+- tenant bootstrap configuration defines pilot readiness
+
+## Pilot Setup and Onboarding
+
+To prepare NEXUS for a real pilot, a new tenant environment must complete the following steps.
+
+### Minimum Viable Pilot Setup
+
+A tenant is ready for a bounded pilot when all of these are configured:
+
+1. **Supported Outage Families**: At least one curated incident pack enabled
+   - `INC001`: Timeout/Retry Amplification (requires `checkout-python-fastapi-auth-redis-v1` pack)
+   - `INC002`: DB Pool Exhaustion (requires `checkout-python-fastapi-postgres-v1` pack)
+   - `INC003`: Deploy Regression / 5xx Spike (requires catalog pack)
+
+2. **Owner Mappings**: Teams and engineers responsible for each supported outage family
+   - Maps issue families to on-call engineers
+   - Enables NEXUS to route investigations to the right owner
+   - Example: `{"timeout_retry": "checkout-team", "db_pool": "infra-team"}`
+
+3. **Repository Information**: Code repositories where investigations will point
+   - Service-to-repo mappings for TRACE handoff
+   - Enables "inspect here first" packet generation
+   - Example: `{"checkout-service": "github.com/acme/checkout"}`
+
+4. **Delivery Targets**: Where investigation packets should be sent
+   - At least one of: GitHub, Slack, or Email integration configured
+   - Enables downstream handoff to engineering
+   - Example: `{"github": {"org": "acme", "repo": "incidents"}}`
+
+5. **Approval Policy**: Guardian approval requirements by incident severity
+   - Defines who can approve actions by severity level
+   - Example: `{"P0": "incident_manager", "P1-P2": "operator", "P3+": "operator"}`
+
+6. **Enabled Packs**: Runtime reproduction packs available for this tenant
+   - At least one bounded pack enabled (see "Supported Outage Families" above)
+   - Packs are configured in the tenant bootstrap configuration
+   - Example: `["checkout-python-fastapi-auth-redis-v1", "checkout-python-fastapi-postgres-v1"]`
+
+### Bootstrap Configuration Workflow
+
+1. Navigate to **Settings** from the training page (or via `/settings`)
+2. Review the **Tenant Onboarding & Deployment Readiness** section
+3. Under **Required Setup Steps**, see which fields are missing
+4. Contact your administrator to configure each missing field
+5. Refresh the settings page to confirm all fields are configured
+6. The **Supported Outage Families** section will show which incident types are enabled
+
+### Example Bootstrap Configuration
+
+```json
+{
+  "tenant_id": "acme-pilot",
+  "owners": {
+    "timeout_retry_amplification": "checkout-team@acme.com",
+    "db_pool_exhaustion": "infra-team@acme.com"
+  },
+  "repos": {
+    "checkout-service": "https://github.com/acme/checkout",
+    "payment-service": "https://github.com/acme/payment"
+  },
+  "delivery_targets": {
+    "github": {
+      "org": "acme",
+      "repo": "incidents",
+      "token_env": "GITHUB_INCIDENTS_TOKEN"
+    },
+    "slack": {
+      "webhook_env": "SLACK_INCIDENTS_WEBHOOK"
+    }
+  },
+  "approval_policy": {
+    "P0": "incident_manager",
+    "P1": "incident_manager",
+    "P2": "operator",
+    "P3": "operator"
+  },
+  "enabled_packs": [
+    "checkout-python-fastapi-auth-redis-v1",
+    "checkout-python-fastapi-postgres-v1"
+  ]
+}
+```
+
 ## Product Observability and Health Monitoring
 
 NEXUS provides operators and maintainers with visibility into the product's own health and operational status.
