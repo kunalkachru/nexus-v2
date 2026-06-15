@@ -15,7 +15,7 @@ Use it when you want to:
 
 The current validated baseline for this walkthrough is:
 
-- `pytest tests/ -q` -> `141 passed`
+- `pytest tests/ -q` -> `145 passed`
 - `npm run browser:verify` -> `11 passed`
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
 - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes
