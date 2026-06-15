@@ -3,7 +3,7 @@
     "id": 77,
     "title": "Pilot deployment and tenant onboarding",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Turn the pilot-ready product into something that can be stood up repeatedly for a real tenant without code surgery. Add a bounded tenant onboarding path, deployment checklist surface, and configuration bootstrap so a new customer environment can be initialized in a disciplined way.",
     "implementation_tasks": [
       "define the minimum tenant bootstrap contract for owners, repos, delivery destinations, policies, and enabled packs",

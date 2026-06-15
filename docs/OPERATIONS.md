@@ -58,6 +58,57 @@ Characteristics:
 - same frontend and backend served together
 - easy rebuild path
 
+## Tenant Onboarding and Bootstrap
+
+### Required Bootstrap Fields
+
+Before a tenant can use NEXUS, the following must be configured:
+
+1. **Owners**: Service owners and escalation contacts (team names, Slack channels, or email lists)
+2. **Repos**: Repository mapping (service name to repository URL or path)
+3. **Delivery Targets**: Downstream workflow destinations (GitHub, Slack, Jira, etc.)
+4. **Approval Policy**: Guardian approval requirements by incident severity (P0/P1/P2 rules)
+5. **Enabled Packs**: Which runtime packs are enabled for this tenant environment
+
+### Viewing Bootstrap Status
+
+The **Settings** page shows the current bootstrap status for a tenant:
+
+- Navigate to `/settings`
+- Look for the **Tenant Onboarding & Deployment Readiness** section
+- See which fields are configured and which are still pending
+
+### Configuring Bootstrap Fields
+
+Bootstrap configuration can be updated via:
+
+```bash
+# Get current bootstrap config
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:7860/api/v1/tenant/bootstrap-config
+
+# Update bootstrap config
+curl -X PUT -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "owners": {"team_checkout": "checkout-team@example.com"},
+    "repos": {"checkout": "github.com/example/checkout"},
+    "delivery_targets": {"github": true, "slack": true},
+    "approval_policy": {"p0": "incident_manager", "p1": "operator"},
+    "enabled_packs": ["checkout-python-fastapi-auth-redis-v1", "checkout-python-fastapi-postgres-v1"]
+  }' \
+  http://localhost:7860/api/v1/tenant/bootstrap-config
+```
+
+### Onboarding Checklist
+
+- [ ] Define service owners and escalation contacts
+- [ ] Map services to their repositories
+- [ ] Configure downstream delivery targets
+- [ ] Set approval policies for incident severity levels
+- [ ] Enable appropriate runtime packs for your stack
+- [ ] Verify bootstrap status shows "Ready" on the Settings page
+
 ## Recommended Start Commands
 
 ### Fresh local rebuild

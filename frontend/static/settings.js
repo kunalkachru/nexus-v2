@@ -7,10 +7,39 @@ function setText(id, value) {
   }
 }
 
+function setHtml(id, html) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.innerHTML = html;
+  }
+}
+
 function titleCase(value) {
   return String(value || "")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+async function renderBootstrapStatus() {
+  try {
+    const status = await fetchAuthedJson("/api/v1/tenant/bootstrap-status");
+    const isReady = status.is_ready || false;
+    setText("bootstrapStatus", isReady ? "Ready ✓" : "Incomplete");
+    setText("bootstrapOwners", status.owners_configured ? "✓ Configured" : "⚠ Pending");
+    setText("bootstrapRepos", status.repos_configured ? "✓ Configured" : "⚠ Pending");
+    setText("bootstrapDelivery", status.delivery_targets_configured ? "✓ Configured" : "⚠ Pending");
+    setText("bootstrapPolicy", status.approval_policy_configured ? "✓ Configured" : "⚠ Pending");
+    setText("bootstrapPacks", status.enabled_packs_configured ? "✓ Configured" : "⚠ Pending");
+
+    const missingFields = status.missing_fields || [];
+    const missingHtml = missingFields.length > 0
+      ? missingFields.map(field => `<li>Configure <strong>${titleCase(field)}</strong></li>`).join("")
+      : "<li>All required fields are configured. Environment is ready for use.</li>";
+    setHtml("bootstrapMissingFields", missingHtml);
+  } catch (error) {
+    setText("bootstrapStatus", "Error");
+    setHtml("bootstrapMissingFields", `<li>Unable to load bootstrap status: ${error.message}</li>`);
+  }
 }
 
 async function renderSettingsSummary() {
@@ -77,6 +106,12 @@ async function renderSettingsSummary() {
 }
 
 window.addEventListener("load", () => {
+  renderBootstrapStatus().catch((error) => {
+    const missingFields = document.getElementById("bootstrapMissingFields");
+    if (missingFields) {
+      missingFields.innerHTML = `<li>Error: ${error.message}</li>`;
+    }
+  });
   renderSettingsSummary().catch((error) => {
     const cards = document.getElementById("platformStatusCards");
     if (cards) {

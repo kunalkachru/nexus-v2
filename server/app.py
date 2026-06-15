@@ -355,6 +355,57 @@ async def get_runtime_execution_state(
     return execution_state.to_dict()
 
 
+@app.get("/api/v1/tenant/bootstrap-status")
+async def get_tenant_bootstrap_status(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="tenant_bootstrap")
+    tenancy_service = request.app.state.tenancy_service
+    status = tenancy_service.get_bootstrap_status(auth.tenant_id)
+    await write_audit_log(
+        "tenant.bootstrap_status.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id},
+    )
+    return status
+
+
+@app.get("/api/v1/tenant/bootstrap-config")
+async def get_tenant_bootstrap_config(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="tenant_bootstrap")
+    require_role(auth, "admin")
+    tenancy_service = request.app.state.tenancy_service
+    config = tenancy_service.get_bootstrap_config(auth.tenant_id)
+    await write_audit_log(
+        "tenant.bootstrap_config.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id},
+    )
+    return config
+
+
+@app.put("/api/v1/tenant/bootstrap-config")
+async def update_tenant_bootstrap_config(
+    request: Request,
+    payload: dict[str, object],
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="tenant_bootstrap")
+    require_role(auth, "admin")
+    tenancy_service = request.app.state.tenancy_service
+    updated = tenancy_service.update_bootstrap_config(auth.tenant_id, payload)
+    await write_audit_log(
+        "tenant.bootstrap_config.updated",
+        auth.tenant_id,
+        {"user_id": auth.user_id, "updates": list(payload.keys())},
+    )
+    return updated
+
+
 @app.post("/api/v1/internal/runtime-host/replica-replay")
 async def runtime_host_replica_replay(
     payload: RuntimeHostReplayRequest,

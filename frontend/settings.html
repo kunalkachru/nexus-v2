@@ -72,6 +72,33 @@
 
         <section class="section">
             <div class="section-header">
+                <h2>Tenant Onboarding & Deployment Readiness</h2>
+                <div class="section-note">Before NEXUS can be used in this environment, the tenant must complete a bounded onboarding process.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Bootstrap Status</div>
+                    <div class="hero-stats raw-intake-grid">
+                        <div class="stat"><div class="stat-label">Overall</div><div class="stat-value" id="bootstrapStatus">-</div></div>
+                        <div class="stat"><div class="stat-label">Owners</div><div class="stat-value" id="bootstrapOwners">-</div></div>
+                        <div class="stat"><div class="stat-label">Repos</div><div class="stat-value" id="bootstrapRepos">-</div></div>
+                        <div class="stat"><div class="stat-label">Delivery targets</div><div class="stat-value" id="bootstrapDelivery">-</div></div>
+                        <div class="stat"><div class="stat-label">Approval policy</div><div class="stat-value" id="bootstrapPolicy">-</div></div>
+                        <div class="stat"><div class="stat-label">Enabled packs</div><div class="stat-value" id="bootstrapPacks">-</div></div>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Required Setup Steps</div>
+                    <ul class="simple-list" id="bootstrapMissingFields">
+                        <li>Loading bootstrap requirements...</li>
+                    </ul>
+                    <p class="section-note" style="margin-top: 1em;">Contact your administrator to complete onboarding if this environment is not yet ready.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
                 <h2>Operational Status</h2>
                 <div class="section-note">This product is meant to be deployed and governed, not only demoed.</div>
             </div>
