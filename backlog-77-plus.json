@@ -1,0 +1,271 @@
+[
+  {
+    "id": 77,
+    "title": "Pilot deployment and tenant onboarding",
+    "priority": "high",
+    "status": "pending",
+    "description": "Turn the pilot-ready product into something that can be stood up repeatedly for a real tenant without code surgery. Add a bounded tenant onboarding path, deployment checklist surface, and configuration bootstrap so a new customer environment can be initialized in a disciplined way.",
+    "implementation_tasks": [
+      "define the minimum tenant bootstrap contract for owners, repos, delivery destinations, policies, and enabled packs",
+      "add a deployment or onboarding status surface so operators can see whether the environment is ready for use",
+      "persist bootstrap completeness and configuration health in a product-readable way",
+      "document the exact onboarding steps for a new tenant and make the UI reflect missing setup clearly"
+    ],
+    "done_when": [
+      "a new tenant can be configured through a bounded onboarding workflow instead of ad hoc code edits",
+      "the product shows onboarding or deployment readiness clearly before operators start triaging incidents",
+      "tenant bootstrap gaps are visible and actionable instead of surfacing only as downstream runtime errors"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/incidents.py",
+      "frontend/settings.html",
+      "frontend/static/settings.js",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/OPERATIONS.md"
+    ]
+  },
+  {
+    "id": 78,
+    "title": "Auth, roles, and approval controls hardening",
+    "priority": "high",
+    "status": "pending",
+    "description": "Harden the product’s approval and operator-control surface so the market-ready workflow has believable role separation. Replay, downstream handoff, admin controls, and Guardian approval actions should be gated by clearer roles and more explicit authorization rules.",
+    "implementation_tasks": [
+      "define the bounded role matrix for operator, reviewer, and admin capabilities",
+      "apply role gating consistently to replay, handoff send, settings, and approval actions",
+      "surface authorization posture in the UI so unavailable controls read as policy-driven rather than broken",
+      "document the role model and control boundaries for real pilot or early production usage"
+    ],
+    "done_when": [
+      "critical actions are gated by a consistent role model",
+      "the UI makes role-based unavailability explicit and understandable",
+      "approval and administrative actions feel governed instead of demo-open"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/auth.py",
+      "server/services/incidents.py",
+      "frontend/static/incident.js",
+      "frontend/static/settings.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/OPERATIONS.md"
+    ]
+  },
+  {
+    "id": 79,
+    "title": "Integration reliability and delivery guarantees",
+    "priority": "high",
+    "status": "pending",
+    "description": "Move downstream handoff integrations from first working state toward reliable workflow plumbing. Delivery attempts, retries, failures, and operator recovery should be visible and auditable so GitHub or Slack handoffs feel trustworthy enough for repeat use.",
+    "implementation_tasks": [
+      "define delivery-attempt lifecycle states for downstream sends",
+      "persist retryable failure versus terminal failure semantics",
+      "add operator-visible recovery or retry affordances where appropriate",
+      "ensure delivery audit trails remain aligned with evidence posture and case history"
+    ],
+    "done_when": [
+      "downstream handoff actions expose delivery lifecycle and failure state clearly",
+      "operators can tell whether a send succeeded, needs retry, or failed terminally",
+      "integration behavior feels durable enough for repeated workflow use"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/app.py",
+      "frontend/static/incident.js",
+      "frontend/static/history.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/OPERATIONS.md"
+    ]
+  },
+  {
+    "id": 80,
+    "title": "Product observability and self-monitoring",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make NEXUS observable as a product, not only as a demo. Operators and maintainers should be able to see health, latency, replay failure rates, integration failures, and product workflow bottlenecks so the system itself can be trusted in real usage.",
+    "implementation_tasks": [
+      "define a bounded product-observability model for request health, replay health, and downstream integration health",
+      "surface key health and latency summaries in a product-facing status area",
+      "persist or expose operational anomalies that matter for trust in the product itself",
+      "keep observability safe and concise without leaking sensitive evidence"
+    ],
+    "done_when": [
+      "the product exposes its own health in a way operators can understand",
+      "replay and downstream handoff failures are visible in self-monitoring surfaces",
+      "the product no longer feels like a black box when its own workflow degrades"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/observability.py",
+      "frontend/training.html",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/OPERATIONS.md"
+    ]
+  },
+  {
+    "id": 81,
+    "title": "Security and secrets handling hardening",
+    "priority": "high",
+    "status": "pending",
+    "description": "Harden the early production posture around secrets, sensitive evidence, and downstream integration credentials. The goal is not full enterprise compliance, but a credible market-ready v1 baseline that avoids obvious trust blockers.",
+    "implementation_tasks": [
+      "audit where secrets and integration credentials enter the product",
+      "tighten masking, storage, and display behavior for sensitive configuration and evidence",
+      "ensure downstream integrations and approval workflows do not leak secrets or unsafe payloads into user-facing surfaces",
+      "document the security posture and known boundaries honestly"
+    ],
+    "done_when": [
+      "sensitive configuration and secrets are handled more safely across product surfaces",
+      "credential-bearing integrations do not expose unsafe data in ordinary operator flows",
+      "the product has an honest documented security baseline for market-ready v1"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/auth.py",
+      "server/openai_keys.py",
+      "frontend/static/settings.js",
+      "frontend/static/incident.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/OPERATIONS.md"
+    ]
+  },
+  {
+    "id": 82,
+    "title": "Operator onboarding and runbooks",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Reduce founder dependence by producing operator-ready onboarding flows and product runbooks. A new operator should be able to understand how to use NEXUS for triage, replay, handoff, review, and feedback without relying on internal context.",
+    "implementation_tasks": [
+      "define the core operator journeys that need onboarding support",
+      "add in-product or adjacent docs for triage, replay, handoff, approval, and feedback usage",
+      "tighten wording across surfaces so the workflow is understandable without sales narration",
+      "document known boundaries, escalation paths, and recovery steps for common operator mistakes"
+    ],
+    "done_when": [
+      "a new operator can understand the primary workflow without direct founder guidance",
+      "the product has usable runbooks for the main market-ready v1 flows",
+      "operator-facing documentation matches the shipped workflow and its boundaries"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "docs/DEMO_WALKTHROUGH.md",
+      "docs/OPERATIONS.md",
+      "docs/LOCAL_ENTERPRISE_ONE_SHOT_TEST.md",
+      "frontend/training.html",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 83,
+    "title": "Buyer-facing proof package and ROI story",
+    "priority": "high",
+    "status": "pending",
+    "description": "Turn the product’s operational improvements into a buyer-ready proof package. The goal is to make the ROI story, flagship incident case studies, and measured-versus-estimated gains easy to present without hand-built founder slides every time.",
+    "implementation_tasks": [
+      "define the buyer-proof artifacts for market-ready v1",
+      "turn existing ROI and case-history signals into presentation-ready product outputs or docs",
+      "prepare before-and-after workflow evidence for the flagship outage classes",
+      "keep all claims aligned with what the product actually measures today"
+    ],
+    "done_when": [
+      "the product and docs together provide a coherent buyer-facing proof package",
+      "ROI, relay reduction, and workflow acceleration claims are tied to visible evidence",
+      "market-facing materials remain aligned with the bounded product reality"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "docs/PRODUCT_STRATEGY_AND_GTM.md",
+      "docs/PRESENTATION_PACK.md",
+      "docs/POST_76_MARKET_READY_PLAN.md",
+      "frontend/training.html",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 84,
+    "title": "Market-ready v1 checkpoint and release readiness",
+    "priority": "high",
+    "status": "pending",
+    "description": "Close the market-ready hardening phase with a deliberate release-readiness checkpoint. Confirm the bounded support-triage product is truthful, operable, buyer-explainable, and deployment-ready for a narrow v1 without drifting into unsupported claims.",
+    "implementation_tasks": [
+      "run a full validation pass across backend tests, browser flows, demo flow, and deployment path",
+      "refresh owner-facing docs so the market-ready story, boundaries, and deployment posture are current",
+      "write a release-readiness summary that states what is real, what is bounded, and what remains out of scope",
+      "treat this item as the explicit gate before any new breadth-expansion backlog is written"
+    ],
+    "done_when": [
+      "the repo ends the phase with a clear release-readiness checkpoint",
+      "owner-facing docs clearly state the market-ready v1 scope and boundaries",
+      "the product can be described as a narrow sellable support-triage v1 without hand-waving"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/LOOPS_RUNBOOK.md",
+      "docs/POST_76_MARKET_READY_PLAN.md",
+      "docs/DEMO_WALKTHROUGH.md",
+      "docs/OPERATIONS.md",
+      "docs/PRESENTATION_PACK.md",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  }
+]

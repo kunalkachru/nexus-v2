@@ -8,8 +8,8 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
 - Flagship incidents:
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
-- Current validated baseline (post items 61–68 hardening phase):
-  - `pytest tests/ -q` -> `141 passed`
+- Current validated baseline (post items 69–76 pilot-readiness phase):
+  - `pytest tests/ -q` -> `145 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
@@ -135,7 +135,9 @@ The `15–76` backlog is complete.
 
 The `backlog-69-plus.json` is complete (pilot readiness checkpoint).
 
-The next phase is market-ready v1 hardening and deployment preparation.
+The active next execution backlog is `backlog-77-plus.json`.
+
+This phase is a market-ready v1 hardening and deployment-preparation checkpoint.
 
 ## Reality Check
 
@@ -158,16 +160,19 @@ Implemented now:
 - durable replay execution history through the artifact layer
 - shared evidence-posture language across seeded and live incident paths
 - stricter debugger evidence contract and fresh-incident truth gates
+- pilot-ready case lifecycle, downstream sends, tenant-aware routing, engineering feedback, admin visibility, and buyer-facing ROI surfaces
 
 Not implemented yet:
 
 - arbitrary environment reproduction
 - universal code debugging across arbitrary stacks
 - autonomous multi-step production remediation
-- arbitrary external ticketing or messaging integrations
+- broad third-party workflow coverage beyond the current bounded integrations
 - fully durable active runtime queue orchestration beyond app-local in-flight state
+- full market-ready deployment and onboarding hardening
+- hardened auth, security, observability, and operator onboarding polish for v1 release
 
 ## Reference
 
 See [docs/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOPS_RUNBOOK.md) for the operator-facing guide and prompt templates.
-Use [backlog-69-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-69-plus.json), [docs/POST_68_MARKET_READINESS_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_68_MARKET_READINESS_PLAN.md), and [docs/POST_68_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_68_EXECUTION_MAP.md) for the next active phase.
+Use [backlog-77-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-77-plus.json), [docs/POST_76_MARKET_READY_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_76_MARKET_READY_PLAN.md), and [docs/POST_76_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_76_EXECUTION_MAP.md) for the next active phase.

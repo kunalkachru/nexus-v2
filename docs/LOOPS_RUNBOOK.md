@@ -28,16 +28,16 @@ Do not start a loop against a vague objective like "improve Nexus more." Write a
 
 The `15–76` backlog is complete.
 
-The `backlog-69-plus.json` is finished (pilot readiness checkpoint achieved).
+The active next backlog is `backlog-77-plus.json`.
 
-The next phase is market-ready v1 hardening and deployment preparation, not breadth-first expansion.
+This phase is market-ready v1 hardening and deployment preparation, not breadth-first expansion.
 
 Before the loop starts:
 
 1. read the finished codebase control docs
-2. read `backlog-69-plus.json`
-3. read `docs/POST_68_MARKET_READINESS_PLAN.md`
-4. read `docs/POST_68_EXECUTION_MAP.md`
+2. read `backlog-77-plus.json`
+3. read `docs/POST_76_MARKET_READY_PLAN.md`
+4. read `docs/POST_76_EXECUTION_MAP.md`
 5. keep the work bounded to the listed items
 6. only then begin the loop
 
@@ -47,9 +47,9 @@ Make sure the agent reads:
 
 1. [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
 2. [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
-3. [backlog-69-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-69-plus.json)
-4. [docs/POST_68_MARKET_READINESS_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_68_MARKET_READINESS_PLAN.md)
-5. [docs/POST_68_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_68_EXECUTION_MAP.md)
+3. [backlog-77-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-77-plus.json)
+4. [docs/POST_76_MARKET_READY_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_76_MARKET_READY_PLAN.md)
+5. [docs/POST_76_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_76_EXECUTION_MAP.md)
 6. [docs/DEMO_WALKTHROUGH.md](/Users/kunalkachru/Documents/nexus-v3/docs/DEMO_WALKTHROUGH.md)
 
 Recommended local checks before starting:
@@ -76,7 +76,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 4. Paste a prompt like this:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/POST_68_MARKET_READINESS_PLAN.md, docs/POST_68_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-69-plus.json.
+Read AGENTS.md, WORKING_STATE.md, docs/POST_76_MARKET_READY_PLAN.md, docs/POST_76_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-77-plus.json.
 Run a commit-and-continue loop against the backlog.
 
 Rules:
@@ -100,7 +100,7 @@ Rules:
 Use the same flow, but keep the grounding stricter:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/POST_68_MARKET_READINESS_PLAN.md, docs/POST_68_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-69-plus.json completely before coding.
+Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/POST_76_MARKET_READY_PLAN.md, docs/POST_76_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-77-plus.json completely before coding.
 Resume from the first pending backlog item.
 Drain the backlog top to bottom in a build-test-commit loop.
 Do not invent scope outside the backlog.
@@ -203,4 +203,4 @@ As of the latest validated state:
 - runtime replay can be delegated to a Docker-capable runtime host
 - the debugger is still bounded to the two curated flagship outage classes
 - recent replay execution history is durable, while active in-flight runtime posture remains app-local
-- the next real frontier is pilot readiness: durable case workflow, real engineering handoff, tenant-aware routing, and buyer-visible value
+- the next real frontier is market-ready v1 hardening: deployment readiness, role boundaries, delivery reliability, observability, security posture, operator onboarding, and buyer-proof packaging

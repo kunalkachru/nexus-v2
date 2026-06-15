@@ -20,8 +20,8 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 ## Baseline State
 
 - Branch: `master`
-- Baseline feature slice through item `68` (hardening complete): latest commit
-- `pytest tests/ -q` → **141 passed**
+- Baseline feature slice through item `76` (pilot readiness complete): latest commit
+- `pytest tests/ -q` → **145 passed**
 - `npm run browser:verify` → **11 passed**
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
 - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` → passes
@@ -82,6 +82,7 @@ Still bounded:
 - TRACE is a bounded developer handoff, not a universal debugger
 - the debugger flows are descriptive guidance, not interactive step-through debuggers
 - external delivery targets are still export-oriented rather than full third-party integrations
+- bounded downstream sends and engineering feedback loops are now present for the pilot workflow
 - recent runtime execution history is durable, but active in-flight runtime posture is still app-local rather than full job orchestration
 
 ## Two Code Paths — Critical To Understand
@@ -102,13 +103,16 @@ These paths must stay semantically aligned.
 - `backlog-47-plus.json` — completed backlog through item `53`
 - `backlog-54-plus.json` — completed backlog through item `60`
 - `backlog-61-plus.json` — completed backlog through item `68`
-- `backlog-69-plus.json` — active backlog for pilot readiness and market-facing workflow productization
+- `backlog-69-plus.json` — completed backlog through item `76`
+- `backlog-77-plus.json` — active backlog for market-ready v1 hardening and deployment preparation
 - `AGENTS.md` — loop rules and current validated baseline
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
 - `docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md` — broader product strategy and scope
 - `docs/POST_68_MARKET_READINESS_PLAN.md` — readiness ladder and product direction after the hardening phase
 - `docs/POST_68_EXECUTION_MAP.md` — task/subtask execution map for items `69–76`
+- `docs/POST_76_MARKET_READY_PLAN.md` — market-ready v1 hardening direction after pilot readiness
+- `docs/POST_76_EXECUTION_MAP.md` — task/subtask execution map for items `77–84`
 
 ## Most Important Files For The Next Phase
 
@@ -127,5 +131,5 @@ These paths must stay semantically aligned.
 
 ## Next Recommended Frontier
 
-The active frontier is `backlog-69-plus.json`.
-This phase should bias toward pilot workflow usability, tenant realism, downstream engineering handoff, and buyer-visible value rather than broadening outage coverage.
+The active frontier is `backlog-77-plus.json`.
+This phase should bias toward deployment readiness, control hardening, integration reliability, self-observability, security posture, onboarding, and release credibility rather than adding new outage breadth.
