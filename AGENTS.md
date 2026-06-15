@@ -9,7 +9,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
   - `INC003` deploy regression / 5xx spike
-- Current validated baseline (post item 107 runtime evidence weighting v3):
+- Current validated baseline (post item 108 FR2 checkpoint):
   - `pytest tests/ -q` -> `150 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes (all three incidents complete)
@@ -30,6 +30,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
   - **Deepened runtime evidence weighting** showing explicitly why each action won, with clear evidence posture and residual-risk semantics
   - **Weighted evidence explanation** across inference, memory, and runtime sources with measurable confidence boosts
   - **Pilot operations kit** including tenant setup, weekly reviews, and closeout procedures
+  - **FR2 repeatable enterprise pilot closure** with bounded onboarding, measured proof, and stronger engineering trust
 
 ## What Loops Are For
 
@@ -147,28 +148,29 @@ The `backlog-86-plus.json` is complete (items 86–92, wedge-strengthening and p
 
 The `backlog-93-plus.json` is complete (items 93–100, pilot conversion and technical proof deepening).
 
-The next active backlog is `backlog-101-plus.json`.
+The `backlog-101-plus.json` phase is complete.
 
-This phase is FR2: repeatable enterprise pilot product.
+The next active backlog is `backlog-109-plus.json`.
+
+This phase is selective expansion inside the same support-triage wedge.
 
 It should:
 
-- improve fresh customer log intake quality
-- make per-tenant coverage and unsupported-case downgrade explicit
-- add a fresh-incident evaluation harness
-- add pilot scorecards and case-based proof exports
-- deepen engineering handoff trust and runtime evidence weighting
-- close with a pilot operations kit and FR2 checkpoint
+- add the auth dependency slowdown / token validation failure family
+- add the queue / worker backlog affecting transaction completion family
+- attach bounded REPLICA and TRACE support for both new families
+- extend coverage, scorecard, proof, and routing calibration across the five-family wedge
+- close with a five-family checkpoint before ops maturity work begins
 
 Completed in this phase:
-- Added a third outage family: `INC003` deploy regression / 5xx spike
-- Bounded REPLICA and TRACE support for `INC003` via api-python-fastapi-catalog-v1 pack
-- Enhanced LLM-driven triage quality with adaptive reasoning for all three outage families
-- Agent deliberation visibility via workflow timeline showing all agent contributions
-- Pilot conversion kit with three-outage wedge narrative
-- Final UI polish and visual completion across core surfaces
+- improved customer log intake normalization with quality posture and tenant-aware hints
+- per-tenant coverage matrix and unsupported-case downgrade guidance
+- fresh-incident quality evaluation harness
+- pilot scorecard dashboard and case-based proof export
+- engineering handoff trust v3 and runtime evidence weighting v3
+- pilot operations kit and FR2 checkpoint closure
 
-The product now supports three bounded incident families with consistent investigation workflows.
+The product now supports three bounded incident families with a repeatable enterprise-pilot workflow and is ready to widen to five families without changing category.
 
 ## Reality Check
 
@@ -207,4 +209,4 @@ Not implemented yet:
 ## Reference
 
 See [docs/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOPS_RUNBOOK.md) for the operator-facing guide and prompt templates.
-Use [backlog-101-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-101-plus.json), [docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md), and [docs/POST_100_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_EXECUTION_MAP.md) for the next active phase.
+Use [backlog-109-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-109-plus.json), [docs/POST_108_SELECTIVE_EXPANSION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_SELECTIVE_EXPANSION_PLAN.md), and [docs/POST_108_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_EXECUTION_MAP.md) for the next active phase.

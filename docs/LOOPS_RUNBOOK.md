@@ -36,18 +36,20 @@ The `backlog-86-plus.json` is complete (items 86–92 wedge-strengthening checkp
 
 The `backlog-93-plus.json` is complete (items 93–100 pilot conversion and technical proof deepening).
 
-The next active frontier is `backlog-101-plus.json`.
+The `backlog-101-plus.json` phase is complete.
 
-The product is ready to enter FR2: repeatable enterprise pilot execution across 2–3 tenants while staying inside the bounded three-outage wedge.
+The next active frontier is `backlog-109-plus.json`.
 
-FR2 should focus on:
+The product is ready to move from FR2 into selective wedge expansion while staying inside the same support-triage category.
 
-1. customer log intake normalization
-2. per-tenant coverage matrix and unsupported-case downgrade
-3. fresh-incident quality evaluation
-4. pilot scorecards and case-based proof export
-5. engineering handoff trust and runtime evidence weighting
-6. pilot operations kit and multi-tenant checkpoint
+The `109–116` phase should focus on:
+
+1. auth dependency slowdown and token validation failures
+2. queue or worker backlog affecting transaction completion
+3. bounded REPLICA and TRACE support for both new families
+4. five-family coverage, scorecard, and proof-surface calibration
+5. fresh-incident routing and owner inference calibration across the five-family wedge
+6. five-family checkpoint and control-doc refresh
 
 ## Before Starting A Loop
 
@@ -56,9 +58,9 @@ Make sure the agent reads:
 1. [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
 2. [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
 3. [docs/LOOP_MEMORY.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOP_MEMORY.md)
-4. [backlog-101-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-101-plus.json)
-5. [docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md)
-6. [docs/POST_100_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_EXECUTION_MAP.md)
+4. [backlog-109-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-109-plus.json)
+5. [docs/POST_108_SELECTIVE_EXPANSION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_SELECTIVE_EXPANSION_PLAN.md)
+6. [docs/POST_108_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_EXECUTION_MAP.md)
 7. [docs/DEMO_WALKTHROUGH.md](/Users/kunalkachru/Documents/nexus-v3/docs/DEMO_WALKTHROUGH.md)
 
 Recommended local checks before starting:
@@ -85,7 +87,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 4. Paste a prompt like this:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/LOOP_MEMORY.md, docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md, docs/POST_100_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-101-plus.json.
+Read AGENTS.md, WORKING_STATE.md, docs/LOOP_MEMORY.md, docs/POST_108_SELECTIVE_EXPANSION_PLAN.md, docs/POST_108_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-109-plus.json.
 Run a commit-and-continue loop against the backlog.
 
 Rules:
@@ -110,7 +112,7 @@ Rules:
 Use the same flow, but keep the grounding stricter:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/LOOP_MEMORY.md, docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md, docs/POST_100_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-101-plus.json completely before coding.
+Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/LOOP_MEMORY.md, docs/POST_108_SELECTIVE_EXPANSION_PLAN.md, docs/POST_108_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-109-plus.json completely before coding.
 Resume from the first pending backlog item.
 Drain the backlog top to bottom in a build-test-commit loop.
 Do not invent scope outside the backlog.
@@ -239,6 +241,6 @@ As of the completion of items 77–85:
 
 The product is ready for v1 release as a narrow, credible support-triage system for recurring checkout and transaction-critical incidents.
 
-The [backlog-101-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-101-plus.json) is the active next frontier for FR2.
+The [backlog-109-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-109-plus.json) is the active next frontier.
 
-Use FR2 to make NEXUS repeatable across 2–3 pilot tenants before adding more outage breadth.
+Use `109–116` to widen NEXUS from a three-family wedge to a five-family wedge without drifting into universal-platform claims.

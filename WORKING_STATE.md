@@ -14,7 +14,7 @@ Items `69–76`: **complete** (pilot readiness checkpoint) in `backlog-69-plus.j
 Items `77–85`: **complete** (market-ready v1 hardening, deployment preparation, buyer proof, UI polish, release checkpoint) in `backlog-77-plus.json`
 Items `86–92`: **complete** (wedge-strengthening, three-outage support, LLM reasoning enhancement, pilot conversion, checkpoint) in `backlog-86-plus.json`
 Items `93–100`: **complete** (pilot conversion and technical proof deepening) in `backlog-93-plus.json`
-Items `101–107`: **complete** (FR2 field pilot execution and proof-at-scale prep) in `backlog-101-plus.json`
+Items `101–108`: **complete** (FR2 repeatable enterprise pilot checkpoint) in `backlog-101-plus.json`
 
 ## App In One Sentence
 
@@ -23,8 +23,8 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 ## Baseline State
 
 - Branch: `master`
-- Baseline feature slice through item `100` (pilot conversion and technical proof checkpoint complete): latest commit
-- `pytest tests/ -q` → **145 passed**
+- Baseline feature slice through item `108` (FR2 repeatable enterprise pilot checkpoint complete): latest commit
+- `pytest tests/ -q` → **150 passed**
 - `npm run browser:verify` → **11 passed**
 - `python demo.py` → all three incidents complete
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
@@ -110,12 +110,16 @@ These paths must stay semantically aligned.
 - `backlog-77-plus.json` — completed backlog through item `85` (market-ready v1 release)
 - `backlog-86-plus.json` — completed backlog through item `92`
 - `backlog-93-plus.json` — completed backlog through item `100`
+- `backlog-101-plus.json` — completed backlog through item `108` (FR2 repeatable enterprise pilot checkpoint)
+- `backlog-109-plus.json` — next backlog for five-family selective wedge expansion
 - `AGENTS.md` — loop rules and current validated baseline
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
 - `docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md` — broader product strategy and scope
 - `docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md` — FR2 direction after pilot conversion and technical proof deepening
 - `docs/POST_100_EXECUTION_MAP.md` — task/subtask execution map for items `101–108`
+- `docs/POST_108_SELECTIVE_EXPANSION_PLAN.md` — post-FR2 five-family wedge plan
+- `docs/POST_108_EXECUTION_MAP.md` — task/subtask execution map for items `109–116`
 
 ## Most Important Files For The Next Phase
 
@@ -134,12 +138,12 @@ These paths must stay semantically aligned.
 
 ## Next Recommended Frontier
 
-The active frontier is `backlog-101-plus.json`.
+The active frontier is `backlog-109-plus.json`.
 
 Use these documents together:
 
-- [docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md)
-- [docs/POST_100_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_EXECUTION_MAP.md)
-- [backlog-101-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-101-plus.json)
+- [docs/POST_108_SELECTIVE_EXPANSION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_SELECTIVE_EXPANSION_PLAN.md)
+- [docs/POST_108_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_108_EXECUTION_MAP.md)
+- [backlog-109-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-109-plus.json)
 
-This phase is FR2: a repeatable enterprise pilot product for 2–3 tenants, still inside the bounded three-outage wedge.
+This phase is the post-FR2 selective expansion sprint: widen the bounded wedge from three outage families to five while keeping seeded and live paths truthful and coherent.

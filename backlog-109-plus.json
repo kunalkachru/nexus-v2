@@ -1,0 +1,288 @@
+[
+  {
+    "id": 109,
+    "title": "Auth dependency family packet across seeded and live paths",
+    "priority": "high",
+    "status": "pending",
+    "description": "Add a new outage family for auth dependency slowdown and token validation failures. Seeded incidents, live fresh incidents, and the operator story should all frame this family consistently without overclaiming runtime support before the bounded pack exists.",
+    "implementation_tasks": [
+      "define the auth dependency outage family across seeded and live paths",
+      "add likely owner, customer path, and failure-story framing for auth dependency incidents",
+      "keep downgrade and evidence-posture language honest before runtime support is attached",
+      "make the new family buyer-legible in core product surfaces"
+    ],
+    "done_when": [
+      "the auth dependency family is coherent in seeded and live incident paths",
+      "operators can understand what kind of auth dependency problem is being framed",
+      "the product does not overclaim runtime support before the pack lands"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "server/incident_payloads.py",
+      "server/services/surface_payloads.py",
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/DEMO_WALKTHROUGH.md"
+    ]
+  },
+  {
+    "id": 110,
+    "title": "Bounded REPLICA and TRACE support for auth dependency family",
+    "priority": "high",
+    "status": "pending",
+    "description": "Add bounded reproduction and debugging support for the auth dependency family. The pack should stay narrow and curated, with explicit runtime-backed versus inferred-only behavior and a clear debugger packet that points engineering to the likely dependency boundary.",
+    "implementation_tasks": [
+      "add a bounded runtime pack for the auth dependency family",
+      "attach REPLICA runtime posture and mitigation comparison for the new family",
+      "attach TRACE debugging packet and likely inspection path for the new family",
+      "preserve strict runtime-backed versus inferred-only language"
+    ],
+    "done_when": [
+      "the auth dependency family has bounded REPLICA and TRACE support where claimed",
+      "runtime comparison is visible and truthful for the new family",
+      "engineering gets a concrete but bounded debug handoff"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/replica_runtime.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "runtime_host/server/app.py",
+      "frontend/static/incident.js",
+      "tests/test_replica_runtime.py",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  },
+  {
+    "id": 111,
+    "title": "Queue and worker backlog family packet across seeded and live paths",
+    "priority": "high",
+    "status": "pending",
+    "description": "Add a fifth outage family for queue or worker backlog affecting transaction completion. The packet should explain customer impact, likely ownership, and the relay-reduction story across both seeded and live paths before deeper runtime support is attached.",
+    "implementation_tasks": [
+      "define the queue or worker backlog family across seeded and live paths",
+      "add likely owner, customer path, and operational framing for queue backlog incidents",
+      "keep evidence posture honest when support is inference-first",
+      "make the family understandable in buyer and operator surfaces"
+    ],
+    "done_when": [
+      "the queue or worker backlog family is coherent in seeded and live paths",
+      "operators can understand the queue backlog problem frame",
+      "the product still reads as one support-triage category rather than a grab-bag"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "server/incident_payloads.py",
+      "server/services/surface_payloads.py",
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/BUYER_PROOF_PACKAGE.md"
+    ]
+  },
+  {
+    "id": 112,
+    "title": "Bounded REPLICA and TRACE support for queue and worker backlog family",
+    "priority": "high",
+    "status": "pending",
+    "description": "Add bounded reproduction and debugging support for the queue and worker backlog family. The runtime pack should stay narrow, with explicit mitigation ladders, runtime outcomes, and a developer handoff packet that points to the backlog-processing boundary.",
+    "implementation_tasks": [
+      "add a bounded runtime pack for the queue or worker backlog family",
+      "attach REPLICA runtime posture and mitigation comparison for the family",
+      "attach TRACE debugging packet and inspection path for worker backlog issues",
+      "keep runtime-backed versus inference-only semantics strict"
+    ],
+    "done_when": [
+      "the queue or worker backlog family has bounded REPLICA and TRACE support where claimed",
+      "runtime comparison is visible and truthful for the new family",
+      "engineering gets a bounded but useful worker-backlog debug packet"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/replica_runtime.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "runtime_host/server/app.py",
+      "frontend/static/incident.js",
+      "tests/test_replica_runtime.py",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  },
+  {
+    "id": 113,
+    "title": "Coverage matrix and pilot scorecard extension for the five-family wedge",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Extend the tenant coverage matrix, scorecard, and proof surfaces so the five-family wedge is visible and bounded. Buyers and operators should be able to see exactly what is runtime-backed, inference-first, or unsupported across the expanded wedge.",
+    "implementation_tasks": [
+      "extend coverage matrix for five-family support state",
+      "extend pilot scorecard and proof surfaces for the expanded wedge",
+      "keep runtime-backed versus inferred-only ratios honest as support broadens",
+      "make expanded wedge coverage understandable to buyers and operators"
+    ],
+    "done_when": [
+      "coverage and proof surfaces reflect the five-family wedge truthfully",
+      "operators can see what is covered per tenant without ambiguity",
+      "buyers can understand the widened wedge without the product losing focus"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/incidents.py",
+      "server/services/tenancy.py",
+      "frontend/static/settings.js",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/BUYER_PROOF_PACKAGE.md",
+      "docs/PRESENTATION_PACK.md"
+    ]
+  },
+  {
+    "id": 114,
+    "title": "Fresh-incident routing and owner inference calibration across the five-family wedge",
+    "priority": "high",
+    "status": "pending",
+    "description": "Calibrate fresh-incident framing, owner routing, and uncertainty posture now that the wedge covers five bounded families. The goal is better live routing quality without slipping into overconfident generic triage.",
+    "implementation_tasks": [
+      "calibrate live routing and owner inference across five families",
+      "improve uncertainty language where multiple families overlap",
+      "keep fresh-incident evaluation coherent after wedge expansion",
+      "preserve downgrade honesty for weak or unsupported incidents"
+    ],
+    "done_when": [
+      "fresh incidents route more coherently across the five-family wedge",
+      "uncertainty language stays explicit when family overlap exists",
+      "the product remains honest on ambiguous or weak live incidents"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/OPERATOR_RUNBOOK.md",
+      "docs/DEMO_WALKTHROUGH.md"
+    ]
+  },
+  {
+    "id": 115,
+    "title": "Buyer and demo material refresh for the five supported outage families",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Refresh the buyer-facing, owner-facing, and demo materials so the product can present the five-family wedge clearly. The demo story should stay narrow and legible while showing broader coverage and stronger runtime-backed reasoning.",
+    "implementation_tasks": [
+      "refresh buyer proof and presentation material for five-family support",
+      "refresh demo walkthrough and owner-facing narrative for the widened wedge",
+      "keep the message tightly focused on support-to-engineering investigation workflow",
+      "make the expanded wedge easy to explain without sounding like a universal platform"
+    ],
+    "done_when": [
+      "buyer and demo material reflects five supported outage families",
+      "the market-facing narrative stays narrow and credible",
+      "owner-facing walkthroughs match the shipped product reality"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "docs/BUYER_PROOF_PACKAGE.md",
+      "docs/PRESENTATION_PACK.md",
+      "docs/DEMO_WALKTHROUGH.md",
+      "docs/LIVE_DEMO_SPEAKER_NOTES.md",
+      "docs/NOW_NEXT_LATER_GTM_LADDER.md",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 116,
+    "title": "Five-family wedge checkpoint and control-doc refresh",
+    "priority": "high",
+    "status": "pending",
+    "description": "Close the selective expansion phase with a deliberate checkpoint. Validate the five-family wedge end-to-end, confirm seeded and live truthfulness, and refresh the control docs so the repo ends the phase with a clear bounded-wedge posture before ops maturity work begins.",
+    "implementation_tasks": [
+      "run the full validation stack across tests, browser, demo, and Docker path",
+      "verify all five families remain bounded and truthful in seeded and live paths",
+      "refresh owner-facing control docs so the next active frontier is the ops-maturity phase",
+      "close the backlog cleanly before any 117–124 work begins"
+    ],
+    "done_when": [
+      "the five-family wedge is validated end-to-end",
+      "control docs truthfully describe the new bounded wedge baseline",
+      "the repo is ready to move into near-production ops maturity"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/LOOPS_RUNBOOK.md",
+      "docs/BUYER_PROOF_PACKAGE.md",
+      "docs/DEMO_WALKTHROUGH.md",
+      "docs/PRESENTATION_PACK.md",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  }
+]
