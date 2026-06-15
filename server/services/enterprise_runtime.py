@@ -1563,6 +1563,12 @@ def _duration_for_incident(incident: IncidentDefinition, *, executed: bool) -> f
 
 def infer_issue_family(root_cause: str, incident_name: str) -> str:
     text = f"{root_cause} {incident_name}".lower()
+    if "auth" in text and ("validation" in text or "token" in text or "certificate" in text) and "timeout" not in text and "retry" not in text:
+        return "Auth dependency slowdown / token validation failures"
+    if "auth" in text and ("slowdown" in text or "degradation" in text or "latency" in text) and "timeout" not in text and "retry" not in text:
+        return "Auth dependency slowdown / token validation failures"
+    if "queue" in text and ("backlog" in text or "lag" in text or "consumer" in text or "rebalance" in text):
+        return "Queue / worker backlog affecting transaction completion"
     if "deploy" in text and ("5xx" in text or "regression" in text or "error" in text or "null" in text):
         return "Deploy regression / 5xx spike"
     if "retry" in text and "timeout" in text:
@@ -1598,7 +1604,23 @@ def build_triage_summary(
     blast_radius = "Customer-facing requests are degraded while the incident remains under investigation."
     approval_focus = "Prefer reversible mitigation before any broader change."
 
-    if any(token in service_key for token in ("checkout", "payment", "order", "gateway", "auth")) or "checkout" in incident_name.lower():
+    if "auth" in issue_family.lower() and "dependency" in issue_family.lower():
+        impacted_customer_path = "Checkout and authenticated API requests"
+        likely_owner_service = "auth-svc"
+        likely_owner_team = "Identity Platform"
+        responder_team = "API Platform incident command with Identity Platform on-call"
+        support_queue = "Auth service degradation"
+        blast_radius = "Authenticated API requests time out while auth-svc token validation slows down downstream and cache effectiveness degrades."
+        approval_focus = "Recover auth validation throughput first by addressing the dependency slowdown or cert validation overhead."
+    elif "queue" in issue_family.lower() and "backlog" in issue_family.lower():
+        impacted_customer_path = "Transaction settlement and async processing"
+        likely_owner_service = "billing-consumer" if "billing" in service_key else service
+        likely_owner_team = "Billing Platform" if "billing" in service_key else "Streaming Platform"
+        responder_team = "Billing Platform incident command with Data Streaming on-call" if "billing" in service_key else "Data Streaming on-call"
+        support_queue = "Queue backlog escalation"
+        blast_radius = "Transactions queue up behind saturated consumer partitions and settlement processing stalls for active sessions."
+        approval_focus = "Restore consumer rebalancing and partition ownership first, then scale workers if backlog persists."
+    elif any(token in service_key for token in ("checkout", "payment", "order", "gateway", "auth")) or "checkout" in incident_name.lower():
         impacted_customer_path = "Checkout and payment authorization"
         likely_owner_service = "auth-svc" if "retry" in issue_family.lower() else service
         likely_owner_team = "Identity Platform" if "retry" in issue_family.lower() else "Checkout Platform"
@@ -1671,6 +1693,16 @@ def extract_reproduced_symptoms(recent_logs: list[object]) -> list[str]:
 
 
 def default_reproduced_symptoms(issue_family: str, recent_logs: list[object]) -> list[str]:
+    if "auth" in issue_family.lower() and "dependency" in issue_family.lower():
+        return [
+            "Authenticated API requests time out as token validation latency increases downstream.",
+            "Token cache effectiveness degrades and validation throughput drops under replayed load.",
+        ]
+    if "queue" in issue_family.lower() and "backlog" in issue_family.lower():
+        return [
+            "Consumer lag grew as partition assignment changed and rebalancing did not recover.",
+            "Worker throughput dropped when several partitions remained unassigned after the deployment.",
+        ]
     if "retry amplification" in issue_family:
         return [
             "Customer-facing checkout requests stall after repeated upstream auth retries.",
@@ -1987,6 +2019,18 @@ def _build_mitigation_ladder(comparison: dict[str, object]) -> dict[str, object]
 
 def runtime_aligned_candidate_fixes(issue_family: str, service: str) -> list[dict[str, object]]:
     issue_family_text = issue_family.lower()
+    if "auth" in issue_family_text and "dependency" in issue_family_text:
+        return [
+            {"action": "Reset circuit breaker and force token cache invalidation to restore auth throughput", "success_rate": 0.91},
+            {"action": "Temporarily increase auth-svc timeout and cache TTL to smooth the validation latency", "success_rate": 0.87},
+            {"action": "Roll back auth-svc to recover from enhanced validation overhead", "success_rate": 0.82},
+        ]
+    if "queue" in issue_family_text and "backlog" in issue_family_text:
+        return [
+            {"action": "Roll back consumer and force group rebalance", "success_rate": 0.93},
+            {"action": "Re-enable rebalance feature flag in place", "success_rate": 0.88},
+            {"action": "Increase partition count immediately", "success_rate": 0.24},
+        ]
     if "retry amplification" in issue_family_text or ("timeout" in issue_family_text and "retry" in issue_family_text):
         return [
             {"action": "Enable auth-svc circuit breaker and cap retries to 1", "success_rate": 0.9},
@@ -2316,6 +2360,32 @@ def build_replica_summary(
             ],
         )
         reasoning = "The failure reproduced when repeated image transform batches retained frame buffers beyond the expected cleanup path."
+    elif "auth" in issue_family and "dependency" in issue_family:
+        environment_pack_id = "generic-support-triage-pack-v1"
+        reproduction_status = "not_run"
+        hypothesis_supported = False
+        confidence_delta = 0.0
+        tested_mitigations = build_mitigation_checks(
+            candidate_actions,
+            fallback_checks=[
+                ("Reset circuit breaker and force token cache invalidation to restore auth throughput", "inferred from historical auth dependency patterns", 0.0),
+                ("Temporarily increase auth-svc timeout and cache TTL to smooth the validation latency", "inferred from historical auth dependency patterns", 0.0),
+            ],
+        )
+        reasoning = "Bounded runtime support for auth dependency slowdown is not yet available. These mitigation candidates are inferred from historical patterns only."
+    elif "queue" in issue_family and "backlog" in issue_family:
+        environment_pack_id = "generic-support-triage-pack-v1"
+        reproduction_status = "not_run"
+        hypothesis_supported = False
+        confidence_delta = 0.0
+        tested_mitigations = build_mitigation_checks(
+            candidate_actions,
+            fallback_checks=[
+                ("Roll back consumer and force group rebalance", "inferred from historical queue backlog patterns", 0.0),
+                ("Re-enable rebalance feature flag in place", "inferred from historical queue backlog patterns", 0.0),
+            ],
+        )
+        reasoning = "Bounded runtime support for queue and worker backlog is not yet available. These mitigation candidates are inferred from historical patterns only."
 
     if not reproduced_symptoms:
         reproduced_symptoms = default_reproduced_symptoms(issue_family, recent_logs or [])

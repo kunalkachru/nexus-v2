@@ -108,6 +108,10 @@ def _build_replay_lifecycle(
 
 def _root_cause_from_issue_family(issue_family: str, service: str) -> str:
     issue_family_text = issue_family.lower()
+    if "auth" in issue_family_text and "dependency" in issue_family_text:
+        return f"Auth service degradation caused by token validation slowdown or dependency latency in {service or 'the auth path'}."
+    if "queue" in issue_family_text and "backlog" in issue_family_text:
+        return f"Consumer backlog surge caused by partition assignment failure or worker starvation in {service or 'the queue'} topology."
     if "retry amplification" in issue_family_text:
         return f"Timeout cascade caused by retry amplification in the {service or 'checkout'} authorization path."
     if "pool exhaustion" in issue_family_text or "session leak" in issue_family_text:

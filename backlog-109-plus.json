@@ -3,7 +3,7 @@
     "id": 109,
     "title": "Auth dependency family packet across seeded and live paths",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Add a new outage family for auth dependency slowdown and token validation failures. Seeded incidents, live fresh incidents, and the operator story should all frame this family consistently without overclaiming runtime support before the bounded pack exists.",
     "implementation_tasks": [
       "define the auth dependency outage family across seeded and live paths",

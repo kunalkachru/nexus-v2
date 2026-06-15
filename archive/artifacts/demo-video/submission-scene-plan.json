@@ -1,0 +1,24 @@
+{
+  "scenes": [
+    {
+      "name": "problem_command_center",
+      "audio_duration_sec": 43.658005,
+      "video_duration_ms": 45000
+    },
+    {
+      "name": "inputs_user_workflow",
+      "audio_duration_sec": 36.587528,
+      "video_duration_ms": 38000
+    },
+    {
+      "name": "incident_detail_governance",
+      "audio_duration_sec": 52.833651,
+      "video_duration_ms": 72000
+    },
+    {
+      "name": "learning_rl",
+      "audio_duration_sec": 42.73678,
+      "video_duration_ms": 44000
+    }
+  ]
+}

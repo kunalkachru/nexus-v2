@@ -1,0 +1,24 @@
+{
+  "scenes": [
+    {
+      "name": "command_center",
+      "audio_duration_sec": 27.766077,
+      "video_duration_ms": 30000
+    },
+    {
+      "name": "inputs",
+      "audio_duration_sec": 31.650249,
+      "video_duration_ms": 31650
+    },
+    {
+      "name": "incident_detail",
+      "audio_duration_sec": 34.158639,
+      "video_duration_ms": 40000
+    },
+    {
+      "name": "learning_controls",
+      "audio_duration_sec": 30.547302,
+      "video_duration_ms": 30547
+    }
+  ]
+}

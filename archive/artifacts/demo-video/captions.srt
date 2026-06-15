@@ -1,0 +1,15 @@
+1
+00:00:00,000 --> 00:00:30,000
+NEXUS v2 opens in the Command Center. This is the live operational view of the product. Instead of starting with a wall of metrics, the interface leads with one active incident and a visible crew of autonomous agents. SENTINEL, PRISM, FORGE, and GUARDIAN appear as specialists with clear roles, current tasks, and visible handoffs. The queue is still present, but it stays secondary to the active incident story so the operator immediately understands what the system is doing.
+
+2
+00:00:30,000 --> 00:01:01,650
+From here we open Inputs, which is the fastest path into the system. This screen is designed for raw incident intake. We can paste logs, stack traces, or operational notes, and the interface normalizes them into structured evidence. In the demo, we load example logs so the detected service, severity, and error signature become visible before backend reasoning begins. That matters because NEXUS does not treat incident text as opaque data. It converts the text into a usable incident contract before handing it off to the agents.
+
+3
+00:01:01,650 --> 00:01:41,650
+Once the logs are submitted, the app redirects directly into Incident Detail. This is the core product surface. First, the handoff thread shows what SENTINEL classified, what PRISM diagnosed, what FORGE proposed, and how GUARDIAN governs the result. Then we move to the visible BYO OpenAI key panel. The product is safe by default, live reasoning is off, and a user only gets live OpenAI-backed behavior by bringing their own key through this control. Finally, we approve the runbook, and the execution state moves cleanly through Guardian into an approved and executed outcome.
+
+4
+00:01:41,650 --> 00:02:12,197
+Finally, we open Learning and Controls. This screen makes the learning story easy to absorb. We start with the learning summary, where the reward curve shows thirty episodes of training moving from a lower baseline to a stronger trained policy. Then we move to the agent improvement and governance sections, where the control posture stays visible beside the learning metrics. The result is a product that not only resolves incidents through a visible multi-agent flow, but also shows how that system improves over time without losing operator trust.
