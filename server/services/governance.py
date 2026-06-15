@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from server.models import IncidentRecord
 
 
@@ -91,4 +92,50 @@ class GovernanceService:
             "policy_id": f"{self._POLICY_ID}:pending",
             "policy_name": self._POLICY_NAME,
             "policy_basis": "Runbook proposal ready, but operator approval is still required before execution.",
+        }
+
+    def get_governance_visibility(self, tenant_id: str) -> dict[str, object]:
+        """Get governance rules and role matrix for UI visibility."""
+        from server.auth import ROLE_MATRIX
+
+        critical_actions = [
+            {
+                "capability": "approve_action",
+                "description": "Approve or reject a runbook for execution",
+                "allowed_roles": [
+                    role for role, data in ROLE_MATRIX.items()
+                    if data["capabilities"].get("approve_action", False)
+                ],
+            },
+            {
+                "capability": "trigger_replay",
+                "description": "Trigger a bounded replay of an incident",
+                "allowed_roles": [
+                    role for role, data in ROLE_MATRIX.items()
+                    if data["capabilities"].get("trigger_replay", False)
+                ],
+            },
+            {
+                "capability": "send_handoff",
+                "description": "Send engineering handoff to downstream systems",
+                "allowed_roles": [
+                    role for role, data in ROLE_MATRIX.items()
+                    if data["capabilities"].get("send_handoff", False)
+                ],
+            },
+            {
+                "capability": "update_bootstrap",
+                "description": "Update tenant bootstrap configuration",
+                "allowed_roles": [
+                    role for role, data in ROLE_MATRIX.items()
+                    if data["capabilities"].get("update_bootstrap", False)
+                ],
+            },
+        ]
+
+        return {
+            "tenant_id": tenant_id,
+            "roles": ROLE_MATRIX,
+            "critical_actions": critical_actions,
+            "last_updated_at": datetime.now(timezone.utc).isoformat(),
         }
