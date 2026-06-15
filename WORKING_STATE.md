@@ -14,6 +14,7 @@ Items `69–76`: **complete** (pilot readiness checkpoint) in `backlog-69-plus.j
 Items `77–85`: **complete** (market-ready v1 hardening, deployment preparation, buyer proof, UI polish, release checkpoint) in `backlog-77-plus.json`
 Items `86–92`: **complete** (wedge-strengthening, three-outage support, LLM reasoning enhancement, pilot conversion, checkpoint) in `backlog-86-plus.json`
 Items `93–100`: **complete** (pilot conversion and technical proof deepening) in `backlog-93-plus.json`
+Items `101–107`: **complete** (FR2 field pilot execution and proof-at-scale prep) in `backlog-101-plus.json`
 
 ## App In One Sentence
 

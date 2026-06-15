@@ -9,12 +9,12 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
   - `INC003` deploy regression / 5xx spike
-- Current validated baseline (post items 93–100 pilot conversion and technical proof checkpoint):
-  - `pytest tests/ -q` -> `145 passed`
+- Current validated baseline (post item 107 runtime evidence weighting v3):
+  - `pytest tests/ -q` -> `150 passed`
   - `npm run browser:verify` -> `11 passed`
-  - `python demo.py` -> passes
+  - `python demo.py` -> passes (all three incidents complete)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
-  - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes
+  - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
   - **Premium visual system** across queue, inputs, incident, training, replay
   - **Improved incident console** with clearer operator story from triage to Guardian approval
   - **Fresh incident parity** with explicit scaffold-only vs runtime-backed language
@@ -27,6 +27,9 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
   - **Bounded debugger parity** for both `INC001` and `INC002`
   - **Operator ROI and audit surface** plus the larger visual reinvention pass
   - **Delivery-target exports, governance packet export, and runtime guardrail surfaces** across the enterprise workflow
+  - **Deepened runtime evidence weighting** showing explicitly why each action won, with clear evidence posture and residual-risk semantics
+  - **Weighted evidence explanation** across inference, memory, and runtime sources with measurable confidence boosts
+  - **Pilot operations kit** including tenant setup, weekly reviews, and closeout procedures
 
 ## What Loops Are For
 
