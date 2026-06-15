@@ -100,6 +100,16 @@ def require_role(auth: AuthenticatedContext, *allowed_roles: str) -> None:
         raise HTTPException(status_code=403, detail="role not allowed")
 
 
+def check_governance_capability(auth: AuthenticatedContext, capability: str) -> None:
+    """Check if user has required capability for a governance action."""
+    capabilities = get_user_capabilities(auth.roles)
+    if not capabilities.get(capability, False):
+        raise HTTPException(
+            status_code=403,
+            detail=f"governance action '{capability}' not allowed for roles: {', '.join(auth.roles)}",
+        )
+
+
 async def require_auth(request: Request) -> AuthenticatedContext:
     user_id = request.headers.get("x-user-id", "").strip()
     tenant_id = request.headers.get("x-tenant-id", "").strip()
