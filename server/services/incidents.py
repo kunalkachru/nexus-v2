@@ -59,6 +59,7 @@ from server.services.enterprise_runtime import (
     runbook_score_from_candidates,
 )
 from server.services.replica_runtime import ReplicaExecutionResult, build_runtime_trust_packet, invoke_runtime_host_relay
+from server.services.runtime_queue import RuntimeQueueManager
 from training.runner import TrainingForgeClient
 
 logger = logging.getLogger(__name__)
@@ -1135,6 +1136,8 @@ class IncidentService:
                 },
             }
         )
+        payload["runtime_queue_state"] = RuntimeQueueManager.get_incident_queue_state(incident.nexus_incident_id)
+        payload["runtime_recovery_posture"] = RuntimeQueueManager.get_runtime_recovery_posture()
         return self._apply_persisted_replay_packet(incident=incident, payload=payload)
 
     async def record_guardian_decision(
@@ -1527,6 +1530,8 @@ class IncidentService:
                 },
             }
         )
+        payload["runtime_queue_state"] = RuntimeQueueManager.get_incident_queue_state(incident.nexus_incident_id)
+        payload["runtime_recovery_posture"] = RuntimeQueueManager.get_runtime_recovery_posture()
         return self._apply_persisted_replay_packet(incident=incident, payload=payload)
 
     async def execute_incident(
@@ -1621,6 +1626,10 @@ class IncidentService:
         tenant_id: str | None = None,
     ) -> dict[str, object]:
         requested_at = _utc_now_iso()
+        queue_job_id = await RuntimeQueueManager.queue_replay_job(
+            incident_id=nexus_incident_id,
+            host_label="Main app host",
+        )
         context = await self.get_incident_context_v1(
             nexus_incident_id,
             tenant_id=tenant_id,
@@ -1634,6 +1643,7 @@ class IncidentService:
         runbook = dict(context.get("runbook") or {})
         config = AppConfig()
         started_at = _utc_now_iso()
+        await RuntimeQueueManager.start_job(queue_job_id)
 
         replica_summary = build_replica_summary(
             incident_id=nexus_incident_id,
@@ -1789,6 +1799,11 @@ class IncidentService:
             replica_summary["replay_history"] = replay_history
             trace_summary["replay_history"] = replay_history
 
+        if status in {"replay_executed", "relay_executed"}:
+            await RuntimeQueueManager.recover_job(queue_job_id, outcome=status)
+        else:
+            await RuntimeQueueManager.complete_job(queue_job_id)
+
         return {
             "incident_id": nexus_incident_id,
             "status": status,
@@ -1798,6 +1813,7 @@ class IncidentService:
             "trust_packet": dict(replica_summary.get("runtime_trust_packet") or {}),
             "replica_summary": replica_summary,
             "trace_summary": trace_summary,
+            "queue_job_id": queue_job_id,
         }
 
     def _format_handoff_as_markdown(

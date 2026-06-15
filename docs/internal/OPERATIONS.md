@@ -80,3 +80,54 @@ Operators should rely on the product’s runtime posture labels:
 - unsupported
 
 Do not treat inference-first reasoning as replay validation.
+
+## Runtime Queue Durability and Recovery
+
+NEXUS persists the state of all runtime replay jobs so they survive app restarts and connection failures.
+
+### Queue Job States
+
+Each replay job transitions through these states:
+
+- `queued`: The job was requested and is waiting to run.
+- `running`: The job is actively executing.
+- `completed`: The job finished without errors.
+- `recovered`: The job ran successfully (synonym for completed when tracking recovery).
+- `retrying`: The job failed and is being retried; check error_message.
+- `failed`: The job failed permanently; see error details.
+- `abandoned`: The job was abandoned (e.g., due to app restart during execution).
+
+### Recovery Posture
+
+The product reports overall runtime queue recovery status:
+
+- `healthy`: No active jobs; all jobs have completed or been recovered.
+- `recovering`: Some jobs were lost during an app restart but were recovered by replaying the request.
+- `degraded`: Some jobs remain active or failed and require operator attention.
+
+### Viewing Queue State
+
+Operators can monitor runtime queue state in **Settings > Runtime Queue Recovery**:
+
+- Recovery status shows the overall health of the queue
+- Active jobs tracks in-flight work
+- Recovered jobs counts successful recoveries from restart boundaries
+- Failed jobs tracks permanent failures
+
+When an incident is loaded, its queue state appears in the incident context, showing:
+
+- Whether the incident has queue history
+- The latest job state and outcome
+- Total attempts and retry count
+- Error messages if applicable
+
+### Incident-Specific Queue State
+
+Each incident displays its replay job lifecycle:
+
+- `has_queue_history`: Whether the incident has any recorded jobs
+- `current_state`: The most recent job state (queued, running, recovered, failed, etc.)
+- `total_attempts`: How many replay jobs have been attempted
+- `message`: Operator-friendly summary of the current state
+
+The UI keeps the queue state visible so operators understand whether a replay succeeded, is still running, or needs retry.

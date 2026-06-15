@@ -22,6 +22,7 @@ def _default_payload() -> dict[str, list[dict[str, object]]]:
         "audit_events": [],
         "guardian_reviews": [],
         "execution_events": [],
+        "runtime_queue_jobs": [],
     }
 
 
@@ -51,6 +52,7 @@ def _load_artifacts() -> dict[str, list[dict[str, object]]]:
     audit_events = payload.get("audit_events", [])
     guardian_reviews = payload.get("guardian_reviews", [])
     execution_events = payload.get("execution_events", [])
+    runtime_queue_jobs = payload.get("runtime_queue_jobs", [])
     result = {
         "replay_launches": [item for item in replay_launches if isinstance(item, dict)],
         "training_snapshots": [item for item in training_snapshots if isinstance(item, dict)],
@@ -58,6 +60,7 @@ def _load_artifacts() -> dict[str, list[dict[str, object]]]:
         "audit_events": [item for item in audit_events if isinstance(item, dict)],
         "guardian_reviews": [item for item in guardian_reviews if isinstance(item, dict)],
         "execution_events": [item for item in execution_events if isinstance(item, dict)],
+        "runtime_queue_jobs": [item for item in runtime_queue_jobs if isinstance(item, dict)],
     }
     _ARTIFACT_CACHE = result
     return {key: list(value) for key, value in result.items()}
@@ -145,6 +148,35 @@ async def record_execution_event(record: dict[str, object]) -> None:
         _persist_artifacts(payload)
 
 
+async def record_runtime_queue_job(record: dict[str, object]) -> None:
+    async with _ARTIFACT_LOCK:
+        payload = _load_artifacts()
+        payload["runtime_queue_jobs"].append(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                **record,
+            }
+        )
+        _persist_artifacts(payload)
+
+
+async def update_runtime_queue_job(job_id: str, updates: dict[str, object]) -> None:
+    async with _ARTIFACT_LOCK:
+        payload = _load_artifacts()
+        jobs = payload.get("runtime_queue_jobs", [])
+        for job in jobs:
+            if isinstance(job, dict) and job.get("job_id") == job_id:
+                job.update(updates)
+                job["updated_at"] = datetime.now(timezone.utc).isoformat()
+                break
+        _persist_artifacts(payload)
+
+
+def get_runtime_queue_jobs() -> list[dict[str, object]]:
+    payload = _load_artifacts()
+    return [item for item in payload.get("runtime_queue_jobs", []) if isinstance(item, dict)]
+
+
 def get_artifact_summary() -> dict[str, int]:
     payload = _load_artifacts()
     return {
@@ -154,4 +186,5 @@ def get_artifact_summary() -> dict[str, int]:
         "audit_events": len(payload["audit_events"]),
         "guardian_reviews": len(payload["guardian_reviews"]),
         "execution_events": len(payload["execution_events"]),
+        "runtime_queue_jobs": len(payload.get("runtime_queue_jobs", [])),
     }

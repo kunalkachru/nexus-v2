@@ -281,6 +281,16 @@
                             <div class="stat"><div class="stat-label">Coverage</div><div class="stat-value" id="runtimeCoverage">-</div></div>
                         </div>
                     </div>
+                    <div class="detail-card" id="runtimeQueueCard" style="display: none; margin-top: 1em; background-color: rgba(100, 200, 100, 0.05); border: 1px solid rgba(100, 200, 100, 0.15);">
+                        <div class="badge">Runtime queue recovery</div>
+                        <p class="section-note" id="runtimeQueueStatus">Queue state will appear here once REPLICA loads.</p>
+                        <div class="hero-stats raw-intake-grid" style="margin-top: 0.5em;">
+                            <div class="stat"><div class="stat-label">Current state</div><div class="stat-value" id="runtimeQueueCurrentState">-</div></div>
+                            <div class="stat"><div class="stat-label">Attempts</div><div class="stat-value" id="runtimeQueueAttempts">-</div></div>
+                            <div class="stat"><div class="stat-label">Retries</div><div class="stat-value" id="runtimeQueueRetries">-</div></div>
+                        </div>
+                        <p class="section-note" id="runtimeQueueMessage" style="margin-top: 0.5em;">Queue details will appear here once REPLICA loads.</p>
+                    </div>
                     <div class="shell-actions">
                         <button class="nav-link channel-cta" id="replicaReplayBtn" type="button">Run bounded replay</button>
                     </div>

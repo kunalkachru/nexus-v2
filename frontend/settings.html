@@ -151,6 +151,26 @@
 
         <section class="section">
             <div class="section-header">
+                <h2>Runtime Queue Recovery</h2>
+                <div class="section-note">Monitor the durable state of runtime replay jobs across app restarts and recovery boundaries.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Recovery Posture</div>
+                    <div class="hero-stats raw-intake-grid">
+                        <div class="stat"><div class="stat-label">Status</div><div class="stat-value" id="runtimeQueueRecoveryStatus">-</div></div>
+                        <div class="stat"><div class="stat-label">Active Jobs</div><div class="stat-value" id="runtimeQueueActiveJobs">-</div></div>
+                        <div class="stat"><div class="stat-label">Recovered</div><div class="stat-value" id="runtimeQueueRecoveredJobs">-</div></div>
+                        <div class="stat"><div class="stat-label">Failed</div><div class="stat-value" id="runtimeQueueFailedJobs">-</div></div>
+                        <div class="stat"><div class="stat-label">Total</div><div class="stat-value" id="runtimeQueueTotalJobs">-</div></div>
+                    </div>
+                    <p class="hero-copy" id="runtimeQueueMessage">Runtime queue recovery posture will appear here once the platform loads.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
                 <h2>Environment Controls</h2>
                 <div class="section-note">These controls define how the product behaves in validation, review, and production-like operation.</div>
             </div>

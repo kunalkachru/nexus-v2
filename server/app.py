@@ -190,6 +190,8 @@ async def get_product_health(
     await request.app.state.rate_limiter.check(auth=auth, route_key="health_check")
 
     try:
+        from server.services.runtime_queue import RuntimeQueueManager
+
         execution_state = getattr(request.app.state, "runtime_execution_state", RuntimeExecutionState())
         service = get_incident_service(
             session=request.app.state.db_session_factory(),
@@ -200,6 +202,7 @@ async def get_product_health(
         queue_health = "healthy" if len(queue_items) < 100 else "degraded" if len(queue_items) < 500 else "unhealthy"
 
         execution_health = "idle" if execution_state.current_state == "idle" else "running"
+        runtime_recovery = RuntimeQueueManager.get_runtime_recovery_posture()
 
         return {
             "status": "ok",
@@ -218,6 +221,14 @@ async def get_product_health(
                 "items_pending": len(queue_items),
                 "threshold_warning": 100,
                 "threshold_critical": 500,
+            },
+            "runtime_queue": {
+                "recovery_status": runtime_recovery.get("recovery_status"),
+                "active_jobs": runtime_recovery.get("active_jobs"),
+                "recovered_jobs": runtime_recovery.get("recovered_jobs"),
+                "failed_jobs": runtime_recovery.get("failed_jobs"),
+                "total_jobs": runtime_recovery.get("total_jobs"),
+                "message": runtime_recovery.get("message"),
             },
             "downstream_integrations": {
                 "status": "healthy",

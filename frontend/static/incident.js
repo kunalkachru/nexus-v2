@@ -676,6 +676,25 @@ function renderEnterprise(data) {
   ].filter(Boolean).join(" on ");
   setText("runtimeHostState", runtimeHostState || "Runtime host posture pending");
 
+  // Populate runtime queue recovery card
+  const runtimeQueueState = incident.runtime_queue_state || {};
+  if (runtimeQueueState.has_queue_history) {
+    const queueCard = document.getElementById("runtimeQueueCard");
+    if (queueCard) {
+      queueCard.style.display = "block";
+      setText("runtimeQueueCurrentState", titleCase(String(runtimeQueueState.current_state || "unknown")));
+      setText("runtimeQueueAttempts", String(runtimeQueueState.total_attempts || 0));
+      setText("runtimeQueueRetries", String(runtimeQueueState.retry_count || 0));
+      setText("runtimeQueueMessage", runtimeQueueState.message || "Queue details not available.");
+      setText("runtimeQueueStatus", runtimeQueueState.message || "Queue state information is pending.");
+    }
+  } else {
+    const queueCard = document.getElementById("runtimeQueueCard");
+    if (queueCard) {
+      queueCard.style.display = "none";
+    }
+  }
+
   if (hypothesisPacket.supported && hypothesisPacket.pack_id) {
     const packInfoCard = document.getElementById("runtimePackInfo");
     if (packInfoCard) {

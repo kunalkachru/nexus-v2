@@ -120,6 +120,29 @@ async function renderSettingsSummary() {
   }
 }
 
+async function renderRuntimeQueueRecovery() {
+  try {
+    const health = await fetchAuthedJson("/api/v1/platform/health").catch(() => ({}));
+    const runtimeQueue = health.runtime_queue || {};
+
+    const statusColor =
+      runtimeQueue.recovery_status === "healthy" ? "✓ Healthy" :
+      runtimeQueue.recovery_status === "recovering" ? "◐ Recovering" :
+      runtimeQueue.recovery_status === "degraded" ? "⚠ Degraded" :
+      "Unknown";
+
+    setText("runtimeQueueRecoveryStatus", statusColor);
+    setText("runtimeQueueActiveJobs", runtimeQueue.active_jobs ?? "-");
+    setText("runtimeQueueRecoveredJobs", runtimeQueue.recovered_jobs ?? "-");
+    setText("runtimeQueueFailedJobs", runtimeQueue.failed_jobs ?? "-");
+    setText("runtimeQueueTotalJobs", runtimeQueue.total_jobs ?? "-");
+    setText("runtimeQueueMessage", runtimeQueue.message || "No runtime queue data available yet.");
+  } catch (error) {
+    setText("runtimeQueueRecoveryStatus", "Error");
+    setText("runtimeQueueMessage", `Unable to load runtime queue status: ${error.message}`);
+  }
+}
+
 window.addEventListener("load", () => {
   renderBootstrapStatus().catch((error) => {
     const missingFields = document.getElementById("bootstrapMissingFields");
@@ -132,5 +155,9 @@ window.addEventListener("load", () => {
     if (cards) {
       cards.innerHTML = `<div class="summary-card"><div class="label">Settings error</div><div class="value">${error.message}</div></div>`;
     }
+  });
+  renderRuntimeQueueRecovery().catch((error) => {
+    setText("runtimeQueueRecoveryStatus", "Error");
+    setText("runtimeQueueMessage", `Error loading runtime queue: ${error.message}`);
   });
 });
