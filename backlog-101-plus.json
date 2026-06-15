@@ -212,7 +212,7 @@
     "id": 107,
     "title": "Runtime evidence weighting v3",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen how inference, memory, and runtime evidence are weighted so the product’s recommendations feel more defensible in real pilots. The product should show more clearly when an action is inferred, improved by runtime validation, or strongly runtime-resolved, with tighter confidence and residual-risk semantics.",
     "implementation_tasks": [
       "deepen weighting between inference, memory, and runtime evidence",
@@ -249,7 +249,7 @@
     "id": 108,
     "title": "Pilot operations kit and FR2 checkpoint",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Close FR2 with a deliberate multi-tenant pilot checkpoint. Add the pilot operations kit, run the full validation stack, and refresh the owner-facing control docs so the repo ends the phase with a clear repeatable-enterprise-pilot posture before any selective outage expansion begins.",
     "implementation_tasks": [
       "add the pilot operations kit including tenant setup runbook, operator quickstart, weekly pilot review checklist, and pilot closeout template",
