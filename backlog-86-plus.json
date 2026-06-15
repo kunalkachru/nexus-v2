@@ -217,7 +217,7 @@
     "id": 92,
     "title": "Post-85 wedge-strengthening checkpoint and control-doc refresh",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Close the post-85 wedge-strengthening phase with a deliberate checkpoint. Confirm the product now supports three flagship outage families, stronger LLM-driven triage, clearer agent visibility, stronger pilot proof, and a finished UI polish pass while remaining bounded and truthful.",
     "implementation_tasks": [
       "run the full validation stack across tests, browser flows, demo flow, and packaged-app Docker path",

@@ -5,10 +5,11 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
 ## Current Product State
 
 - Product shape: support triage and incident investigation workspace
-- Flagship incidents:
+- Flagship incidents (three-outage wedge):
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
-- Current validated baseline (post items 77–85 market-ready v1 checkpoint):
+  - `INC003` deploy regression / 5xx spike
+- Current validated baseline (post items 86–92 wedge-strengthening checkpoint):
   - `pytest tests/ -q` -> `145 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes
@@ -139,29 +140,31 @@ The `backlog-77-plus.json` is complete (market-ready v1 hardening and deployment
 
 All items through 85 are complete. The product is market-ready v1 for narrow support-triage workflow.
 
-The next active backlog is `backlog-86-plus.json`.
+The `backlog-86-plus.json` is now complete (items 86–92, wedge-strengthening and pilot-conversion checkpoint).
 
-This phase is a short wedge-strengthening and pilot-conversion sprint:
+Completed in this phase:
+- Added a third outage family: `INC003` deploy regression / 5xx spike
+- Bounded REPLICA and TRACE support for `INC003` via api-python-fastapi-catalog-v1 pack
+- Enhanced LLM-driven triage quality with adaptive reasoning for all three outage families
+- Agent deliberation visibility via workflow timeline showing all agent contributions
+- Pilot conversion kit with three-outage wedge narrative
+- Final UI polish and visual completion across core surfaces
 
-- add a third outage family (`INC003` deploy regression / 5xx spike)
-- add bounded REPLICA and TRACE support for it
-- strengthen LLM-driven triage quality
-- improve agent deliberation visibility
-- tighten buyer/pilot proof
-- complete the remaining wow-effect UI polish
+The product now supports three bounded incident families with consistent investigation workflows.
 
 ## Reality Check
 
 Implemented now:
 
-- two real bounded REPLICA runtime packs
+- three real bounded REPLICA runtime packs (auth-redis for INC001, postgres for INC002, catalog for INC003)
 - packaged-app replay delegation through a Docker-capable runtime host
 - runtime trust and audit packet
 - replay lifecycle and replay history visibility
-- bounded TRACE ownership and trace-to-code packet for both flagship outages
+- bounded TRACE ownership and trace-to-code packet for all three outage families
 - bounded mitigation ladder across REPLICA, FORGE, and GUARDIAN
-- one bounded debugger flow for `INC001`
-- one bounded debugger flow for `INC002`
+- one bounded debugger flow for `INC001` (timeout/retry amplification)
+- one bounded debugger flow for `INC002` (DB pool exhaustion)
+- one bounded runtime pack for `INC003` (deploy regression with rollback path)
 - improved fresh-incident reasoning that distinguishes scaffold-only versus runtime-backed evidence
 - runtime-host visibility in the operator UI
 - post-approval outcome capture and memory-linked execution context
@@ -186,4 +189,5 @@ Not implemented yet:
 ## Reference
 
 See [docs/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOPS_RUNBOOK.md) for the operator-facing guide and prompt templates.
-Use [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json), [docs/POST_85_WEDGE_STRENGTHENING_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_WEDGE_STRENGTHENING_PLAN.md), and [docs/POST_85_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_EXECUTION_MAP.md) for the next active phase.
+
+The [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json) is complete (items 86–92). See [docs/POST_85_WEDGE_STRENGTHENING_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_WEDGE_STRENGTHENING_PLAN.md) and [docs/POST_85_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_EXECUTION_MAP.md) for the execution plan.

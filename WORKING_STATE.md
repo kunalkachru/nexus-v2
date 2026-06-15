@@ -12,6 +12,7 @@ Items `54–60`: **complete**
 Items `61–68`: **complete** (hardening and truthfulness checkpoint)
 Items `69–76`: **complete** (pilot readiness checkpoint) in `backlog-69-plus.json`
 Items `77–85`: **complete** (market-ready v1 hardening, deployment preparation, buyer proof, UI polish, release checkpoint) in `backlog-77-plus.json`
+Items `86–92`: **complete** (wedge-strengthening, three-outage support, LLM reasoning enhancement, pilot conversion, checkpoint) in `backlog-86-plus.json`
 
 ## App In One Sentence
 
@@ -20,12 +21,12 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 ## Baseline State
 
 - Branch: `master`
-- Baseline feature slice through item `85` (market-ready v1 release complete): latest commit
+- Baseline feature slice through item `92` (wedge-strengthening checkpoint complete): latest commit
 - `pytest tests/ -q` → **145 passed**
 - `npm run browser:verify` → **11 passed**
+- `python demo.py` → all three incidents complete
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
-- `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` → passes
-- `python demo.py` → passes
+- `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` → passes (all smoke checks)
 
 ## What Is Complete
 
