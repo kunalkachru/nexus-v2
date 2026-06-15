@@ -171,7 +171,7 @@
     "id": 82,
     "title": "Operator onboarding and runbooks",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Reduce founder dependence by producing operator-ready onboarding flows and product runbooks. A new operator should be able to understand how to use NEXUS for triage, replay, handoff, review, and feedback without relying on internal context.",
     "implementation_tasks": [
       "define the core operator journeys that need onboarding support",
