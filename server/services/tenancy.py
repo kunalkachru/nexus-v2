@@ -74,7 +74,11 @@ class TenancyService:
 
     def get_bootstrap_config(self, tenant_id: str) -> dict[str, Any]:
         configs = self._load_bootstrap_configs()
-        return configs.get(tenant_id, {})
+        config = configs.get(tenant_id, {})
+        # Note: This endpoint returns unmasked configuration.
+        # Admins should NOT store production secrets in bootstrap config.
+        # Use environment variables for sensitive credentials instead.
+        return config
 
     def update_bootstrap_config(self, tenant_id: str, updates: dict[str, Any]) -> dict[str, Any]:
         from datetime import datetime, timezone

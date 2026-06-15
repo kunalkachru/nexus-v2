@@ -137,7 +137,7 @@
     "id": 81,
     "title": "Security and secrets handling hardening",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Harden the early production posture around secrets, sensitive evidence, and downstream integration credentials. The goal is not full enterprise compliance, but a credible market-ready v1 baseline that avoids obvious trust blockers.",
     "implementation_tasks": [
       "audit where secrets and integration credentials enter the product",

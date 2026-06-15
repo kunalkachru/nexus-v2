@@ -204,6 +204,73 @@ If a delivery fails:
 3. If it looks like a temporary issue, click the **Retry** button
 4. If it's a terminal failure, update the target configuration and try a new send
 
+## Security and Secrets Handling
+
+NEXUS handles authentication credentials, API keys, and integration secrets. This section documents the security posture for market-ready v1.
+
+### Security Baseline
+
+**What is protected:**
+
+- OpenAI API keys: Request-scoped, never persisted to disk, passed via `x-openai-api-key` header only
+- Webhook signatures: Verified via HMAC-SHA256, checked on every incoming webhook
+- Runtime host authentication: Token-based, checked on runtime-to-app communication
+- User identities: Validated via headers, required for all authenticated endpoints
+
+**What is NOT encrypted or specially protected:**
+
+- Bootstrap configuration (owners, repos, delivery targets) is stored in plaintext JSON
+- User roles and tenant IDs are passed in request headers
+- Audit logs are stored in plaintext JSON files
+- Incident payloads and normalized evidence are stored in plaintext JSON
+
+**What we do NOT support (out of scope for v1):**
+
+- At-rest encryption for incident data or configuration
+- Key rotation for webhook secrets or runtime host tokens
+- TLS mutual authentication
+- Hardware security module (HSM) integration
+- Encryption key management beyond environment variables
+
+### Secret Entry Points
+
+1. **OpenAI API Key**
+   - Entry: Request header `x-openai-api-key`
+   - Scope: Request-scoped only, never persisted
+   - Handling: Validated format, never logged
+
+2. **Webhook Signature Secret**
+   - Entry: Environment variable `NEXUS_WEBHOOK_SIGNING_SECRET`
+   - Scope: Server-wide, used to verify incoming webhooks
+   - Handling: Used in HMAC-SHA256 computation, never exposed in responses
+
+3. **Runtime Host Token**
+   - Entry: Environment variable `NEXUS_RUNTIME_HOST_SHARED_TOKEN`
+   - Scope: Runtime-to-app communication only
+   - Handling: Compared via constant-time comparison, never exposed
+
+4. **Bootstrap Configuration Secrets**
+   - Entry: PUT `/api/v1/tenant/bootstrap-config` endpoint
+   - Scope: Stored in plaintext, accessible to admin role only
+   - Handling: Not masked in responses (consider your security model before storing secrets here)
+
+### Recommendations
+
+For production use of NEXUS:
+
+1. **Do** use separate credentials for each environment (dev, staging, prod)
+2. **Do** rotate webhook and runtime host secrets regularly (manual process)
+3. **Do** run NEXUS with minimal IAM permissions in your infrastructure
+4. **Do** restrict access to the incident database and configuration files
+5. **Do NOT** store production API keys or OAuth tokens in bootstrap config
+6. **Do NOT** expose NEXUS directly to the internet without authentication
+7. **Do NOT** log or debug with customer incident data
+8. **Consider** running NEXUS in a private network or behind a VPN
+
+### Honest Security Statement for Customers
+
+> NEXUS is a support-triage automation tool with a market-ready v1 security posture. It does not encrypt incident data at rest, and secrets should not be stored in bootstrap configuration. For production use, ensure NEXUS runs in a secured network environment with restricted access to its configuration and database files. The product is suitable for internal teams within secure infrastructure; external deployment requires additional hardening not included in v1.
+
 ## Tenant Onboarding and Bootstrap
 
 ### Required Bootstrap Fields
