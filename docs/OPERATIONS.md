@@ -58,6 +58,39 @@ Characteristics:
 - same frontend and backend served together
 - easy rebuild path
 
+## Role-Based Access Control
+
+NEXUS implements a bounded role model to govern who can perform critical operations.
+
+### Role Matrix
+
+| Role | Description | Can Read Incidents | Can Create Incidents | Can Trigger Replay | Can Send Handoff | Can View Settings | Can Update Bootstrap | Can Approve Actions | Can Review Actions |
+|------|-------------|-------------------|----------------------|-------------------|------------------|-------------------|----------------------|---------------------|--------------------|
+| operator | Support operator | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
+| incident_manager | Incident manager | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✓ |
+| guardian | Guardian reviewer | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ | ✓ | ✓ |
+| admin | Administrator | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+### Passing Roles in Requests
+
+Roles are passed via the `x-roles` header as a comma-separated list:
+
+```bash
+curl -H "x-user-id: user123" \
+  -H "x-tenant-id: tenant-a" \
+  -H "x-roles: operator,incident_manager" \
+  http://localhost:7860/api/v1/incidents/queue
+```
+
+### UI Role-Based Visibility
+
+The product automatically hides or disables controls based on the user's assigned roles:
+
+- **Replay button**: Hidden/disabled for users without `trigger_replay` capability
+- **Handoff send button**: Hidden/disabled for users without `send_handoff` capability
+- **Guardian approval buttons**: Hidden for users without `approve_action` capability
+- **Bootstrap config endpoints**: Restricted to `admin` role only
+
 ## Tenant Onboarding and Bootstrap
 
 ### Required Bootstrap Fields

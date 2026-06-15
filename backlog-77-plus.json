@@ -37,7 +37,7 @@
     "id": 78,
     "title": "Auth, roles, and approval controls hardening",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Harden the product’s approval and operator-control surface so the market-ready workflow has believable role separation. Replay, downstream handoff, admin controls, and Guardian approval actions should be gated by clearer roles and more explicit authorization rules.",
     "implementation_tasks": [
       "define the bounded role matrix for operator, reviewer, and admin capabilities",

@@ -1287,12 +1287,50 @@ function setGuardianButtonsDisabled(disabled) {
   });
 }
 
+async function loadUserCapabilities() {
+  try {
+    const context = await fetchAuthedJson("/api/v1/auth/user-context");
+    return context.capabilities || {};
+  } catch {
+    return {};
+  }
+}
+
+function applyRoleBasedVisibility(capabilities) {
+  const controls = {
+    replay: document.getElementById("replayRelayBtn"),
+    handoff_send: document.getElementById("sendBtn"),
+    guardian_approve: document.getElementById("guardianApproveBtn"),
+    guardian_block: document.getElementById("guardianBlockBtn"),
+    guardian_modify: document.getElementById("guardianModifyBtn"),
+  };
+
+  if (!capabilities.trigger_replay && controls.replay) {
+    controls.replay.disabled = true;
+    controls.replay.title = "Your role does not have permission to trigger replay";
+  }
+
+  if (!capabilities.send_handoff && controls.handoff_send) {
+    controls.handoff_send.disabled = true;
+    controls.handoff_send.title = "Your role does not have permission to send handoffs";
+  }
+
+  if (!capabilities.approve_action) {
+    if (controls.guardian_approve) controls.guardian_approve.style.display = "none";
+    if (controls.guardian_block) controls.guardian_block.style.display = "none";
+    if (controls.guardian_modify) controls.guardian_modify.style.display = "none";
+  }
+}
+
 window.addEventListener("load", async () => {
   const incidentId = getIncidentId();
   const historyReviewMode = isHistoryReviewMode();
   let currentIncidentData = null;
   syncLiveReasoningToggle();
   syncOpenAIKeyUI();
+
+  const userCapabilities = await loadUserCapabilities();
+  applyRoleBasedVisibility(userCapabilities);
 
   async function refreshIncident(options = {}) {
     currentIncidentData = await loadAndRenderIncident(incidentId, options);

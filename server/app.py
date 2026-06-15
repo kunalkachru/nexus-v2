@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from server.audit import write_audit_log
 from server.auth import AuthenticatedContext, require_auth, require_role, require_runtime_host_auth
-from server.auth import verify_webhook_signature
+from server.auth import verify_webhook_signature, get_user_capabilities, ROLE_MATRIX
 from server.artifacts import record_execution_event, _load_artifacts
 from server.config import AppConfig
 from server.db import DatabaseSession, create_session_factory, get_db
@@ -404,6 +404,35 @@ async def update_tenant_bootstrap_config(
         {"user_id": auth.user_id, "updates": list(payload.keys())},
     )
     return updated
+
+
+@app.get("/api/v1/auth/user-context")
+async def get_user_context(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="user_context")
+    capabilities = get_user_capabilities(auth.roles)
+    role_descriptions = []
+    for role in auth.roles:
+        role_data = ROLE_MATRIX.get(role, {})
+        role_descriptions.append({
+            "role": role,
+            "description": role_data.get("description", ""),
+        })
+
+    await write_audit_log(
+        "auth.user_context.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id, "roles": auth.roles},
+    )
+    return {
+        "user_id": auth.user_id,
+        "tenant_id": auth.tenant_id,
+        "roles": auth.roles,
+        "role_descriptions": role_descriptions,
+        "capabilities": capabilities,
+    }
 
 
 @app.post("/api/v1/internal/runtime-host/replica-replay")

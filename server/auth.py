@@ -13,6 +13,83 @@ class AuthenticatedContext(BaseModel):
     roles: list[str] = Field(default_factory=list)
 
 
+ROLE_MATRIX = {
+    "operator": {
+        "description": "Support operator: triage, replay, and handoff",
+        "capabilities": {
+            "read_incidents": True,
+            "create_incident": True,
+            "trigger_replay": True,
+            "send_handoff": True,
+            "view_settings": True,
+            "update_bootstrap": False,
+            "approve_action": False,
+            "review_action": False,
+        },
+    },
+    "incident_manager": {
+        "description": "Incident manager: operator + incident management controls",
+        "capabilities": {
+            "read_incidents": True,
+            "create_incident": True,
+            "trigger_replay": True,
+            "send_handoff": True,
+            "view_settings": True,
+            "update_bootstrap": False,
+            "approve_action": False,
+            "review_action": True,
+        },
+    },
+    "guardian": {
+        "description": "Guardian reviewer: approves and executes suggested actions",
+        "capabilities": {
+            "read_incidents": True,
+            "create_incident": False,
+            "trigger_replay": False,
+            "send_handoff": False,
+            "view_settings": True,
+            "update_bootstrap": False,
+            "approve_action": True,
+            "review_action": True,
+        },
+    },
+    "admin": {
+        "description": "Administrator: full system access including bootstrap configuration",
+        "capabilities": {
+            "read_incidents": True,
+            "create_incident": True,
+            "trigger_replay": True,
+            "send_handoff": True,
+            "view_settings": True,
+            "update_bootstrap": True,
+            "approve_action": True,
+            "review_action": True,
+        },
+    },
+}
+
+
+def get_user_capabilities(roles: list[str]) -> dict[str, bool]:
+    capabilities = {
+        "read_incidents": False,
+        "create_incident": False,
+        "trigger_replay": False,
+        "send_handoff": False,
+        "view_settings": False,
+        "update_bootstrap": False,
+        "approve_action": False,
+        "review_action": False,
+    }
+
+    for role in roles:
+        role_data = ROLE_MATRIX.get(role, {})
+        for capability, allowed in role_data.get("capabilities", {}).items():
+            if allowed:
+                capabilities[capability] = True
+
+    return capabilities
+
+
 def require_role(auth: AuthenticatedContext, *allowed_roles: str) -> None:
     if not allowed_roles:
         return
