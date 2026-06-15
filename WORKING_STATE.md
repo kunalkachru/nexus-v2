@@ -22,7 +22,7 @@ NEXUS is an AI support-triage and incident-investigation product: noisy logs go 
 ## Baseline State
 
 - Branch: `master`
-- Baseline feature slice through item `92` (wedge-strengthening checkpoint complete): latest commit
+- Baseline feature slice through item `100` (pilot conversion and technical proof checkpoint complete): latest commit
 - `pytest tests/ -q` → **145 passed**
 - `npm run browser:verify` → **11 passed**
 - `python demo.py` → all three incidents complete
@@ -107,12 +107,14 @@ These paths must stay semantically aligned.
 - `backlog-61-plus.json` — completed backlog through item `68`
 - `backlog-69-plus.json` — completed backlog through item `76`
 - `backlog-77-plus.json` — completed backlog through item `85` (market-ready v1 release)
+- `backlog-86-plus.json` — completed backlog through item `92`
+- `backlog-93-plus.json` — completed backlog through item `100`
 - `AGENTS.md` — loop rules and current validated baseline
 - `docs/LOOPS_RUNBOOK.md` — operator-facing guide and prompt templates
 - `docs/DEMO_WALKTHROUGH.md` — owner walkthrough for the business use case
 - `docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md` — broader product strategy and scope
-- `docs/POST_76_MARKET_READY_PLAN.md` — market-ready v1 hardening direction after pilot readiness
-- `docs/POST_76_EXECUTION_MAP.md` — task/subtask execution map for items `77–85`
+- `docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md` — FR2 direction after pilot conversion and technical proof deepening
+- `docs/POST_100_EXECUTION_MAP.md` — task/subtask execution map for items `101–108`
 
 ## Most Important Files For The Next Phase
 
@@ -131,12 +133,12 @@ These paths must stay semantically aligned.
 
 ## Next Recommended Frontier
 
-The active frontier is `backlog-86-plus.json`.
+The active frontier is `backlog-101-plus.json`.
 
 Use these documents together:
 
-- [docs/POST_85_WEDGE_STRENGTHENING_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_WEDGE_STRENGTHENING_PLAN.md)
-- [docs/POST_85_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_EXECUTION_MAP.md)
-- [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json)
+- [docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md)
+- [docs/POST_100_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_EXECUTION_MAP.md)
+- [backlog-101-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-101-plus.json)
 
-This phase should strengthen the narrow wedge rather than broaden into a universal platform.
+This phase is FR2: a repeatable enterprise pilot product for 2–3 tenants, still inside the bounded three-outage wedge.

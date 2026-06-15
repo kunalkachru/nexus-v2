@@ -32,19 +32,20 @@ The market-ready v1 checkpoint (items `77–85`) is finished.
 
 The `backlog-86-plus.json` is complete (items 86–92 wedge-strengthening checkpoint).
 
-The `backlog-93-plus.json` is now complete (items 93–100 pilot conversion and technical proof deepening).
+The `backlog-93-plus.json` is complete (items 93–100 pilot conversion and technical proof deepening).
 
-The product is ready for real pilot evaluation with three bounded incident families, runtime-backed investigation paths, and strengthened pilot conversion surfaces.
+The next active frontier is `backlog-101-plus.json`.
 
-**Completed in items 86–92:**
-1. ✓ added `INC003` deploy regression / 5xx spike as the third outage family
-2. ✓ deepened bounded REPLICA and TRACE support across all three families
-3. ✓ improved LLM-driven triage quality with adaptive reasoning for deploy regression
-4. ✓ improved agent reasoning visibility via workflow timeline
-5. ✓ strengthened pilot-conversion proof with three-outage wedge narrative
-6. ✓ completed wow-effect UI polish across core surfaces
+The product is ready to enter FR2: repeatable enterprise pilot execution across 2–3 tenants while staying inside the bounded three-outage wedge.
 
-The product now supports **three-outage bounded wedge** with consistent investigation workflows, runtime-backed validation, and measurable pilot readiness.
+FR2 should focus on:
+
+1. customer log intake normalization
+2. per-tenant coverage matrix and unsupported-case downgrade
+3. fresh-incident quality evaluation
+4. pilot scorecards and case-based proof export
+5. engineering handoff trust and runtime evidence weighting
+6. pilot operations kit and multi-tenant checkpoint
 
 ## Before Starting A Loop
 
@@ -52,9 +53,9 @@ Make sure the agent reads:
 
 1. [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
 2. [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
-3. [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json)
-4. [docs/POST_85_WEDGE_STRENGTHENING_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_WEDGE_STRENGTHENING_PLAN.md)
-5. [docs/POST_85_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_EXECUTION_MAP.md)
+3. [backlog-101-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-101-plus.json)
+4. [docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md)
+5. [docs/POST_100_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_EXECUTION_MAP.md)
 6. [docs/DEMO_WALKTHROUGH.md](/Users/kunalkachru/Documents/nexus-v3/docs/DEMO_WALKTHROUGH.md)
 
 Recommended local checks before starting:
@@ -81,7 +82,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 4. Paste a prompt like this:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/POST_85_WEDGE_STRENGTHENING_PLAN.md, docs/POST_85_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-86-plus.json.
+Read AGENTS.md, WORKING_STATE.md, docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md, docs/POST_100_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-101-plus.json.
 Run a commit-and-continue loop against the backlog.
 
 Rules:
@@ -105,7 +106,7 @@ Rules:
 Use the same flow, but keep the grounding stricter:
 
 ```text
-Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/POST_85_WEDGE_STRENGTHENING_PLAN.md, docs/POST_85_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-86-plus.json completely before coding.
+Read AGENTS.md, WORKING_STATE.md, docs/LOOPS_RUNBOOK.md, docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md, docs/POST_100_EXECUTION_MAP.md, docs/DEMO_WALKTHROUGH.md, and backlog-101-plus.json completely before coding.
 Resume from the first pending backlog item.
 Drain the backlog top to bottom in a build-test-commit loop.
 Do not invent scope outside the backlog.
@@ -214,6 +215,6 @@ As of the completion of items 77–85:
 
 The product is ready for v1 release as a narrow, credible support-triage system for recurring checkout and transaction-critical incidents.
 
-The [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json) is now complete (items 86–92 finished). 
+The [backlog-101-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-101-plus.json) is the active next frontier for FR2.
 
-The product has been strengthened from two-incident to three-incident bounded wedge with consistent investigation workflows and pilot-ready presentation materials. No further platform work is scheduled until broader strategic direction is decided.
+Use FR2 to make NEXUS repeatable across 2–3 pilot tenants before adding more outage breadth.

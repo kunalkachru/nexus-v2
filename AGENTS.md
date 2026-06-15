@@ -9,7 +9,7 @@ Use this file when running Codex or Claude in a commit-and-continue loop against
   - `INC001` checkout timeout / retry amplification
   - `INC002` checkout DB pool exhaustion / session leak
   - `INC003` deploy regression / 5xx spike
-- Current validated baseline (post items 86–92 wedge-strengthening checkpoint):
+- Current validated baseline (post items 93–100 pilot conversion and technical proof checkpoint):
   - `pytest tests/ -q` -> `145 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes
@@ -142,7 +142,20 @@ All items through 85 are complete. The product is market-ready v1 for narrow sup
 
 The `backlog-86-plus.json` is complete (items 86–92, wedge-strengthening and pilot-conversion checkpoint).
 
-The `backlog-93-plus.json` is now complete (items 93–100, pilot conversion and technical proof deepening).
+The `backlog-93-plus.json` is complete (items 93–100, pilot conversion and technical proof deepening).
+
+The next active backlog is `backlog-101-plus.json`.
+
+This phase is FR2: repeatable enterprise pilot product.
+
+It should:
+
+- improve fresh customer log intake quality
+- make per-tenant coverage and unsupported-case downgrade explicit
+- add a fresh-incident evaluation harness
+- add pilot scorecards and case-based proof exports
+- deepen engineering handoff trust and runtime evidence weighting
+- close with a pilot operations kit and FR2 checkpoint
 
 Completed in this phase:
 - Added a third outage family: `INC003` deploy regression / 5xx spike
@@ -191,5 +204,4 @@ Not implemented yet:
 ## Reference
 
 See [docs/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/LOOPS_RUNBOOK.md) for the operator-facing guide and prompt templates.
-
-The [backlog-86-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-86-plus.json) is complete (items 86–92). See [docs/POST_85_WEDGE_STRENGTHENING_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_WEDGE_STRENGTHENING_PLAN.md) and [docs/POST_85_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_85_EXECUTION_MAP.md) for the execution plan.
+Use [backlog-101-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-101-plus.json), [docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md), and [docs/POST_100_EXECUTION_MAP.md](/Users/kunalkachru/Documents/nexus-v3/docs/POST_100_EXECUTION_MAP.md) for the next active phase.

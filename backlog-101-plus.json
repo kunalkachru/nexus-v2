@@ -1,0 +1,284 @@
+[
+  {
+    "id": 101,
+    "title": "Customer log intake normalization v2",
+    "priority": "high",
+    "status": "pending",
+    "description": "Improve how NEXUS handles noisy real customer incidents by deepening log normalization, partial-input handling, and tenant-aware intake hints. The goal is to make fresh tenant incidents more usable before triage quality and proof expectations are evaluated.",
+    "implementation_tasks": [
+      "improve parsing and normalization for messier tenant-provided logs",
+      "add bounded tenant-aware input hints or profiles where useful",
+      "improve fallback behavior for partial, low-signal, or malformed inputs",
+      "make intake quality and normalization posture clearer to operators"
+    ],
+    "done_when": [
+      "fresh customer incidents are normalized more usefully before triage",
+      "partial or weak input quality is surfaced clearly instead of failing silently",
+      "the product handles noisier pilot inputs more credibly"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/incidents.py",
+      "server/services/enterprise_runtime.py",
+      "frontend/inputs.html",
+      "frontend/static/inputs.js",
+      "frontend/static/api.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/OPERATOR_RUNBOOK.md"
+    ]
+  },
+  {
+    "id": 102,
+    "title": "Coverage matrix and unsupported-incident downgrade path",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make support coverage explicit per tenant and per incident family. The product should clearly distinguish runtime-backed support, inference-first support, and unsupported cases, and it should downgrade gracefully instead of bluffing when a case falls outside the current wedge.",
+    "implementation_tasks": [
+      "define per-tenant support-state representation for runtime-backed, inference-first, and unsupported cases",
+      "add downgrade semantics and operator guidance for unsupported incidents",
+      "surface coverage matrix information in settings, training, or incident surfaces",
+      "keep the product truthfulness model visible in downgrade flows"
+    ],
+    "done_when": [
+      "operators can see what the tenant is strongly supported for",
+      "unsupported incidents degrade honestly and clearly",
+      "the product does not overclaim when runtime support is unavailable"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/incidents.py",
+      "frontend/settings.html",
+      "frontend/training.html",
+      "frontend/static/settings.js",
+      "frontend/static/training.js",
+      "frontend/static/incident.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/OPERATIONS.md"
+    ]
+  },
+  {
+    "id": 103,
+    "title": "Fresh-incident quality evaluation harness",
+    "priority": "high",
+    "status": "pending",
+    "description": "Add a bounded evaluation harness so the team can assess how good NEXUS is on fresh incidents during pilots. The product should make it possible to review issue framing, owner routing, next-step quality, and uncertainty language instead of only trusting informal impressions.",
+    "implementation_tasks": [
+      "add a bounded fresh-incident review and scoring structure",
+      "capture issue framing, owner routing, next-step quality, and uncertainty quality",
+      "support lightweight reviewer feedback for fresh-incident evaluation",
+      "keep evaluation output usable for pilot learning without becoming a full analytics platform"
+    ],
+    "done_when": [
+      "fresh-incident quality can be evaluated in a structured way",
+      "the team can review triage quality beyond seeded incidents",
+      "the harness helps pilot learning without broadening scope excessively"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "frontend/training.html",
+      "frontend/static/training.js",
+      "frontend/static/incident.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/DEMO_WALKTHROUGH.md"
+    ]
+  },
+  {
+    "id": 104,
+    "title": "Pilot scorecard dashboard",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make pilot value visible at the tenant level with a durable scorecard. Buyers and operators should be able to see incidents handled, runtime-backed versus inferred-only ratios, triage time saved, handoff completion, and repeat-incident reuse without relying only on presentation narration.",
+    "implementation_tasks": [
+      "expose per-tenant pilot scorecard signals",
+      "add a scorecard section or surface that is legible to operators and buyers",
+      "keep scorecard metrics tied to measured or honestly estimated evidence",
+      "prepare the scorecard for use in weekly pilot reviews"
+    ],
+    "done_when": [
+      "pilot value is visible in a durable per-tenant scorecard",
+      "the scorecard is useful to both operators and buyers",
+      "value proof is less dependent on static docs alone"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/app.py",
+      "server/services/incidents.py",
+      "frontend/training.html",
+      "frontend/static/training.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/BUYER_PROOF_PACKAGE.md",
+      "docs/PRESENTATION_PACK.md"
+    ]
+  },
+  {
+    "id": 105,
+    "title": "Case-based proof export",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Generate proof artifacts from real handled incidents rather than relying only on curated examples. The product should export case-based before/after summaries, handoff quality proof, runtime validation proof, and value summaries that can be used in pilot reviews and buyer conversations.",
+    "implementation_tasks": [
+      "add exportable proof packaging based on real handled incidents",
+      "support before/after case framing and evidence-backed value summaries",
+      "make proof exports buyer-usable while preserving truthful evidence posture",
+      "tie proof exports back to incident history and scorecard signals where useful"
+    ],
+    "done_when": [
+      "real pilot cases can be exported as proof artifacts",
+      "buyers can review evidence-backed case summaries instead of only hearing narration",
+      "the proof export remains bounded and honest about support state"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/app.py",
+      "frontend/static/incident.js",
+      "frontend/static/history.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/BUYER_PROOF_PACKAGE.md",
+      "docs/PRESENTATION_PACK.md"
+    ]
+  },
+  {
+    "id": 106,
+    "title": "Engineering handoff trust v3",
+    "priority": "high",
+    "status": "pending",
+    "description": "Deepen engineering trust by improving repo-aware inspection guidance, mitigation rationale, and residual-risk framing. The goal is to make the handoff feel more concrete for engineering teams while still staying bounded to the supported wedge rather than pretending to be a universal debugger.",
+    "implementation_tasks": [
+      "strengthen repo-aware inspection briefs and likely inspection targets",
+      "improve mitigation rationale and residual-risk framing",
+      "make the engineering handoff packet more concrete about what to inspect next and why",
+      "keep the debugger story explicitly bounded"
+    ],
+    "done_when": [
+      "engineering handoffs feel more actionable and trustworthy",
+      "inspect-first guidance is easier to follow",
+      "the handoff becomes stronger without overclaiming debugging breadth"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "frontend/static/incident.js",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/LIVE_DEMO_SPEAKER_NOTES.md",
+      "docs/PRESENTATION_PACK.md"
+    ]
+  },
+  {
+    "id": 107,
+    "title": "Runtime evidence weighting v3",
+    "priority": "high",
+    "status": "pending",
+    "description": "Deepen how inference, memory, and runtime evidence are weighted so the product’s recommendations feel more defensible in real pilots. The product should show more clearly when an action is inferred, improved by runtime validation, or strongly runtime-resolved, with tighter confidence and residual-risk semantics.",
+    "implementation_tasks": [
+      "deepen weighting between inference, memory, and runtime evidence",
+      "improve recommendation posture on resolved, improved, and unvalidated cases",
+      "tighten residual-risk and confidence semantics",
+      "make recommendation quality more visible in product surfaces and exported packets"
+    ],
+    "done_when": [
+      "runtime evidence more clearly drives recommendations",
+      "operators and reviewers can understand why an action won",
+      "the product feels more defensible in runtime-backed cases"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_app.py tests/test_api_contract.py -q",
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "server/services/replica_runtime.py",
+      "frontend/static/incident.js",
+      "frontend/static/training.js",
+      "tests/test_replica_runtime.py",
+      "tests/test_app.py",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  },
+  {
+    "id": 108,
+    "title": "Pilot operations kit and FR2 checkpoint",
+    "priority": "high",
+    "status": "pending",
+    "description": "Close FR2 with a deliberate multi-tenant pilot checkpoint. Add the pilot operations kit, run the full validation stack, and refresh the owner-facing control docs so the repo ends the phase with a clear repeatable-enterprise-pilot posture before any selective outage expansion begins.",
+    "implementation_tasks": [
+      "add the pilot operations kit including tenant setup runbook, operator quickstart, weekly pilot review checklist, and pilot closeout template",
+      "run the full validation stack across tests, browser flows, demo flow, and packaged-app Docker path",
+      "refresh owner-facing docs so the FR2 posture is current",
+      "refresh control docs so backlog-101-plus.json becomes the closed phase baseline"
+    ],
+    "done_when": [
+      "the repo ends the FR2 phase with a clean validated checkpoint",
+      "the pilot operations kit exists and is usable",
+      "control docs are current and ready for the next planning phase"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/LOOPS_RUNBOOK.md",
+      "docs/POST_100_FIELD_PILOT_EXECUTION_AND_PROOF_AT_SCALE_PLAN.md",
+      "docs/POST_100_EXECUTION_MAP.md",
+      "docs/OPERATIONS.md",
+      "docs/OPERATOR_RUNBOOK.md",
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh"
+    ]
+  }
+]
