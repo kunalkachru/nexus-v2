@@ -11,7 +11,8 @@ Items `47–53`: **complete**
 Items `54–60`: **complete**
 Items `61–68`: **complete** (hardening and truthfulness checkpoint)
 Items `69–76`: **complete** (pilot readiness checkpoint) in `backlog-69-plus.json`
-Next phase: market-ready v1 hardening and deployment preparation
+Items `77–82`: **complete** (market-ready v1 deployment/control/integration/observability/security/onboarding hardening) in `backlog-77-plus.json`
+Items `83–85`: **pending** (buyer proof, UI wow-effect, release checkpoint) in `backlog-77-plus.json`
 
 ## App In One Sentence
 
