@@ -24,7 +24,10 @@ This is the presenter-facing index for the product’s current narrative baselin
 6. Product strategy and GTM
    - [PRODUCT_STRATEGY_AND_GTM.md](/Users/kunalkachru/Documents/nexus-v3/docs/PRODUCT_STRATEGY_AND_GTM.md)
 
-7. Visual architecture and flow
+7. Buyer proof package
+   - [BUYER_PROOF_PACKAGE.md](/Users/kunalkachru/Documents/nexus-v3/docs/BUYER_PROOF_PACKAGE.md)
+
+8. Visual architecture and flow
    - [VISUAL_ARCHITECTURE_AND_FLOWS.md](/Users/kunalkachru/Documents/nexus-v3/docs/VISUAL_ARCHITECTURE_AND_FLOWS.md)
 
 8. Full support-triage execution plan

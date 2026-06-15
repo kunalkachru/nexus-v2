@@ -7,6 +7,7 @@ This document reframes NEXUS as a support triage and incident investigation prod
 For the implementation-grade execution sequence, agent contracts, and demo acceptance criteria, use:
 
 - [SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md](/Users/kunalkachru/Documents/nexus-v3/docs/SUPPORT_TRIAGE_PRODUCT_EXECUTION_PLAN.md)
+- [NOW_NEXT_LATER_GTM_LADDER.md](/Users/kunalkachru/Documents/nexus-v3/docs/NOW_NEXT_LATER_GTM_LADDER.md)
 
 ## Product Category
 
