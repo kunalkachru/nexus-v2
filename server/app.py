@@ -764,6 +764,8 @@ async def send_engineering_handoff_v1(
         nexus_incident_id,
         target=target,
         tenant_id=auth.tenant_id,
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
     )
 
     await write_audit_log(
@@ -775,6 +777,8 @@ async def send_engineering_handoff_v1(
             "status": response.get("status"),
             "user_id": auth.user_id,
         },
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
     )
     return response
 
@@ -795,6 +799,8 @@ async def retry_engineering_handoff_v1(
         nexus_incident_id,
         target=target,
         tenant_id=auth.tenant_id,
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
     )
 
     await write_audit_log(
@@ -827,6 +833,8 @@ async def submit_engineering_feedback_v1(
         feedback_status=feedback_status,
         feedback_reason=feedback_reason,
         tenant_id=auth.tenant_id,
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
     )
 
     await write_audit_log(
@@ -837,6 +845,8 @@ async def submit_engineering_feedback_v1(
             "feedback_status": feedback_status,
             "user_id": auth.user_id,
         },
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
     )
     return response
 
@@ -850,11 +860,18 @@ async def execute_incident_v1(
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="incident_execute")
     require_role(auth, "operator", "guardian")
-    response = await service.execute_incident(nexus_incident_id, tenant_id=auth.tenant_id)
+    response = await service.execute_incident(
+        nexus_incident_id,
+        tenant_id=auth.tenant_id,
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
+    )
     await write_audit_log(
         "incident.execute_v1.requested",
         auth.tenant_id,
         {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, **response},
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
     )
     return response
 
@@ -881,7 +898,12 @@ async def replay_incident_v1(
 
     execution_state.start_execution(pack_id, nexus_incident_id)
     try:
-        response = await service.trigger_replica_replay(nexus_incident_id, tenant_id=auth.tenant_id)
+        response = await service.trigger_replica_replay(
+            nexus_incident_id,
+            tenant_id=auth.tenant_id,
+            actor_user_id=auth.user_id,
+            actor_roles=auth.roles,
+        )
         status = response.get("status", "unknown")
         execution_state.finish_execution("completed" if status in {"replay_executed", "relay_executed"} else "failed")
     except Exception as e:
@@ -892,6 +914,8 @@ async def replay_incident_v1(
         "incident.replica_replay_v1.requested",
         auth.tenant_id,
         {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, **response},
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
     )
     return response
 
@@ -906,11 +930,19 @@ async def guardian_review_incident_v1(
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="incident_execute")
     require_role(auth, "operator", "guardian")
-    response = await service.record_guardian_decision(nexus_incident_id, payload=payload, tenant_id=auth.tenant_id)
+    response = await service.record_guardian_decision(
+        nexus_incident_id,
+        payload=payload,
+        tenant_id=auth.tenant_id,
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
+    )
     await write_audit_log(
         "incident.guardian_review_v1.requested",
         auth.tenant_id,
         {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, **response},
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
     )
     return response
 

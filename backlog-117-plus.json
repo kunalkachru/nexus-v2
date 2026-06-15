@@ -78,7 +78,7 @@
     "id": 119,
     "title": "Auth and governance hardening v2 for multi-tenant pilot operation",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen the current role and approval model so repeated pilot operation is safer across tenants. The product should make it clear who can approve, retry, export, administer packs, and send downstream handoffs.",
     "implementation_tasks": [
       "Tighten capability checks across operator, incident manager, guardian, and admin actions.",

@@ -1146,6 +1146,8 @@ class IncidentService:
         *,
         payload: GuardianDecisionRequest,
         tenant_id: str | None = None,
+        actor_user_id: str | None = None,
+        actor_roles: list[str] | None = None,
     ) -> dict[str, object]:
         if tenant_id is None:
             loaded = await self._session.incidents.get_incident(nexus_incident_id)
@@ -1188,6 +1190,8 @@ class IncidentService:
                 "guardian_policy_name": updated.guardian_policy_name,
                 "guardian_policy_basis": updated.guardian_policy_basis,
                 "status": updated.status,
+                "actor_user_id": actor_user_id,
+                "actor_roles": actor_roles or [],
             }
         )
 
@@ -1539,6 +1543,8 @@ class IncidentService:
         nexus_incident_id: str,
         *,
         tenant_id: str | None = None,
+        actor_user_id: str | None = None,
+        actor_roles: list[str] | None = None,
     ) -> dict[str, object]:
         lifecycle = await self.get_incident_status(nexus_incident_id, tenant_id=tenant_id)
         guardian_decision = str(lifecycle.get("guardian_decision") or "pending")
@@ -1580,6 +1586,9 @@ class IncidentService:
                 ),
                 "mitigation_outcome_class": str(replica_summary.get("best_mitigation_outcome_class") or "inferred_only"),
                 "runtime_backed": bool(replica_summary.get("runtime_executed")),
+                "actor_user_id": actor_user_id,
+                "actor_roles": actor_roles or [],
+                "tenant_id": tenant_id or "tenant-system",
             }
 
         if executed:
@@ -1624,6 +1633,8 @@ class IncidentService:
         nexus_incident_id: str,
         *,
         tenant_id: str | None = None,
+        actor_user_id: str | None = None,
+        actor_roles: list[str] | None = None,
     ) -> dict[str, object]:
         requested_at = _utc_now_iso()
         queue_job_id = await RuntimeQueueManager.queue_replay_job(
@@ -1776,6 +1787,8 @@ class IncidentService:
                     "source_channel": incident.get("source_channel") or incident.get("source") or "incident_console",
                     "title": incident.get("name") or nexus_incident_id,
                     "launch_label": "Replica relay replay" if status == "relay_executed" else "Replica replay",
+                    "actor_user_id": actor_user_id,
+                    "actor_roles": actor_roles or [],
                 }
             )
 
@@ -2141,6 +2154,8 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
         *,
         target: str = "github",
         tenant_id: str | None = None,
+        actor_user_id: str | None = None,
+        actor_roles: list[str] | None = None,
     ) -> dict[str, object]:
         try:
             handoff = await self.build_engineering_handoff(
@@ -2165,6 +2180,9 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "evidence_backing": handoff.get("backing_evidence"),
                 "validated_items": handoff.get("validated_items", {}),
                 "attempt_count": len([a for a in delivery_history if a.get("target") == target]) + 1,
+                "actor_user_id": actor_user_id,
+                "actor_roles": actor_roles or [],
+                "tenant_id": tenant_id or "tenant-system",
             }
 
             delivery_history.append(delivery_entry)
@@ -2182,6 +2200,8 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "sent_at": delivery_entry["sent_at"],
                 "backing_evidence": delivery_entry["evidence_backing"],
                 "attempt_count": delivery_entry["attempt_count"],
+                "actor_user_id": actor_user_id,
+                "actor_roles": actor_roles or [],
             }
         except Exception as e:
             logger.error(f"Failed to send handoff for {nexus_incident_id} to {target}: {str(e)}")
@@ -2205,6 +2225,9 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "failure_reason": str(e),
                 "attempt_count": attempt_count,
                 "retryable": is_retryable,
+                "actor_user_id": actor_user_id,
+                "actor_roles": actor_roles or [],
+                "tenant_id": tenant_id or "tenant-system",
             }
 
             delivery_history.append(delivery_entry)
@@ -2223,6 +2246,8 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "failure_reason": str(e),
                 "attempt_count": attempt_count,
                 "retryable": is_retryable,
+                "actor_user_id": actor_user_id,
+                "actor_roles": actor_roles or [],
             }
 
     async def retry_delivery_handoff(
@@ -2231,6 +2256,8 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
         *,
         target: str = "github",
         tenant_id: str | None = None,
+        actor_user_id: str | None = None,
+        actor_roles: list[str] | None = None,
     ) -> dict[str, object]:
         stored_incident = (
             await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
@@ -2251,7 +2278,13 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
         if last_attempt.get("status") == "terminal_failure":
             raise ValueError(f"Cannot retry terminal failure for target {target}")
 
-        return await self.send_engineering_handoff(nexus_incident_id, target=target, tenant_id=tenant_id)
+        return await self.send_engineering_handoff(
+            nexus_incident_id,
+            target=target,
+            tenant_id=tenant_id,
+            actor_user_id=actor_user_id,
+            actor_roles=actor_roles,
+        )
 
     async def submit_engineering_feedback(
         self,
@@ -2260,6 +2293,8 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
         feedback_status: str,
         feedback_reason: str = "",
         tenant_id: str | None = None,
+        actor_user_id: str | None = None,
+        actor_roles: list[str] | None = None,
     ) -> dict[str, object]:
         try:
             stored_incident = (
@@ -2286,6 +2321,9 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "reason": feedback_reason,
                 "recorded_at": _utc_now_iso(),
                 "delivery_state": delivery_state,
+                "actor_user_id": actor_user_id,
+                "actor_roles": actor_roles or [],
+                "tenant_id": tenant_id or "tenant-system",
             }
 
             normalized_evidence["engineering_feedback"].append(feedback_entry)
@@ -2296,6 +2334,8 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 delivery_history[-1]["feedback_recorded"] = True
                 delivery_history[-1]["feedback_state"] = delivery_state
                 delivery_history[-1]["feedback_recorded_at"] = feedback_entry["recorded_at"]
+                delivery_history[-1]["feedback_actor_user_id"] = actor_user_id
+                delivery_history[-1]["feedback_actor_roles"] = actor_roles or []
                 normalized_evidence["delivery_history"] = delivery_history
 
             await self._session.incidents.update_incident_normalized_evidence(
@@ -2308,6 +2348,8 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "feedback_status": feedback_status,
                 "delivery_state": delivery_state,
                 "recorded_at": feedback_entry["recorded_at"],
+                "actor_user_id": actor_user_id,
+                "actor_roles": actor_roles or [],
             }
         except Exception as e:
             logger.error(f"Failed to record engineering feedback for {nexus_incident_id}: {str(e)}")
