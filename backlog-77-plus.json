@@ -204,7 +204,7 @@
     "id": 83,
     "title": "Buyer-facing proof package and ROI story",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Turn the product’s operational improvements into a buyer-ready proof package. The goal is to make the ROI story, flagship incident case studies, and measured-versus-estimated gains easy to present without hand-built founder slides every time.",
     "implementation_tasks": [
       "define the buyer-proof artifacts for market-ready v1",
