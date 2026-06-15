@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from server.audit import write_audit_log
-from server.auth import AuthenticatedContext, require_auth, require_role, require_runtime_host_auth
+from server.auth import AuthenticatedContext, require_auth, require_role, require_runtime_host_auth, check_governance_capability
 from server.auth import verify_webhook_signature, get_user_capabilities, ROLE_MATRIX
 from server.artifacts import record_execution_event, _load_artifacts
 from server.config import AppConfig
@@ -345,6 +345,7 @@ async def launch_replay_scenario(
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="replay_launch")
     require_role(auth, "operator", "incident_manager")
+    check_governance_capability(auth, "trigger_replay")
     response = await service.launch_replay_scenario(scenario_id, tenant_id=auth.tenant_id)
     await write_audit_log(
         "replay.scenario.launched",
@@ -723,6 +724,7 @@ async def get_governance_packet_v1(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="incident_governance_export")
+    check_governance_capability(auth, "read_incidents")
     packet = await service.build_governance_packet(
         nexus_incident_id,
         tenant_id=auth.tenant_id,
@@ -743,6 +745,7 @@ async def send_engineering_handoff_v1(
     auth: AuthenticatedContext = Depends(require_auth),
 ) -> dict[str, object]:
     await request.app.state.rate_limiter.check(auth=auth, route_key="incident_handoff_send")
+    check_governance_capability(auth, "send_handoff")
     body = await request.json()
     target = body.get("target", "github")
 
