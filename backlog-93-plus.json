@@ -175,7 +175,7 @@
     "id": 98,
     "title": "Runtime evidence weighting and mitigation confidence v2",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen how runtime evidence influences mitigation posture so the product feels more decision-driving. Recommendations should more clearly distinguish inferred best actions, runtime-improved actions, and runtime-resolved actions, with stronger residual-risk framing.",
     "implementation_tasks": [
       "deepen mitigation ranking so runtime deltas more strongly drive recommendation posture",
@@ -212,7 +212,7 @@
     "id": 99,
     "title": "Fresh-incident triage quality calibration and evaluation",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Improve how the product evaluates and calibrates fresh-incident triage quality. The goal is to make fresh incidents more adaptive and more consistent while remaining explicit about lower confidence and bounded support when runtime packs are unavailable.",
     "implementation_tasks": [
       "improve fresh-incident triage quality around issue framing, owner routing, next steps, and uncertainty language",
@@ -248,7 +248,7 @@
     "id": 100,
     "title": "Post-92 pilot conversion and technical proof checkpoint",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Close the post-92 phase with a deliberate checkpoint. Confirm the three-outage wedge is easier to pilot, easier to prove, more repo-aware in engineering handoff, more runtime-driven in mitigation posture, and more consistent on fresh incidents while staying bounded and truthful.",
     "implementation_tasks": [
       "run the full validation stack across tests, browser flows, demo flow, and packaged-app Docker path",
