@@ -3,7 +3,7 @@
     "id": 93,
     "title": "Tenant onboarding v2 and pilot setup kit",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Take the stronger three-outage wedge and make it easier to stand up for a real pilot. Tenant setup should more clearly express supported outage families, owner routing, downstream targets, reviewer expectations, and pack availability so a new customer environment can be prepared with less founder-led interpretation.",
     "implementation_tasks": [
       "deepen tenant bootstrap and readiness semantics for real pilot usage",
@@ -38,7 +38,7 @@
     "id": 94,
     "title": "Pilot ROI instrumentation and case-based proof capture",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make pilot-value proof more durable than a one-time demo. The product should capture and present case-based proof across the supported outage families so buyer and pilot conversations can rely on structured evidence rather than only narration.",
     "implementation_tasks": [
       "deepen ROI and proof capture per tenant and per incident family",
@@ -72,7 +72,7 @@
     "id": 95,
     "title": "Delivery and feedback closure v2",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen the workflow after a case is handed off so the system feels more complete in repeated pilot use. Delivery, acknowledgment, action outcome, rejection, and follow-up states should be easier to understand and more visibly connected back into product learning.",
     "implementation_tasks": [
       "deepen delivery lifecycle and engineering feedback capture",
@@ -106,7 +106,7 @@
     "id": 96,
     "title": "Operator workflow simplification and role clarity v2",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Reduce friction in repeated pilot usage by simplifying the operator path from intake to review to handoff. The product should make role-specific responsibilities and next actions clearer so it is easier for a support team to use NEXUS repeatedly without founder narration.",
     "implementation_tasks": [
       "simplify the repeated-use operator path across intake, incident, review, and handoff surfaces",
@@ -142,7 +142,7 @@
     "id": 97,
     "title": "Repo-aware debugger handoff deepening",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make the engineering handoff feel more technically actionable by deepening repo-aware trace cues without overclaiming universal debugging. The goal is to improve likely owner, likely module, likely inspection point, and 'inspect here first' quality for bounded incidents.",
     "implementation_tasks": [
       "strengthen trace-to-repo cues such as likely module, likely owner, and likely inspection boundary",
