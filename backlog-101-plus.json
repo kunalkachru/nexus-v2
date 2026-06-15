@@ -145,7 +145,7 @@
     "id": 105,
     "title": "Case-based proof export",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Generate proof artifacts from real handled incidents rather than relying only on curated examples. The product should export case-based before/after summaries, handoff quality proof, runtime validation proof, and value summaries that can be used in pilot reviews and buyer conversations.",
     "implementation_tasks": [
       "add exportable proof packaging based on real handled incidents",

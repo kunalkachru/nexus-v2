@@ -1556,6 +1556,61 @@ Generated: ${govData.generated_at}
     }
   });
 
+  document.getElementById("exportProofBtn")?.addEventListener("click", async () => {
+    const button = document.getElementById("exportProofBtn");
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Generating proof export...";
+    }
+    try {
+      const response = await fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/proof-export`);
+      const proof = response;
+      const proofText = `# Case Proof Export — ${proof.case_id}
+
+${proof.case_title}
+
+## Summary
+${proof.proof_summary}
+
+## Before State
+- Incident: ${proof.before_state.incident_title}
+- Severity: ${proof.before_state.severity}
+- Issue Family: ${proof.before_state.issue_family}
+- Business Impact: ${proof.before_state.business_impact}
+- Manual Relay Required: ${proof.before_state.manual_relay_required ? 'Yes' : 'No'}
+
+## After State
+- Root Cause: ${proof.after_state.root_cause}
+- Likely Owner: ${proof.after_state.likely_owner}
+- Recommended Action: ${proof.after_state.recommended_action}
+- Triage Time Saved: ${proof.after_state.triage_time_saved}
+- Manual Relay Required: ${proof.after_state.manual_relay_required ? 'Yes' : 'No'}
+- Execution Status: ${proof.after_state.execution_status}
+
+## Support Posture
+${proof.evidence_posture}
+
+## Proof Signals
+${proof.value_signals.map(s => `- ${s}`).join('\n')}
+
+## Honest Boundaries
+${proof.honest_boundaries.map(b => `- ${b}`).join('\n')}
+
+---
+Generated: ${proof.export_timestamp}
+`;
+      downloadTextFile(proofText, `${incidentId}-case-proof.txt`);
+    } catch (err) {
+      console.error("Proof export failed:", err);
+      alert("Failed to generate proof export. See console for details.");
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Export case proof";
+      }
+    }
+  });
+
   const sendDropdown = document.getElementById("sendDropdown");
   const sendBtn = document.getElementById("sendHandoffBtn");
 

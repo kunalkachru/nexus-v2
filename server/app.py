@@ -607,6 +607,50 @@ async def get_incident_context_v1(
     return response
 
 
+@app.get("/api/v1/incidents/{nexus_incident_id}/proof-export")
+async def get_incident_proof_export(
+    nexus_incident_id: str,
+    request: Request,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_context_v1")
+    context = await service.get_incident_context_v1(
+        nexus_incident_id,
+        tenant_id=auth.tenant_id,
+    )
+
+    incident = context.get("incident", {})
+    triage = context.get("triage_summary", {})
+    replica = context.get("replica_summary", {})
+    diagnosis = context.get("diagnosis", {})
+    runbook = context.get("runbook", {})
+    execution = context.get("execution_outcome")
+    quality = context.get("quality_evaluation")
+    tenant_support = context.get("tenant_support", {})
+
+    proof = service.build_case_proof_export(
+        incident_id=nexus_incident_id,
+        incident_title=incident.get("name", "incident"),
+        severity=incident.get("severity", "unknown"),
+        issue_family=incident.get("issue_family"),
+        support_state=tenant_support.get("support_state"),
+        triage_summary=triage,
+        replica_summary=replica,
+        diagnosis=diagnosis,
+        runbook=runbook,
+        execution_outcome=execution,
+        quality_evaluation=quality,
+    )
+
+    await write_audit_log(
+        "incident.proof_export.read",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id},
+    )
+    return proof
+
+
 @app.get("/api/v1/audit-logs/{nexus_incident_id}")
 async def get_audit_logs_v1(
     nexus_incident_id: str,
