@@ -87,6 +87,43 @@
             </div>
         </section>
 
+        <section class="section" id="productHealthSection">
+            <div class="section-header">
+                <h2>Product health and observability</h2>
+                <div class="section-note">Monitor NEXUS itself: response times, replay health, queue depth, and downstream integration status.</div>
+            </div>
+            <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Application health</div>
+                    <div class="kpi-grid">
+                        <div class="summary-card"><div class="label">Status</div><div class="value" id="appHealthStatus">-</div></div>
+                        <div class="summary-card"><div class="label">Response time (ms)</div><div class="value" id="appResponseTime">-</div></div>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Replay execution</div>
+                    <div class="kpi-grid">
+                        <div class="summary-card"><div class="label">Current state</div><div class="value" id="replayExecutionState">-</div></div>
+                        <div class="summary-card"><div class="label">Recent executions</div><div class="value" id="replayExecutionCount">-</div></div>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Incident queue</div>
+                    <div class="kpi-grid">
+                        <div class="summary-card"><div class="label">Status</div><div class="value" id="queueHealthStatus">-</div></div>
+                        <div class="summary-card"><div class="label">Items pending</div><div class="value" id="queueItemCount">-</div></div>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Downstream integrations</div>
+                    <div class="kpi-grid">
+                        <div class="summary-card"><div class="label">GitHub</div><div class="value" id="integrationGithub">-</div></div>
+                        <div class="summary-card"><div class="label">Slack</div><div class="value" id="integrationSlack">-</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="section" id="runtimeSection">
             <div class="section-header">
                 <h2>Enterprise runtime summary</h2>

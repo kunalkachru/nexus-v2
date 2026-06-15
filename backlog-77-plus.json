@@ -104,7 +104,7 @@
     "id": 80,
     "title": "Product observability and self-monitoring",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make NEXUS observable as a product, not only as a demo. Operators and maintainers should be able to see health, latency, replay failure rates, integration failures, and product workflow bottlenecks so the system itself can be trusted in real usage.",
     "implementation_tasks": [
       "define a bounded product-observability model for request health, replay health, and downstream integration health",

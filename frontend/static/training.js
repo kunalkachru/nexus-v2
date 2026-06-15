@@ -433,13 +433,36 @@ function renderOperatorROI(trainingData) {
   setText("memoryOutcomeWeight", "Outcome-weighted");
 }
 
+function renderProductHealth(healthData) {
+  const health = healthData || {};
+  const status = health.status || "unknown";
+  const appHealth = health.app || {};
+  const replayHealth = health.replay || {};
+  const queueHealth = health.queue || {};
+  const integrations = health.downstream_integrations || {};
+
+  setText("appHealthStatus", appHealth.status ? titleCase(appHealth.status) : "-");
+  setText("appResponseTime", appHealth.response_time_ms !== undefined ? appHealth.response_time_ms : "-");
+
+  setText("replayExecutionState", replayHealth.status ? titleCase(replayHealth.status) : "-");
+  const recentExecCount = replayHealth.recent_executions?.length || 0;
+  setText("replayExecutionCount", recentExecCount > 0 ? recentExecCount : "None recent");
+
+  setText("queueHealthStatus", queueHealth.status ? titleCase(queueHealth.status) : "-");
+  setText("queueItemCount", queueHealth.items_pending !== undefined ? queueHealth.items_pending : "-");
+
+  setText("integrationGithub", integrations.github?.available ? "✓ Available" : "✗ Unavailable");
+  setText("integrationSlack", integrations.slack?.available ? "✓ Available" : "✗ Unavailable");
+}
+
 window.addEventListener("load", async () => {
   wireTrainingNavigation();
-  const [trainingData, platformData, capabilitiesData, executionStateData] = await Promise.all([
+  const [trainingData, platformData, capabilitiesData, executionStateData, healthData] = await Promise.all([
     fetchAuthedJson("/api/v1/training/summary").catch(() => loadMetrics()),
     fetchAuthedJson("/api/v1/platform/status").catch(() => loadMetrics()),
     fetchAuthedJson("/api/v1/runtime/capabilities").catch(() => ({})),
     fetchAuthedJson("/api/v1/runtime/execution-state").catch(() => ({})),
+    fetchAuthedJson("/api/v1/observability/health").catch(() => ({})),
   ]);
 
   renderSessionTriage(trainingData);
@@ -450,4 +473,5 @@ window.addEventListener("load", async () => {
   renderAdvanced(trainingData);
   renderRuntimeCapabilities(capabilitiesData);
   renderExecutionState(executionStateData);
+  renderProductHealth(healthData);
 });

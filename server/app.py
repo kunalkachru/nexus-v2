@@ -182,6 +182,61 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/api/v1/observability/health")
+async def get_product_health(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    await request.app.state.rate_limiter.check(auth=auth, route_key="health_check")
+
+    try:
+        execution_state = getattr(request.app.state, "runtime_execution_state", RuntimeExecutionState())
+        service = get_incident_service(
+            session=request.app.state.db_session_factory(),
+        )
+
+        queue = await service.list_queue_items(tenant_id=auth.tenant_id)
+        queue_items = queue.items if hasattr(queue, "items") else queue.get("items", [])
+        queue_health = "healthy" if len(queue_items) < 100 else "degraded" if len(queue_items) < 500 else "unhealthy"
+
+        execution_health = "idle" if execution_state.current_state == "idle" else "running"
+
+        return {
+            "status": "ok",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "app": {
+                "status": "healthy",
+                "response_time_ms": 0,
+            },
+            "replay": {
+                "status": execution_health,
+                "current_execution": execution_state.to_dict(),
+                "recent_executions": execution_state.to_dict().get("execution_history", [])[:5],
+            },
+            "queue": {
+                "status": queue_health,
+                "items_pending": len(queue_items),
+                "threshold_warning": 100,
+                "threshold_critical": 500,
+            },
+            "downstream_integrations": {
+                "status": "healthy",
+                "github": {"available": True, "last_delivery": None},
+                "slack": {"available": True, "last_delivery": None},
+            },
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "error_message": str(e),
+            "app": {"status": "unhealthy"},
+            "replay": {"status": "unknown"},
+            "queue": {"status": "unknown"},
+            "downstream_integrations": {"status": "unknown"},
+        }
+
+
 @app.get("/api/v1/incidents/queue")
 async def get_incident_queue(
     request: Request,

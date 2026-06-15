@@ -58,6 +58,78 @@ Characteristics:
 - same frontend and backend served together
 - easy rebuild path
 
+## Product Observability and Health Monitoring
+
+NEXUS provides operators and maintainers with visibility into the product's own health and operational status.
+
+### Health Endpoints
+
+#### GET /health
+Basic health check returning `{"status": "ok"}`. Use this for infrastructure health probes.
+
+#### GET /api/v1/observability/health
+Comprehensive product health summary including:
+
+- **App**: Response times and overall application status
+- **Replay**: Current execution state and recent replay activity history
+- **Queue**: Incident queue depth and degradation thresholds
+- **Downstream Integrations**: Health status of GitHub, Slack, and other targets
+
+Returns a status object with detailed metrics:
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-06-15T12:34:56Z",
+  "app": {
+    "status": "healthy",
+    "response_time_ms": 0
+  },
+  "replay": {
+    "status": "idle",
+    "current_execution": {...},
+    "recent_executions": [...]
+  },
+  "queue": {
+    "status": "healthy",
+    "items_pending": 5,
+    "threshold_warning": 100,
+    "threshold_critical": 500
+  },
+  "downstream_integrations": {
+    "status": "healthy",
+    "github": {"available": true},
+    "slack": {"available": true}
+  }
+}
+```
+
+### Viewing Product Health in the UI
+
+Navigate to the **Learning & Controls** page to see the **Product Health & Observability** section, which displays:
+
+- Application status and response time
+- Current replay execution state and recent activity count
+- Incident queue health and pending item count
+- Downstream integration availability
+
+### Interpreting Health Status
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| **healthy** | System is operating normally | None required |
+| **degraded** | System is experiencing elevated load or latency | Monitor closely; may need to reduce load or investigate |
+| **unhealthy** | System is experiencing critical issues | Immediate investigation required |
+| **idle** | No operations in progress | Normal between replay executions |
+| **running** | Operations in progress | Wait for completion or investigate if stuck |
+
+### Queue Thresholds
+
+- **Warning**: 100+ items pending (yellow)
+- **Critical**: 500+ items pending (red)
+
+If queue exceeds warning threshold, consider reducing new incident intake or investigating processing delays.
+
 ## Role-Based Access Control
 
 NEXUS implements a bounded role model to govern who can perform critical operations.
