@@ -3166,6 +3166,13 @@ def build_trace_summary(
         developer_handoff_summary = f"{developer_handoff_summary} Runtime evidence came from direct replay on the current app host.".strip()
         runtime_clue = f"{runtime_clue} Runtime provenance: direct replay on the current app host.".strip()
 
+    residual_risk = {
+        "summary": "This handoff is bounded to the supported wedge. Engineering should treat recommendations as starting guidance, not universal debugging.",
+        "scope": "Bounded to curated incident families with REPLICA packs",
+        "confidence_caveats": f"Confidence is {int(confidence * 100)}% based on bounded inference. Runtime replay provides measured evidence when available.",
+        "next_steps_if_divergent": "If the suspected path does not match production behavior, escalate through standard engineering triage and use production debugging tools.",
+    }
+
     return {
         "incident_id": incident_id,
         "service": service,
@@ -3189,6 +3196,7 @@ def build_trace_summary(
         "suspected_files": suspected_files,
         "developer_handoff_summary": developer_handoff_summary,
         "runtime_provenance": runtime_provenance,
+        "residual_risk": residual_risk,
         "confidence": confidence,
         "reasoning": reasoning,
     }

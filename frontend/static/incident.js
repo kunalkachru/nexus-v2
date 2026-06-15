@@ -896,6 +896,11 @@ function renderEnterprise(data) {
   setText("traceStackSummary", trace.stack_path_summary || "TRACE has not prepared a bounded stack path for this incident yet.");
   setText("traceFailureBoundary", trace.failure_boundary || "TRACE has not identified the failure boundary yet.");
   setText("traceRuntimeClue", trace.runtime_clue || "TRACE has not attached a runtime clue yet.");
+  const residualRisk = trace.residual_risk || {};
+  setText("traceResidualSummary", residualRisk.summary || "Residual risk summary will appear here.");
+  setText("traceResidualScope", `Scope: ${residualRisk.scope || "Scope information will appear here."}`);
+  setText("traceResidualCaveats", residualRisk.confidence_caveats || "Confidence caveats will appear here.");
+  setText("traceResidualNextSteps", `If divergent: ${residualRisk.next_steps_if_divergent || "Next steps will appear here."}`);
   renderList(
     "traceStackPath",
     (trace.stack_path || []).length

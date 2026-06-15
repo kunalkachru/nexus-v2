@@ -179,7 +179,7 @@
     "id": 106,
     "title": "Engineering handoff trust v3",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Deepen engineering trust by improving repo-aware inspection guidance, mitigation rationale, and residual-risk framing. The goal is to make the handoff feel more concrete for engineering teams while still staying bounded to the supported wedge rather than pretending to be a universal debugger.",
     "implementation_tasks": [
       "strengthen repo-aware inspection briefs and likely inspection targets",
