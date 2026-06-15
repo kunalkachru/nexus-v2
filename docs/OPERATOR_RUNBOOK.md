@@ -1,76 +1,47 @@
 # NEXUS Operator Runbook
 
-Quick reference guide for operators using NEXUS to triage and manage support cases.
+Quick reference for support operators triaging and managing incidents through NEXUS.
 
-## Getting Started as an Operator
+## The 6-Step Flow
 
-### What You'll Do
+1. **Triage**: Command Center → select incident
+2. **Review**: Read the triage summary and suggested action
+3. **Decide**: Approve, reject, or request modification
+4. **Execute**: (if approved) Action runs and results are captured
+5. **Handoff**: Send investigation packet to engineering (GitHub, Slack, or download)
+6. **Follow-up**: Track delivery and engineering feedback
 
-1. **Triage** incoming incidents from the queue
-2. **Review** NEXUS analysis and suggestions
-3. **Decide** whether to approve, modify, or reject the suggested action
-4. **Execute** approved actions (if permitted by your role)
-5. **Handoff** to engineering with all the investigation details
-6. **Follow up** on outcomes
+## At Each Step: Your Next Action
 
-### First Steps
+### In Command Center (Queue)
+- **See**: Incidents sorted by severity and recency
+- **Do**: Click an incident to open the detail view
+- **Look for**: Severity, service, and summary to understand the scope
 
-1. Navigate to **Command Center** (Queue)
-2. Select an incident from the list
-3. Read the incident detail page to understand what NEXUS found
-4. Review the suggested Guardian decision
-5. Apply your judgment and approve or reject
+### In Incident Detail
+- **See**: SENTINEL classification, PRISM evidence, TRACE guidance, FORGE action, GUARDIAN decision
+- **Do**: Read the summary, then scroll to **Guardian Gate**
+- **Your choice**: Approve (execute), Reject (don't act), or Modify (request changes)
 
-## The Core Workflow
+### If You Approve
+- **See**: Action executes and results appear below Guardian
+- **Do**: Review execution outcome
+- **Next**: Click **Send Handoff** to notify engineering
 
-### Step 1: Triage in the Queue
+### If You Reject or Request Modification
+- **See**: Case remains in "awaiting review" state
+- **Do**: Provide feedback if applicable
+- **Next**: Engineering reviews your decision
 
-- **Command Center** shows your incident queue
-- Items are sorted by severity and recency
-- Click an incident to open the detail view
-- Look at the **triage summary** to understand what happened
+### Sending Handoff to Engineering
+- **See**: Handoff send options (GitHub, Slack, download)
+- **Do**: Choose target, review contents, click Send
+- **See**: Delivery history shows send status
 
-### Step 2: Review NEXUS Analysis
-
-The incident detail page shows:
-
-- **SENTINEL classification**: What kind of problem is this?
-- **PRISM evidence**: What specific evidence points to the root cause?
-- **TRACE guidance**: Where in your codebase should you look?
-- **FORGE proposal**: What's the suggested fix or investigation?
-- **GUARDIAN gate**: Is it safe to execute this suggestion?
-
-### Step 3: Make a Decision
-
-For each incident, you choose:
-
-- **Approve**: Execute the suggested action
-- **Modify**: Request changes before execution
-- **Reject**: Don't execute (but keep the investigation for reference)
-
-### Step 4: Execute or Handoff
-
-- **If approved**: The action executes (replay testing or otherwise), and results are captured
-- **If rejected**: The case moves to learning without execution
-- **Either way**: You can handoff the full investigation packet to engineering
-
-### Step 5: Send to Engineering
-
-Click **Send Handoff** to export the complete investigation:
-
-1. Choose target: GitHub, Slack, or download
-2. Review what's being sent (debugging path, evidence, Guardian decision)
-3. Click Send
-
-The handoff includes everything engineering needs to understand the issue without re-running your triage.
-
-### Step 6: Track Outcomes
-
-After sending to engineering:
-
-- View **delivery history** to see if the send succeeded
-- Check **engineering feedback** section once they respond
-- Use outcomes to improve NEXUS memory for similar future cases
+### After Handoff Sent
+- **Track**: Delivery history shows sent timestamp and status
+- **Receive**: Engineering feedback when action is taken
+- **Learn**: Outcomes improve memory for similar cases
 
 ## Common Operator Tasks
 
