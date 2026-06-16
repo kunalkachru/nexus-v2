@@ -1,6 +1,6 @@
 # NEXUS Full Manual Walkthrough
 
-Current as of 2026-06-15.
+Current as of 2026-06-16.
 
 Use this walkthrough to validate the product end to end and to present the current shipped workflow truthfully.
 
@@ -45,18 +45,27 @@ Then open:
 
 Walk these in order:
 
-1. `/inputs`
-2. a created `nxs_...` incident or `/incident?nexus_incident_id=INC001`
-3. `/training`
+1. `/queue`
+2. flagship seeded incident workspace
+3. `Inspect intake` -> `/inputs`
+4. a created `nxs_...` incident or `/incident?nexus_incident_id=INC001`
+5. `/training`
 
 Supporting routes:
 
-- `/queue`
 - `/history`
 - `/replay`
 - `/settings`
 
-## 1. Inputs
+## 1. Queue
+
+What it should communicate:
+
+- this is the operating-room landing page
+- seeded incidents and fresh-intake paths are both available without guesswork
+- the product leads with a focal case, not a wall of dashboards
+
+## 2. Inputs
 
 What it should communicate:
 
@@ -64,7 +73,11 @@ What it should communicate:
 - the product is built around real support-triage intake, not prompt demos
 - NEXUS evaluates intake quality before pretending confidence
 
-## 2. Incident Detail
+The strongest UI path is:
+
+`/queue -> seeded incident -> Inspect intake -> /inputs`
+
+## 3. Incident Detail
 
 What it should communicate:
 
@@ -90,7 +103,7 @@ The evidence chain is:
 2. FORGE uses that result to weight mitigation choice
 3. GUARDIAN distinguishes runtime-backed versus inference-first posture
 
-## 3. Training
+## 4. Training
 
 What it should communicate:
 

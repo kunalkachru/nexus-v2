@@ -1,6 +1,6 @@
 # NEXUS Live Demo Speaker Notes
 
-Current as of 2026-06-15.
+Current as of 2026-06-16.
 
 ## Core Story
 
@@ -17,9 +17,22 @@ The product promise:
 
 ## Demo Order
 
-1. `Inputs`
-2. created `Incident Detail`
-3. `Training`
+1. `Command Center`
+2. seeded `Incident Detail`
+3. `Inputs`
+4. created `Incident Detail`
+5. `Training`
+
+Use the strongest truthful UI path:
+
+`/queue -> seeded incident -> Inspect intake -> /inputs -> fresh nxs incident -> /training`
+
+## Command Center
+
+Say:
+
+- “This is the operating-room landing page.”
+- “The product shows both the focal seeded case and the path into fresh intake without making the operator guess where to start.”
 
 ## Inputs
 

@@ -31,7 +31,7 @@
     "id": 146,
     "title": "Queue-first demo path and route-map consistency pass",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Align the public walkthroughs around the current strongest route through the product so the docs do not contradict the shipped UI path from queue to intake to fresh incident review.",
     "implementation_tasks": [
       "Audit public demo docs for route order contradictions, especially any path that starts directly at `/inputs` instead of the current queue-first operator path.",

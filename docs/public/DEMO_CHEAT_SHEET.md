@@ -1,6 +1,6 @@
 # NEXUS Demo Cheat Sheet
 
-Current as of 2026-06-15.
+Current as of 2026-06-16.
 
 ## One-Line Pitch
 
@@ -20,14 +20,16 @@ NEXUS compresses the support-to-engineering relay for recurring customer-facing 
 
 ## Fastest Demo Flow
 
-1. open `/inputs`
-2. load example logs
-3. submit raw logs
-4. open the created `nxs_...` incident
-5. show issue framing, memory, replay posture, and debugger path
-6. approve the runbook
-7. open `/training`
-8. show latest triage plus scorecard
+1. open `/queue`
+2. open the flagship seeded incident
+3. click `Inspect intake`
+4. on `/inputs`, load a guided demo bundle or example logs
+5. submit raw logs
+6. open the created `nxs_...` incident from the top brief
+7. show issue framing, memory, replay posture, and debugger path
+8. approve the runbook
+9. open `/training`
+10. show latest triage plus scorecard
 
 ## Do Not Overclaim
 
