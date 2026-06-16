@@ -503,6 +503,7 @@ function renderSummary(data) {
 }
 
 function renderEnterprise(data) {
+  const incident = data.incident || {};
   const orchestration = data.orchestration || {};
   const tasks = data.task_board?.tasks || [];
   const memoryHits = data.memory_hits || {};
@@ -513,6 +514,8 @@ function renderEnterprise(data) {
   const triage = data.triage_summary || {};
   const replica = data.replica_summary || {};
   const trace = data.trace_summary || {};
+  const runbook = data.runbook || {};
+  const guardian = data.guardian || {};
 
   setText(
     "orchestrationState",
