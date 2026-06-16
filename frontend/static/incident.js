@@ -423,6 +423,7 @@ function renderHandoffFlow(data) {
   const previousOwner = String(handoff.previous_owner || "-");
   const nextOwner = String(handoff.next_owner || "-");
   const transferReason = String(handoff.transfer_reason || "Handoff in progress");
+  const events = handoff.events || [];
 
   setText("handoffCurrentOwner", owner);
   setText("handoffPreviousOwner", previousOwner);
@@ -456,6 +457,58 @@ function renderHandoffFlow(data) {
       node.classList.add("relay-node-waiting");
     }
   });
+
+  const receivedPacketEvent = events.find((e) => e.from !== owner && e.event_type === "packet_emitted");
+  const emittedPacketEvent = events.find((e) => e.from === owner && e.event_type === "packet_emitted");
+
+  if (receivedPacketEvent && receivedPacketEvent.packet) {
+    const packet = receivedPacketEvent.packet;
+    setText("handoffReceivedPacketTitle", String(packet.packet_type || "packet"));
+    setText("handoffReceivedPacketSummary", String(packet.summary || ""));
+    const fieldsContainer = document.getElementById("handoffReceivedPacketFields");
+    if (fieldsContainer && Array.isArray(packet.fields)) {
+      fieldsContainer.innerHTML = packet.fields
+        .map(
+          (field) => `<div class="packet-field"><div class="packet-field-label">${field.label || ""}</div><div class="packet-field-value">${field.value || ""}</div></div>`
+        )
+        .join("");
+    }
+  }
+
+  if (emittedPacketEvent && emittedPacketEvent.packet) {
+    const packet = emittedPacketEvent.packet;
+    setText("handoffEmittedPacketTitle", String(packet.packet_type || "packet"));
+    setText("handoffEmittedPacketSummary", String(packet.summary || ""));
+    const fieldsContainer = document.getElementById("handoffEmittedPacketFields");
+    if (fieldsContainer && Array.isArray(packet.fields)) {
+      fieldsContainer.innerHTML = packet.fields
+        .map(
+          (field) => `<div class="packet-field"><div class="packet-field-label">${field.label || ""}</div><div class="packet-field-value">${field.value || ""}</div></div>`
+        )
+        .join("");
+    }
+  } else {
+    setText("handoffEmittedPacketTitle", "No packet yet");
+    setText("handoffEmittedPacketSummary", `${owner} has not emitted a packet yet`);
+    document.getElementById("handoffEmittedPacketFields").innerHTML = "";
+  }
+
+  const ledgerContainer = document.getElementById("handoffLedger");
+  if (ledgerContainer && Array.isArray(events)) {
+    ledgerContainer.innerHTML = events
+      .map(
+        (event) => `<div class="ledger-entry">
+          <div class="ledger-entry-header">
+            <div>${event.from || "Unknown"}</div>
+            <div class="ledger-entry-arrow">→</div>
+            <div>${event.to || "Unknown"}</div>
+            <div class="ledger-entry-status">${event.status || "pending"}</div>
+          </div>
+          <div class="ledger-entry-reason">${event.reason || event.title || ""}</div>
+        </div>`
+      )
+      .join("");
+  }
 }
 
 function renderCrew(data) {

@@ -1803,6 +1803,125 @@ h3 {
   border-top: 1px solid var(--border-soft);
 }
 
+.handoff-packets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.handoff-packet-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+}
+
+.packet-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.packet-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.packet-summary {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.packet-fields {
+  display: grid;
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.packet-field {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+.packet-field-label {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.packet-field-value {
+  color: var(--text-on-accent);
+  font-weight: 500;
+}
+
+.handoff-ledger {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.ledger-label {
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.ledger-entries {
+  display: grid;
+  gap: 8px;
+}
+
+.ledger-entry {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.ledger-entry-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ledger-entry-arrow {
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
+.ledger-entry-status {
+  color: var(--muted);
+  font-size: 0.74rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-active);
+}
+
+.ledger-entry-reason {
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-soft);
+}
+
 .orchestration-rail {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);

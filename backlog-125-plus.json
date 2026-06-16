@@ -59,7 +59,7 @@
     "id": 127,
     "title": "Emitted packet, received packet, and handoff ledger surfaces",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Show the packets moving between agents instead of only role descriptions. Each active incident should show what the current owner received, what it emitted, and a chronological ledger of six-agent handoff events.",
     "implementation_tasks": [
       "Add received-packet and emitted-packet cards near the top investigation surfaces.",
