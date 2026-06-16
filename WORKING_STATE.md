@@ -49,9 +49,9 @@ Still bounded:
 
 ## Current Frontier
 
-- Active backlog: `backlog-145-plus.json` in progress
-- Active phase: documentation and demo-truth consistency pass
-- Status: items `145-147` are complete; internal control-surface sync and final checkpoint remain
+- Active backlog: none
+- Active phase: none
+- Status: `backlog-145-plus.json` closed cleanly after the documentation and demo-truth consistency pass
 
 Completed phases:
 
@@ -59,10 +59,12 @@ Completed phases:
 - `backlog-125-plus.json` closed
 - `backlog-131-plus.json` closed
 - `backlog-137-plus.json` closed
+- `backlog-145-plus.json` closed
 - near-production ops maturity closed
 - six-agent handoff UX closed
 - guided demo-intake phase closed
 - pilot UX hardening and live-intake trust pass closed
+- documentation and demo-truth consistency pass closed
 
 Current wrapped baseline:
 
@@ -87,13 +89,15 @@ Most recently implemented:
 - refined `/inputs -> fresh incident` transition with top-brief-first landing
 - operator-facing walkthrough and doc index sync
 - browser-truth and smoke coverage across the core demo surfaces
+- public validation baseline sync
+- queue-first public demo route sync
+- public product-story truth sync
+- internal control-surface sync and documentation checkpoint
 
 Next execution target:
 
-- `backlog-145-plus.json`
-- focus: documentation truth, route guidance consistency, and control-surface sync
-- current pending items: `148` then `149`
-- the next session can resume from the first pending item
+- no active loop is open
+- the next phase should be a new narrow backlog only if a concrete pilot-hardening or bug-fix frontier is agreed
 
 Truth boundaries maintained:
 

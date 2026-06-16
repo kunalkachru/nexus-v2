@@ -18,6 +18,7 @@ Current public truth:
 - the five-family product wedge is complete
 - the near-production ops maturity phase is complete
 - the guided demo-intake phase is complete
+- the documentation and demo-truth consistency pass is complete
 - the strongest live walkthrough is now `queue -> seeded incident -> Inspect intake -> /inputs -> fresh nxs incident`
 
 Current internal truth:

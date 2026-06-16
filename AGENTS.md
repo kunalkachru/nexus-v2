@@ -146,11 +146,11 @@ feat(#<id>): <title>
 
 Active backlog:
 
-- `backlog-145-plus.json` in progress
+- none; `backlog-145-plus.json` is complete
 
 Current phase:
 
-- documentation and demo-truth consistency pass
+- none
 
 The current shipped baseline is:
 
@@ -169,6 +169,7 @@ The most recently closed implementation target was:
 - stronger fresh-incident evidence provenance
 - guided raw-log demo path refinement
 - final browser-truth and operator-doc sync
+- documentation and demo-truth consistency
 
 ## Reality Check
 
@@ -225,11 +226,7 @@ The most recent narrow phase also closed cleanly:
 
 The next active narrow phase is intentionally still inside the same wedge:
 
-- documentation and demo-truth consistency
-- public validation baseline sync complete
-- queue-first demo route guidance sync complete
-- public product-story truth pass complete
-- internal control-surface sync and final checkpoint remain
+- none yet; write a new narrow backlog before starting another implementation loop
 
 Boundaries remain:
 

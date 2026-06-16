@@ -120,7 +120,7 @@
     "id": 149,
     "title": "Documentation truth checkpoint and backlog close",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Validate the documentation-sync phase end to end and close the backlog cleanly so the repo returns to one coherent truth surface.",
     "implementation_tasks": [
       "Rerun the narrow validation gates after items 145-148 complete.",
