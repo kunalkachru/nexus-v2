@@ -4,13 +4,9 @@ This document explains how to run Codex or Claude in a controlled implementation
 
 ## Current State
 
-The documentation reset and five-family wedge completion are done.
+The documentation reset, five-family wedge, and near-production ops maturity pass are done.
 
-The active backlog is:
-
-- `backlog-117-plus.json`
-
-This backlog covers near-production ops maturity for the current five-family product.
+There is no active implementation backlog right now.
 
 ## Loop Rule
 
@@ -27,7 +23,9 @@ Before any future loop:
 1. read [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
 2. read [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
 3. read [LOOP_MEMORY.md](/Users/kunalkachru/Documents/nexus-v3/docs/internal/LOOP_MEMORY.md)
-4. read [backlog-117-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-117-plus.json)
+4. read the active backlog file for the next narrow phase
+
+Do not start a new loop until that backlog exists and has ordered items, explicit gates, and files-likely-touched lists.
 
 ## Current Safety Rules
 
@@ -36,3 +34,13 @@ Before any future loop:
 - verify packaged-app runtime claims through the Docker path on `:7860`
 - refresh control docs when a backlog is fully closed
 - update the backlog item status immediately after its gates pass
+
+## Post-124 Checkpoint
+
+`backlog-117-plus.json` is complete.
+
+The current product objective is wrapped for the present strategy. Any future loop should focus on:
+
+- bugfixes
+- pilot-specific hardening
+- narrowly scoped tenant follow-ups

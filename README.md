@@ -93,6 +93,23 @@ ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
 EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
 ```
 
+Current validated baseline:
+
+- `pytest tests/ -q` -> `168 passed`
+- `npm run browser:verify` -> `11 passed`
+- `python demo.py` -> passes
+- Docker rebuild and enterprise smoke path -> passes
+
+## Roadmap Status
+
+The current five-family product objective is wrapped for the present strategy.
+
+Any next work should stay narrow:
+
+- pilot-specific hardening
+- bugfixes
+- explicitly scoped tenant follow-ups
+
 ## Repository Shape
 
 - `server/` backend APIs, incident pipeline, and runtime pack orchestration

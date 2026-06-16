@@ -2,6 +2,13 @@
 
 Use this set when presenting NEXUS to buyers, evaluators, or potential customers.
 
+Current product state:
+
+- five bounded outage families
+- bounded REPLICA and bounded TRACE
+- runtime-backed versus inference-first posture made explicit
+- current major roadmap objective wrapped for this strategy
+
 Recommended reading order:
 
 1. [Top-level README](/Users/kunalkachru/Documents/nexus-v3/README.md)

@@ -240,7 +240,7 @@
     "id": 124,
     "title": "Near-production ops checkpoint and final control-doc refresh",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Close the current product roadmap for the five-family strategy. Refresh the control docs, validation docs, and market-facing truth surfaces so the repo ends in a clear, market-ready state without roadmap ambiguity.",
     "implementation_tasks": [
       "Run the full validation gate set after items 117-123 land.",

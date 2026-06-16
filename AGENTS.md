@@ -12,7 +12,7 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - `INC005` queue / worker backlog affecting transaction completion
   - `INC007` auth dependency slowdown / token validation failures
 - Current validated baseline:
-  - `pytest tests/ -q` -> `150 passed`
+  - `pytest tests/ -q` -> `168 passed`
   - `npm run browser:verify` -> `11 passed`
   - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
@@ -140,11 +140,11 @@ feat(#<id>): <title>
 
 Active backlog:
 
-- `backlog-117-plus.json`
+- none; `backlog-117-plus.json` is complete
 
 Current phase:
 
-- near-production ops maturity for the five-family wedge
+- current five-family market-ready objective is wrapped
 
 The current shipped baseline is:
 
@@ -154,7 +154,7 @@ The current shipped baseline is:
 - packaged runtime-host relay
 - operator, pilot, and buyer proof surfaces
 
-The next loop should resume from the first `pending` item in `backlog-117-plus.json`.
+Do not start another implementation loop until a new narrow backlog is written.
 
 ## Reality Check
 
@@ -188,7 +188,19 @@ Not implemented yet:
 - broad third-party workflow coverage beyond the current bounded integrations
 - fully durable active runtime queue orchestration beyond app-local in-flight state
 - multi-tenant production hardening beyond the current narrow v1 release baseline
-- enterprise-grade auth, security, observability, and onboarding maturity beyond the current v1 checkpoint
+- enterprise-grade auth, security, observability, and onboarding maturity beyond the current wrapped five-family strategy
+
+## Checkpoint Note
+
+The current product objective is complete for the present strategy:
+
+- five bounded outage families
+- bounded REPLICA and bounded TRACE
+- truthful runtime-backed versus inference-first posture
+- governed support-to-engineering investigation workflow
+- pilot-safe operational surfaces, exports, and review kits
+
+Any next phase should be narrow: bugfixes, pilot-specific hardening, or explicitly scoped tenant follow-ups.
 
 ## Reference
 

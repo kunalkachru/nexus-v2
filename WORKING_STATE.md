@@ -10,7 +10,7 @@ NEXUS is an AI-assisted support-to-engineering investigation product: noisy logs
 
 - Branch: `master`
 - Current bounded wedge: five supported outage families
-- `pytest tests/ -q` → target baseline: **150 passed**
+- `pytest tests/ -q` → target baseline: **168 passed**
 - `npm run browser:verify` → target baseline: **11 passed**
 - `python demo.py` → demo incidents complete
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → should pass
@@ -49,10 +49,20 @@ Still bounded:
 
 ## Current Frontier
 
-- Active backlog: `backlog-117-plus.json`
-- Active phase: near-production ops maturity
-- Entry item: `117` runtime queue durability and recovery semantics
+- Active backlog: none
+- Active phase: current five-family strategy wrapped
+- Entry item: only create a new backlog for narrow bugfixes or pilot-specific follow-up work
 
-The five-family wedge and documentation reset are complete.
+Completed phase:
 
-The next implementation work should now deepen operational reliability, governance, and pilot-safe recovery behavior without broadening the product category.
+- `backlog-117-plus.json` closed
+- near-production ops maturity closed
+
+Current wrapped baseline:
+
+- five-family support-to-engineering wedge
+- bounded REPLICA runtime replay
+- bounded TRACE debugging and engineering handoff
+- pilot-safe observability, governance, exports, resilience, and review packet automation
+
+The next implementation work should stay narrow and evidence-driven rather than opening a new broad roadmap by default.
