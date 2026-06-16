@@ -142,11 +142,11 @@ feat(#<id>): <title>
 
 Active backlog:
 
-- none; `backlog-131-plus.json` is complete
+- [backlog-137-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-137-plus.json)
 
 Current phase:
 
-- current five-family market-ready objective remains wrapped
+- pilot UX hardening and live-intake trust pass
 
 The current shipped baseline is:
 
@@ -162,6 +162,15 @@ The most recently closed implementation target was:
 - bundle proof and expected agent-story surfaces
 - fresh incident demo-origin carryover into the incident workspace
 - one owner-facing walkthrough that matches the shipped demo path
+
+The current active narrow phase is:
+
+- queue and incident-access usability
+- incident workspace progressive disclosure
+- six-agent relay legibility v2
+- stronger fresh-incident evidence provenance
+- guided raw-log demo path refinement
+- final browser-truth and operator-doc sync
 
 ## Reality Check
 
@@ -215,6 +224,13 @@ The most recent narrow phase also closed cleanly:
 - `/inputs` now supports curated stakeholder demo bundles
 - fresh incidents can preserve bundle context in the incident workspace
 - the owner-facing walkthrough now matches the shipped demo flow
+
+The next active narrow phase is intentionally still inside the same wedge:
+
+- no new outage families
+- no broader platform claims
+- no universal debugger or arbitrary reproduction claims
+- focus only on self-serve pilot UX, relay clarity, and live-intake trust
 
 Boundaries remain:
 

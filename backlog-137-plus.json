@@ -1,0 +1,237 @@
+[
+  {
+    "id": 137,
+    "title": "Queue and incident-access usability pass",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make it easier for a first-time operator to find seeded incidents, reach fresh-incident intake, and understand which route to take next from the queue.",
+    "implementation_tasks": [
+      "Audit the current queue and app-shell navigation path from queue to seeded incidents and from queue to `/inputs`.",
+      "Add a clearer incident list or incident-access block that exposes the flagship seeded incidents and the recent live incidents without requiring guesswork.",
+      "Add concise operator-facing copy so the queue explains when to open a seeded incident versus when to start from raw-log intake.",
+      "Keep the route semantics aligned with the current product story; do not invent new workflow branches."
+    ],
+    "done_when": [
+      "the queue makes seeded incidents and the intake path easy to reach",
+      "a first-time user can understand where to click next without relying on external docs",
+      "the new access pattern is consistent with the current five-family wedge"
+    ],
+    "test_gates": [
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "frontend/queue.html",
+      "frontend/static/app-shell.js",
+      "frontend/static/dashboard.css",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 138,
+    "title": "Incident workspace progressive-disclosure pass",
+    "priority": "high",
+    "status": "pending",
+    "description": "Reduce information overload on the incident page by emphasizing the current decision, the current owner, and the next operator action while hiding lower-signal detail behind intentional reveals.",
+    "implementation_tasks": [
+      "Identify which incident sections should be primary, secondary, or collapsed by default.",
+      "Promote the most important decision surfaces higher in the layout.",
+      "Collapse or defer low-signal supporting detail so the page reads top-down instead of wall-to-wall.",
+      "Keep all information available; this is a presentation refactor, not evidence deletion."
+    ],
+    "done_when": [
+      "the incident page reads more clearly for a first-time operator",
+      "the current decision and next action are obvious without scrolling through every section",
+      "supporting detail remains accessible but is no longer overwhelming by default"
+    ],
+    "test_gates": [
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "frontend/static/dashboard.css",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 139,
+    "title": "Six-agent relay legibility v2",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make the baton rail, packet cards, and handoff ledger easier to follow during a stakeholder demo, especially for fresh incidents where the user needs a clearer narrative of who owns the case right now and why the baton moved.",
+    "implementation_tasks": [
+      "Tighten current-owner, previous-owner, and next-owner labels and supporting copy.",
+      "Improve emitted and received packet summaries so they explain why a transfer happened, not only what artifact was produced.",
+      "Refine replay mode so the relay sequence is easier to step through and explain live.",
+      "Keep REPLICA and TRACE messaging explicit about their bounded scope."
+    ],
+    "done_when": [
+      "the six-agent relay can be explained from the UI without extra narration",
+      "handoff packets read like a transfer of responsibility, not only a data dump",
+      "demo replay mode clearly shows baton movement across the six-agent chain"
+    ],
+    "test_gates": [
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "frontend/static/dashboard.css",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 140,
+    "title": "Fresh-incident evidence provenance and reasoning clarity",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make fresh-log incidents clearer about what evidence was extracted directly from the logs, what was inferred by reasoning, and what remains uncertain so the live path feels more trustworthy and less opaque.",
+    "implementation_tasks": [
+      "Audit the live incident path for fresh `nxs_...` incidents and identify where evidence provenance is weak or visually buried.",
+      "Strengthen the incident packet and UI to separate extracted signals, inferred conclusions, and remaining uncertainty.",
+      "Keep the copy strict about runtime-backed versus inference-first posture.",
+      "Preserve semantic parity between seeded and live incidents where the same concepts exist."
+    ],
+    "done_when": [
+      "fresh incidents clearly show what came from raw evidence versus reasoning",
+      "operators can explain uncertainty without reading source code or docs",
+      "live-path trust improves without fabricating stronger evidence than exists"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "frontend/static/dashboard.css",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 141,
+    "title": "Guided raw-log demo path refinement",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Polish the `/inputs -> fresh incident` story so a stakeholder can load a curated bundle, understand what it proves, submit it, and land in the right top-of-page context without awkward transitions or narration gaps.",
+    "implementation_tasks": [
+      "Review bundle selection, submit progress, and landing behavior on the fresh incident page.",
+      "Improve submit-state messaging, scroll or focus behavior, and top-of-page guidance where the transition still feels abrupt.",
+      "Keep the free-form paste path aligned with the curated bundle path.",
+      "Do not introduce hidden assumptions or backend-only state."
+    ],
+    "done_when": [
+      "the curated bundle flow feels intentional from `/inputs` through fresh incident landing",
+      "submit progress and landing behavior are legible to a live demo audience",
+      "the fresh incident page opens in a state that highlights what to inspect next"
+    ],
+    "test_gates": [
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "frontend/inputs.html",
+      "frontend/incident.html",
+      "frontend/static/inputs.js",
+      "frontend/static/incident.js",
+      "frontend/static/dashboard.css",
+      "tests/e2e/browser-verification.spec.js",
+      "docs/public/MASTER_OPERATOR_DEMO_GUIDE.md"
+    ]
+  },
+  {
+    "id": 142,
+    "title": "Operator-first demo guide and screen-map sync",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Refresh the main owner-facing walkthrough after the UX hardening lands so one document accurately describes the best review order, exact UI paths, and expected behavior on every major screen.",
+    "implementation_tasks": [
+      "Update the master demo guide with the final queue, inputs, incident, training, settings, history, and replay navigation path.",
+      "Document what the operator should expect to see and why each screen matters.",
+      "Keep public doc indexes aligned if the reading order or key proof points change.",
+      "Do not leave contradictory route guidance in any public document."
+    ],
+    "done_when": [
+      "one public doc can be followed end-to-end without outside help",
+      "the doc reflects the actual shipped UI and navigation order",
+      "public documentation matches the current five-family product truth"
+    ],
+    "test_gates": [
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "docs/public/MASTER_OPERATOR_DEMO_GUIDE.md",
+      "docs/public/README.md",
+      "docs/README.md",
+      "README.md"
+    ]
+  },
+  {
+    "id": 143,
+    "title": "Full browser-truth pass for core review surfaces",
+    "priority": "high",
+    "status": "pending",
+    "description": "Run and tighten the browser-verified truth pass across the routes that matter most for demos so layout truncation, hidden overflow, and broken transitions do not slip through a green backend baseline.",
+    "implementation_tasks": [
+      "Review `/queue`, `/inputs`, seeded incidents, a fresh incident flow, `/training`, and `/settings` for layout or navigation regressions.",
+      "Add or refine browser verification assertions for the highest-risk UI behaviors.",
+      "Fix any discovered UI truth gaps before closing the item.",
+      "Keep the verification focused on the actual demo path, not visual perfection for every unused edge."
+    ],
+    "done_when": [
+      "the main demo and operator routes have explicit browser-verified coverage for the current UX risks",
+      "the app no longer relies on docs to compensate for avoidable UI confusion",
+      "recent UI regressions are harder to reintroduce"
+    ],
+    "test_gates": [
+      "npm run browser:verify",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "tests/e2e/browser-verification.spec.js",
+      "scripts/local_enterprise_smoke.sh",
+      "frontend/queue.html",
+      "frontend/inputs.html",
+      "frontend/incident.html",
+      "frontend/static/app-shell.js",
+      "frontend/static/inputs.js",
+      "frontend/static/incident.js",
+      "frontend/static/dashboard.css"
+    ]
+  },
+  {
+    "id": 144,
+    "title": "Pilot UX hardening checkpoint and control-doc refresh",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Close the pilot UX hardening phase cleanly after the work is validated, then refresh the control surface so future loops start from the right truth instead of stale phase markers.",
+    "implementation_tasks": [
+      "Rerun the full baseline validation once items 137-143 are complete.",
+      "Refresh AGENTS, WORKING_STATE, and the loop runbook to mark the backlog complete and summarize the phase outcome.",
+      "Update internal doc indexes if the active references changed.",
+      "Leave one narrow next-step note only if a new backlog is genuinely warranted."
+    ],
+    "done_when": [
+      "the backlog is closed with green gates",
+      "the control docs point to the new truth and do not leave the frontier ambiguous",
+      "the current product state is easy for the next agent session to pick up"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/internal/LOOPS_RUNBOOK.md",
+      "docs/internal/README.md",
+      "backlog-137-plus.json"
+    ]
+  }
+]

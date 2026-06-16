@@ -16,7 +16,9 @@ Core documents:
 - [Loop memory contract](/Users/kunalkachru/Documents/nexus-v3/docs/internal/LOOP_MEMORY.md)
 - [Now / Next / Later GTM ladder](/Users/kunalkachru/Documents/nexus-v3/docs/internal/NOW_NEXT_LATER_GTM_LADDER.md)
 - [Post-116 ops maturity plan](/Users/kunalkachru/Documents/nexus-v3/docs/internal/POST_116_OPS_MATURITY_PLAN.md)
+- [Post-131 pilot UX hardening plan](/Users/kunalkachru/Documents/nexus-v3/docs/internal/POST_131_PILOT_UX_HARDENING_PLAN.md)
 - [Most recent completed backlog](/Users/kunalkachru/Documents/nexus-v3/backlog-131-plus.json)
+- [Active backlog](/Users/kunalkachru/Documents/nexus-v3/backlog-137-plus.json)
 
 Top-level control docs still used by agents:
 
@@ -27,4 +29,4 @@ Current checkpoint:
 
 - the five-family strategy is wrapped
 - the guided demo-intake phase is wrapped
-- no active implementation backlog is open
+- a new narrow pilot UX hardening backlog is open

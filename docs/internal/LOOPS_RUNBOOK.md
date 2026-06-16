@@ -8,11 +8,11 @@ The documentation reset, five-family wedge, and near-production ops maturity pas
 
 The active implementation backlog is:
 
-- none; `backlog-131-plus.json` is complete
+- [backlog-137-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-137-plus.json)
 
 The active narrow phase is:
 
-- none
+- pilot UX hardening and live-intake trust pass
 
 ## Loop Rule
 
@@ -49,6 +49,8 @@ Do not start a new loop until that backlog exists and has ordered items, explici
 
 `backlog-131-plus.json` is complete.
 
+`backlog-137-plus.json` is now the active next frontier.
+
 The five-family product objective remains wrapped for the present strategy. The most recently closed narrow phase added:
 
 - guided stakeholder demo bundles on `/inputs`
@@ -60,8 +62,10 @@ Truth boundaries remain:
 - do not present `REPLICA` as arbitrary VM reproduction
 - do not present `TRACE` as a universal debugger
 
-Future loops should return to:
+The current loop should focus on:
 
-- bugfixes
-- pilot-specific hardening
-- narrowly scoped tenant follow-ups
+- queue and incident-access usability
+- progressive disclosure on the incident page
+- stronger six-agent relay legibility
+- better fresh-incident evidence provenance
+- browser-truth validation across the main demo path

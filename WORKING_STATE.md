@@ -49,9 +49,9 @@ Still bounded:
 
 ## Current Frontier
 
-- Active backlog: none
-- Active phase: current five-family market-ready objective remains wrapped
-- Status: `backlog-131-plus.json` closed cleanly after guided demo-intake implementation
+- Active backlog: `backlog-137-plus.json`
+- Active phase: pilot UX hardening and live-intake trust pass
+- Status: `backlog-131-plus.json` closed cleanly after guided demo-intake implementation; next narrow backlog opened
 
 Completed phases:
 
@@ -78,6 +78,14 @@ Most recently implemented:
 - bundle proof surfaces showing expected family, likely owner, runtime posture, TRACE posture, and agent path
 - bundle-backed raw-log submission that preserves demo context in the fresh incident workspace
 - refreshed owner-facing walkthrough aligned to the shipped input-to-incident demo flow
+
+Next execution target:
+
+- make seeded and fresh incident access easier from the queue
+- reduce incident-page overload through progressive disclosure
+- improve six-agent relay legibility during live demos
+- strengthen fresh-incident evidence provenance and reasoning clarity
+- finish with a browser-truth pass and final operator-doc sync
 
 Truth boundaries maintained:
 
