@@ -114,7 +114,7 @@
     "id": 129,
     "title": "Demo replay mode for the handoff chain",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Add explicit replay controls so a demo operator can step through the six-agent handoff chain and explain how control moved from one agent to the next. This replay must be UI-only and must not mutate incident state on the server.",
     "implementation_tasks": [
       "Add replay start, next-step, reset, and replay-state controls.",

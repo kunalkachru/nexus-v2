@@ -1929,6 +1929,30 @@ h3 {
   border-top: 1px solid var(--border-soft);
 }
 
+.handoff-replay-controls {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+  margin-top: 14px;
+}
+
+.replay-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.replay-state {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .orchestration-rail {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);

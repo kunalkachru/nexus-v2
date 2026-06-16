@@ -1670,6 +1670,50 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  let replayState = { inProgress: false, currentStep: -1, events: [] };
+  const handoffReplayStart = document.getElementById("handoffReplayStart");
+  const handoffReplayNext = document.getElementById("handoffReplayNext");
+  const handoffReplayReset = document.getElementById("handoffReplayReset");
+
+  function updateReplayUI() {
+    const isRunning = replayState.inProgress;
+    const hasEvents = replayState.events.length > 0;
+    const isAtEnd = replayState.currentStep >= replayState.events.length - 1;
+
+    if (handoffReplayStart) handoffReplayStart.disabled = isRunning || !hasEvents;
+    if (handoffReplayNext) handoffReplayNext.disabled = isRunning || !hasEvents || isAtEnd;
+    if (handoffReplayReset) handoffReplayReset.disabled = !isRunning && replayState.currentStep === -1;
+
+    const stateLabel = isRunning
+      ? `Replaying step ${replayState.currentStep + 1} of ${replayState.events.length}`
+      : replayState.currentStep >= 0
+        ? `Paused at step ${replayState.currentStep + 1}`
+        : "Ready to replay";
+    setText("handoffReplayState", stateLabel);
+  }
+
+  handoffReplayStart?.addEventListener("click", () => {
+    if (currentIncidentData?.handoff_flow?.events) {
+      replayState = { inProgress: true, currentStep: -1, events: currentIncidentData.handoff_flow.events };
+      updateReplayUI();
+    }
+  });
+
+  handoffReplayNext?.addEventListener("click", () => {
+    if (replayState.inProgress && replayState.currentStep < replayState.events.length - 1) {
+      replayState.currentStep += 1;
+      updateReplayUI();
+    }
+  });
+
+  handoffReplayReset?.addEventListener("click", () => {
+    replayState = { inProgress: false, currentStep: -1, events: [] };
+    updateReplayUI();
+    if (currentIncidentData) {
+      renderHandoffFlow(currentIncidentData);
+    }
+  });
+
   const exportDropdown = document.getElementById("exportDropdown");
   const exportBtn = document.getElementById("exportHandoffBtn");
   const exportFormatMap = {
@@ -1944,6 +1988,10 @@ Generated: ${proof.export_timestamp}
     const data = await refreshIncident({
       liveReasoningOverride: historyReviewMode ? "0" : undefined,
     });
+    if (data?.handoff_flow?.events) {
+      replayState.events = data.handoff_flow.events;
+      updateReplayUI();
+    }
     if (historyReviewMode) {
       setText(
         "liveReasoningDetail",
