@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections import defaultdict, deque
 from time import monotonic
 
@@ -11,17 +12,23 @@ class RateLimiter:
         self._max_requests = max_requests
         self._window_seconds = window_seconds
         self._requests_by_key: dict[str, deque[float]] = defaultdict(deque)
+        self._locks: dict[str, asyncio.Lock] = {}
 
     async def check(self, *, auth: AuthenticatedContext, route_key: str) -> None:
         key = f"{auth.tenant_id}:{auth.user_id}:{route_key}"
-        now = monotonic()
-        requests = self._requests_by_key[key]
 
-        while requests and now - requests[0] > self._window_seconds:
-            requests.popleft()
+        if key not in self._locks:
+            self._locks[key] = asyncio.Lock()
 
-        requests.append(now)
-        if len(requests) > self._max_requests:
-            from fastapi import HTTPException
+        async with self._locks[key]:
+            now = monotonic()
+            requests = self._requests_by_key[key]
 
-            raise HTTPException(status_code=429, detail="rate limit exceeded")
+            while requests and now - requests[0] > self._window_seconds:
+                requests.popleft()
+
+            requests.append(now)
+            if len(requests) > self._max_requests:
+                from fastapi import HTTPException
+
+                raise HTTPException(status_code=429, detail="rate limit exceeded")

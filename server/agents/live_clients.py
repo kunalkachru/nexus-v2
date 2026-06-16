@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
+
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAIForgeClient:
@@ -38,7 +42,16 @@ class OpenAIForgeClient:
                 }
             },
         )
-        return json.loads(response.output_text)
+        try:
+            data = json.loads(response.output_text)
+            required_fields = ["language", "summary", "code", "estimated_cost_usd"]
+            for field in required_fields:
+                if field not in data:
+                    raise ValueError(f"Missing required field: {field}")
+            return data
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.exception(f"Invalid FORGE response format: {e}")
+            raise ValueError(f"FORGE client returned invalid JSON or missing fields: {e}") from e
 
 
 class OpenAISentinelClient:
@@ -76,7 +89,16 @@ class OpenAISentinelClient:
                 }
             },
         )
-        return json.loads(response.output_text)
+        try:
+            data = json.loads(response.output_text)
+            required_fields = ["incident_id", "incident_name", "severity", "confidence", "reasoning"]
+            for field in required_fields:
+                if field not in data:
+                    raise ValueError(f"Missing required field: {field}")
+            return data
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.exception(f"Invalid SENTINEL response format: {e}")
+            raise ValueError(f"SENTINEL client returned invalid JSON or missing fields: {e}") from e
 
 
 class OpenAIPrismClient:
@@ -120,4 +142,13 @@ class OpenAIPrismClient:
                 }
             },
         )
-        return json.loads(response.output_text)
+        try:
+            data = json.loads(response.output_text)
+            required_fields = ["root_cause", "confidence", "evidence", "queried_sources", "reasoning"]
+            for field in required_fields:
+                if field not in data:
+                    raise ValueError(f"Missing required field: {field}")
+            return data
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.exception(f"Invalid PRISM response format: {e}")
+            raise ValueError(f"PRISM client returned invalid JSON or missing fields: {e}") from e
