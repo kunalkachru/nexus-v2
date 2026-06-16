@@ -13,7 +13,7 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - `INC007` auth dependency slowdown / token validation failures
 - Current validated baseline:
   - `pytest tests/ -q` -> `168 passed`
-  - `npm run browser:verify` -> `13 passed`
+  - `npm run browser:verify` -> `15 passed`
   - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
@@ -33,6 +33,8 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - **Weighted evidence explanation** across inference, memory, and runtime sources with measurable confidence boosts
   - **Pilot operations kit** including tenant setup, weekly reviews, and closeout procedures
   - **FR2 repeatable enterprise pilot closure** with bounded onboarding, measured proof, and stronger engineering trust
+  - **Guided stakeholder demo bundles** on `/inputs` for all five supported outage families
+  - **Fresh incident demo-origin carryover** from `/inputs` into the incident workspace
 
 ## What Loops Are For
 
@@ -129,7 +131,7 @@ feat(#<id>): <title>
 | Incident UI | `frontend/incident.html` |
 | Incident client logic | `frontend/static/incident.js` |
 | Shared UI data loading and fallback synthesis | `frontend/static/api.js` |
-| Global UI styling | `frontend/static/styles.css` |
+| Global UI styling | `frontend/static/dashboard.css` |
 | API contract tests | `tests/test_api_contract.py` |
 | App tests | `tests/test_app.py` |
 | Runtime tests | `tests/test_replica_runtime.py` |
@@ -140,11 +142,11 @@ feat(#<id>): <title>
 
 Active backlog:
 
-- `backlog-125-plus.json`
+- none; `backlog-131-plus.json` is complete
 
 Current phase:
 
-- six-agent handoff UX hardening for the incident console
+- current five-family market-ready objective remains wrapped
 
 The current shipped baseline is:
 
@@ -154,12 +156,12 @@ The current shipped baseline is:
 - packaged runtime-host relay
 - operator, pilot, and buyer proof surfaces
 
-The current active implementation target is:
+The most recently closed implementation target was:
 
-- make agent control transfer visibly real in the incident UI
-- promote `REPLICA` and `TRACE` into first-class visible relay participants
-- keep `REPLICA` and `TRACE` execution scope explicitly bounded
-- add packet movement, handoff ledger, and replay controls without changing the product category
+- guided stakeholder demo bundles on `/inputs`
+- bundle proof and expected agent-story surfaces
+- fresh incident demo-origin carryover into the incident workspace
+- one owner-facing walkthrough that matches the shipped demo path
 
 ## Reality Check
 
@@ -191,6 +193,8 @@ Implemented now:
 - chronological handoff ledger with event details and status
 - clearer transfer animations with pulse effects and active state highlighting
 - demo-mode handoff chain replay controls for operator walkthroughs
+- curated `/inputs` demo bundles for the five bounded outage families
+- additive demo-origin guidance on fresh `nxs_...` incidents created from curated bundles
 
 Not implemented yet:
 
@@ -206,18 +210,17 @@ Not implemented yet:
 
 The five-family market-ready baseline remains wrapped for the present strategy.
 
-The active next slice is intentionally narrow:
+The most recent narrow phase also closed cleanly:
 
-- six-agent relay visibility
-- handoff ledger and packet movement
-- current-owner state
-- replayable handoff demo mode
+- `/inputs` now supports curated stakeholder demo bundles
+- fresh incidents can preserve bundle context in the incident workspace
+- the owner-facing walkthrough now matches the shipped demo flow
 
 Boundaries remain:
 
-- `REPLICA` becomes a first-class visible relay agent in the UI, but not a universal reproduction system
-- `TRACE` becomes a first-class visible relay agent in the UI, but not a universal debugger
-- no new outage families or platform broadening are in scope for this backlog
+- `REPLICA` is still bounded, not a universal reproduction system
+- `TRACE` is still bounded, not a universal debugger
+- no new outage families or platform broadening landed in this phase
 
 ## Reference
 

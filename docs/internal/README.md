@@ -16,7 +16,7 @@ Core documents:
 - [Loop memory contract](/Users/kunalkachru/Documents/nexus-v3/docs/internal/LOOP_MEMORY.md)
 - [Now / Next / Later GTM ladder](/Users/kunalkachru/Documents/nexus-v3/docs/internal/NOW_NEXT_LATER_GTM_LADDER.md)
 - [Post-116 ops maturity plan](/Users/kunalkachru/Documents/nexus-v3/docs/internal/POST_116_OPS_MATURITY_PLAN.md)
-- [Most recent completed backlog](/Users/kunalkachru/Documents/nexus-v3/backlog-117-plus.json)
+- [Most recent completed backlog](/Users/kunalkachru/Documents/nexus-v3/backlog-131-plus.json)
 
 Top-level control docs still used by agents:
 
@@ -26,4 +26,5 @@ Top-level control docs still used by agents:
 Current checkpoint:
 
 - the five-family strategy is wrapped
+- the guided demo-intake phase is wrapped
 - no active implementation backlog is open

@@ -6,7 +6,13 @@ This document explains how to run Codex or Claude in a controlled implementation
 
 The documentation reset, five-family wedge, and near-production ops maturity pass are done.
 
-There is no active implementation backlog right now.
+The active implementation backlog is:
+
+- none; `backlog-131-plus.json` is complete
+
+The active narrow phase is:
+
+- none
 
 ## Loop Rule
 
@@ -35,11 +41,26 @@ Do not start a new loop until that backlog exists and has ordered items, explici
 - refresh control docs when a backlog is fully closed
 - update the backlog item status immediately after its gates pass
 
-## Post-124 Checkpoint
+## Post-131 Checkpoint
 
 `backlog-117-plus.json` is complete.
 
-The current product objective is wrapped for the present strategy. Any future loop should focus on:
+`backlog-125-plus.json` is complete.
+
+`backlog-131-plus.json` is complete.
+
+The five-family product objective remains wrapped for the present strategy. The most recently closed narrow phase added:
+
+- guided stakeholder demo bundles on `/inputs`
+- bundle proof surfaces
+- fresh-incident demo-origin carryover
+
+Truth boundaries remain:
+
+- do not present `REPLICA` as arbitrary VM reproduction
+- do not present `TRACE` as a universal debugger
+
+Future loops should return to:
 
 - bugfixes
 - pilot-specific hardening

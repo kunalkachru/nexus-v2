@@ -11,7 +11,7 @@ NEXUS is an AI-assisted support-to-engineering investigation product: noisy logs
 - Branch: `master`
 - Current bounded wedge: five supported outage families
 - `pytest tests/ -q` → target baseline: **168 passed**
-- `npm run browser:verify` → target baseline: **13 passed**
+- `npm run browser:verify` → target baseline: **15 passed**
 - `python demo.py` → demo incidents complete
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → should pass
 - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` → should pass
@@ -49,15 +49,18 @@ Still bounded:
 
 ## Current Frontier
 
-- Active backlog: `backlog-125-plus.json`
-- Active phase: six-agent handoff UX hardening
-- Status: 5/6 items complete (items 125-129 done, item 130 in final validation)
+- Active backlog: none
+- Active phase: current five-family market-ready objective remains wrapped
+- Status: `backlog-131-plus.json` closed cleanly after guided demo-intake implementation
 
 Completed phases:
 
 - `backlog-117-plus.json` closed
+- `backlog-125-plus.json` closed
+- `backlog-131-plus.json` closed
 - near-production ops maturity closed
-- six-agent handoff UX: contract, relay, packets, animations, replay controls added
+- six-agent handoff UX closed
+- guided demo-intake phase closed
 
 Current wrapped baseline:
 
@@ -66,16 +69,15 @@ Current wrapped baseline:
 - bounded TRACE debugging and engineering handoff
 - pilot-safe observability, governance, exports, resilience, and review packet automation
 - visible six-agent handoff with packet flow and demo replay mode
+- curated `/inputs` demo bundles for the five-family wedge
+- fresh-incident demo-origin guidance for stakeholder walkthroughs
 
-Implemented in this phase:
+Most recently implemented:
 
-- visible relay: `SENTINEL -> PRISM -> REPLICA -> TRACE -> FORGE -> GUARDIAN` with animated baton transfer
-- `handoff_flow` contract across seeded and live incident paths
-- current-owner state with previous/next owner visibility
-- emitted/received packet cards from handoff events
-- chronological handoff ledger with event tracking
-- pulse animations for active relay nodes and ledger highlighting
-- demo-mode replay controls (start, next, reset) for operator walkthroughs
+- guided demo bundles on `/inputs` for all five supported outage families
+- bundle proof surfaces showing expected family, likely owner, runtime posture, TRACE posture, and agent path
+- bundle-backed raw-log submission that preserves demo context in the fresh incident workspace
+- refreshed owner-facing walkthrough aligned to the shipped input-to-incident demo flow
 
 Truth boundaries maintained:
 

@@ -41,6 +41,7 @@ Supported bounded outage families:
 Real today:
 
 - fresh incident intake and normalization posture
+- curated demo-bundle intake on `/inputs`
 - memory-backed triage and investigation
 - bounded REPLICA runtime replay for curated packs
 - bounded TRACE developer handoff and debugger guidance
@@ -96,7 +97,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 Current validated baseline:
 
 - `pytest tests/ -q` -> `168 passed`
-- `npm run browser:verify` -> `11 passed`
+- `npm run browser:verify` -> `15 passed`
 - `python demo.py` -> passes
 - Docker rebuild and enterprise smoke path -> passes
 
