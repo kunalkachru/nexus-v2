@@ -20,6 +20,20 @@ function titleCase(value) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function postureLabel(value) {
+  const posture = String(value || "").toLowerCase();
+  if (posture === "healthy") {
+    return "Healthy";
+  }
+  if (posture === "partial") {
+    return "Partial";
+  }
+  if (posture === "unavailable") {
+    return "Unavailable";
+  }
+  return titleCase(value || "Unknown");
+}
+
 async function renderBootstrapStatus() {
   try {
     const status = await fetchAuthedJson("/api/v1/tenant/bootstrap-status");
@@ -185,18 +199,41 @@ async function renderDegradedServices() {
   try {
     const health = await fetchAuthedJson("/api/v1/observability/health").catch(() => ({}));
     const degradedServices = health.degraded_services || [];
+    const pilotSurface = health.pilot_surface || {};
+    const subsystems = pilotSurface.subsystems || [];
+    const nextChecks = pilotSurface.next_checks || [];
     const guidanceList = document.getElementById("degradedServicesGuidance");
+    const summaryList = document.getElementById("pilotObservabilitySubsystems");
+
+    setText("pilotObservabilityOverall", postureLabel(pilotSurface.overall_posture));
+    setText("pilotObservabilityAttention", pilotSurface.attention_required ? "Required" : "None");
+    setText("pilotObservabilitySummary", pilotSurface.summary || "Pilot observability data is not available yet.");
+
+    if (summaryList) {
+      if (subsystems.length === 0) {
+        summaryList.innerHTML = "<li>Pilot subsystem posture is not available yet.</li>";
+      } else {
+        summaryList.innerHTML = subsystems
+          .map((service) => {
+            const guidanceText = (service.guidance || []).join(" ");
+            return `<li><strong>${titleCase(service.service)}</strong> — ${service.label || postureLabel(service.posture)}${guidanceText ? ` · ${guidanceText}` : ""}</li>`;
+          })
+          .join("");
+      }
+    }
 
     if (guidanceList) {
-      if (degradedServices.length === 0) {
-        guidanceList.innerHTML = "<li>All pilot-critical services are operating normally.</li>";
+      if (nextChecks.length > 0) {
+        guidanceList.innerHTML = nextChecks.map((item) => `<li>${item}</li>`).join("");
+      } else if (degradedServices.length === 0) {
+        guidanceList.innerHTML = "<li>No operator action is required. The bounded pilot workflow is currently healthy.</li>";
       } else {
         guidanceList.innerHTML = degradedServices
           .map((service) => {
-            const statusEmoji = service.status === "healthy" ? "✓" :
-                               service.status === "degraded" ? "⚠" :
-                               service.status === "unavailable" ? "✗" : "?";
-            const guidanceText = (service.guidance || []).join(" ");
+            const statusEmoji = service.posture === "healthy" ? "✓" :
+                               service.posture === "partial" ? "⚠" :
+                               service.posture === "unavailable" ? "✗" : "?";
+            const guidanceText = (service.next_checks || service.guidance || []).join(" ");
             return `<li><strong>${statusEmoji} ${titleCase(service.service)}</strong>${guidanceText ? ` — ${guidanceText}` : ""}</li>`;
           })
           .join("");
@@ -207,6 +244,9 @@ async function renderDegradedServices() {
     if (guidanceList) {
       guidanceList.innerHTML = `<li>Unable to load service status: ${error.message}</li>`;
     }
+    setText("pilotObservabilityOverall", "Error");
+    setText("pilotObservabilityAttention", "Required");
+    setText("pilotObservabilitySummary", `Unable to load pilot observability: ${error.message}`);
   }
 }
 

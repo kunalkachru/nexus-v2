@@ -197,15 +197,29 @@
         <section class="section">
             <div class="section-header">
                 <h2>Pilot Observability</h2>
-                <div class="section-note">Monitor which pilot-critical services are healthy and what operator action is needed to resume normal operations.</div>
+                <div class="section-note">Read the bounded pilot operating posture without checking server logs: what is healthy, what is partial, what is unavailable, and what the operator should inspect next.</div>
             </div>
             <div class="story-grid">
                 <div class="detail-card">
-                    <div class="badge">Service Health &amp; Guidance</div>
+                    <div class="badge">Pilot-safe observability summary</div>
+                    <div class="hero-stats raw-intake-grid">
+                        <div class="stat"><div class="stat-label">Overall</div><div class="stat-value" id="pilotObservabilityOverall">-</div></div>
+                        <div class="stat"><div class="stat-label">Attention</div><div class="stat-value" id="pilotObservabilityAttention">-</div></div>
+                    </div>
+                    <p class="hero-copy" id="pilotObservabilitySummary">Loading bounded pilot observability summary...</p>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Subsystem posture</div>
+                    <ul class="simple-list" id="pilotObservabilitySubsystems">
+                        <li>Loading subsystem posture...</li>
+                    </ul>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">What to check next</div>
                     <ul class="simple-list" id="degradedServicesGuidance">
                         <li>Loading service health status...</li>
                     </ul>
-                    <p class="section-note" style="margin-top: 1em;">Services include replay execution, incident queue, memory (knowledge base), and downstream delivery. Degraded services show suggested next steps.</p>
+                    <p class="section-note" style="margin-top: 1em;">Services include replay execution, downstream delivery, runtime queue, and memory. Guidance is explicitly bounded and does not imply autonomous remediation.</p>
                 </div>
             </div>
         </section>

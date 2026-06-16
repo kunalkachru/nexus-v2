@@ -132,6 +132,67 @@ Each incident displays its replay job lifecycle:
 
 The UI keeps the queue state visible so operators understand whether a replay succeeded, is still running, or needs retry.
 
+## Pilot-Safe Observability Surface
+
+NEXUS exposes a bounded operator-facing observability surface through:
+
+- `GET /api/v1/observability/health`
+- the `Learning & Controls` page
+- the `Settings` page
+
+This surface is intentionally not a generic monitoring system. It exists to answer four bounded operator questions:
+
+1. Is replay healthy enough for bounded runtime validation?
+2. Are downstream delivery targets healthy enough for handoff?
+3. Is the runtime queue healthy enough to trust recent replay state?
+4. Is memory available enough to claim historical grounding?
+
+### Pilot-Critical Subsystems
+
+The product currently summarizes these pilot-critical subsystems:
+
+- `replay`
+- `delivery`
+- `runtime queue`
+- `memory`
+
+Each subsystem is rendered with:
+
+- `raw_status`
+- `posture`
+- `label`
+- `summary`
+- `guidance`
+- `next_checks`
+
+### Posture Vocabulary
+
+Operator posture is normalized into exactly three values:
+
+- `healthy` — safe to use inside the current bounded pilot workflow
+- `partial` — degraded but still partially usable; operator review required
+- `unavailable` — do not treat the subsystem as usable for the claimed workflow
+
+This vocabulary is intentionally stricter than generic “green/yellow/red” monitoring because it maps directly to product truth:
+
+- if replay is unavailable, do not claim runtime-backed validation
+- if memory is unavailable, treat reasoning as inference-first
+- if delivery is degraded, do not promise downstream handoff completion
+- if runtime queue is degraded, review prior job state before rerunning replay
+
+### What To Check Next
+
+The UI exposes bounded next-step guidance directly from the health contract.
+
+Examples:
+
+- restore Docker or runtime-host relay before claiming replay-backed evidence
+- review recovered runtime jobs before launching another replay
+- confirm degraded delivery targets before promising send completion
+- proceed with inference-first triage if memory is unavailable
+
+These are operator checks, not autonomous remediation claims.
+
 ## Governance & Multi-Tenant Authorization
 
 ### Architecture Overview

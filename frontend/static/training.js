@@ -29,6 +29,20 @@ function titleCase(value) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function postureLabel(value) {
+  const posture = String(value || "").toLowerCase();
+  if (posture === "healthy") {
+    return "Healthy";
+  }
+  if (posture === "partial") {
+    return "Partial";
+  }
+  if (posture === "unavailable") {
+    return "Unavailable";
+  }
+  return titleCase(value || "Unknown");
+}
+
 function loadLastTriageSummary() {
   try {
     return JSON.parse(window.localStorage.getItem(LAST_TRIAGE_SUMMARY_KEY) || "null");
@@ -533,6 +547,13 @@ function renderProductHealth(healthData) {
   const deliveryHealth = health.delivery || {};
   const integrations = health.downstream_integrations || {};
   const degradedServices = health.degraded_services || [];
+  const pilotSurface = health.pilot_surface || {};
+  const pilotSubsystems = pilotSurface.subsystems || [];
+  const pilotNextChecks = pilotSurface.next_checks || [];
+
+  setText("pilotHealthOverall", postureLabel(pilotSurface.overall_posture));
+  setText("pilotHealthAttention", pilotSurface.attention_required ? "Required" : "None");
+  setText("pilotHealthSummary", pilotSurface.summary || "Pilot posture data is not available yet.");
 
   setText("appHealthStatus", appHealth.status ? titleCase(appHealth.status) : "-");
   setText("appResponseTime", appHealth.response_time_ms !== undefined ? appHealth.response_time_ms : "-");
@@ -547,18 +568,34 @@ function renderProductHealth(healthData) {
   setText("integrationGithub", integrations.github?.available ? "✓ Available" : "✗ Unavailable");
   setText("integrationSlack", integrations.slack?.available ? "✓ Available" : "✗ Unavailable");
 
-  // Render degraded services with guidance
+  const subsystemList = document.getElementById("pilotSubsystemList");
+  if (subsystemList) {
+    if (pilotSubsystems.length === 0) {
+      subsystemList.innerHTML = "<li>Pilot subsystem posture is not available yet.</li>";
+    } else {
+      subsystemList.innerHTML = pilotSubsystems
+        .map((subsystem) => {
+          const nextCheck = subsystem.next_checks?.[0];
+          const suffix = nextCheck ? ` Next check: ${nextCheck}` : "";
+          return `<li><strong>${titleCase(subsystem.service)}</strong> — ${subsystem.label || postureLabel(subsystem.posture)}.${suffix}</li>`;
+        })
+        .join("");
+    }
+  }
+
   const degradedList = document.getElementById("degradedServicesList");
   if (degradedList) {
-    if (degradedServices.length === 0) {
-      degradedList.innerHTML = "<li>All pilot-critical services are operating normally.</li>";
+    if (pilotNextChecks.length > 0) {
+      degradedList.innerHTML = pilotNextChecks.map((item) => `<li>${item}</li>`).join("");
+    } else if (degradedServices.length === 0) {
+      degradedList.innerHTML = "<li>No operator action is required. The bounded pilot workflow is currently healthy.</li>";
     } else {
       degradedList.innerHTML = degradedServices
         .map((service) => {
-          const statusEmoji = service.status === "healthy" ? "✓" :
-                             service.status === "degraded" ? "⚠" :
-                             service.status === "unavailable" || service.status === "unhealthy" ? "✗" : "?";
-          const guidanceText = (service.guidance || []).join(" ");
+          const statusEmoji = service.posture === "healthy" ? "✓" :
+            service.posture === "partial" ? "⚠" :
+            service.posture === "unavailable" || service.status === "unhealthy" ? "✗" : "?";
+          const guidanceText = (service.next_checks || service.guidance || []).join(" ");
           return `<li><strong>${statusEmoji} ${titleCase(service.service)}</strong>${guidanceText ? ` — ${guidanceText}` : ""}</li>`;
         })
         .join("");

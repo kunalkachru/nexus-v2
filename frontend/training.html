@@ -116,9 +116,17 @@
         <section class="section" id="productHealthSection">
             <div class="section-header">
                 <h2>Product health and observability</h2>
-                <div class="section-note">Monitor NEXUS itself: response times, replay health, queue depth, and downstream integration status.</div>
+                <div class="section-note">Read the bounded pilot posture first: what is healthy, what is partial, what is unavailable, and what to check next without dropping into server logs.</div>
             </div>
             <div class="story-grid">
+                <div class="detail-card">
+                    <div class="badge">Pilot-safe posture</div>
+                    <div class="kpi-grid">
+                        <div class="summary-card"><div class="label">Overall</div><div class="value" id="pilotHealthOverall">-</div></div>
+                        <div class="summary-card"><div class="label">Attention</div><div class="value" id="pilotHealthAttention">-</div></div>
+                    </div>
+                    <p class="hero-copy" id="pilotHealthSummary">Loading bounded pilot posture...</p>
+                </div>
                 <div class="detail-card">
                     <div class="badge">Application health</div>
                     <div class="kpi-grid">
@@ -149,10 +157,16 @@
                 </div>
                 <div class="detail-card">
                     <div class="badge">Pilot-safe service status</div>
+                    <ul class="simple-list" id="pilotSubsystemList">
+                        <li>Loading subsystem posture...</li>
+                    </ul>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">What to check next</div>
                     <ul class="simple-list" id="degradedServicesList">
                         <li>Loading service health...</li>
                     </ul>
-                    <p class="section-note" style="margin-top: 1em;">Shows which core services need operator attention. Includes guidance for remediation.</p>
+                    <p class="section-note" style="margin-top: 1em;">Guidance stays bounded to the current pilot workflow. NEXUS does not imply autonomous incident operations here.</p>
                 </div>
             </div>
         </section>

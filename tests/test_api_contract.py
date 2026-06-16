@@ -260,6 +260,35 @@ def test_guardian_review_contract_records_gate_and_execute(client: TestClient, a
     assert platform_payload["guardian_reviews"] >= 1
 
 
+def test_observability_health_contract_exposes_pilot_safe_posture(
+    client: TestClient,
+    auth_headers,
+) -> None:
+    response = client.get("/api/v1/observability/health", headers=auth_headers())
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["pilot_surface"]["overall_posture"] in {"healthy", "partial", "unavailable"}
+    assert isinstance(payload["pilot_surface"]["attention_required"], bool)
+    assert payload["pilot_surface"]["summary"]
+    assert len(payload["pilot_surface"]["subsystems"]) == 4
+
+    subsystem_names = {item["service"] for item in payload["pilot_surface"]["subsystems"]}
+    assert subsystem_names == {"replay", "delivery", "runtime queue", "memory"}
+
+    replay_surface = next(item for item in payload["pilot_surface"]["subsystems"] if item["service"] == "replay")
+    assert replay_surface["posture"] in {"healthy", "partial", "unavailable"}
+    assert replay_surface["label"]
+    assert replay_surface["summary"]
+    assert "next_checks" in replay_surface
+
+    assert payload["runtime_queue"]["recovery_status"] is not None
+    assert "next_checks" in payload["runtime_queue"]
+    assert "next_checks" in payload["delivery"]
+    assert "next_checks" in payload["memory"]
+
+
 def test_guardian_block_contract_blocks_execution(client: TestClient, auth_headers) -> None:
     response = client.post(
         "/api/v1/incidents/manual-report",

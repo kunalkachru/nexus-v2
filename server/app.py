@@ -33,6 +33,7 @@ from server.rate_limit import RateLimiter
 from server.services.deployment_readiness import DeploymentReadiness
 from server.services.governance import GovernanceService
 from server.services.incidents import IncidentService
+from server.services.enterprise_runtime import build_pilot_safe_subsystem, summarize_pilot_surface
 from server.services.live_demo import build_demo_payload
 from server.services.observability import ObservabilityService
 from server.services.replica_runtime import execute_runtime_host_replay, runtime_host_supported_packs, build_runtime_host_relay_status, probe_runtime_host
@@ -207,6 +208,17 @@ async def get_product_health(
             queue_guidance.append("Queue depth is elevated. Review incident backlog and consider pausing intake.")
         elif queue_health == "unhealthy":
             queue_guidance.append("Queue is critically backlogged. Pause incident intake and investigate queue processing.")
+        queue_next_checks = []
+        if queue_health == "degraded":
+            queue_next_checks = [
+                "Review the queue backlog and confirm intake is not spiking faster than operators can close cases.",
+                "Pause non-critical manual intake if queue depth keeps rising.",
+            ]
+        elif queue_health == "unhealthy":
+            queue_next_checks = [
+                "Pause new intake until the backlog returns to the bounded operating range.",
+                "Check queue processing throughput and any database or worker contention behind the backlog.",
+            ]
 
         execution_health = "idle" if execution_state.current_state == "idle" else "running"
         runtime_recovery = RuntimeQueueManager.get_runtime_recovery_posture()
@@ -218,36 +230,151 @@ async def get_product_health(
         if not hasattr(service, 'memory') or service.memory is None:
             memory_health = "unavailable"
             memory_guidance.append("Memory service (knowledge base) is not available. Incidents will be triaged without historical context.")
+        memory_next_checks = (
+            [
+                "Confirm the bounded memory layer is loaded before treating historical matches as available.",
+                "Proceed with inference-first triage until memory becomes available again.",
+            ]
+            if memory_health != "available"
+            else []
+        )
 
         # Delivery service health (downstream integrations)
         delivery_health = "healthy"
         delivery_guidance = []
+        delivery_next_checks = []
         deployment_readiness_str = deployment_readiness.get("readiness", "")
         if deployment_readiness_str == "partially_available":
             delivery_health = "degraded"
             delivery_guidance.append("Some downstream integrations are unavailable. Check GitHub and Slack connectivity.")
+            delivery_next_checks = [
+                "Check which delivery destinations are degraded before promising downstream handoff completion.",
+                "Retry only the affected destination once connectivity or configuration is restored.",
+            ]
         elif deployment_readiness_str != "fully_available":
             delivery_health = "unhealthy"
             delivery_guidance.append("Downstream delivery is blocked. Verify integration configuration and connectivity.")
+            delivery_next_checks = [
+                "Treat downstream export and send actions as blocked until integration readiness returns.",
+                "Verify destination credentials, network reachability, and runtime-host dependent features before retrying.",
+            ]
 
         # Replay health with guidance
         replay_health = execution_health
         replay_guidance = []
+        replay_next_checks = []
         if execution_health == "running":
             replay_guidance.append("Replay is currently executing. Monitor the bounded pack progress.")
+            replay_next_checks = [
+                "Wait for the current bounded replay to finish before starting another replay for the same incident.",
+            ]
         elif not deployment_readiness.get("docker", {}).get("available", False):
             replay_health = "unavailable"
             replay_guidance.append("Docker is not available. Bounded replay requires Docker to be installed and running.")
+            replay_next_checks = [
+                "Restore Docker or enable the runtime-host relay before claiming runtime-backed validation.",
+                "Use inference-first triage and keep approval language bounded until replay is available again.",
+            ]
+
+        runtime_queue_status = runtime_recovery.get("recovery_status") or "unknown"
+        runtime_queue_guidance = []
+        runtime_queue_next_checks = []
+        if runtime_queue_status == "recovering":
+            runtime_queue_guidance.append("Runtime queue recovered recent replay work after an interruption. Review recovered jobs before relaunching.")
+            runtime_queue_next_checks = [
+                "Review recovered runtime jobs before rerunning the same incident replay.",
+                "Confirm the latest replay outcome was persisted before approving follow-on actions.",
+            ]
+        elif runtime_queue_status == "degraded":
+            runtime_queue_guidance.append("Runtime queue has failed or stranded work that needs operator review.")
+            runtime_queue_next_checks = [
+                "Inspect failed or stranded runtime jobs before launching more replay work.",
+                "Retry only jobs marked retryable and avoid duplicate launches for the same incident until state is clear.",
+            ]
+
+        pilot_subsystems = [
+            build_pilot_safe_subsystem(
+                service="replay",
+                raw_status=replay_health,
+                healthy_states=("idle", "running", "healthy"),
+                unavailable_states=("unavailable", "unhealthy", "failed"),
+                guidance=replay_guidance,
+                next_checks=replay_next_checks,
+            ),
+            build_pilot_safe_subsystem(
+                service="delivery",
+                raw_status=delivery_health,
+                healthy_states=("healthy",),
+                partial_states=("degraded",),
+                unavailable_states=("unhealthy", "unavailable"),
+                guidance=delivery_guidance,
+                next_checks=delivery_next_checks,
+            ),
+            build_pilot_safe_subsystem(
+                service="runtime queue",
+                raw_status=runtime_queue_status,
+                healthy_states=("healthy",),
+                partial_states=("recovering", "degraded"),
+                unavailable_states=("unavailable", "failed", "abandoned"),
+                guidance=runtime_queue_guidance,
+                next_checks=runtime_queue_next_checks,
+            ),
+            build_pilot_safe_subsystem(
+                service="memory",
+                raw_status=memory_health,
+                healthy_states=("available", "healthy"),
+                unavailable_states=("unavailable", "missing"),
+                guidance=memory_guidance,
+                next_checks=memory_next_checks,
+            ),
+        ]
+        pilot_surface = summarize_pilot_surface(pilot_subsystems)
 
         degraded_services = []
         if queue_health != "healthy":
-            degraded_services.append({"service": "queue", "status": queue_health, "guidance": queue_guidance})
+            degraded_services.append(
+                {
+                    "service": "queue",
+                    "status": queue_health,
+                    "posture": "partial" if queue_health == "degraded" else "unavailable",
+                    "guidance": queue_guidance,
+                    "next_checks": queue_next_checks,
+                    "summary": "Incident queue is outside the normal operating range.",
+                }
+            )
         if memory_health != "available":
-            degraded_services.append({"service": "memory", "status": memory_health, "guidance": memory_guidance})
+            degraded_services.append(
+                {
+                    "service": "memory",
+                    "status": memory_health,
+                    "posture": "unavailable",
+                    "guidance": memory_guidance,
+                    "next_checks": memory_next_checks,
+                    "summary": "Historical memory is unavailable, so triage should stay inference-first.",
+                }
+            )
         if delivery_health != "healthy":
-            degraded_services.append({"service": "delivery", "status": delivery_health, "guidance": delivery_guidance})
+            degraded_services.append(
+                {
+                    "service": "delivery",
+                    "status": delivery_health,
+                    "posture": "partial" if delivery_health == "degraded" else "unavailable",
+                    "guidance": delivery_guidance,
+                    "next_checks": delivery_next_checks,
+                    "summary": "Downstream handoff destinations need operator review before promising delivery completion.",
+                }
+            )
         if replay_health not in ["idle", "running"]:
-            degraded_services.append({"service": "replay", "status": replay_health, "guidance": replay_guidance})
+            degraded_services.append(
+                {
+                    "service": "replay",
+                    "status": replay_health,
+                    "posture": "unavailable",
+                    "guidance": replay_guidance,
+                    "next_checks": replay_next_checks,
+                    "summary": "Replay is not currently available for runtime-backed validation.",
+                }
+            )
 
         return {
             "status": "ok",
@@ -259,12 +386,14 @@ async def get_product_health(
             "replay": {
                 "status": replay_health,
                 "guidance": replay_guidance,
+                "next_checks": replay_next_checks,
                 "current_execution": execution_state.to_dict(),
                 "recent_executions": execution_state.to_dict().get("execution_history", [])[:5],
             },
             "queue": {
                 "status": queue_health,
                 "guidance": queue_guidance,
+                "next_checks": queue_next_checks,
                 "items_pending": len(queue_items),
                 "threshold_warning": 100,
                 "threshold_critical": 500,
@@ -272,13 +401,15 @@ async def get_product_health(
             "memory": {
                 "status": memory_health,
                 "guidance": memory_guidance,
+                "next_checks": memory_next_checks,
                 "description": "Knowledge base of historical incidents and runbooks",
             },
             "delivery": {
                 "status": delivery_health,
                 "guidance": delivery_guidance,
-                "github": deployment_readiness.get("degraded_features", []) and "github" in deployment_readiness.get("degraded_features", []),
-                "slack": deployment_readiness.get("degraded_features", []) and "slack" in deployment_readiness.get("degraded_features", []),
+                "next_checks": delivery_next_checks,
+                "github": "github" not in (deployment_readiness.get("degraded_features") or []),
+                "slack": "slack" not in (deployment_readiness.get("degraded_features") or []),
             },
             "runtime_queue": {
                 "recovery_status": runtime_recovery.get("recovery_status"),
@@ -287,6 +418,8 @@ async def get_product_health(
                 "failed_jobs": runtime_recovery.get("failed_jobs"),
                 "total_jobs": runtime_recovery.get("total_jobs"),
                 "message": runtime_recovery.get("message"),
+                "guidance": runtime_queue_guidance,
+                "next_checks": runtime_queue_next_checks,
             },
             "deployment_readiness": {
                 "readiness": deployment_readiness.get("readiness"),
@@ -300,9 +433,10 @@ async def get_product_health(
             },
             "downstream_integrations": {
                 "status": delivery_health,
-                "github": {"available": not (deployment_readiness.get("degraded_features", []) and "github" in deployment_readiness.get("degraded_features", [])), "last_delivery": None},
-                "slack": {"available": not (deployment_readiness.get("degraded_features", []) and "slack" in deployment_readiness.get("degraded_features", [])), "last_delivery": None},
+                "github": {"available": "github" not in (deployment_readiness.get("degraded_features") or []), "last_delivery": None},
+                "slack": {"available": "slack" not in (deployment_readiness.get("degraded_features") or []), "last_delivery": None},
             },
+            "pilot_surface": pilot_surface,
             "degraded_services": degraded_services,
         }
     except Exception as e:
