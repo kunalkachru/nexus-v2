@@ -84,7 +84,7 @@
     "id": 140,
     "title": "Fresh-incident evidence provenance and reasoning clarity",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make fresh-log incidents clearer about what evidence was extracted directly from the logs, what was inferred by reasoning, and what remains uncertain so the live path feels more trustworthy and less opaque.",
     "implementation_tasks": [
       "Audit the live incident path for fresh `nxs_...` incidents and identify where evidence provenance is weak or visually buried.",

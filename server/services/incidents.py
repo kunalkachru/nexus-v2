@@ -195,6 +195,113 @@ class IncidentService:
         quality = normalized_evidence.get("input_quality", {})
         return dict(quality) if isinstance(quality, dict) else {}
 
+    def _build_fresh_intake_truth(
+        self,
+        *,
+        incident: IncidentRecord,
+        normalized_evidence: dict[str, object],
+        input_quality: dict[str, object],
+        issue_family: str,
+        triage_summary: dict[str, object],
+        support_state: str,
+        has_runtime_replay: bool,
+    ) -> dict[str, object] | None:
+        if not incident.raw_input_text:
+            return None
+
+        service = str(normalized_evidence.get("service") or incident.service or "unknown-service")
+        severity = str(normalized_evidence.get("severity") or incident.severity or "P2")
+        signature = str(normalized_evidence.get("signature") or "General incident")
+        service_source = str(input_quality.get("service_source") or "defaulted")
+        severity_source = str(input_quality.get("severity_source") or "default")
+        evidence_line_count = int(input_quality.get("evidence_line_count") or 0)
+        posture = str(input_quality.get("normalization_posture") or "weak")
+        likely_owner = str(
+            triage_summary.get("likely_owner_team")
+            or triage_summary.get("likely_owner_service")
+            or "Platform Operations"
+        )
+
+        extracted_signals: list[dict[str, str]] = []
+        extracted_signals.append({
+            "label": "Service token",
+            "value": service,
+            "source": service_source,
+        })
+        extracted_signals.append({
+            "label": "Severity hint",
+            "value": severity,
+            "source": severity_source,
+        })
+        if signature and signature != "General incident":
+            extracted_signals.append({
+                "label": "Signature",
+                "value": signature,
+                "source": "log pattern",
+            })
+        extracted_signals.append({
+            "label": "Evidence lines",
+            "value": str(evidence_line_count),
+            "source": "raw input",
+        })
+        for match in input_quality.get("tenant_hints_applied", []) or []:
+            extracted_signals.append({
+                "label": "Tenant hint",
+                "value": str(match),
+                "source": "tenant bootstrap",
+            })
+
+        inferred_conclusions = [
+            {
+                "label": "Issue family",
+                "value": issue_family or "Unclassified live incident",
+            },
+            {
+                "label": "Likely owner",
+                "value": likely_owner,
+            },
+            {
+                "label": "Support posture",
+                "value": support_state,
+            },
+            {
+                "label": "Next bounded path",
+                "value": "REPLICA → TRACE → FORGE → GUARDIAN" if support_state != "unsupported" else "FORGE → GUARDIAN with inferred evidence only",
+            },
+        ]
+
+        remaining_uncertainty: list[str] = []
+        for signal in input_quality.get("missing_signals", []) or []:
+            remaining_uncertainty.append(f"Missing {signal} confirmation from the pasted evidence.")
+        for warning in input_quality.get("weak_signals", []) or []:
+            remaining_uncertainty.append(str(warning))
+        if support_state == "unsupported":
+            remaining_uncertainty.append("This incident family is outside the bounded runtime packs, so runtime validation is not available.")
+        elif support_state == "inference-first" and not has_runtime_replay:
+            remaining_uncertainty.append("The current path is still inference-first because bounded runtime replay has not validated this case yet.")
+        elif support_state == "runtime-backed" and not has_runtime_replay:
+            remaining_uncertainty.append("Pack coverage exists, but this fresh incident has not yet been validated through bounded replay in this page view.")
+
+        summary = (
+            f"Fresh intake posture is {posture}. "
+            f"NEXUS extracted {len(extracted_signals)} concrete signal(s) from the logs, inferred {len(inferred_conclusions)} routing and action clue(s), "
+            f"and is tracking {len(remaining_uncertainty)} remaining uncertainty item(s)."
+        )
+
+        return {
+            "is_fresh_incident": True,
+            "normalization_posture": posture,
+            "support_state": support_state,
+            "summary": summary,
+            "operator_guidance": str(
+                input_quality.get("operator_guidance")
+                or "Review the extracted versus inferred split before treating this packet as decision-ready."
+            ),
+            "extracted_signals": extracted_signals,
+            "inferred_conclusions": inferred_conclusions,
+            "remaining_uncertainty": remaining_uncertainty,
+        }
+
     async def _persist_latest_replay_packet(
         self,
         *,
@@ -1046,6 +1153,15 @@ class IncidentService:
                 input_quality=input_quality,
                 has_runtime_replay=has_runtime_replay,
             )
+        fresh_intake_truth = self._build_fresh_intake_truth(
+            incident=incident,
+            normalized_evidence=normalized_evidence,
+            input_quality=input_quality,
+            issue_family=issue_family,
+            triage_summary=triage_summary,
+            support_state=support_state_info["support_state"],
+            has_runtime_replay=has_runtime_replay,
+        )
 
         payload = {
             "incident": {
@@ -1071,6 +1187,7 @@ class IncidentService:
                 "all_supported_families": support_state_info["all_supported_families"],
                 "supporting_packs": support_state_info["supported_packs"],
             },
+            "fresh_intake_truth": fresh_intake_truth,
             "quality_evaluation": quality_evaluation,
             "observability": observability,
             "classification": classification,
@@ -1245,6 +1362,13 @@ class IncidentService:
             raw_lines = [line.strip() for line in incident.raw_input_text.splitlines() if line.strip()]
             raw_service = str(raw_evidence.get("service", incident.service or "service")).strip() or "service"
             input_quality = self._raw_input_quality(raw_evidence)
+            has_runtime_replay = bool(
+                isinstance(raw_evidence.get("latest_replay"), dict)
+                and (
+                    raw_evidence["latest_replay"].get("status") in {"replay_executed", "relay_executed"}
+                    or raw_evidence["latest_replay"].get("lifecycle_state") == "completed"
+                )
+            )
             priority = priority_snapshot(incident.severity)
             system_context = SystemContext(
                 service=raw_service,
@@ -1349,6 +1473,10 @@ class IncidentService:
             detected_signals=live_observability["recent_logs"],
             tenant_id=tenant_id,
         )
+        support_state_info = self._tenancy_service.get_incident_support_state(
+            tenant_id,
+            str(triage_summary.get("issue_family") or ""),
+        )
         live_candidate_fixes = runtime_aligned_candidate_fixes(
             str(triage_summary.get("issue_family", "")),
             raw_service,
@@ -1374,6 +1502,15 @@ class IncidentService:
             recent_deployments=recent_deployments,
             recent_logs=live_observability["recent_logs"],
         )
+        fresh_intake_truth = self._build_fresh_intake_truth(
+            incident=incident,
+            normalized_evidence=raw_evidence,
+            input_quality=input_quality,
+            issue_family=str(triage_summary.get("issue_family") or ""),
+            triage_summary=triage_summary,
+            support_state=support_state_info["support_state"],
+            has_runtime_replay=has_runtime_replay,
+        )
 
         payload = {
             "incident": {
@@ -1390,7 +1527,15 @@ class IncidentService:
                 "raw_input_text": incident.raw_input_text,
                 "normalized_evidence": raw_evidence,
                 "input_quality": input_quality,
+                "support_state": support_state_info["support_state"],
             },
+            "tenant_support": {
+                "support_state": support_state_info["support_state"],
+                "downgrade_guidance": support_state_info["downgrade_guidance"],
+                "all_supported_families": support_state_info["all_supported_families"],
+                "supporting_packs": support_state_info["supported_packs"],
+            },
+            "fresh_intake_truth": fresh_intake_truth,
             "observability": live_observability,
             "classification": {
                 "incident_id": sentinel_output.incident_id,

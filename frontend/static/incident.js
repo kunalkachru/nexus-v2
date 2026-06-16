@@ -1234,6 +1234,45 @@ function renderSourcePayload(incident) {
   );
 }
 
+function renderFreshIntakeTruth(data) {
+  const card = document.getElementById("freshTruthCard");
+  const truth = data.fresh_intake_truth;
+  if (!card) {
+    return;
+  }
+  if (!truth || !truth.is_fresh_incident) {
+    card.hidden = true;
+    return;
+  }
+
+  card.hidden = false;
+  const extracted = Array.isArray(truth.extracted_signals) ? truth.extracted_signals : [];
+  const inferred = Array.isArray(truth.inferred_conclusions) ? truth.inferred_conclusions : [];
+  const uncertainty = Array.isArray(truth.remaining_uncertainty) ? truth.remaining_uncertainty : [];
+  setText("freshTruthSummary", truth.summary || "Fresh evidence posture is available.");
+  setText("freshTruthExtractedCount", String(extracted.length));
+  setText("freshTruthInferredCount", String(inferred.length));
+  setText("freshTruthUncertainCount", String(uncertainty.length));
+  setText("freshTruthSupportState", titleCase(String(truth.support_state || "unknown").replace(/-/g, " ")));
+  setText("freshTruthGuidance", truth.operator_guidance || "Review extracted versus inferred evidence before treating the packet as decision-ready.");
+
+  renderList(
+    "freshTruthExtractedList",
+    extracted.length ? extracted : [{ label: "Extracted evidence", value: "No concrete extracted signals recorded yet.", source: "n/a" }],
+    (item) => `<li><strong>${item.label || "Signal"}</strong><br>${item.value || "-"}<br><span class="section-note">Source: ${titleCase(String(item.source || "unknown").replace(/_/g, " "))}</span></li>`
+  );
+  renderList(
+    "freshTruthInferredList",
+    inferred.length ? inferred : [{ label: "Inference", value: "No inferred conclusions recorded yet." }],
+    (item) => `<li><strong>${item.label || "Inference"}</strong><br>${item.value || "-"}</li>`
+  );
+  renderList(
+    "freshTruthUncertaintyList",
+    uncertainty.length ? uncertainty : ["No remaining uncertainty recorded."],
+    (item) => `<li>${item}</li>`
+  );
+}
+
 function renderEvidence(data) {
   renderList("recentLogs", data.observability.recent_logs || [], (line) => `<li>${line}</li>`);
   renderList("alertTimeline", data.observability.alert_timeline || [], (item) => `<li><strong>${item.time}</strong> · ${item.event}</li>`);
@@ -1567,6 +1606,7 @@ async function loadAndRenderIncident(incidentId, options = {}) {
   renderCrew(data);
   renderEnterprise(data);
   renderSourcePayload(data.incident);
+  renderFreshIntakeTruth(data);
   renderEvidence(data);
   renderExecutionOutcome(data);
   renderDeliveryHistory(data);

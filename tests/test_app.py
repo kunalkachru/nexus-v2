@@ -198,3 +198,34 @@ def test_run_incident_returns_realistic_incident_context() -> None:
     assert payload["trace_summary"]["inspection_point"]
     assert payload["trace_summary"]["code_owner_team"]
     assert payload["trace_summary"]["suspected_files"]
+
+
+def test_fresh_raw_text_context_surfaces_extracted_vs_inferred_truth() -> None:
+    with TestClient(app) as client:
+        headers = {
+            "x-user-id": "operator-1",
+            "x-tenant-id": "tenant-a",
+            "x-roles": "operator",
+        }
+
+        create = client.post(
+            "/api/v1/incidents/raw-text",
+            headers=headers,
+            json={
+                "raw_text": "2026-05-30T10:14:22Z checkout-api ERROR timeout waiting for payment service\n2026-05-30T10:14:23Z checkout-api WARN retry budget exhausted\nservice=checkout-api severity=P2"
+            },
+        )
+
+        assert create.status_code == 202
+        incident_id = create.json()["nexus_incident_id"]
+
+        context = client.get(f"/api/v1/incidents/{incident_id}/context", headers=headers)
+        assert context.status_code == 200
+        payload = context.json()
+
+        assert payload["incident"]["source_channel"] == "raw_text"
+        assert payload["fresh_intake_truth"]["is_fresh_incident"] is True
+        assert payload["fresh_intake_truth"]["extracted_signals"]
+        assert payload["fresh_intake_truth"]["inferred_conclusions"]
+        assert "operator_guidance" in payload["fresh_intake_truth"]
+        assert payload["tenant_support"]["support_state"] in {"runtime-backed", "inference-first", "unsupported"}

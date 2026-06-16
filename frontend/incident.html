@@ -66,6 +66,33 @@
                     </div>
                     <p class="section-note" id="demoOriginNextStep">The operator guidance from the chosen bundle will appear here.</p>
                 </div>
+                <div class="detail-card compact-note fresh-truth-card" id="freshTruthCard" hidden>
+                    <div class="badge">Fresh evidence posture</div>
+                    <p class="hero-copy" id="freshTruthSummary">NEXUS will separate extracted evidence from inferred reasoning here for fresh incidents.</p>
+                    <div class="hero-stats raw-intake-grid">
+                        <div class="stat"><div class="stat-label">Extracted from logs</div><div class="stat-value" id="freshTruthExtractedCount">-</div></div>
+                        <div class="stat"><div class="stat-label">Inferred by NEXUS</div><div class="stat-value" id="freshTruthInferredCount">-</div></div>
+                        <div class="stat"><div class="stat-label">Still uncertain</div><div class="stat-value" id="freshTruthUncertainCount">-</div></div>
+                        <div class="stat"><div class="stat-label">Support posture</div><div class="stat-value" id="freshTruthSupportState">-</div></div>
+                    </div>
+                    <p class="section-note" id="freshTruthGuidance">Operator guidance for fresh intake will appear here.</p>
+                    <div class="memory-grid">
+                        <div>
+                            <h3>Extracted from logs</h3>
+                            <ul class="simple-list" id="freshTruthExtractedList"></ul>
+                        </div>
+                        <div>
+                            <h3>Inferred by NEXUS</h3>
+                            <ul class="simple-list" id="freshTruthInferredList"></ul>
+                        </div>
+                    </div>
+                    <details class="agent-details">
+                        <summary>Show remaining uncertainty</summary>
+                        <div class="agent-details-body">
+                            <ul class="simple-list" id="freshTruthUncertaintyList"></ul>
+                        </div>
+                    </details>
+                </div>
             </div>
             <div class="hero-panel controls">
                 <div class="eyebrow">Specialist crew</div>

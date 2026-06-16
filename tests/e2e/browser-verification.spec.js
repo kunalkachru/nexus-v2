@@ -233,6 +233,9 @@ test.describe("NEXUS browser verification", () => {
     await expect(page).toHaveURL(/\/incident\?[^#]*nexus_incident_id=nxs_[a-z0-9]+/i, { timeout: 10000 });
     await expect(page.locator("#incidentTitle")).toContainText("INC-");
     await expect(page.locator("#relayStageBanner")).toContainText("Start at the incident summary first");
+    await expect(page.locator("#freshTruthCard")).toBeVisible();
+    await expect(page.locator("#freshTruthSummary")).toContainText(/extracted|inferred|uncertainty/i);
+    await expect(page.locator("#freshTruthExtractedList")).toContainText(/Service token|Severity hint|Evidence lines/i);
     await expect(page.locator("#sentinelReasoning")).not.toHaveText("Waiting for incident context.");
     await expect(page.locator("#threadSentinelCopy")).not.toHaveText("Waiting for incident context.");
     await expect(page.locator("#guardianReasoning")).toContainText(/Guardian review is pending|recorded|safe/i);
