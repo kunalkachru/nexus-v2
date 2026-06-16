@@ -1,0 +1,150 @@
+[
+  {
+    "id": 145,
+    "title": "Public validation baseline sync",
+    "priority": "high",
+    "status": "pending",
+    "description": "Refresh public-facing validation claims so README and demo documents match the current shipped baseline instead of older pass counts.",
+    "implementation_tasks": [
+      "Scan all public-facing docs for stale validation counts, stale dates, and outdated checkpoint wording.",
+      "Update README and any owner-facing guide that still references older pytest or browser baselines.",
+      "Keep the validation wording truthful: only claim counts that are part of the current validated baseline.",
+      "Avoid broad narrative rewrites unless a stale validation claim materially changes the meaning."
+    ],
+    "done_when": [
+      "public docs no longer reference outdated validation counts like 168 or 15 where the current baseline is 169 and 16",
+      "the top-level README and main demo guide match the current validated baseline",
+      "public validation language is consistent across the primary owner-facing entrypoints"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "README.md",
+      "docs/public/MASTER_OPERATOR_DEMO_GUIDE.md",
+      "docs/public/README.md",
+      "docs/public/SETUP_AND_DEMO.md"
+    ]
+  },
+  {
+    "id": 146,
+    "title": "Queue-first demo path and route-map consistency pass",
+    "priority": "high",
+    "status": "pending",
+    "description": "Align the public walkthroughs around the current strongest route through the product so the docs do not contradict the shipped UI path from queue to intake to fresh incident review.",
+    "implementation_tasks": [
+      "Audit public demo docs for route order contradictions, especially any path that starts directly at `/inputs` instead of the current queue-first operator path.",
+      "Standardize the strongest truthful walkthrough as `queue -> seeded incident -> Inspect intake -> /inputs -> fresh nxs incident -> /training -> /settings` unless a doc explicitly explains an alternate path.",
+      "Clarify when a route is directly linked in the UI versus reached through another screen.",
+      "Keep seeded and fresh-incident guidance semantically aligned."
+    ],
+    "done_when": [
+      "the primary public docs agree on the strongest review order and navigation path",
+      "a first-time owner can move through the UI without contradictory route instructions",
+      "public route guidance matches the shipped navigation model"
+    ],
+    "test_gates": [
+      "python demo.py",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "docs/public/MASTER_OPERATOR_DEMO_GUIDE.md",
+      "docs/public/SETUP_AND_DEMO.md",
+      "docs/public/DEMO_WALKTHROUGH.md",
+      "docs/public/DEMO_CHEAT_SHEET.md",
+      "docs/public/LIVE_DEMO_SPEAKER_NOTES.md",
+      "docs/public/README.md",
+      "README.md"
+    ]
+  },
+  {
+    "id": 147,
+    "title": "Public product-story truth pass",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Review public product and buyer docs for small truth drifts so the current five-family wedge, bounded runtime posture, and operator story read consistently across demo, buyer, and GTM materials.",
+    "implementation_tasks": [
+      "Read the public strategy, buyer proof, presentation, visual-architecture, and setup materials end to end.",
+      "Correct wording that still reflects an older intermediate state or leaves ambiguity about what is real versus bounded.",
+      "Preserve the current product category: support-to-engineering investigation for recurring customer-facing outages.",
+      "Do not broaden the product promise beyond the shipped five-family wedge."
+    ],
+    "done_when": [
+      "public materials describe the same current product state and boundaries",
+      "bounded REPLICA, bounded TRACE, runtime-backed versus inference-first posture, and governed approval are described consistently",
+      "buyer-facing material does not require oral correction during a demo"
+    ],
+    "test_gates": [
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "docs/public/PRODUCT_STRATEGY_AND_GTM.md",
+      "docs/public/BUYER_PROOF_PACKAGE.md",
+      "docs/public/PRESENTATION_PACK.md",
+      "docs/public/VISUAL_ARCHITECTURE_AND_FLOWS.md",
+      "docs/public/SETUP_AND_DEMO.md",
+      "docs/public/DEMO_WALKTHROUGH.md"
+    ]
+  },
+  {
+    "id": 148,
+    "title": "Internal doc and control-surface consistency pass",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Bring the internal operating docs into the same truth set as the current wrapped baseline and the new documentation-sync frontier so future agents do not start from mixed signals.",
+    "implementation_tasks": [
+      "Review internal indexes, checklists, and runbooks for stale baseline numbers or outdated phase/frontier references.",
+      "Keep control docs explicit about the current wrapped five-family baseline and the narrow documentation-sync follow-up phase.",
+      "Refresh any internal references that still imply an active implementation loop when there is only a planned backlog.",
+      "Keep the backlog references intentional and minimal."
+    ],
+    "done_when": [
+      "internal docs and control docs describe the same current baseline and next frontier",
+      "there are no obvious stale pass-count or phase-marker contradictions in the main internal entrypoints",
+      "the next loop can start from one clear control surface"
+    ],
+    "test_gates": [
+      "pytest tests/ -q"
+    ],
+    "files_likely_touched": [
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/internal/README.md",
+      "docs/internal/LOOPS_RUNBOOK.md",
+      "docs/internal/BROWSER_VERIFICATION_CHECKLIST.md",
+      "docs/internal/VERIFICATION_PASS_FAIL_CHECKLIST.md"
+    ]
+  },
+  {
+    "id": 149,
+    "title": "Documentation truth checkpoint and backlog close",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Validate the documentation-sync phase end to end and close the backlog cleanly so the repo returns to one coherent truth surface.",
+    "implementation_tasks": [
+      "Rerun the narrow validation gates after items 145-148 complete.",
+      "Refresh AGENTS, WORKING_STATE, and the loop runbook to mark the documentation-sync backlog complete.",
+      "Update internal and public index docs if the reading order or active references changed.",
+      "Leave the next frontier blank unless a new narrow backlog is intentionally opened."
+    ],
+    "done_when": [
+      "documentation-sync changes are validated",
+      "control docs point to the new truth without stale active-backlog ambiguity",
+      "the repo has one coherent post-backlog documentation surface"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py"
+    ],
+    "files_likely_touched": [
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/internal/LOOPS_RUNBOOK.md",
+      "docs/internal/README.md",
+      "docs/README.md",
+      "backlog-145-plus.json"
+    ]
+  }
+]

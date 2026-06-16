@@ -49,9 +49,9 @@ Still bounded:
 
 ## Current Frontier
 
-- Active backlog: none
-- Active phase: none
-- Status: `backlog-137-plus.json` closed cleanly after the pilot UX hardening and live-intake trust pass
+- Active backlog: `backlog-145-plus.json` planned
+- Active phase: documentation and demo-truth consistency follow-up
+- Status: `backlog-137-plus.json` closed cleanly after the pilot UX hardening and live-intake trust pass; the next narrow backlog is prepared but not yet started
 
 Completed phases:
 
@@ -90,8 +90,9 @@ Most recently implemented:
 
 Next execution target:
 
-- no active loop is open
-- the next phase should be a new narrow backlog only if a concrete pilot-hardening or bug-fix frontier is agreed
+- `backlog-145-plus.json`
+- focus: documentation truth, route guidance consistency, and control-surface sync
+- no loop is active yet; the next session can start from the first pending item
 
 Truth boundaries maintained:
 

@@ -6,7 +6,9 @@ This document explains how to run Codex or Claude in a controlled implementation
 
 The documentation reset, five-family wedge, near-production ops maturity pass, and pilot UX hardening pass are done.
 
-There is no active implementation backlog right now.
+The next planned implementation backlog is [backlog-145-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-145-plus.json).
+
+No loop is active yet.
 
 ## Loop Rule
 
@@ -59,4 +61,6 @@ Truth boundaries remain:
 - do not present `REPLICA` as arbitrary VM reproduction
 - do not present `TRACE` as a universal debugger
 
-Do not start another loop until a new narrow backlog exists with ordered items, explicit test gates, and files-likely-touched lists.
+The next narrow loop should start from `backlog-145-plus.json`.
+
+Do not start any broader implementation loop until that backlog is either completed or intentionally replaced.

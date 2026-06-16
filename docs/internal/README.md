@@ -18,6 +18,7 @@ Core documents:
 - [Post-116 ops maturity plan](/Users/kunalkachru/Documents/nexus-v3/docs/internal/POST_116_OPS_MATURITY_PLAN.md)
 - [Post-131 pilot UX hardening plan](/Users/kunalkachru/Documents/nexus-v3/docs/internal/POST_131_PILOT_UX_HARDENING_PLAN.md)
 - [Most recent completed backlog](/Users/kunalkachru/Documents/nexus-v3/backlog-137-plus.json)
+- [Next planned backlog](/Users/kunalkachru/Documents/nexus-v3/backlog-145-plus.json)
 
 Top-level control docs still used by agents:
 
@@ -29,4 +30,5 @@ Current checkpoint:
 - the five-family strategy is wrapped
 - the guided demo-intake phase is wrapped
 - the pilot UX hardening and live-intake trust pass is wrapped
-- no new implementation loop should start until a new narrow backlog is written
+- the next narrow follow-up is documentation and demo-truth consistency
+- the next loop should start from `backlog-145-plus.json`
