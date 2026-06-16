@@ -1,6 +1,9 @@
 import re
+import logging
 
 from server.agents.base import BaseAgent
+
+logger = logging.getLogger(__name__)
 from server.models import (
     AgentStubInfo,
     ForgeRunbookResult,
@@ -18,18 +21,19 @@ class GuardianAgent(BaseAgent):
     name = "guardian"
 
     _DANGEROUS_PATTERNS = (
-        r"(^|\s)rm\s+-rf\s+/(?:\s|$)",
+        r"(?:^|\s)rm\s+-rf\s+/(?:\s|$)",
         r"\|\s*sh(?:\s|$)",
-        r"(^|\s)shutdown\s+-h(?:\s|$)",
-        r"(^|\s)mkfs(?:\s|$)",
-        r"(^|\s)dd\s+if=",
+        r"(?:^|\s)shutdown\s+-h(?:\s|$)",
+        r"(?:^|\s)mkfs(?:\s|$)",
+        r"(?:^|\s)dd\s+if=",
     )
     _SECRET_PATTERNS = (
         r"aws_secret_access_key\s*=",
         r"openai_api_key\s*=",
-        r"sk-[a-z0-9]+",
-        r"password\s*=",
+        r"sk-[A-Za-z0-9]{20,}",
+        r"(?:password|passwd|secret)\s*[=:]\s*['\"]",
     )
+    _MAX_CODE_LENGTH = 100000
 
     def __init__(self, sandbox: SandboxExecutor | None = None) -> None:
         self._sandbox = sandbox or SandboxExecutor()
@@ -85,11 +89,27 @@ class GuardianAgent(BaseAgent):
         )
 
     def _blocked_patterns(self, code: str) -> list[str]:
+        if len(code) > self._MAX_CODE_LENGTH:
+            logger.warning(f"Code length {len(code)} exceeds max {self._MAX_CODE_LENGTH}, truncating for pattern matching")
+            code = code[:self._MAX_CODE_LENGTH]
+
         code_lower = code.lower()
-        blocked = [pattern for pattern in self._DANGEROUS_PATTERNS if re.search(pattern, code_lower)]
+        blocked = []
+
+        for pattern in self._DANGEROUS_PATTERNS:
+            try:
+                if re.search(pattern, code_lower):
+                    blocked.append(pattern)
+            except re.error as e:
+                logger.error(f"Invalid regex pattern {pattern}: {e}")
+
         for pattern in self._SECRET_PATTERNS:
-            if re.search(pattern, code_lower):
-                blocked.append(pattern)
+            try:
+                if re.search(pattern, code_lower):
+                    blocked.append(pattern)
+            except re.error as e:
+                logger.error(f"Invalid regex pattern {pattern}: {e}")
+
         return blocked
 
     def _safety_score(self, blocked_patterns: list[str]) -> float:

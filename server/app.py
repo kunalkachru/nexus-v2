@@ -7,6 +7,23 @@ from datetime import datetime, timezone
 import logging
 
 from fastapi import Depends, FastAPI, Query, Request
+
+logger = logging.getLogger(__name__)
+
+
+async def _safe_background_task(coro):
+    """Safely execute a background task with error logging."""
+    try:
+        await coro
+    except Exception as e:
+        logger.exception(f"Background task failed: {e}")
+
+
+def _create_background_task(coro):
+    """Create a background task with automatic error handling."""
+    return asyncio.create_task(_safe_background_task(coro))
+
+
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -84,7 +101,7 @@ class RuntimeExecutionState:
                 "finished_at": datetime.now(timezone.utc).isoformat(),
                 "duration_ms": duration_ms,
             }
-            asyncio.create_task(record_execution_event(event))
+            _create_background_task(record_execution_event(event))
 
             self.current_state = "idle"
             self.current_pack_id = None
