@@ -3,7 +3,7 @@
     "id": 145,
     "title": "Public validation baseline sync",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Refresh public-facing validation claims so README and demo documents match the current shipped baseline instead of older pass counts.",
     "implementation_tasks": [
       "Scan all public-facing docs for stale validation counts, stale dates, and outdated checkpoint wording.",
