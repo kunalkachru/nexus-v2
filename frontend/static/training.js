@@ -529,7 +529,10 @@ function renderProductHealth(healthData) {
   const appHealth = health.app || {};
   const replayHealth = health.replay || {};
   const queueHealth = health.queue || {};
+  const memoryHealth = health.memory || {};
+  const deliveryHealth = health.delivery || {};
   const integrations = health.downstream_integrations || {};
+  const degradedServices = health.degraded_services || [];
 
   setText("appHealthStatus", appHealth.status ? titleCase(appHealth.status) : "-");
   setText("appResponseTime", appHealth.response_time_ms !== undefined ? appHealth.response_time_ms : "-");
@@ -543,6 +546,24 @@ function renderProductHealth(healthData) {
 
   setText("integrationGithub", integrations.github?.available ? "✓ Available" : "✗ Unavailable");
   setText("integrationSlack", integrations.slack?.available ? "✓ Available" : "✗ Unavailable");
+
+  // Render degraded services with guidance
+  const degradedList = document.getElementById("degradedServicesList");
+  if (degradedList) {
+    if (degradedServices.length === 0) {
+      degradedList.innerHTML = "<li>All pilot-critical services are operating normally.</li>";
+    } else {
+      degradedList.innerHTML = degradedServices
+        .map((service) => {
+          const statusEmoji = service.status === "healthy" ? "✓" :
+                             service.status === "degraded" ? "⚠" :
+                             service.status === "unavailable" || service.status === "unhealthy" ? "✗" : "?";
+          const guidanceText = (service.guidance || []).join(" ");
+          return `<li><strong>${statusEmoji} ${titleCase(service.service)}</strong>${guidanceText ? ` — ${guidanceText}` : ""}</li>`;
+        })
+        .join("");
+    }
+  }
 }
 
 window.addEventListener("load", async () => {

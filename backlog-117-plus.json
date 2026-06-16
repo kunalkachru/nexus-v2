@@ -112,7 +112,7 @@
     "id": 120,
     "title": "Observability and pilot-safe alerting surfaces",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Turn the existing health and runtime status views into a clearer pilot operations surface. The product should show whether replay, delivery, queue, and memory services are healthy enough for pilot use and what needs operator attention.",
     "implementation_tasks": [
       "Extend health reporting with operator-meaningful status categories and alert cues.",

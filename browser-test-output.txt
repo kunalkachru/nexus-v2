@@ -1,0 +1,30 @@
+
+> browser:verify
+> playwright test tests/e2e/browser-verification.spec.js --project=chromium --reporter=line
+
+[1A[2K[2m[WebServer] [22m/opt/anaconda3/lib/python3.13/site-packages/langgraph/checkpoint/base/__init__.py:18: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit value (e.g., allowed_objects='messages' or allowed_objects='core') to suppress this warning.
+[2m[WebServer] [22m  from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+
+[1A[2K[2m[WebServer] [22mINFO:     Started server process [35222]
+
+[1A[2K[2m[WebServer] [22mINFO:     Waiting for application startup.
+
+[1A[2K[2m[WebServer] [22mINFO:     Application startup complete.
+
+[1A[2K[2m[WebServer] [22mINFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+
+
+Running 11 tests using 1 worker
+
+[1A[2K[1/11] [chromium] › tests/e2e/browser-verification.spec.js:14:3 › NEXUS browser verification › command center feels agent-first and keeps queue internals secondary
+[1A[2K[2/11] [chromium] › tests/e2e/browser-verification.spec.js:41:3 › NEXUS browser verification › incident detail shows autonomous handoffs and hides technical detail by default
+[1A[2K[3/11] [chromium] › tests/e2e/browser-verification.spec.js:84:3 › NEXUS browser verification › incident detail keeps BYO key masked and request-scoped
+[1A[2K[4/11] [chromium] › tests/e2e/browser-verification.spec.js:102:3 › NEXUS browser verification › learning and controls leads with progress while keeping RL artifacts collapsed
+[1A[2K[5/11] [chromium] › tests/e2e/browser-verification.spec.js:125:3 › NEXUS browser verification › settings exposes runtime-host posture and bounded pack coverage
+[1A[2K[6/11] [chromium] › tests/e2e/browser-verification.spec.js:136:3 › NEXUS browser verification › advanced routes preserve return context back into the incident console
+[1A[2K[7/11] [chromium] › tests/e2e/browser-verification.spec.js:162:3 › NEXUS browser verification › raw log submission opens the created incident with populated agent context
+[1A[2K[8/11] [chromium] › tests/e2e/browser-verification.spec.js:185:3 › NEXUS browser verification › INC001 runtime comparison block shows baseline vs mitigated outcome
+[1A[2K[9/11] [chromium] › tests/e2e/browser-verification.spec.js:203:3 › NEXUS browser verification › INC002 runtime comparison block shows baseline vs mitigated outcome
+[1A[2K[10/11] [chromium] › tests/e2e/browser-verification.spec.js:220:3 › NEXUS browser verification › INC001 TRACE inspection point cites real module or function
+[1A[2K[11/11] [chromium] › tests/e2e/browser-verification.spec.js:237:3 › NEXUS browser verification › INC001 FORGE reasoning cites runtime outcome and GUARDIAN posture is non-generic
+[1A[2K  11 passed (44.5s)

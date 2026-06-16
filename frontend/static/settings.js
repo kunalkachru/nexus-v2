@@ -122,7 +122,7 @@ async function renderSettingsSummary() {
 
 async function renderRuntimeQueueRecovery() {
   try {
-    const health = await fetchAuthedJson("/api/v1/platform/health").catch(() => ({}));
+    const health = await fetchAuthedJson("/api/v1/observability/health").catch(() => ({}));
     const runtimeQueue = health.runtime_queue || {};
 
     const statusColor =
@@ -145,7 +145,7 @@ async function renderRuntimeQueueRecovery() {
 
 async function renderDeploymentReadiness() {
   try {
-    const health = await fetchAuthedJson("/api/v1/platform/health").catch(() => ({}));
+    const health = await fetchAuthedJson("/api/v1/observability/health").catch(() => ({}));
     const readiness = health.deployment_readiness || {};
 
     const readinessLabel =
@@ -181,6 +181,35 @@ async function renderDeploymentReadiness() {
   }
 }
 
+async function renderDegradedServices() {
+  try {
+    const health = await fetchAuthedJson("/api/v1/observability/health").catch(() => ({}));
+    const degradedServices = health.degraded_services || [];
+    const guidanceList = document.getElementById("degradedServicesGuidance");
+
+    if (guidanceList) {
+      if (degradedServices.length === 0) {
+        guidanceList.innerHTML = "<li>All pilot-critical services are operating normally.</li>";
+      } else {
+        guidanceList.innerHTML = degradedServices
+          .map((service) => {
+            const statusEmoji = service.status === "healthy" ? "✓" :
+                               service.status === "degraded" ? "⚠" :
+                               service.status === "unavailable" ? "✗" : "?";
+            const guidanceText = (service.guidance || []).join(" ");
+            return `<li><strong>${statusEmoji} ${titleCase(service.service)}</strong>${guidanceText ? ` — ${guidanceText}` : ""}</li>`;
+          })
+          .join("");
+      }
+    }
+  } catch (error) {
+    const guidanceList = document.getElementById("degradedServicesGuidance");
+    if (guidanceList) {
+      guidanceList.innerHTML = `<li>Unable to load service status: ${error.message}</li>`;
+    }
+  }
+}
+
 window.addEventListener("load", () => {
   renderBootstrapStatus().catch((error) => {
     const missingFields = document.getElementById("bootstrapMissingFields");
@@ -201,5 +230,11 @@ window.addEventListener("load", () => {
   renderDeploymentReadiness().catch((error) => {
     setText("deploymentReadiness", "Error");
     setText("deploymentMessage", `Error loading deployment readiness: ${error.message}`);
+  });
+  renderDegradedServices().catch((error) => {
+    const guidanceList = document.getElementById("degradedServicesGuidance");
+    if (guidanceList) {
+      guidanceList.innerHTML = `<li>Error loading service status: ${error.message}</li>`;
+    }
   });
 });
