@@ -3,7 +3,7 @@
     "id": 137,
     "title": "Queue and incident-access usability pass",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make it easier for a first-time operator to find seeded incidents, reach fresh-incident intake, and understand which route to take next from the queue.",
     "implementation_tasks": [
       "Audit the current queue and app-shell navigation path from queue to seeded incidents and from queue to `/inputs`.",

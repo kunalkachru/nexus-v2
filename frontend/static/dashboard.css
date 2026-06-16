@@ -618,6 +618,97 @@ h3 {
   gap: 12px;
 }
 
+.queue-path-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.path-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 22px 22px 20px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 250, 245, 0.72), rgba(255, 245, 237, 0.52));
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+html[data-theme="dark"] .path-card {
+  background: linear-gradient(180deg, rgba(32, 24, 42, 0.92), rgba(18, 14, 25, 0.88));
+}
+
+.path-card:hover,
+.path-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+  border-color: var(--border-accent-strong);
+}
+
+.path-card-primary {
+  border-color: var(--border-accent-strong);
+  background:
+    radial-gradient(circle at top right, rgba(255, 143, 82, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(255, 249, 241, 0.88), rgba(255, 241, 231, 0.78));
+}
+
+html[data-theme="dark"] .path-card-primary {
+  background:
+    radial-gradient(circle at top right, rgba(255, 143, 82, 0.2), transparent 34%),
+    linear-gradient(180deg, rgba(40, 28, 30, 0.98), rgba(24, 17, 22, 0.94));
+}
+
+.path-card-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.path-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.22rem;
+  line-height: 1.2;
+}
+
+.path-card p,
+.path-card-meta {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.path-card-list {
+  align-content: start;
+}
+
+.seeded-incident-list {
+  display: grid;
+  gap: 10px;
+}
+
+.seeded-incident-link {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+.seeded-incident-link:hover,
+.seeded-incident-link:focus-visible {
+  border-color: var(--border-accent);
+  background: var(--surface-active);
+  transform: translateX(2px);
+}
+
 .queue-status {
   display: grid;
   gap: 12px;
@@ -2557,6 +2648,12 @@ h3 {
 .queue-list-compact {
   display: grid;
   gap: 12px;
+}
+
+@media (max-width: 1120px) {
+  .queue-path-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .working-memory-shell {

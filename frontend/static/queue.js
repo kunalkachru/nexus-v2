@@ -79,7 +79,7 @@ async function renderQueueSummary() {
   const queueList = document.querySelector(".queue-list");
   if (queueList && items.length) {
     queueList.innerHTML = items
-      .slice(0, 3)
+      .slice(0, 5)
       .map(
         (item) => {
           const incidentUrl = `incident?nexus_incident_id=${encodeURIComponent(item.nexus_incident_id)}`;

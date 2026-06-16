@@ -60,9 +60,10 @@
                 </div>
                 <div class="command-context-links">
                     <a class="nav-link channel-cta" id="queueOpenConsoleLink" href="incident?nexus_incident_id=INC001" data-preserve-return data-loading-label="Opening incident detail...">Open incident detail</a>
+                    <a class="nav-link channel-cta" href="inputs" data-preserve-return data-loading-label="Opening raw-log intake...">Start from raw logs</a>
                     <a class="nav-link channel-ghost" href="history" data-preserve-return>Open archive</a>
                     <a class="nav-link channel-ghost" href="replay" data-preserve-return>View replay set</a>
-                    <a class="nav-link channel-ghost" href="incident?nexus_incident_id=INC006" data-preserve-return>Open P0 certificate scenario</a>
+                    <a class="nav-link channel-ghost" href="incident?nexus_incident_id=INC003" data-preserve-return>Open deploy regression scenario</a>
                 </div>
             </div>
             <div class="hero-panel controls">
@@ -115,16 +116,48 @@
 
         <section class="section">
             <div class="section-header">
-                <h2>Compact queue rail</h2>
-                <div class="section-note">The crew works one focal incident while the rest of the queue stays visible but secondary.</div>
+                <h2>Choose your path</h2>
+                <div class="section-note">Use the seeded wedge when you want the cleanest bounded story, or start from raw logs when you want to prove the live intake path.</div>
+            </div>
+            <div class="queue-path-grid">
+                <a class="path-card path-card-primary" href="inputs" data-preserve-return data-loading-label="Opening raw-log intake...">
+                    <div class="path-card-eyebrow">Fresh incident</div>
+                    <h3>Start from raw logs</h3>
+                    <p>Paste noisy evidence or load a guided bundle to show how NEXUS moves from first contact into a shaped investigation packet.</p>
+                    <div class="path-card-meta">Best for stakeholder demos of the live support-to-engineering relay.</div>
+                </a>
+                <a class="path-card" href="incident?nexus_incident_id=INC001" data-preserve-return data-loading-label="Opening flagship seeded incident...">
+                    <div class="path-card-eyebrow">Flagship seeded incident</div>
+                    <h3>Open the strongest bounded story</h3>
+                    <p>Jump straight into `INC001` when you want the clearest replay-backed timeout and retry amplification walkthrough.</p>
+                    <div class="path-card-meta">Best for showing runtime evidence, bounded TRACE, and governed approval.</div>
+                </a>
+                <div class="path-card path-card-list">
+                    <div class="path-card-eyebrow">Supported five-family wedge</div>
+                    <h3>Seeded incidents to review</h3>
+                    <div class="seeded-incident-list">
+                        <a class="seeded-incident-link" href="incident?nexus_incident_id=INC001" data-preserve-return>INC001 · Checkout timeout / retry amplification</a>
+                        <a class="seeded-incident-link" href="incident?nexus_incident_id=INC002" data-preserve-return>INC002 · DB pool exhaustion / session leak</a>
+                        <a class="seeded-incident-link" href="incident?nexus_incident_id=INC003" data-preserve-return>INC003 · Deploy regression / 5xx spike</a>
+                        <a class="seeded-incident-link" href="incident?nexus_incident_id=INC005" data-preserve-return>INC005 · Queue / worker backlog</a>
+                        <a class="seeded-incident-link" href="incident?nexus_incident_id=INC007" data-preserve-return>INC007 · Auth dependency slowdown</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Recent incident rail</h2>
+                <div class="section-note">The focal case stays primary, but nearby incidents remain one click away for comparison or follow-up.</div>
             </div>
             <div class="queue-list queue-list-compact">
                 <a class="incident-btn" href="incident?nexus_incident_id=INC001">
                     <div class="queue-row">
-                        <strong>INC001 · API timeout</strong>
+                        <strong>INC001 · Checkout timeout</strong>
                         <span class="badge">P1</span>
                     </div>
-                    <div class="queue-meta">Stage: evidence_retrieved · Source: webhook · Owner: API Platform</div>
+                    <div class="queue-meta">Stage: evidence_retrieved · Source: webhook · Owner: Checkout Platform</div>
                 </a>
                 <a class="incident-btn" href="incident?nexus_incident_id=INC002">
                     <div class="queue-row">
@@ -135,17 +168,24 @@
                 </a>
                 <a class="incident-btn" href="incident?nexus_incident_id=INC003">
                     <div class="queue-row">
-                        <strong>INC003 · Memory leak</strong>
+                        <strong>INC003 · Deploy regression</strong>
                         <span class="badge">P2</span>
                     </div>
-                    <div class="queue-meta">Stage: prism_diagnosed · Source: stream_anomaly · Owner: Worker Fleet</div>
+                    <div class="queue-meta">Stage: prism_diagnosed · Source: stream_anomaly · Owner: Catalog Platform</div>
                 </a>
-                <a class="incident-btn" href="incident?nexus_incident_id=INC006">
+                <a class="incident-btn" href="incident?nexus_incident_id=INC005">
                     <div class="queue-row">
-                        <strong>INC006 · Certificate expiry</strong>
-                        <span class="badge">P0</span>
+                        <strong>INC005 · Queue backlog</strong>
+                        <span class="badge">P2</span>
                     </div>
-                    <div class="queue-meta">Stage: guardian_reviewed · Source: webhook · Owner: Edge Platform</div>
+                    <div class="queue-meta">Stage: prism_diagnosed · Source: webhook · Owner: Worker Platform</div>
+                </a>
+                <a class="incident-btn" href="incident?nexus_incident_id=INC007">
+                    <div class="queue-row">
+                        <strong>INC007 · Auth dependency slowdown</strong>
+                        <span class="badge">P2</span>
+                    </div>
+                    <div class="queue-meta">Stage: sentinel_classified · Source: manual_form · Owner: Identity Platform</div>
                 </a>
             </div>
         </section>

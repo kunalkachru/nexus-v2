@@ -25,6 +25,10 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByRole("navigation", { name: "Primary" })).not.toContainText("Settings");
 
     await expect(page.getByRole("heading", { name: "Turn support chaos into one focused operating room." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Choose your path" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Start from raw logs", exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Supported five-family wedge")).toBeVisible();
+    await expect(page.locator(".seeded-incident-link")).toHaveCount(5);
     await expect(page.getByText("Agent Crew")).toBeVisible();
     await expect(page.locator(".agent-crew-strip .crew-bot")).toHaveCount(4);
     await expect(page.locator(".crew-bot-name")).toHaveText(["SENTINEL", "PRISM", "FORGE", "GUARDIAN"]);
