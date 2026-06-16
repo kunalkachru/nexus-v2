@@ -11,7 +11,7 @@ NEXUS is an AI-assisted support-to-engineering investigation product: noisy logs
 - Branch: `master`
 - Current bounded wedge: five supported outage families
 - `pytest tests/ -q` → target baseline: **168 passed**
-- `npm run browser:verify` → target baseline: **11 passed**
+- `npm run browser:verify` → target baseline: **13 passed**
 - `python demo.py` → demo incidents complete
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → should pass
 - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` → should pass
@@ -49,14 +49,15 @@ Still bounded:
 
 ## Current Frontier
 
-- Active backlog: none
-- Active phase: current five-family strategy wrapped
-- Entry item: only create a new backlog for narrow bugfixes or pilot-specific follow-up work
+- Active backlog: `backlog-125-plus.json`
+- Active phase: six-agent handoff UX hardening
+- Status: 5/6 items complete (items 125-129 done, item 130 in final validation)
 
-Completed phase:
+Completed phases:
 
 - `backlog-117-plus.json` closed
 - near-production ops maturity closed
+- six-agent handoff UX: contract, relay, packets, animations, replay controls added
 
 Current wrapped baseline:
 
@@ -64,5 +65,20 @@ Current wrapped baseline:
 - bounded REPLICA runtime replay
 - bounded TRACE debugging and engineering handoff
 - pilot-safe observability, governance, exports, resilience, and review packet automation
+- visible six-agent handoff with packet flow and demo replay mode
 
-The next implementation work should stay narrow and evidence-driven rather than opening a new broad roadmap by default.
+Implemented in this phase:
+
+- visible relay: `SENTINEL -> PRISM -> REPLICA -> TRACE -> FORGE -> GUARDIAN` with animated baton transfer
+- `handoff_flow` contract across seeded and live incident paths
+- current-owner state with previous/next owner visibility
+- emitted/received packet cards from handoff events
+- chronological handoff ledger with event tracking
+- pulse animations for active relay nodes and ledger highlighting
+- demo-mode replay controls (start, next, reset) for operator walkthroughs
+
+Truth boundaries maintained:
+
+- `REPLICA` remains bounded to curated reproduction packs (not arbitrary VM reproduction)
+- `TRACE` remains bounded to curated debugging (not universal code debugger)
+- all handoff packet surfaces include explicit scope messaging about bounded capability

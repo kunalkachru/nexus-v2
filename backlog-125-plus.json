@@ -143,7 +143,7 @@
     "id": 130,
     "title": "Docs, validation, and checkpoint for agent handoff UX",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Refresh the owner-facing walkthrough and, if this backlog is adopted, the control docs, so the repo truthfully explains the new six-agent handoff surfaces and replay model.",
     "implementation_tasks": [
       "Update the master operator demo guide with current-owner, packet, ledger, replay instructions, and the six-agent chain including REPLICA and TRACE.",

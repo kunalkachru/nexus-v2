@@ -13,7 +13,7 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - `INC007` auth dependency slowdown / token validation failures
 - Current validated baseline:
   - `pytest tests/ -q` -> `168 passed`
-  - `npm run browser:verify` -> `11 passed`
+  - `npm run browser:verify` -> `13 passed`
   - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
@@ -140,11 +140,11 @@ feat(#<id>): <title>
 
 Active backlog:
 
-- none; `backlog-117-plus.json` is complete
+- `backlog-125-plus.json`
 
 Current phase:
 
-- current five-family market-ready objective is wrapped
+- six-agent handoff UX hardening for the incident console
 
 The current shipped baseline is:
 
@@ -154,7 +154,12 @@ The current shipped baseline is:
 - packaged runtime-host relay
 - operator, pilot, and buyer proof surfaces
 
-Do not start another implementation loop until a new narrow backlog is written.
+The current active implementation target is:
+
+- make agent control transfer visibly real in the incident UI
+- promote `REPLICA` and `TRACE` into first-class visible relay participants
+- keep `REPLICA` and `TRACE` execution scope explicitly bounded
+- add packet movement, handoff ledger, and replay controls without changing the product category
 
 ## Reality Check
 
@@ -179,6 +184,13 @@ Implemented now:
 - shared evidence-posture language across seeded and live incident paths
 - stricter debugger evidence contract and fresh-incident truth gates
 - pilot-ready case lifecycle, downstream sends, tenant-aware routing, engineering feedback, admin visibility, and buyer-facing ROI surfaces
+- route transition and submit-progress UX improvements for the `/incident -> /inputs -> fresh incident` flow
+- truthful six-agent baton relay in the incident console with explicit handoff_flow contract
+- `REPLICA` and `TRACE` as first-class visible relay agents in the UI with bounded scope messaging
+- handoff packet cards showing emitted/received packets between agents
+- chronological handoff ledger with event details and status
+- clearer transfer animations with pulse effects and active state highlighting
+- demo-mode handoff chain replay controls for operator walkthroughs
 
 Not implemented yet:
 
@@ -192,15 +204,20 @@ Not implemented yet:
 
 ## Checkpoint Note
 
-The current product objective is complete for the present strategy:
+The five-family market-ready baseline remains wrapped for the present strategy.
 
-- five bounded outage families
-- bounded REPLICA and bounded TRACE
-- truthful runtime-backed versus inference-first posture
-- governed support-to-engineering investigation workflow
-- pilot-safe operational surfaces, exports, and review kits
+The active next slice is intentionally narrow:
 
-Any next phase should be narrow: bugfixes, pilot-specific hardening, or explicitly scoped tenant follow-ups.
+- six-agent relay visibility
+- handoff ledger and packet movement
+- current-owner state
+- replayable handoff demo mode
+
+Boundaries remain:
+
+- `REPLICA` becomes a first-class visible relay agent in the UI, but not a universal reproduction system
+- `TRACE` becomes a first-class visible relay agent in the UI, but not a universal debugger
+- no new outage families or platform broadening are in scope for this backlog
 
 ## Reference
 
