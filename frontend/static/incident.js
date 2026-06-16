@@ -15,6 +15,7 @@ import {
 
 const FRESH_TRIAGE_STORAGE_KEY = "nexus.fresh_triage_incident_id";
 const DEMO_BUNDLE_CONTEXT_PREFIX = "nexus.demo_bundle_context.";
+const PENDING_INCIDENT_LAUNCH_PREFIX = "nexus.pending_incident_launch.";
 const LAST_TRIAGE_SUMMARY_KEY = "nexus.last_triage_summary";
 const RELAY_SEEN_PREFIX = "nexus.relay_seen.";
 let relayRunToken = 0;
@@ -78,6 +79,10 @@ function demoBundleContextKey(incidentId) {
   return `${DEMO_BUNDLE_CONTEXT_PREFIX}${incidentId}`;
 }
 
+function pendingIncidentLaunchKey(incidentId) {
+  return `${PENDING_INCIDENT_LAUNCH_PREFIX}${incidentId}`;
+}
+
 function readDemoBundleContext(incidentId) {
   if (!incidentId) {
     return null;
@@ -87,6 +92,51 @@ function readDemoBundleContext(incidentId) {
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
+  }
+}
+
+function readPendingIncidentLaunch(incidentId) {
+  if (!incidentId) {
+    return null;
+  }
+  try {
+    const raw = window.sessionStorage.getItem(pendingIncidentLaunchKey(incidentId));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingIncidentLaunch(incidentId) {
+  if (!incidentId) {
+    return;
+  }
+  try {
+    window.sessionStorage.removeItem(pendingIncidentLaunchKey(incidentId));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function hasFreshLaunchFlag() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("fresh_launch") === "1";
+  } catch {
+    return false;
+  }
+}
+
+function clearFreshLaunchFlag() {
+  try {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("fresh_launch")) {
+      return;
+    }
+    url.searchParams.delete("fresh_launch");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  } catch {
+    // Ignore URL rewrite failures.
   }
 }
 
@@ -271,6 +321,32 @@ function showFreshIntakeLanding(data) {
       : "You are landing on the top-level incident brief first. Replay handoff is available if you want to inspect how the crew reached this packet."
   );
   window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+function renderPendingIncidentLaunch(incidentId) {
+  const pending = readPendingIncidentLaunch(incidentId);
+  if (!pending && !hasFreshLaunchFlag()) {
+    return null;
+  }
+  const incidentHandle = formatIncidentHandle(incidentId);
+  const bundleLabel = pending?.bundle_title ? `${pending.bundle_title} · ` : "";
+  window.NexusNavigation?.beginRouteTransition?.("Preparing incident brief...");
+  setText("incidentTitle", `${incidentHandle} · preparing fresh brief`);
+  setText("incidentSubtitle", "Fresh intake captured. NEXUS is assembling the top incident brief before any deeper relay detail appears.");
+  setText("incidentHeroId", incidentHandle);
+  setText("incidentHeroSeverity", pending?.severity || "PENDING");
+  setText("incidentHeroGuardian", "PENDING");
+  setText("incidentHeroExecution", "PENDING");
+  setText("incidentOverviewNote", `${bundleLabel}${pending?.service || "Fresh intake"} is being shaped into a bounded investigation packet now.`);
+  setText("liveReasoningDetail", "Hydrating the fresh incident workspace. The operator-first brief will appear before deeper relay detail.");
+  setText("operatorNextStep", pending?.bundle_next_step || "Hold on while NEXUS loads the incident brief, then start at the top summary before inspecting replay or TRACE.");
+  setText("relayStageBanner", "Fresh intake captured. Preparing the top incident brief first so the landing page reads clearly.");
+  setText("guardianRelayPrompt", "Guardian is waiting for the prepared packet. The fresh incident will open at the top summary before any deeper replay detail.");
+  setText("collaborationLead", "Hydrating fresh incident brief.");
+  setText("collaborationNarrative", `${incidentHandle} is loading from raw intake. The first render will prioritize the incident summary, support posture, and next operator action.`);
+  setText("collaborationOutcome", "The handoff replay remains available, but it should not interrupt the first landing read.");
+  setText("resultBanner", `${incidentHandle} · OPENING WORKSPACE`);
+  return pending;
 }
 
 function persistLastTriageSummary(data) {
@@ -1725,6 +1801,7 @@ function applyRoleBasedVisibility(capabilities) {
 window.addEventListener("DOMContentLoaded", async () => {
   const incidentId = getIncidentId();
   const historyReviewMode = isHistoryReviewMode();
+  const pendingLaunch = renderPendingIncidentLaunch(incidentId);
   let currentIncidentData = null;
   syncLiveReasoningToggle();
   syncOpenAIKeyUI();
@@ -2151,8 +2228,12 @@ Generated: ${proof.export_timestamp}
       syncLiveReasoningState({ ...data, live_reasoning: false });
     }
     await maybePlayInitialRelay(incidentId, data);
+    clearPendingIncidentLaunch(incidentId);
+    clearFreshLaunchFlag();
+    window.NexusNavigation?.endRouteTransition?.();
   } catch (error) {
     setText("incidentTitle", "Incident unavailable");
     setText("resultBanner", `Failed to load ${incidentId}: ${error.message}`);
+    window.NexusNavigation?.endRouteTransition?.();
   }
 });

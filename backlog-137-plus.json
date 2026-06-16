@@ -115,7 +115,7 @@
     "id": 141,
     "title": "Guided raw-log demo path refinement",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Polish the `/inputs -> fresh incident` story so a stakeholder can load a curated bundle, understand what it proves, submit it, and land in the right top-of-page context without awkward transitions or narration gaps.",
     "implementation_tasks": [
       "Review bundle selection, submit progress, and landing behavior on the fresh incident page.",

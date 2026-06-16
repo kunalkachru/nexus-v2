@@ -8,6 +8,7 @@ service=checkout-api severity=P1`;
 const WEBHOOK_SECRET = "nexus-demo-webhook-secret";
 const FRESH_TRIAGE_STORAGE_KEY = "nexus.fresh_triage_incident_id";
 const DEMO_BUNDLE_CONTEXT_PREFIX = "nexus.demo_bundle_context.";
+const PENDING_INCIDENT_LAUNCH_PREFIX = "nexus.pending_incident_launch.";
 const DEMO_BUNDLES_URL = "static/demo/demo-bundles.json";
 let tenantServiceHints = [];
 let demoBundles = [];
@@ -108,8 +109,22 @@ function incidentHref(incidentId, liveReasoning) {
   return window.NexusNavigation?.withReturnTo(target) || target;
 }
 
+function withFreshLaunchFlag(target) {
+  try {
+    const url = new URL(target, window.location.origin);
+    url.searchParams.set("fresh_launch", "1");
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return target;
+  }
+}
+
 function demoBundleContextKey(incidentId) {
   return `${DEMO_BUNDLE_CONTEXT_PREFIX}${incidentId}`;
+}
+
+function pendingIncidentLaunchKey(incidentId) {
+  return `${PENDING_INCIDENT_LAUNCH_PREFIX}${incidentId}`;
 }
 
 function escapeHtml(value) {
@@ -140,6 +155,23 @@ function persistDemoBundleContext(incidentId, bundle) {
     window.sessionStorage.setItem(demoBundleContextKey(incidentId), JSON.stringify(payload));
   } catch {
     // Ignore storage failures; the incident can still open without the additive demo note.
+  }
+}
+
+function persistPendingIncidentLaunch(incidentId, payload) {
+  if (!incidentId || !payload) {
+    return;
+  }
+  try {
+    window.sessionStorage.setItem(
+      pendingIncidentLaunchKey(incidentId),
+      JSON.stringify({
+        ...payload,
+        stored_at: new Date().toISOString(),
+      })
+    );
+  } catch {
+    // Ignore storage failures; the incident can still open without the additive launch state.
   }
 }
 
@@ -638,7 +670,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (result) {
-      result.textContent = "Step 1 of 3: normalizing the intake and opening a bounded incident record.";
+      result.textContent = "Step 1 of 3: shaping the raw evidence into one bounded incident case.";
     }
     setSubmissionPending(true, "Normalizing intake...");
     setSubmitProgress(1);
@@ -705,7 +737,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
 
       if (result) {
-        result.textContent = `Step 2 of 3: created ${response.nexus_incident_id} with status ${response.status}. Preparing the incident workspace...`;
+        result.textContent = `Step 2 of 3: created ${response.nexus_incident_id} with status ${response.status}. Hydrating the top incident brief now.`;
       }
       setSubmissionPending(true, "Opening workspace...");
       setSubmitProgress(2);
@@ -714,12 +746,25 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (selectedChannel.dataset.channel === "raw_text" && selectedDemoBundle) {
           persistDemoBundleContext(response.nexus_incident_id, selectedDemoBundle);
         }
+        persistPendingIncidentLaunch(response.nexus_incident_id, {
+          channel: selectedChannel.dataset.channel,
+          incident_id: response.nexus_incident_id,
+          status: response.status,
+          service,
+          severity,
+          summary,
+          likely_signature: selectedChannel.dataset.channel === "raw_text"
+            ? parseRawLogText(rawLogInput?.value || channel.payload).signature
+            : channel.summary,
+          bundle_title: selectedDemoBundle?.title || null,
+          bundle_next_step: selectedDemoBundle?.next_step || null,
+        });
       } catch {
         // Ignore storage failures; the incident console still opens normally.
       }
       if (launch) {
         const liveReasoning = getLiveReasoningPreference() ? "1" : "0";
-        launch.href = incidentHref(response.nexus_incident_id, liveReasoning);
+        launch.href = withFreshLaunchFlag(incidentHref(response.nexus_incident_id, liveReasoning));
         launch.dataset.incidentId = response.nexus_incident_id;
         launch.textContent = `Open ${response.nexus_incident_id} incident workspace`;
       }
@@ -727,10 +772,10 @@ window.addEventListener("DOMContentLoaded", async () => {
       const targetHref = launch?.href;
       if (targetHref) {
         if (result) {
-          result.textContent = `Step 3 of 3: opening ${response.nexus_incident_id}. The incident will land at the top summary first, and you can replay the handoff only if you want to inspect the crew transition.`;
+          result.textContent = `Step 3 of 3: opening ${response.nexus_incident_id}. You will land on the top incident brief first, then inspect replay or deeper technical detail only if needed.`;
         }
         setSubmitProgress(3);
-        window.NexusNavigation?.beginRouteTransition?.("Opening incident workspace...");
+        window.NexusNavigation?.beginRouteTransition?.("Opening top incident brief...");
         window.location.assign(targetHref);
         return;
       }

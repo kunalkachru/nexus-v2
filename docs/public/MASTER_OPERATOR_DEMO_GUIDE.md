@@ -303,10 +303,11 @@ After submit:
 
 - a fresh incident with an `nxs_...` id should be created
 - the input screen should show a staged transition rather than a silent freeze:
-  - `Step 1 of 3: normalizing the intake...`
-  - `Step 2 of 3: created ... Preparing the incident workspace...`
+  - `Step 1 of 3: shaping the raw evidence into one bounded incident case...`
+  - `Step 2 of 3: created ... Hydrating the top incident brief now...`
   - `Step 3 of 3: opening ...`
 - the three-step progress strip should visibly advance with that same flow
+- the route transition should read like an intentional handoff into the top incident brief, not like a blank page reload
 - the UI should open the incident workspace for that new incident
 - the created incident should preserve the intake context
 - the fresh incident should land at the **top incident brief first**
