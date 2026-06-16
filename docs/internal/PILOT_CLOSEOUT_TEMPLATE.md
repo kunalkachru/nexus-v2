@@ -114,6 +114,7 @@ Based on feedback, engineering teams assess NEXUS as:
 - **Inference-only clarity**: [Assessment of how clearly inferred-only decisions are labeled]
 - **Unsupported downgrade**: [Assessment of whether out-of-scope incidents downgrade cleanly]
 - **Honest residual risk**: [Assessment of whether risk posture feels earned, not inflated]
+- **Reviewer traceability**: [Assessment of whether exports and audit surfaces clearly show actor, role, and evidence posture]
 
 ### Product Integrity
 
@@ -133,6 +134,7 @@ Based on feedback, engineering teams assess NEXUS as:
 | Triage time visibly shorter | [Met/Partial/Missed] | [Time saved estimate: ___] |
 | No critical regressions | [Met/Partial/Missed] | [Incidents/notes: ___] |
 | Operational posture is honest | [Met/Partial/Missed] | [Assessment: ___] |
+| Reviewer traceability is legible | [Met/Partial/Missed] | [Actor / role / evidence posture visible: ___] |
 
 **Overall pass/fail**: [ ] PASSED | [ ] PARTIAL | [ ] FAILED
 

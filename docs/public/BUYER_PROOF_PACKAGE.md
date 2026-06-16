@@ -31,6 +31,7 @@ NEXUS is designed to show:
 - stronger first-pass engineering handoff quality
 - runtime-backed evidence where curated packs exist
 - bounded governance and auditability
+- reviewer traceability that shows who approved, replayed, exported, or delivered the case packet
 
 ## Current Supported Bounded Families
 
@@ -62,3 +63,18 @@ The product does not claim:
 - fully autonomous production remediation
 - arbitrary environment reproduction
 - broad third-party integration coverage beyond the current bounded flow
+
+## Evidence Posture Buyers Should Expect
+
+Every serious buyer conversation should distinguish:
+
+- `runtime-backed`: bounded replay actually ran and improved or resolved the case
+- `inference-first`: the packet is useful, but runtime replay was not available for this case
+- `unsupported`: the incident family is outside the current wedge and the product should downgrade honestly
+
+NEXUS should also be able to show reviewer traceability:
+
+- who approved the packet
+- who launched replay
+- who exported or sent the handoff
+- what audit trail existed behind the recommendation

@@ -142,7 +142,7 @@
     "id": 121,
     "title": "Audit and export maturity with reviewer traceability",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Make audit and export artifacts stronger for customer review. Approval history, replay state, evidence posture, and downstream actions should be traceable in exports without overstating what was runtime-validated.",
     "implementation_tasks": [
       "Extend export payloads with clearer reviewer and replay traceability fields.",

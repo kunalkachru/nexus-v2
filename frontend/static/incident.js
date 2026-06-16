@@ -1048,6 +1048,30 @@ function formatAuditEventLabel(eventType) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function formatAuditActor(entry) {
+  if (!entry) {
+    return "System";
+  }
+  const payload = entry.payload || {};
+  const actor = entry.actor_user_id || payload.user_id || entry.tenant_id || "System";
+  const roles = Array.isArray(entry.actor_roles) ? entry.actor_roles.filter(Boolean) : [];
+  return roles.length ? `${actor} (${roles.join(", ")})` : actor;
+}
+
+function formatEvidencePostureLabel(value) {
+  const posture = String(value || "").toLowerCase();
+  if (posture === "runtime-backed") {
+    return "Runtime-backed";
+  }
+  if (posture === "inference-first" || posture === "inferred-only") {
+    return "Inference-first";
+  }
+  if (posture === "unsupported") {
+    return "Unsupported";
+  }
+  return titleCase(value || "Recorded");
+}
+
 function renderAudit(status, auditLogs, data) {
   const recentAuditLogs = auditLogs.length ? [...auditLogs].slice(-24) : [];
   setText("workflowSummary", `${data.incident.id} flowing from ${data.incident.source_channel || "webhook"} to verified outcome`);
@@ -1082,7 +1106,7 @@ function renderAudit(status, auditLogs, data) {
   const latest = auditLogs.at(-1);
   setText("auditEntryCount", String(auditLogs.length));
   setText("auditLatestEvent", latest ? formatAuditEventLabel(latest.event_type) : "No events yet");
-  setText("auditLatestActor", latest?.payload?.user_id || latest?.tenant_id || "System");
+  setText("auditLatestActor", formatAuditActor(latest));
   setText("auditLatestState", latest?.payload?.status || latest?.payload?.current_stage || "-");
 
   const chips = document.getElementById("auditSummaryChips");
@@ -1099,7 +1123,7 @@ function renderAudit(status, auditLogs, data) {
     preview.innerHTML = auditLogs
       .slice(-2)
       .reverse()
-      .map((entry) => `<article class="audit-preview-entry"><div class="audit-preview-top"><strong>${formatAuditEventLabel(entry.event_type)}</strong><span>${entry.payload?.status || "recorded"}</span></div><div class="audit-preview-meta">${entry.timestamp || "-"}</div></article>`)
+      .map((entry) => `<article class="audit-preview-entry"><div class="audit-preview-top"><strong>${formatAuditEventLabel(entry.event_type)}</strong><span>${entry.payload?.status || "recorded"}</span></div><div class="audit-preview-meta">${entry.timestamp || "-"} · ${formatAuditActor(entry)}${entry.payload?.evidence_posture ? ` · ${formatEvidencePostureLabel(entry.payload.evidence_posture)}` : ""}</div></article>`)
       .join("");
   }
 
@@ -1109,9 +1133,10 @@ function renderAudit(status, auditLogs, data) {
     (entry) => `
       <article class="audit-entry">
         <div class="audit-entry-top">
-          <div><div class="audit-entry-title">${formatAuditEventLabel(entry.event_type)}</div><div class="audit-entry-meta">${entry.timestamp || "-"} · ${entry.tenant_id || "tenant-system"}</div></div>
+          <div><div class="audit-entry-title">${formatAuditEventLabel(entry.event_type)}</div><div class="audit-entry-meta">${entry.timestamp || "-"} · ${formatAuditActor(entry)} · ${entry.tenant_id || "tenant-system"}${entry.payload?.evidence_posture ? ` · ${formatEvidencePostureLabel(entry.payload.evidence_posture)}` : ""}</div></div>
           <div class="audit-entry-badge">${entry.payload?.status || entry.payload?.current_stage || "recorded"}</div>
         </div>
+        <div class="section-note">${entry.payload?.reasoning || entry.payload?.summary || entry.payload?.note || entry.payload?.decision || "Recorded for reviewer traceability."}</div>
       </article>
     `
   );
@@ -1190,9 +1215,13 @@ function renderDeliveryHistory(data) {
     const reason = entry.failure_reason ? ` — ${entry.failure_reason}` : "";
     const attemptInfo = entry.attempt_count ? ` [attempt ${entry.attempt_count}]` : "";
     const statusLabel = entry.status;
+    const actorInfo = entry.actor_user_id
+      ? ` · ${entry.actor_user_id}${Array.isArray(entry.actor_roles) && entry.actor_roles.length ? ` (${entry.actor_roles.join(", ")})` : ""}`
+      : "";
+    const feedbackInfo = entry.feedback_state ? ` · feedback ${entry.feedback_state}` : "";
     return {
       label: `${icon} ${String(entry.target || "unknown").toUpperCase()} — ${statusLabel}${attemptInfo}${backing}${reason}`,
-      detail: `Sent at ${formatTimestamp(entry.sent_at)}`,
+      detail: `Sent at ${formatTimestamp(entry.sent_at)}${actorInfo}${feedbackInfo}`,
       entry: entry,
     };
   });
@@ -1552,7 +1581,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 - Severity: ${govData.incident_severity}
 
 ## Approval Timeline
-${(govData.approval_timeline || []).map(event => `- **${event.event}** (${event.actor || 'system'}): ${event.summary}`).join('\n')}
+${(govData.approval_timeline || []).map(event => `- **${event.event}** (${event.actor || 'system'}): ${event.summary}${event.evidence_posture ? ` [${event.evidence_posture}]` : ''}`).join('\n')}
 
 ## Governance Decisions
 - Decision: ${govData.governance_decisions?.guardian_decision || 'PENDING'}
@@ -1561,8 +1590,16 @@ ${(govData.approval_timeline || []).map(event => `- **${event.event}** (${event.
 
 ## Evidence Posture
 - Root Cause Evidence: ${govData.evidence_posture?.root_cause_evidence || 'inferred-only'}
+- Support Posture: ${govData.evidence_posture?.support_posture || 'inference-first'}
 - Hypothesis Confidence: ${govData.evidence_posture?.hypothesis_confidence || 0}%
 - Mitigation Validated: ${govData.evidence_posture?.mitigation_validated ? 'Yes' : 'No'}
+
+## Reviewer Traceability
+- Latest actor: ${govData.reviewer_traceability?.latest_actor_label || 'System'}
+- Governance actor: ${govData.reviewer_traceability?.governance_actor_label || 'System'}
+- Replay actor: ${govData.reviewer_traceability?.replay_actor_label || 'Not recorded'}
+- Delivery actor: ${govData.reviewer_traceability?.delivery_actor_label || 'Not recorded'}
+- Audit entries considered: ${govData.reviewer_traceability?.audit_entry_count || 0}
 
 ## Execution Record
 - Status: ${govData.execution_record?.status || 'pending'}

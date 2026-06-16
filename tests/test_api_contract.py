@@ -1468,6 +1468,37 @@ def test_handoff_send_endpoint_returns_delivery_status(client: TestClient, auth_
     assert "sent_at" in payload or "failure_reason" in payload
 
 
+def test_handoff_export_exposes_support_posture_and_traceability(client: TestClient, auth_headers) -> None:
+    response = client.get(
+        "/api/v1/incidents/INC001/handoff-export",
+        params={"format": "markdown"},
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["incident_id"] == "INC001"
+    assert payload["support_posture"] in {"runtime-backed", "inference-first", "unsupported"}
+    assert payload["reviewer_traceability"]["audit_entry_count"] >= 0
+    assert "Reviewer Traceability" in payload["handoff_text"]
+    assert "Evidence posture" in payload["handoff_text"]
+
+
+def test_governance_packet_exposes_reviewer_traceability(client: TestClient, auth_headers) -> None:
+    response = client.get(
+        "/api/v1/incidents/INC001/governance-packet",
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["incident_id"] == "INC001"
+    assert payload["reviewer_traceability"]["audit_entry_count"] >= 0
+    assert payload["evidence_posture"]["support_posture"] in {"runtime-backed", "inference-first", "unsupported"}
+    assert payload["approval_timeline"]
+    assert "evidence_posture" in payload["approval_timeline"][0]
+
+
 def test_handoff_send_persists_delivery_status(client: TestClient, seeded_incident: IncidentRecord, auth_headers) -> None:
     incident_id = seeded_incident.nexus_incident_id
 
