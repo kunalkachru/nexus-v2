@@ -1399,7 +1399,7 @@ function applyRoleBasedVisibility(capabilities) {
   }
 }
 
-window.addEventListener("load", async () => {
+window.addEventListener("DOMContentLoaded", async () => {
   const incidentId = getIncidentId();
   const historyReviewMode = isHistoryReviewMode();
   let currentIncidentData = null;
