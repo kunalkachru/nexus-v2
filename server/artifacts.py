@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
 
+logger = logging.getLogger(__name__)
 _ARTIFACT_LOCK = asyncio.Lock()
 _ARTIFACT_CACHE: dict[str, list[dict[str, object]]] | None = None
 
@@ -69,11 +71,17 @@ def _load_artifacts() -> dict[str, list[dict[str, object]]]:
 def _persist_artifacts(payload: dict[str, list[dict[str, object]]]) -> None:
     global _ARTIFACT_CACHE
     path = _artifact_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temp_path = path.with_suffix(".tmp")
-    temp_path.write_text(json.dumps(payload, indent=2, sort_keys=True))
-    temp_path.replace(path)
-    _ARTIFACT_CACHE = {key: list(value) for key, value in payload.items()}
+
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temp_path = path.with_suffix(".tmp")
+        serialized = json.dumps(payload, indent=2, sort_keys=True)
+        temp_path.write_text(serialized)
+        temp_path.replace(path)
+        _ARTIFACT_CACHE = {key: list(value) for key, value in payload.items()}
+    except Exception as e:
+        logger.exception("Failed to persist artifacts to %s: %s", path, e)
+        raise
 
 
 async def record_replay_launch(record: dict[str, object]) -> None:

@@ -101,8 +101,14 @@ def _load_audit_logs() -> list[dict[str, object]]:
 def _persist_audit_logs(entries: list[dict[str, object]]) -> None:
     global _AUDIT_CACHE
     path = _audit_log_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temp_path = path.with_suffix(".tmp")
-    temp_path.write_text(json.dumps(entries, indent=2, sort_keys=True))
-    temp_path.replace(path)
-    _AUDIT_CACHE = list(entries)
+
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temp_path = path.with_suffix(".tmp")
+        serialized = json.dumps(entries, indent=2, sort_keys=True)
+        temp_path.write_text(serialized)
+        temp_path.replace(path)
+        _AUDIT_CACHE = list(entries)
+    except Exception as e:
+        logger.exception("Failed to persist audit logs to %s: %s", path, e)
+        raise
