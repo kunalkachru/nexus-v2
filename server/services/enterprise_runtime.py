@@ -46,6 +46,125 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def build_live_handoff_flow(
+    incident_id: str,
+    classification: dict[str, object],
+    diagnosis: dict[str, object],
+    replica_summary: dict[str, object],
+    trace_summary: dict[str, object],
+    runbook: dict[str, object],
+    guardian: dict[str, object],
+) -> dict[str, object]:
+    events = [
+        {
+            "id": "sentinel-emitted-triage-packet",
+            "from": "SENTINEL",
+            "to": "PRISM",
+            "status": "completed",
+            "event_type": "packet_emitted",
+            "title": "SENTINEL emitted triage packet",
+            "reason": f"Initial classification with confidence {classification.get('confidence', 0.0)} ready for diagnosis.",
+            "packet": {
+                "packet_type": "triage_packet",
+                "summary": str(classification.get("reasoning", "Classification completed")),
+                "fields": [
+                    {"label": "Severity", "value": str(classification.get("severity", "P2"))},
+                    {"label": "Confidence", "value": f"{float(classification.get('confidence', 0.0)) * 100:.0f}%"},
+                ],
+            },
+        },
+        {
+            "id": "prism-emitted-diagnosis-packet",
+            "from": "PRISM",
+            "to": "REPLICA",
+            "status": "completed",
+            "event_type": "packet_emitted",
+            "title": "PRISM emitted diagnosis packet",
+            "reason": f"Root cause analysis with confidence {diagnosis.get('confidence', 0.0)} ready for validation.",
+            "packet": {
+                "packet_type": "diagnosis_packet",
+                "summary": str(diagnosis.get("root_cause", "Diagnosis pending")),
+                "fields": [
+                    {"label": "Root cause", "value": str(diagnosis.get("root_cause", "Analysis in progress"))},
+                ],
+            },
+        },
+        {
+            "id": "replica-emitted-reproduction-packet",
+            "from": "REPLICA",
+            "to": "TRACE",
+            "status": "completed",
+            "event_type": "packet_emitted",
+            "title": "REPLICA emitted reproduction packet",
+            "reason": f"Reproduction status: {replica_summary.get('reproduction_status', 'not_run')}.",
+            "packet": {
+                "packet_type": "reproduction_packet",
+                "summary": str(replica_summary.get("reasoning", "Reproduction assessment complete")),
+                "fields": [
+                    {"label": "Reproduction status", "value": str(replica_summary.get("reproduction_status", "not_run"))},
+                ],
+            },
+        },
+        {
+            "id": "trace-emitted-debug-packet",
+            "from": "TRACE",
+            "to": "FORGE",
+            "status": "completed",
+            "event_type": "packet_emitted",
+            "title": "TRACE emitted debug packet",
+            "reason": f"Code path analysis ready with confidence {trace_summary.get('confidence', 0.0)}.",
+            "packet": {
+                "packet_type": "debug_packet",
+                "summary": str(trace_summary.get("reasoning", "Debug analysis complete")),
+                "fields": [
+                    {"label": "Trace status", "value": str(trace_summary.get("trace_status", "not_run"))},
+                ],
+            },
+        },
+        {
+            "id": "forge-emitted-runbook-packet",
+            "from": "FORGE",
+            "to": "GUARDIAN",
+            "status": "completed",
+            "event_type": "packet_emitted",
+            "title": "FORGE emitted runbook packet",
+            "reason": "Remediation plan ready for governance approval.",
+            "packet": {
+                "packet_type": "runbook_packet",
+                "summary": str(runbook.get("summary", "Remediation plan ready")),
+                "fields": [
+                    {"label": "Recommended action", "value": str(runbook.get("recommended_runbook", "Mitigation pending"))},
+                ],
+            },
+        },
+        {
+            "id": "guardian-accepted-governance-packet",
+            "from": "GUARDIAN",
+            "to": "execution",
+            "status": "completed",
+            "event_type": "packet_received",
+            "title": "GUARDIAN accepted governance packet",
+            "reason": f"Safety decision: {guardian.get('decision', 'pending')}.",
+            "packet": {
+                "packet_type": "governance_packet",
+                "summary": f"Decision: {guardian.get('decision', 'pending')}",
+                "fields": [
+                    {"label": "Decision", "value": str(guardian.get("decision", "pending"))},
+                ],
+            },
+        },
+    ]
+
+    return {
+        "current_owner": "GUARDIAN",
+        "previous_owner": "FORGE",
+        "next_owner": "execution",
+        "state": "in_progress",
+        "transfer_reason": "FORGE handed remediation packet to GUARDIAN for safety review.",
+        "events": events,
+    }
+
+
 class RuntimeState(TypedDict):
     alert_envelope: NormalizedAlertEnvelope
     context: IncidentContext
@@ -585,6 +704,15 @@ class EnterpriseNexusRuntime:
             recent_deployments=incident_deployments_from_observability(observability),
             recent_logs=observability.get("recent_logs", []),
         )
+        handoff_flow = build_live_handoff_flow(
+            incident_id=incident_id,
+            classification=classification,
+            diagnosis=diagnosis,
+            replica_summary=replica_summary,
+            trace_summary=trace_summary,
+            runbook=runbook,
+            guardian=guardian,
+        )
         task_board = [
             self._task("sentinel-classify", "SENTINEL", "completed", "Classify severity and pattern", str(classification.get("reasoning", "")), "PRISM"),
             self._task("prism-evidence", "PRISM", "completed", "Correlate logs and metrics", f"{len(observability.get('recent_logs', []))} live evidence lines assembled", "PRISM"),
@@ -606,6 +734,7 @@ class EnterpriseNexusRuntime:
             "triage_summary": triage_summary,
             "replica_summary": replica_summary,
             "trace_summary": trace_summary,
+            "handoff_flow": handoff_flow,
             "task_board": {"tasks": task_board},
             "memory_hits": memory_hits,
             "agent_metrics": {

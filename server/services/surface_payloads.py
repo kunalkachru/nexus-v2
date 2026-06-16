@@ -25,6 +25,142 @@ METRICS_PATH = Path(__file__).resolve().parents[2] / "frontend" / "metrics.json"
 OBSERVABILITY_SERVICE = ObservabilityService()
 
 
+def build_seeded_handoff_flow(
+    incident_id: str,
+    incident_name: str,
+    triage_summary: dict[str, object],
+    replica_summary: dict[str, object],
+    trace_summary: dict[str, object],
+    classification: dict[str, object],
+    diagnosis: dict[str, object],
+    runbook: dict[str, object],
+    guardian: dict[str, object],
+) -> dict[str, object]:
+    events = [
+        {
+            "id": "sentinel-emitted-triage-packet",
+            "from": "SENTINEL",
+            "to": "PRISM",
+            "status": "completed",
+            "event_type": "packet_emitted",
+            "title": "SENTINEL emitted triage packet",
+            "reason": f"Initial classification is stable with confidence {classification.get('confidence', 0.0)} for issue diagnosis branching.",
+            "packet": {
+                "packet_type": "triage_packet",
+                "summary": str(classification.get("evidence", ["Issue classification completed"])[0] if classification.get("evidence") else "Issue family and likely owner identified"),
+                "fields": [
+                    {"label": "Issue family", "value": str(triage_summary.get("issue_family", "Unknown"))},
+                    {"label": "Likely owner", "value": str(triage_summary.get("likely_owner_service", incident_name))},
+                    {"label": "Severity", "value": str(classification.get("severity", "Unknown"))},
+                    {"label": "Confidence", "value": f"{float(classification.get('confidence', 0.0)) * 100:.0f}%"},
+                ],
+            },
+        },
+        {
+            "id": "prism-emitted-diagnosis-packet",
+            "from": "PRISM",
+            "to": "REPLICA",
+            "status": "completed",
+            "event_type": "packet_emitted",
+            "title": "PRISM emitted diagnosis packet",
+            "reason": f"Root cause analysis is ready with confidence {diagnosis.get('confidence', 0.0)} for reproduction.",
+            "packet": {
+                "packet_type": "diagnosis_packet",
+                "summary": str(diagnosis.get("root_cause", "Root cause analysis pending")),
+                "fields": [
+                    {"label": "Root cause", "value": str(diagnosis.get("root_cause", "Unknown"))},
+                    {"label": "Analysis confidence", "value": f"{float(diagnosis.get('confidence', 0.0)) * 100:.0f}%"},
+                    {"label": "Evidence basis", "value": f"{len(diagnosis.get('supporting_logs', []))} supporting logs"},
+                ],
+            },
+        },
+        {
+            "id": "replica-emitted-reproduction-packet",
+            "from": "REPLICA",
+            "to": "TRACE",
+            "status": "completed",
+            "event_type": "packet_emitted",
+            "title": "REPLICA emitted reproduction packet",
+            "reason": f"Sandbox reproduction status: {replica_summary.get('reproduction_status', 'not_run')}.",
+            "packet": {
+                "packet_type": "reproduction_packet",
+                "summary": str(replica_summary.get("reasoning", "Reproduction completed") or "Reproduction status assessed"),
+                "fields": [
+                    {"label": "Pack ID", "value": str(replica_summary.get("environment_pack_id", "bounded_pack"))},
+                    {"label": "Reproduction status", "value": str(replica_summary.get("reproduction_status", "not_run"))},
+                    {"label": "Runtime mode", "value": str(replica_summary.get("runtime_mode", "inference_only"))},
+                ],
+            },
+        },
+        {
+            "id": "trace-emitted-debug-packet",
+            "from": "TRACE",
+            "to": "FORGE",
+            "status": "completed",
+            "event_type": "packet_emitted",
+            "title": "TRACE emitted debug packet",
+            "reason": f"Code path analysis ready with confidence {trace_summary.get('confidence', 0.0)}.",
+            "packet": {
+                "packet_type": "debug_packet",
+                "summary": str(trace_summary.get("reasoning", "Code path inspection completed") or "Debug analysis ready"),
+                "fields": [
+                    {"label": "Inspection point", "value": str(trace_summary.get("inspection_point", "Runtime path determined"))},
+                    {"label": "Trace status", "value": str(trace_summary.get("trace_status", "not_run"))},
+                ],
+            },
+        },
+        {
+            "id": "forge-emitted-runbook-packet",
+            "from": "FORGE",
+            "to": "GUARDIAN",
+            "status": "completed",
+            "event_type": "packet_emitted",
+            "title": "FORGE emitted runbook packet",
+            "reason": "Remediation path is ready for governance review.",
+            "packet": {
+                "packet_type": "runbook_packet",
+                "summary": str(runbook.get("summary", "Remediation plan ready")),
+                "fields": [
+                    {"label": "Recommended action", "value": str(runbook.get("recommended_runbook", "Review and execute mitigation"))},
+                    {"label": "Selection logic", "value": str(runbook.get("selection_logic", "Runtime-aligned candidate fixes selected"))},
+                    {"label": "Cost estimate", "value": f"${runbook.get('cost_usd', 0.12):.2f}"},
+                ],
+            },
+        },
+        {
+            "id": "guardian-accepted-governance-packet",
+            "from": "GUARDIAN",
+            "to": "execution",
+            "status": "completed",
+            "event_type": "packet_received",
+            "title": "GUARDIAN accepted governance packet",
+            "reason": f"Safety review decision: {guardian.get('decision', 'pending')}.",
+            "packet": {
+                "packet_type": "governance_packet",
+                "summary": f"Governance decision: {guardian.get('decision', 'pending')}",
+                "fields": [
+                    {"label": "Decision", "value": str(guardian.get("decision", "pending"))},
+                    {"label": "Confidence", "value": f"{float(guardian.get('confidence', 0.0)) * 100:.0f}%"},
+                    {"label": "Risk class", "value": str(guardian.get("risk_class", "medium"))},
+                ],
+            },
+        },
+    ]
+
+    current_owner = "GUARDIAN"
+    previous_owner = "FORGE"
+    next_owner = "execution"
+
+    return {
+        "current_owner": current_owner,
+        "previous_owner": previous_owner,
+        "next_owner": next_owner,
+        "state": "in_progress",
+        "transfer_reason": f"{previous_owner} handed remediation packet to {current_owner} for approval.",
+        "events": events,
+    }
+
+
 def _display_severity(severity: str) -> str:
     return normalize_priority_label(severity)
 
@@ -84,6 +220,18 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
         "recent_guardian_outcomes": [],
     }
     memory_hits = enrich_memory_with_runtime(memory_hits, replica_summary=replica_summary)
+
+    handoff_flow = build_seeded_handoff_flow(
+        incident_id=incident.id,
+        incident_name=incident.name,
+        triage_summary=triage_summary,
+        replica_summary=replica_summary,
+        trace_summary=trace_summary,
+        classification=details["sentinel"],
+        diagnosis=details["prism"],
+        runbook=details["forge"],
+        guardian=details["guardian"],
+    )
 
     return {
         "incident": {
@@ -147,6 +295,7 @@ def build_incident_response(incident_id: str) -> dict[str, object]:
         "triage_summary": triage_summary,
         "replica_summary": replica_summary,
         "trace_summary": trace_summary,
+        "handoff_flow": handoff_flow,
         "memory_hits": memory_hits,
         "structured_result": {
             **build_structured_result(

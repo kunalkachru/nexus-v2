@@ -1,0 +1,175 @@
+[
+  {
+    "id": 125,
+    "title": "Shared incident handoff contract for seeded and live paths",
+    "priority": "high",
+    "status": "done",
+    "description": "Introduce one additive `handoff_flow` incident contract so the UI can show explicit six-agent ownership transfer instead of generic stage text. The contract must stay semantically aligned across seeded incidents and fresh `nxs_...` incidents.",
+    "implementation_tasks": [
+      "Add `handoff_flow` to seeded incident payload generation with current owner, previous owner, next owner, transfer reason, and event ledger.",
+      "Add equivalent `handoff_flow` generation to the live incident runtime so fresh incidents use the same vocabulary and packet labels.",
+      "Represent emitted packet content for SENTINEL, PRISM, REPLICA, TRACE, FORGE, and GUARDIAN as bounded packet summaries with explicit fields.",
+      "Keep runtime-backed vs inference-first wording strict inside packet summaries.",
+      "Thread the additive field through the incident context without breaking existing keys."
+    ],
+    "done_when": [
+      "incident context contains additive `handoff_flow` data on both seeded and live paths",
+      "handoff events include packet summaries that can drive a frontend ledger",
+      "seeded and live incidents use one shared six-agent owner and transfer vocabulary"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py tests/test_app.py -q"
+    ],
+    "files_likely_touched": [
+      "server/services/surface_payloads.py",
+      "server/services/enterprise_runtime.py",
+      "server/services/incidents.py",
+      "tests/test_api_contract.py",
+      "tests/test_app.py"
+    ]
+  },
+  {
+    "id": 126,
+    "title": "Current-owner state and baton rail in the incident console",
+    "priority": "high",
+    "status": "pending",
+    "description": "Make the incident page show who currently owns the case, who handed it off, who is next, and why control moved across a six-agent chain. This should feel like a real baton transfer rather than static agent panels.",
+    "implementation_tasks": [
+      "Add current owner, previous owner, next owner, transfer reason, and current state placeholders to the incident UI.",
+      "Render baton state from `handoff_flow` rather than only from a generic relay index.",
+      "Style active, completed, waiting, and blocked owners so the handoff is legible in a static screenshot.",
+      "Promote REPLICA and TRACE into first-class visible owners in the relay while keeping their underlying execution bounded."
+    ],
+    "done_when": [
+      "the incident UI shows a single current owner clearly",
+      "the previous owner and next owner are visible",
+      "the relay strip and collaboration area agree on who owns the case across six agents"
+    ],
+    "test_gates": [
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "frontend/static/dashboard.css",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 127,
+    "title": "Emitted packet, received packet, and handoff ledger surfaces",
+    "priority": "high",
+    "status": "pending",
+    "description": "Show the packets moving between agents instead of only role descriptions. Each active incident should show what the current owner received, what it emitted, and a chronological ledger of six-agent handoff events.",
+    "implementation_tasks": [
+      "Add received-packet and emitted-packet cards near the top investigation surfaces.",
+      "Render packet title, summary, and key fields from `handoff_flow.events`.",
+      "Add a chronological handoff ledger with event direction, status, reason, and packet summary.",
+      "Use explicit empty states when an agent has not emitted a packet yet."
+    ],
+    "done_when": [
+      "the current owner has a visible received-packet surface",
+      "the current owner has a visible emitted-packet surface or explicit empty state",
+      "the ledger reads like a support-to-engineering relay log rather than raw audit history"
+    ],
+    "test_gates": [
+      "pytest tests/test_api_contract.py -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "frontend/static/dashboard.css",
+      "tests/test_api_contract.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 128,
+    "title": "Clearer transfer animations and acceptance states",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Make handoff movement feel real during replay or staged viewing. The UI should show who emitted, who accepted, and why control advanced across SENTINEL, PRISM, REPLICA, TRACE, FORGE, and GUARDIAN, without turning into motion-heavy marketing animation.",
+    "implementation_tasks": [
+      "Refactor relay stepping to consume handoff events instead of only a stage index.",
+      "Highlight current transfer reason and packet change as the baton moves.",
+      "Add bounded animation for active owner, active ledger row, and updated packet cards.",
+      "Keep the motion subtle and readable during operator use."
+    ],
+    "done_when": [
+      "replaying the handoff visibly changes current owner and transfer reason",
+      "the UI shows emitted vs accepted state clearly during transitions",
+      "transfer motion is visible but does not overwhelm the page"
+    ],
+    "test_gates": [
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "frontend/static/incident.js",
+      "frontend/static/dashboard.css",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 129,
+    "title": "Demo replay mode for the handoff chain",
+    "priority": "high",
+    "status": "pending",
+    "description": "Add explicit replay controls so a demo operator can step through the six-agent handoff chain and explain how control moved from one agent to the next. This replay must be UI-only and must not mutate incident state on the server.",
+    "implementation_tasks": [
+      "Add replay start, next-step, reset, and replay-state controls.",
+      "Implement a deterministic replay cursor over `handoff_flow.events`.",
+      "Ensure replay works for both seeded and fresh incidents.",
+      "Restore the fully rendered live incident state after replay reset."
+    ],
+    "done_when": [
+      "an operator can replay the handoff chain step-by-step",
+      "replay mode works without changing server state",
+      "reset returns the page to the current live handoff state"
+    ],
+    "test_gates": [
+      "pytest tests/test_app.py -q",
+      "npm run browser:verify"
+    ],
+    "files_likely_touched": [
+      "frontend/incident.html",
+      "frontend/static/incident.js",
+      "frontend/static/dashboard.css",
+      "tests/test_app.py",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  },
+  {
+    "id": 130,
+    "title": "Docs, validation, and checkpoint for agent handoff UX",
+    "priority": "medium",
+    "status": "pending",
+    "description": "Refresh the owner-facing walkthrough and, if this backlog is adopted, the control docs, so the repo truthfully explains the new six-agent handoff surfaces and replay model.",
+    "implementation_tasks": [
+      "Update the master operator demo guide with current-owner, packet, ledger, replay instructions, and the six-agent chain including REPLICA and TRACE.",
+      "Update public overview wording only where the incident console story materially changes.",
+      "Refresh AGENTS, WORKING_STATE, and docs/internal/LOOPS_RUNBOOK only if this backlog is actively being drained.",
+      "Run the full validation gate set after all prior items land."
+    ],
+    "done_when": [
+      "the owner guide explains how to demo the handoff chain clearly",
+      "validation is green after the handoff UX slice lands",
+      "control docs are current if the backlog becomes active"
+    ],
+    "test_gates": [
+      "pytest tests/ -q",
+      "npm run browser:verify",
+      "python demo.py",
+      "ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh",
+      "EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh"
+    ],
+    "files_likely_touched": [
+      "docs/public/MASTER_OPERATOR_DEMO_GUIDE.md",
+      "docs/public/README.md",
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/internal/LOOPS_RUNBOOK.md",
+      "tests/e2e/browser-verification.spec.js"
+    ]
+  }
+]
