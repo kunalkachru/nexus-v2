@@ -1,0 +1,5 @@
+2026-06-16T09:41:52Z checkout-api WARN token validation latency exceeded latency_ms=1820 dependency=jwks-cache
+2026-06-16T09:41:53Z auth-gateway ERROR jwks refresh timeout issuer=https://issuer.example.com timeout_ms=1500
+2026-06-16T09:41:54Z checkout-api ERROR unauthorized downstream status=401 reason=token_validation_failed request_id=req-7712
+2026-06-16T09:41:55Z edge-proxy WARN auth dependency slowdown p95_ms=1710 impacted_path=/checkout
+service=auth-gateway severity=P1 region=us-east-1

@@ -234,6 +234,38 @@ test.describe("NEXUS browser verification", () => {
     expect(landing.guardianTop).toBeGreaterThan(landing.titleTop);
   });
 
+  test("inputs offers curated demo bundles that preload a stakeholder-ready outage story", async ({ page }) => {
+    await page.goto("/inputs");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.getByRole("heading", { name: "Guided demo bundles" })).toBeVisible();
+    await expect(page.getByText("Use a bounded outage bundle when you want a fast, truthful stakeholder walkthrough.")).toBeVisible();
+
+    await page.getByRole("button", { name: /Checkout timeout \/ retry amplification/i }).click();
+    await expect(page.locator("#demoBundleTitle")).toContainText("Checkout timeout / retry amplification");
+    await expect(page.locator("#demoBundleProof")).toContainText(/what this proves/i);
+    await expect(page.locator("#demoBundleExpectedFamily")).toContainText(/checkout timeout/i);
+    await expect(page.locator("#demoBundleExpectedOwner")).toContainText(/checkout platform/i);
+    await expect(page.locator("#demoBundleExpectedPath")).toContainText(/SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN/);
+    await expect(page.locator("#rawLogInput")).toHaveValue(/timeout waiting for payment service/i);
+    await expect(page.locator("#rawDetectedSignature")).toContainText(/Timeout/i);
+  });
+
+  test("bundle-backed raw log submission carries demo origin into the fresh incident workspace", async ({ page }) => {
+    await page.goto("/inputs");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByRole("button", { name: /DB pool exhaustion \/ session leak/i }).click();
+    await page.getByRole("button", { name: "Submit raw logs" }).click();
+
+    await expect(page).toHaveURL(/\/incident\?[^#]*nexus_incident_id=nxs_[a-z0-9]+/i, { timeout: 10000 });
+    await expect(page.locator("#demoOriginCard")).toBeVisible();
+    await expect(page.locator("#demoOriginTitle")).toContainText("DB pool exhaustion / session leak");
+    await expect(page.locator("#demoOriginFamily")).toContainText(/DB pool exhaustion/i);
+    await expect(page.locator("#demoOriginOwner")).toContainText(/Checkout Data/i);
+    await expect(page.locator("#demoOriginNextStep")).toContainText(/runtime comparison/i);
+  });
+
   // ── NEW TESTS added for items 9-12 ──────────────────────────────────────────
 
   // Item 12: runtime comparison block must be present and populated

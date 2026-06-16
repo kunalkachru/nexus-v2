@@ -1,0 +1,69 @@
+{
+  "bundles": [
+    {
+      "id": "inc001-timeout-retry",
+      "title": "Checkout timeout / retry amplification",
+      "family": "Checkout timeout / retry amplification",
+      "likely_owner": "Checkout Platform",
+      "runtime_posture": "Runtime-backed via checkout-python-fastapi-auth-redis-v1",
+      "trace_posture": "Bounded TRACE packet narrows the timeout guard and retry middleware path",
+      "proof": "Shows that NEXUS can turn gateway timeout logs into one routed case, a bounded REPLICA replay, and a mitigation ladder that still stays governed.",
+      "expected_path": "SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN",
+      "next_step": "Watch the runtime comparison first, then inspect TRACE's timeout checkpoints before reviewing Guardian's decision.",
+      "incident_hint": "INC001",
+      "log_path": "static/demo/logs/inc001-timeout-retry.txt"
+    },
+    {
+      "id": "inc002-db-pool",
+      "title": "DB pool exhaustion / session leak",
+      "family": "Checkout DB pool exhaustion / session leak",
+      "likely_owner": "Checkout Data",
+      "runtime_posture": "Runtime-backed via checkout-python-fastapi-postgres-v1",
+      "trace_posture": "Bounded TRACE packet narrows the checkout session scope and release path",
+      "proof": "Shows that NEXUS can connect database saturation logs to one bounded runtime replay and a developer handoff that points at the session-release path.",
+      "expected_path": "SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN",
+      "next_step": "Look at the runtime comparison and the session-release debugging path before you review the selected mitigation.",
+      "incident_hint": "INC002",
+      "log_path": "static/demo/logs/inc002-db-pool.txt"
+    },
+    {
+      "id": "inc003-deploy-regression",
+      "title": "Deploy regression / 5xx spike",
+      "family": "Deploy regression / 5xx spike",
+      "likely_owner": "Catalog Release",
+      "runtime_posture": "Runtime-backed via the bounded catalog rollback pack",
+      "trace_posture": "Bounded TRACE packet narrows the rollback candidate and affected release boundary",
+      "proof": "Shows that NEXUS can connect a noisy release incident to a reversible rollback-oriented mitigation rather than forcing a generic escalation.",
+      "expected_path": "SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN",
+      "next_step": "Check the release-change clues, then look at the rollback packet and Guardian's rollback posture.",
+      "incident_hint": "INC003",
+      "log_path": "static/demo/logs/inc003-deploy-regression.txt"
+    },
+    {
+      "id": "inc005-queue-backlog",
+      "title": "Queue / worker backlog affecting transaction completion",
+      "family": "Queue / worker backlog affecting transaction completion",
+      "likely_owner": "Order Processing",
+      "runtime_posture": "Inference-first triage with bounded queue backlog support where mapped",
+      "trace_posture": "Bounded TRACE packet narrows the worker backlog path and queue drain expectations",
+      "proof": "Shows that NEXUS can route queue-pressure logs into one clear ownership and recovery story instead of leaving support to guess between app and infrastructure teams.",
+      "expected_path": "SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN",
+      "next_step": "Check whether support coverage stayed runtime-backed or inference-first, then inspect the queue backlog handoff packet.",
+      "incident_hint": "INC005",
+      "log_path": "static/demo/logs/inc005-queue-backlog.txt"
+    },
+    {
+      "id": "inc007-auth-dependency",
+      "title": "Auth dependency slowdown / token validation failures",
+      "family": "Auth dependency slowdown / token validation failures",
+      "likely_owner": "Auth Platform",
+      "runtime_posture": "Runtime-backed via the bounded auth validation pack where mapped",
+      "trace_posture": "Bounded TRACE packet narrows token-validation hotspots and dependency latency clues",
+      "proof": "Shows that NEXUS can separate auth dependency drag from generic checkout noise and surface the correct owner and mitigation path early.",
+      "expected_path": "SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN",
+      "next_step": "Inspect the auth dependency clues and the bounded replay posture before reviewing the final runbook.",
+      "incident_hint": "INC007",
+      "log_path": "static/demo/logs/inc007-auth-dependency.txt"
+    }
+  ]
+}

@@ -7,7 +7,11 @@ service=checkout-api severity=P1`;
 
 const WEBHOOK_SECRET = "nexus-demo-webhook-secret";
 const FRESH_TRIAGE_STORAGE_KEY = "nexus.fresh_triage_incident_id";
+const DEMO_BUNDLE_CONTEXT_PREFIX = "nexus.demo_bundle_context.";
+const DEMO_BUNDLES_URL = "static/demo/demo-bundles.json";
 let tenantServiceHints = [];
+let demoBundles = [];
+let selectedDemoBundle = null;
 
 const CHANNELS = {
   raw_text: {
@@ -102,6 +106,41 @@ function incidentHref(incidentId, liveReasoning) {
   const reasoningParam = liveReasoning ? `&live_reasoning=${liveReasoning}` : "";
   const target = `incident?nexus_incident_id=${encodeURIComponent(incidentId)}${reasoningParam}`;
   return window.NexusNavigation?.withReturnTo(target) || target;
+}
+
+function demoBundleContextKey(incidentId) {
+  return `${DEMO_BUNDLE_CONTEXT_PREFIX}${incidentId}`;
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function persistDemoBundleContext(incidentId, bundle) {
+  if (!incidentId || !bundle) {
+    return;
+  }
+  const payload = {
+    id: bundle.id,
+    title: bundle.title,
+    family: bundle.family,
+    likely_owner: bundle.likely_owner,
+    proof: bundle.proof,
+    expected_path: bundle.expected_path,
+    next_step: bundle.next_step,
+    runtime_posture: bundle.runtime_posture,
+    trace_posture: bundle.trace_posture,
+    stored_at: new Date().toISOString(),
+  };
+  try {
+    window.sessionStorage.setItem(demoBundleContextKey(incidentId), JSON.stringify(payload));
+  } catch {
+    // Ignore storage failures; the incident can still open without the additive demo note.
+  }
 }
 
 function updateField(id, value) {
@@ -201,14 +240,18 @@ function parseRawLogText(rawText) {
   const tenantMatches = matchTenantServiceHints(text, tenantServiceHints);
 
   let signature = "General incident";
-  if (joined.includes("timeout")) {
+  if (joined.includes("queue_backlog") || joined.includes("consumer_lag") || joined.includes("backlog threshold exceeded")) {
+    signature = "Queue / worker backlog";
+  } else if (joined.includes("deploy completed") || joined.includes("rollback") || joined.includes("status=500") || joined.includes("status=502")) {
+    signature = "Deploy regression / 5xx spike";
+  } else if (joined.includes("pool exhausted") || joined.includes("postgres") || joined.includes("database") || joined.includes("session scope")) {
+    signature = "Database / session leak";
+  } else if (joined.includes("token validation") || joined.includes("jwks") || joined.includes("unauthorized") || joined.includes("auth dependency")) {
+    signature = "Auth dependency slowdown";
+  } else if (joined.includes("timeout")) {
     signature = "Timeout / queue pressure";
-  } else if (joined.includes("sql") || joined.includes("database") || joined.includes("postgres")) {
-    signature = "Database / connection pool pressure";
   } else if (joined.includes("memory") || joined.includes("rss")) {
     signature = "Memory pressure / leak";
-  } else if (joined.includes("auth") || joined.includes("unauthorized")) {
-    signature = "Auth / permission failure";
   } else if (joined.includes("panic") || joined.includes("exception") || joined.includes("traceback")) {
     signature = "Unhandled exception";
   }
@@ -329,7 +372,9 @@ function setActiveChannel(card, cards) {
   const result = document.getElementById("channelResult");
   if (result) {
     result.textContent = card.dataset.channel === "raw_text"
-      ? "Paste raw logs or load the example to preview parsed evidence. For Docker-backed REPLICA replay after intake, start NEXUS with NEXUS_ENABLE_REPLICA_RUNTIME=1."
+      ? selectedDemoBundle
+        ? `Selected bundle: ${selectedDemoBundle.title}. Submit these logs to preserve the same story in the fresh incident workspace.`
+        : "Paste raw logs or load the example to preview parsed evidence. For Docker-backed REPLICA replay after intake, start NEXUS with NEXUS_ENABLE_REPLICA_RUNTIME=1."
       : "No intake parsed yet. For Docker-backed REPLICA replay after intake, start NEXUS with NEXUS_ENABLE_REPLICA_RUNTIME=1.";
   }
 }
@@ -349,7 +394,106 @@ function renderRawLogPreview(rawText) {
   if (result) {
     result.textContent = parsed.service === "-"
       ? "Paste raw logs or click Load example logs to preview parsed evidence."
-      : `Parsed ${parsed.service} as ${parsed.severity} with ${parsed.signature.toLowerCase()}. Intake posture is ${parsed.posture.toLowerCase()}. Runtime-backed replay becomes available when NEXUS_ENABLE_REPLICA_RUNTIME=1 is enabled.`;
+      : selectedDemoBundle
+        ? `Loaded ${selectedDemoBundle.title}. Parsed ${parsed.service} as ${parsed.severity} with ${parsed.signature.toLowerCase()}. Intake posture is ${parsed.posture.toLowerCase()}.`
+        : `Parsed ${parsed.service} as ${parsed.severity} with ${parsed.signature.toLowerCase()}. Intake posture is ${parsed.posture.toLowerCase()}. Runtime-backed replay becomes available when NEXUS_ENABLE_REPLICA_RUNTIME=1 is enabled.`;
+  }
+}
+
+function renderDemoBundleDetails(bundle) {
+  updateField("demoBundleTitle", bundle?.title || "No demo bundle selected yet");
+  updateField(
+    "demoBundleProof",
+    bundle?.proof
+      ? `What this proves: ${bundle.proof}`
+      : "Choose a bundle to explain what the logs should prove, which team the case should route to, and what kind of bounded runtime or debugging evidence to expect."
+  );
+  updateField("demoBundleExpectedFamily", bundle?.family || "Select a bundle");
+  updateField("demoBundleExpectedOwner", bundle?.likely_owner || "Select a bundle");
+  updateField("demoBundleRuntimePosture", bundle?.runtime_posture || "Select a bundle");
+  updateField("demoBundleTracePosture", bundle?.trace_posture || "Select a bundle");
+  updateField("demoBundleExpectedPath", bundle?.expected_path || "SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN");
+  updateField("demoBundleNextStep", bundle?.next_step || "Choose a bundle to see what the operator should watch for after submit.");
+}
+
+function renderDemoBundleList() {
+  const container = document.getElementById("demoBundleList");
+  if (!container) {
+    return;
+  }
+  if (!demoBundles.length) {
+    container.innerHTML = `<div class="section-note">Curated demo bundles are unavailable right now. You can still paste your own logs below.</div>`;
+    return;
+  }
+  container.innerHTML = demoBundles
+    .map(
+      (bundle) => `
+        <button class="demo-bundle-btn${selectedDemoBundle?.id === bundle.id ? " is-active" : ""}" type="button" data-demo-bundle-id="${escapeHtml(bundle.id)}">
+          <div class="demo-bundle-btn-top">
+            <div>
+              <strong>${escapeHtml(bundle.title)}</strong>
+              <div class="section-note">${escapeHtml(bundle.family)}</div>
+            </div>
+            <span class="demo-bundle-pill">${escapeHtml(bundle.incident_hint || "Demo")}</span>
+          </div>
+          <div class="section-note">${escapeHtml(bundle.proof)}</div>
+        </button>
+      `
+    )
+    .join("");
+}
+
+async function loadDemoBundles() {
+  try {
+    const response = await fetch(DEMO_BUNDLES_URL, { headers: demoAuthHeaders() });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const payload = await response.json();
+    demoBundles = Array.isArray(payload?.bundles) ? payload.bundles : [];
+  } catch {
+    demoBundles = [];
+  }
+  renderDemoBundleList();
+  renderDemoBundleDetails(selectedDemoBundle);
+}
+
+async function applyDemoBundle(bundle, cards) {
+  if (!bundle) {
+    return;
+  }
+  selectedDemoBundle = bundle;
+  renderDemoBundleList();
+  renderDemoBundleDetails(bundle);
+
+  const rawTextCard = cards.find((card) => card.dataset.channel === "raw_text");
+  if (rawTextCard) {
+    setActiveChannel(rawTextCard, cards);
+  }
+
+  const rawLogInput = document.getElementById("rawLogInput");
+  if (!rawLogInput) {
+    return;
+  }
+
+  try {
+    const response = await fetch(bundle.log_path, { headers: demoAuthHeaders() });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const logText = await response.text();
+    rawLogInput.value = logText;
+    rawLogInput.dataset.autofilled = "1";
+    renderRawLogPreview(rawLogInput.value);
+    const result = document.getElementById("channelResult");
+    if (result) {
+      result.textContent = `Loaded ${bundle.title}. Submit these logs to open a fresh incident that carries the same stakeholder story into the incident workspace.`;
+    }
+  } catch {
+    const result = document.getElementById("channelResult");
+    if (result) {
+      result.textContent = `Could not load ${bundle.title}. You can still paste your own logs below.`;
+    }
   }
 }
 
@@ -372,13 +516,28 @@ function syncChannelLaunchLiveReasoning() {
   launch.href = incidentHref(launch.dataset.incidentId, liveReasoning);
 }
 
-function setSubmissionPending(pending) {
+function setSubmitProgress(step = 0) {
+  [1, 2, 3].forEach((index) => {
+    const node = document.getElementById(`submitProgressStep${index}`);
+    if (!node) {
+      return;
+    }
+    node.classList.toggle("is-active", index === step);
+    node.classList.toggle("is-complete", step > index);
+  });
+}
+
+function setSubmissionPending(pending, label = "") {
   const submit = document.getElementById("channelSubmit");
   const launch = document.getElementById("channelLaunch");
   const loadExample = document.getElementById("loadRawExample");
   if (submit) {
+    if (!submit.dataset.defaultLabel) {
+      submit.dataset.defaultLabel = submit.textContent || "Submit";
+    }
     submit.disabled = pending;
     submit.dataset.pending = pending ? "1" : "0";
+    submit.textContent = pending ? (label || "Submitting intake...") : (submit.dataset.defaultLabel || submit.textContent);
   }
   if (launch) {
     launch.classList.toggle("is-disabled", pending);
@@ -389,9 +548,12 @@ function setSubmissionPending(pending) {
   if (loadExample) {
     loadExample.disabled = pending;
   }
+  if (!pending) {
+    setSubmitProgress(0);
+  }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
   const cards = Array.from(document.querySelectorAll(".input-channel-card"));
   let selectedChannel = cards.find((card) => card.dataset.channel === "raw_text") || cards[0];
   cards.forEach((card) => {
@@ -405,6 +567,7 @@ window.addEventListener("DOMContentLoaded", () => {
   if (defaultCard) {
     setActiveChannel(defaultCard, cards);
   }
+  setSubmitProgress(0);
 
   const rawLogInput = document.getElementById("rawLogInput");
   rawLogInput?.addEventListener("input", () => {
@@ -413,13 +576,30 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   const loadExampleButton = document.getElementById("loadRawExample");
-  loadExampleButton?.addEventListener("click", () => {
+  loadExampleButton?.addEventListener("click", async () => {
     if (!rawLogInput) {
+      return;
+    }
+    if (selectedDemoBundle) {
+      await applyDemoBundle(selectedDemoBundle, cards);
       return;
     }
     rawLogInput.value = RAW_LOG_EXAMPLE;
     rawLogInput.dataset.autofilled = "1";
     renderRawLogPreview(rawLogInput.value);
+  });
+
+  const bundleList = document.getElementById("demoBundleList");
+  bundleList?.addEventListener("click", async (event) => {
+    const button = event.target instanceof Element ? event.target.closest("[data-demo-bundle-id]") : null;
+    if (!button) {
+      return;
+    }
+    const bundle = demoBundles.find((item) => item.id === button.getAttribute("data-demo-bundle-id"));
+    if (!bundle) {
+      return;
+    }
+    await applyDemoBundle(bundle, cards);
   });
 
   const liveReasoningButton = document.getElementById("liveReasoningToggle");
@@ -458,9 +638,10 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     if (result) {
-      result.textContent = "Submitting intake to the backend contract...";
+      result.textContent = "Step 1 of 3: normalizing the intake and opening a bounded incident record.";
     }
-    setSubmissionPending(true);
+    setSubmissionPending(true, "Normalizing intake...");
+    setSubmitProgress(1);
 
     try {
       const service = document.getElementById("serviceName")?.value || channel.service;
@@ -524,10 +705,15 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
       if (result) {
-        result.textContent = `Created ${response.nexus_incident_id} with status ${response.status}. Opening the incident workspace...`;
+        result.textContent = `Step 2 of 3: created ${response.nexus_incident_id} with status ${response.status}. Preparing the incident workspace...`;
       }
+      setSubmissionPending(true, "Opening workspace...");
+      setSubmitProgress(2);
       try {
         window.sessionStorage.setItem(FRESH_TRIAGE_STORAGE_KEY, response.nexus_incident_id);
+        if (selectedChannel.dataset.channel === "raw_text" && selectedDemoBundle) {
+          persistDemoBundleContext(response.nexus_incident_id, selectedDemoBundle);
+        }
       } catch {
         // Ignore storage failures; the incident console still opens normally.
       }
@@ -540,6 +726,11 @@ window.addEventListener("DOMContentLoaded", () => {
       syncChannelLaunchLiveReasoning();
       const targetHref = launch?.href;
       if (targetHref) {
+        if (result) {
+          result.textContent = `Step 3 of 3: opening ${response.nexus_incident_id}. The incident will land at the top summary first, and you can replay the handoff only if you want to inspect the crew transition.`;
+        }
+        setSubmitProgress(3);
+        window.NexusNavigation?.beginRouteTransition?.("Opening incident workspace...");
         window.location.assign(targetHref);
         return;
       }
@@ -552,7 +743,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  loadTenantInputHints().then(() => {
-    renderRawLogPreview(rawLogInput?.value || "");
-  });
+  await loadDemoBundles();
+  await loadTenantInputHints();
+  renderRawLogPreview(rawLogInput?.value || "");
 });

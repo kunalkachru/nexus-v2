@@ -14,6 +14,7 @@ import {
 } from "./api.js";
 
 const FRESH_TRIAGE_STORAGE_KEY = "nexus.fresh_triage_incident_id";
+const DEMO_BUNDLE_CONTEXT_PREFIX = "nexus.demo_bundle_context.";
 const LAST_TRIAGE_SUMMARY_KEY = "nexus.last_triage_summary";
 const RELAY_SEEN_PREFIX = "nexus.relay_seen.";
 let relayRunToken = 0;
@@ -71,6 +72,22 @@ function formatTimestamp(value) {
     return String(value);
   }
   return parsed.toLocaleString();
+}
+
+function demoBundleContextKey(incidentId) {
+  return `${DEMO_BUNDLE_CONTEXT_PREFIX}${incidentId}`;
+}
+
+function readDemoBundleContext(incidentId) {
+  if (!incidentId) {
+    return null;
+  }
+  try {
+    const raw = window.sessionStorage.getItem(demoBundleContextKey(incidentId));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 function getCrewNodes() {
@@ -229,10 +246,13 @@ function markRelaySeen(incidentId) {
 }
 
 function showFreshIntakeLanding(data) {
+  const demoOrigin = readDemoBundleContext(data?.incident?.id);
   settleRelayState(data);
   setText(
     "relayStageBanner",
-    "Fresh intake loaded. Start at the incident summary first, then replay the handoff only if you want to inspect the crew transition."
+    demoOrigin
+      ? `Fresh intake from ${demoOrigin.title} loaded. Start at the incident summary first, then replay the handoff only if you want to inspect the crew transition.`
+      : "Fresh intake loaded. Start at the incident summary first, then replay the handoff only if you want to inspect the crew transition."
   );
   setText(
     "guardianRelayPrompt",
@@ -240,7 +260,9 @@ function showFreshIntakeLanding(data) {
   );
   setText(
     "operatorNextStep",
-    "Review the incident summary and the proposed action first. Replay handoff is optional and no longer interrupts the landing view."
+    demoOrigin?.next_step
+      ? `Review the incident summary and the proposed action first. ${demoOrigin.next_step}`
+      : "Review the incident summary and the proposed action first. Replay handoff is optional and no longer interrupts the landing view."
   );
   setText(
     "collaborationOutcome",
@@ -393,6 +415,25 @@ function syncOpenAIKeyUI(message) {
     ? `User key attached: ${maskUserOpenAIKey()}. ${message || "Live reasoning will use this key only for the current browser session."}`
     : `No user key attached. ${message || "The app is in deterministic demo mode."}`;
   setText("openaiKeyStatus", status);
+}
+
+function renderDemoOriginContext(incidentId) {
+  const card = document.getElementById("demoOriginCard");
+  const context = readDemoBundleContext(incidentId);
+  if (!card) {
+    return null;
+  }
+  if (!context) {
+    card.hidden = true;
+    return null;
+  }
+  card.hidden = false;
+  setText("demoOriginTitle", context.title || "Fresh incident demo context");
+  setText("demoOriginProof", context.proof || "This incident originated from a curated demo bundle.");
+  setText("demoOriginFamily", context.family || "-");
+  setText("demoOriginOwner", context.likely_owner || "-");
+  setText("demoOriginNextStep", context.next_step || "Review the incident summary first, then inspect the bounded runtime or TRACE evidence.");
+  return context;
 }
 
 function renderThread(data) {
@@ -556,6 +597,7 @@ function renderCrew(data) {
 
 function renderSummary(data) {
   const incident = data.incident;
+  const demoOrigin = renderDemoOriginContext(incident.id);
   const triage = data.triage_summary || {};
   const decision = String(data.guardian.decision || "").toLowerCase();
   const nextStep =
@@ -579,10 +621,13 @@ function renderSummary(data) {
     : "";
   setText(
     "incidentOverviewNote",
-    `Detected ${incident.detected_at} via ${incident.source_channel || "webhook"} and active for ${incident.duration_minutes} minutes. Likely owner: ${triage.likely_owner_team || triage.likely_owner_service || "Platform Operations"}. Support queue: ${triage.support_queue || "Production escalation"}.${downgradeGuidance}`
+    `Detected ${incident.detected_at} via ${incident.source_channel || "webhook"} and active for ${incident.duration_minutes} minutes. Likely owner: ${triage.likely_owner_team || triage.likely_owner_service || "Platform Operations"}. Support queue: ${triage.support_queue || "Production escalation"}.${demoOrigin ? ` Intake bundle: ${demoOrigin.title}.` : ""}${downgradeGuidance}`
   );
   const runtimeHint = data.replica_summary?.runtime_enablement_hint || "";
-  setText("operatorNextStep", `${nextStep} ${triage.manual_relay_removed || ""}${runtimeHint ? ` ${runtimeHint}` : ""}`);
+  setText(
+    "operatorNextStep",
+    `${nextStep} ${demoOrigin?.next_step || ""} ${triage.manual_relay_removed || ""}${runtimeHint ? ` ${runtimeHint}` : ""}`.trim()
+  );
   setText(
     "liveReasoningDetail",
     data.llm_access?.message || (

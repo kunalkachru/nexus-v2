@@ -125,6 +125,33 @@
                 <h2>Raw Incident Intake Preview</h2>
                 <div class="section-note">This is the moment where unstructured evidence stops being support toil and becomes a case the crew can actually work.</div>
             </div>
+            <div class="story-grid demo-bundle-grid">
+                <div class="detail-card">
+                    <div class="badge">Guided demo bundles</div>
+                    <h3>Guided demo bundles</h3>
+                    <p class="hero-copy">Use a bounded outage bundle when you want a fast, truthful stakeholder walkthrough.</p>
+                    <div class="section-note">These bundles stay inside the current five-family wedge. They preload realistic evidence without pretending the product supports arbitrary incident classes.</div>
+                    <div class="demo-bundle-list" id="demoBundleList">
+                        <div class="section-note">Loading curated bundle choices...</div>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <div class="badge">Bundle proof</div>
+                    <h3 id="demoBundleTitle">No demo bundle selected yet</h3>
+                    <p class="hero-copy" id="demoBundleProof">Choose a bundle to explain what the logs should prove, which team the case should route to, and what kind of bounded runtime or debugging evidence to expect.</p>
+                    <div class="hero-stats raw-intake-grid">
+                        <div class="stat"><div class="stat-label">Expected family</div><div class="stat-value" id="demoBundleExpectedFamily">Select a bundle</div></div>
+                        <div class="stat"><div class="stat-label">Likely owner</div><div class="stat-value" id="demoBundleExpectedOwner">Select a bundle</div></div>
+                        <div class="stat"><div class="stat-label">Runtime posture</div><div class="stat-value" id="demoBundleRuntimePosture">Select a bundle</div></div>
+                        <div class="stat"><div class="stat-label">TRACE posture</div><div class="stat-value" id="demoBundleTracePosture">Select a bundle</div></div>
+                    </div>
+                    <div class="detail-card compact-note demo-bundle-note">
+                        <div class="badge">Expected agent path</div>
+                        <p class="hero-copy" id="demoBundleExpectedPath">SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN</p>
+                        <p class="section-note" id="demoBundleNextStep">Choose a bundle to see what the operator should watch for after submit.</p>
+                    </div>
+                </div>
+            </div>
             <div class="story-grid">
                 <div class="detail-card">
                     <div class="badge">Raw input</div>
@@ -163,8 +190,31 @@ service=checkout-api severity=P1</pre>
                         <div class="badge">Live API</div>
                         <pre class="input-code" id="channelEndpoint">Preview only: no raw-log backend endpoint yet</pre>
                         <button class="nav-link channel-cta" id="channelSubmit" type="button">Submit raw logs</button>
+                        <div class="submit-progress" id="submitProgress" aria-live="polite">
+                            <div class="submit-progress-step" id="submitProgressStep1">
+                                <span class="submit-progress-index">1</span>
+                                <div class="submit-progress-copy">
+                                    <div class="submit-progress-label">Normalize intake</div>
+                                    <div class="submit-progress-note">Shape raw logs into a bounded incident packet.</div>
+                                </div>
+                            </div>
+                            <div class="submit-progress-step" id="submitProgressStep2">
+                                <span class="submit-progress-index">2</span>
+                                <div class="submit-progress-copy">
+                                    <div class="submit-progress-label">Create incident</div>
+                                    <div class="submit-progress-note">Persist the fresh `nxs_...` case and preserve intake context.</div>
+                                </div>
+                            </div>
+                            <div class="submit-progress-step" id="submitProgressStep3">
+                                <span class="submit-progress-index">3</span>
+                                <div class="submit-progress-copy">
+                                    <div class="submit-progress-label">Open workspace</div>
+                                    <div class="submit-progress-note">Land at the top incident brief before any deeper review.</div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="badge">Open console</div>
-                        <a class="inline-link channel-cta" id="channelLaunch" href="incident?nexus_incident_id=INC001" data-preserve-return>Open incident workspace</a>
+                        <a class="inline-link channel-cta" id="channelLaunch" href="incident?nexus_incident_id=INC001" data-preserve-return data-loading-label="Opening incident workspace...">Open incident workspace</a>
                         <div class="result-banner" id="channelResult">No intake parsed yet.</div>
                         <p class="hero-copy">The same incident console will later receive the normalized log bundle and reason over it with the agents.</p>
                     </div>

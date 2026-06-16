@@ -57,6 +57,8 @@ def test_dashboard_routes_are_served() -> None:
     assert "Expand technical detail" in incident.text
     assert "Input Channels" in inputs.text
     assert "Paste Raw Logs" in inputs.text
+    assert "Guided demo bundles" in inputs.text
+    assert "Use a bounded outage bundle" in inputs.text
     assert "Normalization posture" in inputs.text
     assert "Missing signals" in inputs.text
     assert "Incident archive" in history.text
@@ -119,12 +121,14 @@ def test_dashboard_serves_static_assets() -> None:
     settings_js = client.get("/static/settings.js")
     training_js = client.get("/static/training.js")
     css = client.get("/static/dashboard.css")
+    demo_bundles = client.get("/static/demo/demo-bundles.json")
 
     assert root.status_code == 200
     assert queue_js.status_code == 200
     assert settings_js.status_code == 200
     assert training_js.status_code == 200
     assert css.status_code == 200
+    assert demo_bundles.status_code == 200
 
 
 def test_metrics_api_returns_dashboard_payload() -> None:

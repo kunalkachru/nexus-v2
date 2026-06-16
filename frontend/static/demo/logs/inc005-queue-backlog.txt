@@ -1,0 +1,5 @@
+2026-06-16T09:34:11Z order-worker WARN consumer_lag=18450 topic=checkout-events partition=7
+2026-06-16T09:34:12Z order-worker ERROR backlog threshold exceeded queue_backlog=1160 oldest_age_sec=418
+2026-06-16T09:34:13Z checkout-api WARN transaction completion delayed awaiting worker ack order_id=ord-1882
+2026-06-16T09:34:14Z kafka-exporter WARN rebalance_count=4 drain_rate_per_min=12 insufficient_for_backlog=true
+service=order-worker severity=P1 region=us-east-1
