@@ -4,6 +4,7 @@ from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from typing import Any, Coroutine
 import logging
 
 from fastapi import Depends, FastAPI, Query, Request
@@ -11,7 +12,7 @@ from fastapi import Depends, FastAPI, Query, Request
 logger = logging.getLogger(__name__)
 
 
-async def _safe_background_task(coro):
+async def _safe_background_task(coro: Coroutine[Any, Any, Any]) -> None:
     """Safely execute a background task with error logging."""
     try:
         await coro
@@ -19,7 +20,7 @@ async def _safe_background_task(coro):
         logger.exception(f"Background task failed: {e}")
 
 
-def _create_background_task(coro):
+def _create_background_task(coro: Coroutine[Any, Any, Any]) -> asyncio.Task[None]:
     """Create a background task with automatic error handling."""
     return asyncio.create_task(_safe_background_task(coro))
 
