@@ -206,7 +206,7 @@
     "id": 144,
     "title": "Pilot UX hardening checkpoint and control-doc refresh",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Close the pilot UX hardening phase cleanly after the work is validated, then refresh the control surface so future loops start from the right truth instead of stale phase markers.",
     "implementation_tasks": [
       "Rerun the full baseline validation once items 137-143 are complete.",

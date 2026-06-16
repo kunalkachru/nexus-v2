@@ -10,11 +10,11 @@ NEXUS is an AI-assisted support-to-engineering investigation product: noisy logs
 
 - Branch: `master`
 - Current bounded wedge: five supported outage families
-- `pytest tests/ -q` → target baseline: **168 passed**
-- `npm run browser:verify` → target baseline: **15 passed**
+- `pytest tests/ -q` → target baseline: **169 passed**
+- `npm run browser:verify` → target baseline: **16 passed**
 - `python demo.py` → demo incidents complete
-- `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → should pass
-- `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` → should pass
+- `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
+- `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` → passes
 
 ## Supported Bounded Families
 
@@ -49,18 +49,20 @@ Still bounded:
 
 ## Current Frontier
 
-- Active backlog: `backlog-137-plus.json`
-- Active phase: pilot UX hardening and live-intake trust pass
-- Status: `backlog-131-plus.json` closed cleanly after guided demo-intake implementation; next narrow backlog opened
+- Active backlog: none
+- Active phase: none
+- Status: `backlog-137-plus.json` closed cleanly after the pilot UX hardening and live-intake trust pass
 
 Completed phases:
 
 - `backlog-117-plus.json` closed
 - `backlog-125-plus.json` closed
 - `backlog-131-plus.json` closed
+- `backlog-137-plus.json` closed
 - near-production ops maturity closed
 - six-agent handoff UX closed
 - guided demo-intake phase closed
+- pilot UX hardening and live-intake trust pass closed
 
 Current wrapped baseline:
 
@@ -71,21 +73,25 @@ Current wrapped baseline:
 - visible six-agent handoff with packet flow and demo replay mode
 - curated `/inputs` demo bundles for the five-family wedge
 - fresh-incident demo-origin guidance for stakeholder walkthroughs
+- queue-first access choices for seeded and fresh incident review
+- progressive disclosure on the incident workspace
+- top-brief-first landing for fresh `nxs_...` incidents created from `/inputs`
+- browser-truth coverage across queue, inputs, incident, training, and settings
 
 Most recently implemented:
 
-- guided demo bundles on `/inputs` for all five supported outage families
-- bundle proof surfaces showing expected family, likely owner, runtime posture, TRACE posture, and agent path
-- bundle-backed raw-log submission that preserves demo context in the fresh incident workspace
-- refreshed owner-facing walkthrough aligned to the shipped input-to-incident demo flow
+- seeded and fresh incident access improvements on `/queue`
+- progressive-disclosure refactor on the incident workspace
+- six-agent relay legibility improvements with clearer baton ownership and packet flow
+- fresh-incident evidence provenance and live-intake truth surfaces
+- refined `/inputs -> fresh incident` transition with top-brief-first landing
+- operator-facing walkthrough and doc index sync
+- browser-truth and smoke coverage across the core demo surfaces
 
 Next execution target:
 
-- make seeded and fresh incident access easier from the queue
-- reduce incident-page overload through progressive disclosure
-- improve six-agent relay legibility during live demos
-- strengthen fresh-incident evidence provenance and reasoning clarity
-- finish with a browser-truth pass and final operator-doc sync
+- no active loop is open
+- the next phase should be a new narrow backlog only if a concrete pilot-hardening or bug-fix frontier is agreed
 
 Truth boundaries maintained:
 

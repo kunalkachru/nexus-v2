@@ -12,8 +12,8 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - `INC005` queue / worker backlog affecting transaction completion
   - `INC007` auth dependency slowdown / token validation failures
 - Current validated baseline:
-  - `pytest tests/ -q` -> `168 passed`
-  - `npm run browser:verify` -> `15 passed`
+  - `pytest tests/ -q` -> `169 passed`
+  - `npm run browser:verify` -> `16 passed`
   - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
@@ -35,6 +35,10 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - **FR2 repeatable enterprise pilot closure** with bounded onboarding, measured proof, and stronger engineering trust
   - **Guided stakeholder demo bundles** on `/inputs` for all five supported outage families
   - **Fresh incident demo-origin carryover** from `/inputs` into the incident workspace
+  - **Queue-first incident access improvements** for both seeded and fresh review paths
+  - **Incident-workspace progressive disclosure** that keeps the top decision path primary
+  - **Top-brief-first landing** for fresh `nxs_...` incidents opened from `/inputs`
+  - **Expanded browser-truth coverage** across queue, inputs, incident, training, and settings
 
 ## What Loops Are For
 
@@ -142,11 +146,11 @@ feat(#<id>): <title>
 
 Active backlog:
 
-- [backlog-137-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-137-plus.json)
+- none; `backlog-137-plus.json` is complete
 
 Current phase:
 
-- pilot UX hardening and live-intake trust pass
+- none
 
 The current shipped baseline is:
 
@@ -158,13 +162,7 @@ The current shipped baseline is:
 
 The most recently closed implementation target was:
 
-- guided stakeholder demo bundles on `/inputs`
-- bundle proof and expected agent-story surfaces
-- fresh incident demo-origin carryover into the incident workspace
-- one owner-facing walkthrough that matches the shipped demo path
-
-The current active narrow phase is:
-
+- pilot UX hardening and live-intake trust pass
 - queue and incident-access usability
 - incident workspace progressive disclosure
 - six-agent relay legibility v2
@@ -227,10 +225,7 @@ The most recent narrow phase also closed cleanly:
 
 The next active narrow phase is intentionally still inside the same wedge:
 
-- no new outage families
-- no broader platform claims
-- no universal debugger or arbitrary reproduction claims
-- focus only on self-serve pilot UX, relay clarity, and live-intake trust
+- none yet; write a new narrow backlog before starting another implementation loop
 
 Boundaries remain:
 

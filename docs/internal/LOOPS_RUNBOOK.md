@@ -4,15 +4,9 @@ This document explains how to run Codex or Claude in a controlled implementation
 
 ## Current State
 
-The documentation reset, five-family wedge, and near-production ops maturity pass are done.
+The documentation reset, five-family wedge, near-production ops maturity pass, and pilot UX hardening pass are done.
 
-The active implementation backlog is:
-
-- [backlog-137-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-137-plus.json)
-
-The active narrow phase is:
-
-- pilot UX hardening and live-intake trust pass
+There is no active implementation backlog right now.
 
 ## Loop Rule
 
@@ -41,7 +35,7 @@ Do not start a new loop until that backlog exists and has ordered items, explici
 - refresh control docs when a backlog is fully closed
 - update the backlog item status immediately after its gates pass
 
-## Post-131 Checkpoint
+## Post-137 Checkpoint
 
 `backlog-117-plus.json` is complete.
 
@@ -49,23 +43,20 @@ Do not start a new loop until that backlog exists and has ordered items, explici
 
 `backlog-131-plus.json` is complete.
 
-`backlog-137-plus.json` is now the active next frontier.
+`backlog-137-plus.json` is complete.
 
 The five-family product objective remains wrapped for the present strategy. The most recently closed narrow phase added:
 
-- guided stakeholder demo bundles on `/inputs`
-- bundle proof surfaces
-- fresh-incident demo-origin carryover
+- easier seeded and fresh incident access from `/queue`
+- progressive disclosure across the incident workspace
+- stronger six-agent relay ownership and packet visibility
+- clearer extracted-versus-inferred fresh-incident truth
+- a smoother `/inputs -> fresh incident` landing path
+- stronger browser-truth and smoke coverage across the core demo routes
 
 Truth boundaries remain:
 
 - do not present `REPLICA` as arbitrary VM reproduction
 - do not present `TRACE` as a universal debugger
 
-The current loop should focus on:
-
-- queue and incident-access usability
-- progressive disclosure on the incident page
-- stronger six-agent relay legibility
-- better fresh-incident evidence provenance
-- browser-truth validation across the main demo path
+Do not start another loop until a new narrow backlog exists with ordered items, explicit test gates, and files-likely-touched lists.
