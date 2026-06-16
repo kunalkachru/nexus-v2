@@ -146,11 +146,11 @@ feat(#<id>): <title>
 
 Active backlog:
 
-- `backlog-145-plus.json` planned for the next narrow loop
+- `backlog-145-plus.json` in progress
 
 Current phase:
 
-- documentation and demo-truth consistency follow-up
+- documentation and demo-truth consistency pass
 
 The current shipped baseline is:
 
@@ -226,8 +226,10 @@ The most recent narrow phase also closed cleanly:
 The next active narrow phase is intentionally still inside the same wedge:
 
 - documentation and demo-truth consistency
-- sync public validation counts and route guidance to the latest shipped baseline
-- remove owner-facing contradictions between queue-first review flow and older `/inputs`-first walkthroughs
+- public validation baseline sync complete
+- queue-first demo route guidance sync complete
+- public product-story truth pass complete
+- internal control-surface sync and final checkpoint remain
 
 Boundaries remain:
 

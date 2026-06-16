@@ -13,6 +13,7 @@ ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
 - primary nav shows `Command Center`, `Incident Detail`, and `Learning & Controls`
 - supporting routes still exist for `Inputs`, `History`, `Replay`, and `Settings`
 - the product reads like one investigation workflow
+- the queue-first path remains legible: seeded incident -> `Inspect intake` -> `/inputs` -> fresh incident
 
 ## Training Checks
 

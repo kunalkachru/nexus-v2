@@ -91,7 +91,7 @@
     "id": 148,
     "title": "Internal doc and control-surface consistency pass",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Bring the internal operating docs into the same truth set as the current wrapped baseline and the new documentation-sync frontier so future agents do not start from mixed signals.",
     "implementation_tasks": [
       "Review internal indexes, checklists, and runbooks for stale baseline numbers or outdated phase/frontier references.",

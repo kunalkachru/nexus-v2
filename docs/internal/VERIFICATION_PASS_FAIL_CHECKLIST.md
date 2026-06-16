@@ -9,6 +9,7 @@
 ## Product Truth
 
 - [ ] public docs describe five bounded families
+- [ ] public demo docs reflect the queue-first operator path
 - [ ] UI no longer says `NEXUS v2`
 - [ ] runtime-backed versus inference-first wording is explicit
 - [ ] no screen implies replay executed if it did not

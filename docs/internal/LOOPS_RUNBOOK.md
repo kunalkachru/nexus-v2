@@ -6,9 +6,9 @@ This document explains how to run Codex or Claude in a controlled implementation
 
 The documentation reset, five-family wedge, near-production ops maturity pass, and pilot UX hardening pass are done.
 
-The next planned implementation backlog is [backlog-145-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-145-plus.json).
+The active implementation backlog is [backlog-145-plus.json](/Users/kunalkachru/Documents/nexus-v3/backlog-145-plus.json).
 
-No loop is active yet.
+The current loop phase is underway.
 
 ## Loop Rule
 

@@ -30,5 +30,7 @@ Current checkpoint:
 - the five-family strategy is wrapped
 - the guided demo-intake phase is wrapped
 - the pilot UX hardening and live-intake trust pass is wrapped
-- the next narrow follow-up is documentation and demo-truth consistency
-- the next loop should start from `backlog-145-plus.json`
+- the current narrow follow-up is documentation and demo-truth consistency
+- `backlog-145-plus.json` is in progress
+- public validation sync, queue-first route sync, and public story sync are complete
+- the remaining work is internal control-surface sync and final backlog close

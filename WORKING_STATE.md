@@ -49,9 +49,9 @@ Still bounded:
 
 ## Current Frontier
 
-- Active backlog: `backlog-145-plus.json` planned
-- Active phase: documentation and demo-truth consistency follow-up
-- Status: `backlog-137-plus.json` closed cleanly after the pilot UX hardening and live-intake trust pass; the next narrow backlog is prepared but not yet started
+- Active backlog: `backlog-145-plus.json` in progress
+- Active phase: documentation and demo-truth consistency pass
+- Status: items `145-147` are complete; internal control-surface sync and final checkpoint remain
 
 Completed phases:
 
@@ -92,7 +92,8 @@ Next execution target:
 
 - `backlog-145-plus.json`
 - focus: documentation truth, route guidance consistency, and control-surface sync
-- no loop is active yet; the next session can start from the first pending item
+- current pending items: `148` then `149`
+- the next session can resume from the first pending item
 
 Truth boundaries maintained:
 
