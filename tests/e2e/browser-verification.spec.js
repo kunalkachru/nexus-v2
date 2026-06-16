@@ -52,6 +52,25 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(6);
     await expect(page.getByRole("heading", { name: "Investigation Summary & Operator Path" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Enterprise Task Board" })).toBeVisible();
+    await expect(page.getByText("Recommended action")).toBeVisible();
+    await expect(page.getByText("Runtime posture")).toBeVisible();
+    await expect(page.getByText("Inspect here first")).toBeVisible();
+    await expect(page.locator(".enterprise-depth-details")).not.toHaveAttribute("open", "");
+    await expect(page.getByRole("heading", { name: "What is the incident?" })).toBeVisible();
+    await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
+    await expect(page.locator(".byo-key-card .badge")).toHaveText("Bring your own OpenAI key");
+    await expect(page.locator(".section-collapsible")).not.toHaveAttribute("open", "");
+    await expect(page.locator("#liveReasoningState")).toContainText("OFF");
+    await expect(page.locator("#incidentHeroId")).toContainText(/INC(?:-|)\w+/);
+
+    await page.screenshot({ path: "artifacts/browser/incident-detail-default.png", fullPage: true });
+
+    await page.getByRole("button", { name: /Turn live reasoning on/i }).click();
+    await expect(page.locator("#liveReasoningState")).toContainText("ON");
+
+    await page.locator(".enterprise-depth-details > summary").click();
+    await expect(page.getByText("Memory-grounded context")).toBeVisible();
+    await expect(page.locator("#taskBoard .workflow-step")).toHaveCount(8);
     await expect(page.getByText("Investigation depth · REPLICA")).toBeVisible();
     await expect(page.getByText("Investigation depth · TRACE")).toBeVisible();
     await expect(page.getByText("Best mitigation")).toBeVisible();
@@ -63,20 +82,6 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#replicaTrustSummary")).toContainText("Replay trust packet");
     await expect(page.locator("#traceInspectionPoint")).not.toContainText("TRACE has not narrowed");
     await expect(page.locator("#traceDeveloperHandoff")).toContainText("trace_ownership_map.json");
-    await expect(page.getByRole("heading", { name: "What is the incident?" })).toBeVisible();
-    await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
-    await expect(page.locator(".byo-key-card .badge")).toHaveText("Bring your own OpenAI key");
-    await expect(page.getByText("Memory-grounded context")).toBeVisible();
-    await expect(page.locator("#taskBoard .workflow-step")).toHaveCount(8);
-    await expect(page.locator(".section-collapsible")).not.toHaveAttribute("open", "");
-    await expect(page.locator("#liveReasoningState")).toContainText("OFF");
-    await expect(page.locator("#incidentHeroId")).toContainText(/INC(?:-|)\w+/);
-
-    await page.screenshot({ path: "artifacts/browser/incident-detail-default.png", fullPage: true });
-
-    await page.getByRole("button", { name: /Turn live reasoning on/i }).click();
-    await expect(page.locator("#liveReasoningState")).toContainText("ON");
-
     await page.locator(".section-collapsible summary").click();
     await expect(page.locator("#rawInputText")).toBeVisible();
     await expect(page.locator("#workflowTimeline")).toBeVisible();
@@ -277,6 +282,7 @@ test.describe("NEXUS browser verification", () => {
     await page.goto("/incident?nexus_incident_id=INC001");
     await page.waitForLoadState("networkidle");
 
+    await page.locator(".enterprise-depth-details > summary").click();
     await expect(page.locator("#runtimeComparisonBlock")).toBeVisible();
     await expect(page.locator("#runtimeBaselineRow")).toBeVisible();
     await expect(page.locator("#runtimeMitigatedRow")).toBeVisible();
@@ -295,6 +301,7 @@ test.describe("NEXUS browser verification", () => {
     await page.goto("/incident?nexus_incident_id=INC002");
     await page.waitForLoadState("networkidle");
 
+    await page.locator(".enterprise-depth-details > summary").click();
     await expect(page.locator("#runtimeComparisonBlock")).toBeVisible();
     await expect(page.locator("#runtimeBaselineRow")).toBeVisible();
     await expect(page.locator("#runtimeMitigatedRow")).toBeVisible();

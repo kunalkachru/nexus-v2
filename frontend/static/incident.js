@@ -734,6 +734,18 @@ function renderEnterprise(data) {
           ? "Execution is blocked. Review the Guardian decision and request a safer plan."
           : "The crew produced a plan, but execution is still gated by Guardian policy."
   );
+  setText(
+    "focusRecommendedAction",
+    runbook.summary || runbook.recommended_runbook || "FORGE has not finalized the operator-facing action yet."
+  );
+  setText(
+    "focusRuntimePosture",
+    replica.runtime_comparison_summary || replica.runtime_provenance?.summary || replica.summary || "REPLICA has not yet confirmed runtime posture for this incident."
+  );
+  setText(
+    "focusInspectHere",
+    trace.inspection_point || trace.developer_handoff_summary || "TRACE has not yet narrowed the first debugging boundary."
+  );
 
   const taskBoard = document.getElementById("taskBoard");
   if (taskBoard) {

@@ -2650,6 +2650,14 @@ html[data-theme="dark"] .path-card-primary {
   gap: 12px;
 }
 
+.progressive-focus-strip {
+  margin-bottom: 16px;
+}
+
+.enterprise-depth-details {
+  margin-top: 8px;
+}
+
 @media (max-width: 1120px) {
   .queue-path-grid {
     grid-template-columns: minmax(0, 1fr);

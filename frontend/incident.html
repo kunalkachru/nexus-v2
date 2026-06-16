@@ -289,125 +289,144 @@
         <section class="section">
             <div class="section-header">
                 <h2>Enterprise Task Board</h2>
-                <div class="section-note">Complex incidents split into explicit workstreams so operators can see how evidence, change analysis, and memory retrieval converge on one solution.</div>
+                <div class="section-note">Operational depth stays available, but the current decision path should stay readable before you expand the full investigation stack.</div>
             </div>
-            <div class="story-grid">
-                <div class="detail-card">
-                    <div class="badge">Task board</div>
-                    <div class="section-note" id="orchestrationState">Loading orchestration state.</div>
-                    <div class="workflow-timeline" id="taskBoard"></div>
-                </div>
-                <div class="detail-card">
-                    <div class="badge">Memory-grounded context</div>
-                    <p class="hero-copy" id="memorySummary">Loading prior incidents, runbook history, and unresolved work.</p>
-                    <div class="memory-grid">
-                        <div>
-                            <h3>Similar incidents</h3>
-                            <ul class="simple-list" id="memorySimilarIncidents"></ul>
-                        </div>
-                        <div>
-                            <h3>Runbook history</h3>
-                            <ul class="simple-list" id="memoryRunbooks"></ul>
-                        </div>
-                    </div>
-                    <details class="agent-details">
-                        <summary>Show unresolved follow-ups</summary>
-                        <div class="agent-details-body">
-                            <ul class="simple-list" id="memoryUnresolvedItems"></ul>
-                        </div>
-                    </details>
-                </div>
+            <div class="collaboration-strip progressive-focus-strip">
+                <article class="collaboration-card">
+                    <div class="badge">Recommended action</div>
+                    <p class="hero-copy" id="focusRecommendedAction">Waiting for FORGE to prepare the operator-facing action.</p>
+                </article>
+                <article class="collaboration-card">
+                    <div class="badge">Runtime posture</div>
+                    <p class="hero-copy" id="focusRuntimePosture">Waiting for REPLICA to confirm whether runtime evidence is available.</p>
+                </article>
+                <article class="collaboration-card">
+                    <div class="badge">Inspect here first</div>
+                    <p class="hero-copy" id="focusInspectHere">Waiting for TRACE to narrow the first debugging boundary.</p>
+                </article>
             </div>
-            <div class="story-grid" style="margin-top: 14px;">
-                <div class="detail-card">
-                    <div class="badge">Reliability posture</div>
-                    <div class="kpi-grid" id="agentMetrics"></div>
-                </div>
-                <div class="detail-card">
-                    <div class="badge">Fallback and retries</div>
-                    <p class="hero-copy" id="fallbackSummaryNote">The runtime stays deterministic and bounded even when one branch needs a fallback.</p>
-                    <ul class="simple-list" id="fallbackSummary"></ul>
-                </div>
-            </div>
-            <div class="story-grid" style="margin-top: 14px;">
-                <div class="detail-card">
-                    <div class="badge">Investigation depth · REPLICA</div>
-                    <p class="hero-copy" id="replicaSummary">Reproduction findings will appear here once the investigation packet loads.</p>
-                    <div class="hero-stats raw-intake-grid">
-                        <div class="stat"><div class="stat-label">Environment pack</div><div class="stat-value" id="replicaPack">-</div></div>
-                        <div class="stat"><div class="stat-label">Status</div><div class="stat-value" id="replicaStatus">-</div></div>
-                        <div class="stat"><div class="stat-label">Hypothesis</div><div class="stat-value" id="replicaHypothesis">-</div></div>
-                        <div class="stat"><div class="stat-label">Confidence delta</div><div class="stat-value" id="replicaDelta">-</div></div>
-                    </div>
-                    <div class="hero-stats raw-intake-grid">
-                        <div class="stat"><div class="stat-label">Baseline replay</div><div class="stat-value" id="replicaBaseline">-</div></div>
-                        <div class="stat"><div class="stat-label">Best mitigation</div><div class="stat-value" id="replicaBestMitigation">-</div></div>
-                        <div class="stat"><div class="stat-label">Runtime outcome</div><div class="stat-value" id="replicaOutcome">-</div></div>
-                    </div>
-                    <div class="hero-stats raw-intake-grid">
-                        <div class="stat"><div class="stat-label">Replay capability</div><div class="stat-value" id="replicaCapabilityState">-</div></div>
-                        <div class="stat"><div class="stat-label">Replay host</div><div class="stat-value" id="replicaCapabilityHost">-</div></div>
-                    </div>
-                    <div class="detail-card" id="runtimeHostCard" style="margin-top: 1em; background-color: rgba(74, 144, 226, 0.05); border: 1px solid rgba(74, 144, 226, 0.15);">
-                        <div class="badge">Runtime-host posture</div>
-                        <p class="section-note" id="replicaCapabilityDetail">Runtime host posture will appear here once REPLICA loads.</p>
-                        <p class="section-note" id="runtimeHostState" style="margin-top: 0.5em; font-weight: 500;"></p>
-                        <p class="section-note" id="replicaRuntimeHint">Runtime mode details will appear here once REPLICA loads.</p>
-                        <p class="section-note" id="replicaCapabilityMessage">Replay capability details will appear here once REPLICA loads.</p>
-                        <div id="runtimePackInfo" style="margin-top: 1em; padding: 0.75em; background-color: rgba(255, 255, 255, 0.05); border-radius: 4px; display: none;">
-                            <div class="stat"><div class="stat-label">Pack ID</div><div class="stat-value" id="runtimePackId">-</div></div>
-                            <div class="stat"><div class="stat-label">Incident class</div><div class="stat-value" id="runtimeIncidentClass">-</div></div>
-                            <div class="stat"><div class="stat-label">Coverage</div><div class="stat-value" id="runtimeCoverage">-</div></div>
+            <details class="agent-details enterprise-depth-details">
+                <summary>Open task board, memory, REPLICA, and TRACE depth</summary>
+                <div class="agent-details-body">
+                    <div class="story-grid">
+                        <div class="detail-card">
+                            <div class="badge">Task board</div>
+                            <div class="section-note" id="orchestrationState">Loading orchestration state.</div>
+                            <div class="workflow-timeline" id="taskBoard"></div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="badge">Memory-grounded context</div>
+                            <p class="hero-copy" id="memorySummary">Loading prior incidents, runbook history, and unresolved work.</p>
+                            <div class="memory-grid">
+                                <div>
+                                    <h3>Similar incidents</h3>
+                                    <ul class="simple-list" id="memorySimilarIncidents"></ul>
+                                </div>
+                                <div>
+                                    <h3>Runbook history</h3>
+                                    <ul class="simple-list" id="memoryRunbooks"></ul>
+                                </div>
+                            </div>
+                            <details class="agent-details">
+                                <summary>Show unresolved follow-ups</summary>
+                                <div class="agent-details-body">
+                                    <ul class="simple-list" id="memoryUnresolvedItems"></ul>
+                                </div>
+                            </details>
                         </div>
                     </div>
-                    <div class="detail-card" id="runtimeQueueCard" style="display: none; margin-top: 1em; background-color: rgba(100, 200, 100, 0.05); border: 1px solid rgba(100, 200, 100, 0.15);">
-                        <div class="badge">Runtime queue recovery</div>
-                        <p class="section-note" id="runtimeQueueStatus">Queue state will appear here once REPLICA loads.</p>
-                        <div class="hero-stats raw-intake-grid" style="margin-top: 0.5em;">
-                            <div class="stat"><div class="stat-label">Current state</div><div class="stat-value" id="runtimeQueueCurrentState">-</div></div>
-                            <div class="stat"><div class="stat-label">Attempts</div><div class="stat-value" id="runtimeQueueAttempts">-</div></div>
-                            <div class="stat"><div class="stat-label">Retries</div><div class="stat-value" id="runtimeQueueRetries">-</div></div>
+                    <div class="story-grid" style="margin-top: 14px;">
+                        <div class="detail-card">
+                            <div class="badge">Reliability posture</div>
+                            <div class="kpi-grid" id="agentMetrics"></div>
                         </div>
-                        <p class="section-note" id="runtimeQueueMessage" style="margin-top: 0.5em;">Queue details will appear here once REPLICA loads.</p>
+                        <div class="detail-card">
+                            <div class="badge">Fallback and retries</div>
+                            <p class="hero-copy" id="fallbackSummaryNote">The runtime stays deterministic and bounded even when one branch needs a fallback.</p>
+                            <ul class="simple-list" id="fallbackSummary"></ul>
+                        </div>
                     </div>
-                    <div class="shell-actions">
-                        <button class="nav-link channel-cta" id="replicaReplayBtn" type="button">Run bounded replay</button>
+                    <div class="story-grid" style="margin-top: 14px;">
+                        <div class="detail-card">
+                            <div class="badge">Investigation depth · REPLICA</div>
+                            <p class="hero-copy" id="replicaSummary">Reproduction findings will appear here once the investigation packet loads.</p>
+                            <div class="hero-stats raw-intake-grid">
+                                <div class="stat"><div class="stat-label">Environment pack</div><div class="stat-value" id="replicaPack">-</div></div>
+                                <div class="stat"><div class="stat-label">Status</div><div class="stat-value" id="replicaStatus">-</div></div>
+                                <div class="stat"><div class="stat-label">Hypothesis</div><div class="stat-value" id="replicaHypothesis">-</div></div>
+                                <div class="stat"><div class="stat-label">Confidence delta</div><div class="stat-value" id="replicaDelta">-</div></div>
+                            </div>
+                            <div class="hero-stats raw-intake-grid">
+                                <div class="stat"><div class="stat-label">Baseline replay</div><div class="stat-value" id="replicaBaseline">-</div></div>
+                                <div class="stat"><div class="stat-label">Best mitigation</div><div class="stat-value" id="replicaBestMitigation">-</div></div>
+                                <div class="stat"><div class="stat-label">Runtime outcome</div><div class="stat-value" id="replicaOutcome">-</div></div>
+                            </div>
+                            <div class="hero-stats raw-intake-grid">
+                                <div class="stat"><div class="stat-label">Replay capability</div><div class="stat-value" id="replicaCapabilityState">-</div></div>
+                                <div class="stat"><div class="stat-label">Replay host</div><div class="stat-value" id="replicaCapabilityHost">-</div></div>
+                            </div>
+                            <div class="detail-card" id="runtimeHostCard" style="margin-top: 1em; background-color: rgba(74, 144, 226, 0.05); border: 1px solid rgba(74, 144, 226, 0.15);">
+                                <div class="badge">Runtime-host posture</div>
+                                <p class="section-note" id="replicaCapabilityDetail">Runtime host posture will appear here once REPLICA loads.</p>
+                                <p class="section-note" id="runtimeHostState" style="margin-top: 0.5em; font-weight: 500;"></p>
+                                <p class="section-note" id="replicaRuntimeHint">Runtime mode details will appear here once REPLICA loads.</p>
+                                <p class="section-note" id="replicaCapabilityMessage">Replay capability details will appear here once REPLICA loads.</p>
+                                <div id="runtimePackInfo" style="margin-top: 1em; padding: 0.75em; background-color: rgba(255, 255, 255, 0.05); border-radius: 4px; display: none;">
+                                    <div class="stat"><div class="stat-label">Pack ID</div><div class="stat-value" id="runtimePackId">-</div></div>
+                                    <div class="stat"><div class="stat-label">Incident class</div><div class="stat-value" id="runtimeIncidentClass">-</div></div>
+                                    <div class="stat"><div class="stat-label">Coverage</div><div class="stat-value" id="runtimeCoverage">-</div></div>
+                                </div>
+                            </div>
+                            <div class="detail-card" id="runtimeQueueCard" style="display: none; margin-top: 1em; background-color: rgba(100, 200, 100, 0.05); border: 1px solid rgba(100, 200, 100, 0.15);">
+                                <div class="badge">Runtime queue recovery</div>
+                                <p class="section-note" id="runtimeQueueStatus">Queue state will appear here once REPLICA loads.</p>
+                                <div class="hero-stats raw-intake-grid" style="margin-top: 0.5em;">
+                                    <div class="stat"><div class="stat-label">Current state</div><div class="stat-value" id="runtimeQueueCurrentState">-</div></div>
+                                    <div class="stat"><div class="stat-label">Attempts</div><div class="stat-value" id="runtimeQueueAttempts">-</div></div>
+                                    <div class="stat"><div class="stat-label">Retries</div><div class="stat-value" id="runtimeQueueRetries">-</div></div>
+                                </div>
+                                <p class="section-note" id="runtimeQueueMessage" style="margin-top: 0.5em;">Queue details will appear here once REPLICA loads.</p>
+                            </div>
+                            <div class="shell-actions">
+                                <button class="nav-link channel-cta" id="replicaReplayBtn" type="button">Run bounded replay</button>
+                            </div>
+                            <p class="section-note" id="replicaReplayStatus">Replay trigger status will appear here once REPLICA loads.</p>
+                            <p class="section-note" id="replicaReplayLifecycleState">Replay lifecycle state will appear here once REPLICA loads.</p>
+                            <ul class="simple-list" id="replicaReplayLifecycleEvents"></ul>
+                            <p class="section-note" id="replicaTrustSummary">Replay trust packet will appear here once REPLICA loads.</p>
+                            <ul class="simple-list" id="replicaTrustChecks"></ul>
+                            <p class="section-note" id="replicaComparison">Runtime comparison details will appear once REPLICA validates a mitigation.</p>
+                            <div id="runtimeComparisonBlock" style="display:none; margin-top:1em; padding:1em; border:1px solid #ccc; border-radius:4px;">
+                                <div id="runtimeBaselineRow" style="margin-bottom:0.5em;"></div>
+                                <div id="runtimeMitigatedRow" style="margin-bottom:0.5em;"></div>
+                                <div id="runtimeRunnerUpRow" style="margin-bottom:0.5em; display:none;"></div>
+                                <div><strong>Outcome:</strong> <span id="runtimeOutcomeLabel"></span></div>
+                            </div>
+                            <ul class="simple-list" id="replicaMitigations"></ul>
+                        </div>
+                        <div class="detail-card">
+                            <div class="badge">Investigation depth · TRACE</div>
+                            <p class="hero-copy" id="traceSummary">Debugging hints will appear here once TRACE narrows a likely path.</p>
+                            <div class="hero-stats raw-intake-grid">
+                                <div class="stat"><div class="stat-label">Trace status</div><div class="stat-value" id="traceStatus">-</div></div>
+                                <div class="stat"><div class="stat-label">Confidence</div><div class="stat-value" id="traceConfidence">-</div></div>
+                            </div>
+                            <p class="section-note" id="traceReplayEvidence">Replay evidence will appear here once TRACE has a runtime-backed clue set.</p>
+                            <p class="section-note" id="traceInspectionPoint">Inspect-here-first guidance will appear here once TRACE narrows a likely path.</p>
+                            <p class="section-note" id="traceDeveloperHandoff">Developer handoff details will appear here once TRACE prepares a bounded packet.</p>
+                            <ul class="simple-list" id="traceModules"></ul>
+                            <ul class="simple-list" id="traceAnomalies"></ul>
+                            <div class="detail-card" style="margin-top: 1em; background-color: rgba(255, 193, 7, 0.05); border: 1px solid rgba(255, 193, 7, 0.2); border-left: 4px solid rgba(255, 193, 7, 0.5);">
+                                <div class="badge">Residual risk and boundaries</div>
+                                <p class="section-note" id="traceResidualSummary">Risk framing will appear here once TRACE prepares guidance.</p>
+                                <p class="section-note" id="traceResidualScope">Scope boundaries will appear here once TRACE prepares guidance.</p>
+                                <p class="section-note" id="traceResidualCaveats">Confidence caveats will appear here once TRACE prepares guidance.</p>
+                                <p class="section-note" id="traceResidualNextSteps">Next steps if divergent will appear here once TRACE prepares guidance.</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="section-note" id="replicaReplayStatus">Replay trigger status will appear here once REPLICA loads.</p>
-                    <p class="section-note" id="replicaReplayLifecycleState">Replay lifecycle state will appear here once REPLICA loads.</p>
-                    <ul class="simple-list" id="replicaReplayLifecycleEvents"></ul>
-                    <p class="section-note" id="replicaTrustSummary">Replay trust packet will appear here once REPLICA loads.</p>
-                    <ul class="simple-list" id="replicaTrustChecks"></ul>
-                    <p class="section-note" id="replicaComparison">Runtime comparison details will appear once REPLICA validates a mitigation.</p>
-                    <div id="runtimeComparisonBlock" style="display:none; margin-top:1em; padding:1em; border:1px solid #ccc; border-radius:4px;">
-                        <div id="runtimeBaselineRow" style="margin-bottom:0.5em;"></div>
-                        <div id="runtimeMitigatedRow" style="margin-bottom:0.5em;"></div>
-                        <div id="runtimeRunnerUpRow" style="margin-bottom:0.5em; display:none;"></div>
-                        <div><strong>Outcome:</strong> <span id="runtimeOutcomeLabel"></span></div>
-                    </div>
-                    <ul class="simple-list" id="replicaMitigations"></ul>
                 </div>
-                <div class="detail-card">
-                    <div class="badge">Investigation depth · TRACE</div>
-                    <p class="hero-copy" id="traceSummary">Debugging hints will appear here once TRACE narrows a likely path.</p>
-                    <div class="hero-stats raw-intake-grid">
-                        <div class="stat"><div class="stat-label">Trace status</div><div class="stat-value" id="traceStatus">-</div></div>
-                        <div class="stat"><div class="stat-label">Confidence</div><div class="stat-value" id="traceConfidence">-</div></div>
-                    </div>
-                    <p class="section-note" id="traceReplayEvidence">Replay evidence will appear here once TRACE has a runtime-backed clue set.</p>
-                    <p class="section-note" id="traceInspectionPoint">Inspect-here-first guidance will appear here once TRACE narrows a likely path.</p>
-                    <p class="section-note" id="traceDeveloperHandoff">Developer handoff details will appear here once TRACE prepares a bounded packet.</p>
-                    <ul class="simple-list" id="traceModules"></ul>
-                    <ul class="simple-list" id="traceAnomalies"></ul>
-                    <div class="detail-card" style="margin-top: 1em; background-color: rgba(255, 193, 7, 0.05); border: 1px solid rgba(255, 193, 7, 0.2); border-left: 4px solid rgba(255, 193, 7, 0.5);">
-                        <div class="badge">Residual risk and boundaries</div>
-                        <p class="section-note" id="traceResidualSummary">Risk framing will appear here once TRACE prepares guidance.</p>
-                        <p class="section-note" id="traceResidualScope">Scope boundaries will appear here once TRACE prepares guidance.</p>
-                        <p class="section-note" id="traceResidualCaveats">Confidence caveats will appear here once TRACE prepares guidance.</p>
-                        <p class="section-note" id="traceResidualNextSteps">Next steps if divergent will appear here once TRACE prepares guidance.</p>
-                    </div>
-                </div>
-            </div>
+            </details>
         </section>
 
         <details class="section section-collapsible">

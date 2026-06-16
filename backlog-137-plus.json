@@ -30,7 +30,7 @@
     "id": 138,
     "title": "Incident workspace progressive-disclosure pass",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Reduce information overload on the incident page by emphasizing the current decision, the current owner, and the next operator action while hiding lower-signal detail behind intentional reveals.",
     "implementation_tasks": [
       "Identify which incident sections should be primary, secondary, or collapsed by default.",
