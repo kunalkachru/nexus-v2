@@ -102,6 +102,7 @@ The evidence chain is:
 1. REPLICA identifies the supported pack and, when available, executes bounded replay
 2. FORGE uses that result to weight mitigation choice
 3. GUARDIAN distinguishes runtime-backed versus inference-first posture
+4. if the incident is outside the wedge, the product should downgrade to unsupported rather than overclaim
 
 ## 4. Training
 

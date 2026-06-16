@@ -1,6 +1,6 @@
 # NEXUS Visual Architecture And Flows
 
-Current as of 2026-06-15.
+Current as of 2026-06-16.
 
 ## Product Screenshots
 
@@ -31,6 +31,12 @@ Every major surface should help the operator answer:
 5. what should happen next?
 6. who approves the action?
 
+## Strongest Review Flow
+
+The strongest truthful UI path is:
+
+`/queue -> seeded incident -> Inspect intake -> /inputs -> fresh nxs incident -> /training -> /settings`
+
 ## Current Workflow
 
 ```mermaid
@@ -57,3 +63,9 @@ The current wedge covers five bounded outage families:
 - auth dependency slowdown / token validation failures
 
 REPLICA and TRACE are real for curated families, but they remain bounded and explicit.
+
+Every stakeholder walkthrough should also keep the support posture explicit:
+
+- `runtime-backed`
+- `inference-first`
+- `unsupported`

@@ -1,6 +1,6 @@
 # NEXUS Product Strategy And GTM
 
-Current as of 2026-06-15.
+Current as of 2026-06-16.
 
 NEXUS should be presented as:
 
@@ -107,12 +107,22 @@ Still bounded:
 - no arbitrary environment recreation
 - no arbitrary repo-wide debugging
 
+## Evidence Posture Buyers Must Hear
+
+Every serious buyer or pilot conversation should use the shipped evidence posture language:
+
+- `runtime-backed`: bounded replay actually ran and materially improved or resolved the case
+- `inference-first`: the investigation packet is useful, but replay did not validate this case
+- `unsupported`: the incident is outside the current five-family wedge and should be downgraded honestly
+
+This is part of the product promise, not a footnote. NEXUS wins by being useful and explicit, not by pretending broader coverage than it really has.
+
 ## GTM Motion
 
 Lead with a support cost and escalation quality story:
 
 1. show the raw intake problem
-2. show how NEXUS structures the case
+2. show the queue-first operator path and how NEXUS structures the case
 3. show memory and runtime-backed investigation
 4. show the engineering-ready handoff
 5. prove the ROI with relay reduction, triage time, and approval speed

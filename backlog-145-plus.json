@@ -62,7 +62,7 @@
     "id": 147,
     "title": "Public product-story truth pass",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Review public product and buyer docs for small truth drifts so the current five-family wedge, bounded runtime posture, and operator story read consistently across demo, buyer, and GTM materials.",
     "implementation_tasks": [
       "Read the public strategy, buyer proof, presentation, visual-architecture, and setup materials end to end.",

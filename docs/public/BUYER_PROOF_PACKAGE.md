@@ -1,8 +1,15 @@
 # NEXUS Buyer Proof Package
 
-Current as of 2026-06-15.
+Current as of 2026-06-16.
 
 This document packages the demonstrated value of NEXUS for buyer conversations and proof-of-concept cycles.
+
+The current saleable wedge is narrow and explicit:
+
+- five bounded outage families
+- bounded REPLICA replay where curated packs exist
+- bounded TRACE debugging and engineering handoff
+- governed human approval before action
 
 ## The Problem NEXUS Solves
 
