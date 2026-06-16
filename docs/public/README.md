@@ -12,8 +12,8 @@ Current product state:
 
 Recommended reading order:
 
-1. [Top-level README](/Users/kunalkachru/Documents/nexus-v3/README.md)
-2. [Master operator demo guide](/Users/kunalkachru/Documents/nexus-v3/docs/public/MASTER_OPERATOR_DEMO_GUIDE.md)
+1. [Master operator demo guide](/Users/kunalkachru/Documents/nexus-v3/docs/public/MASTER_OPERATOR_DEMO_GUIDE.md)
+2. [Top-level README](/Users/kunalkachru/Documents/nexus-v3/README.md)
 3. [Product strategy and GTM](/Users/kunalkachru/Documents/nexus-v3/docs/public/PRODUCT_STRATEGY_AND_GTM.md)
 4. [Demo walkthrough](/Users/kunalkachru/Documents/nexus-v3/docs/public/DEMO_WALKTHROUGH.md)
 5. [Demo cheat sheet](/Users/kunalkachru/Documents/nexus-v3/docs/public/DEMO_CHEAT_SHEET.md)
@@ -21,3 +21,13 @@ Recommended reading order:
 7. [Presentation pack](/Users/kunalkachru/Documents/nexus-v3/docs/public/PRESENTATION_PACK.md)
 8. [Visual architecture and flows](/Users/kunalkachru/Documents/nexus-v3/docs/public/VISUAL_ARCHITECTURE_AND_FLOWS.md)
 9. [Setup and demo run path](/Users/kunalkachru/Documents/nexus-v3/docs/public/SETUP_AND_DEMO.md)
+
+Fastest demo path through the product:
+
+1. `/queue`
+2. flagship seeded incident
+3. `Inspect intake` -> `/inputs`
+4. guided demo bundle submission
+5. fresh `nxs_...` incident landing at the top incident brief
+6. `/training`
+7. `/settings`

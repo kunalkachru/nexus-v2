@@ -146,7 +146,7 @@
     "id": 142,
     "title": "Operator-first demo guide and screen-map sync",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Refresh the main owner-facing walkthrough after the UX hardening lands so one document accurately describes the best review order, exact UI paths, and expected behavior on every major screen.",
     "implementation_tasks": [
       "Update the master demo guide with the final queue, inputs, incident, training, settings, history, and replay navigation path.",

@@ -12,6 +12,10 @@ This is the single document to use when you want to:
 
 Use this guide as the main operating document. The other public docs are supporting material, not the primary walkthrough.
 
+If you only want the fastest truthful live path, use:
+
+`/queue -> flagship seeded incident -> Inspect intake -> /inputs -> guided demo bundle -> fresh nxs incident -> /training -> /settings`
+
 ## 1. What NEXUS Is
 
 NEXUS is an **AI-assisted support-to-engineering investigation product** for recurring customer-facing application outages.
@@ -284,6 +288,7 @@ Use the curated bundle path first instead of random logs:
 4. verify the browser parse still reads like a timeout-oriented case
 5. click `Submit raw logs`
 6. wait for the fresh `nxs_...` incident workspace to open
+7. start at the top incident brief before replaying the handoff chain or opening deep technical detail
 
 For the second fresh-log demo, repeat the same path with `DB pool exhaustion / session leak`.
 

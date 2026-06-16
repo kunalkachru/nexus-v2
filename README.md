@@ -57,10 +57,24 @@ Still bounded:
 
 ## Start Here
 
+- [Master operator demo guide](/Users/kunalkachru/Documents/nexus-v3/docs/public/MASTER_OPERATOR_DEMO_GUIDE.md)
 - [Documentation index](/Users/kunalkachru/Documents/nexus-v3/docs/README.md)
 - [Public docs](/Users/kunalkachru/Documents/nexus-v3/docs/public/README.md)
 - [Internal docs](/Users/kunalkachru/Documents/nexus-v3/docs/internal/README.md)
 - [Current working state](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
+
+## Fastest Hands-On Review
+
+If you want the shortest truthful walkthrough:
+
+1. Open [http://127.0.0.1:7860/queue](http://127.0.0.1:7860/queue)
+2. Open the flagship incident workspace
+3. Click `Inspect intake`
+4. On `/inputs`, choose a guided demo bundle and submit raw logs
+5. Review the fresh `nxs_...` incident from the top incident brief first
+6. Then inspect `/training` and `/settings` for proof, health, and governance surfaces
+
+For the exact step-by-step behavior on every screen, use the [master operator demo guide](/Users/kunalkachru/Documents/nexus-v3/docs/public/MASTER_OPERATOR_DEMO_GUIDE.md).
 
 ## Local Run
 
