@@ -69,6 +69,8 @@ def test_dashboard_routes_are_served() -> None:
     assert "Advanced artifacts" in training.text
     assert "Pilot-safe posture" in training.text
     assert "Failure vocabulary" in training.text
+    assert "Download weekly review" in training.text
+    assert "Download closeout package" in training.text
     assert "Trust posture, contracts, and deployment controls" in settings.text
     assert "Runtime Host" in settings.text
     assert "Relay posture" in settings.text

@@ -14,6 +14,7 @@ from server.audit import write_audit_log
 from server.auth import AuthenticatedContext, require_auth, require_role, require_runtime_host_auth, check_governance_capability
 from server.auth import verify_webhook_signature, get_user_capabilities, ROLE_MATRIX
 from server.artifacts import record_execution_event, _load_artifacts
+from server.artifacts import get_artifact_summary
 from server.config import AppConfig
 from server.db import DatabaseSession, create_session_factory, get_db
 from server.integrations.alerts import AlertNormalizer
@@ -682,6 +683,66 @@ async def get_pilot_scorecard(
         {"user_id": auth.user_id},
     )
     return scorecard
+
+
+@app.get("/api/v1/tenant/weekly-review-package")
+async def get_weekly_review_package(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    from server.services.enterprise_runtime import build_pilot_scorecard, build_weekly_pilot_review_package
+
+    await request.app.state.rate_limiter.check(auth=auth, route_key="tenant_bootstrap")
+    scorecard = build_pilot_scorecard(
+        incidents_handled=5,
+        incidents_runtime_backed=3,
+        incidents_inferred=2,
+        total_triage_time_saved_minutes=60,
+        handoff_completion_count=4,
+        repeat_incident_reuse_count=2,
+        tenant_id=auth.tenant_id,
+    )
+    packet = build_weekly_pilot_review_package(
+        tenant_id=auth.tenant_id,
+        scorecard=scorecard,
+        artifact_summary=get_artifact_summary(),
+    )
+    await write_audit_log(
+        "tenant.weekly_review_package.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id},
+    )
+    return packet
+
+
+@app.get("/api/v1/tenant/pilot-closeout-package")
+async def get_pilot_closeout_package(
+    request: Request,
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    from server.services.enterprise_runtime import build_pilot_closeout_package, build_pilot_scorecard
+
+    await request.app.state.rate_limiter.check(auth=auth, route_key="tenant_bootstrap")
+    scorecard = build_pilot_scorecard(
+        incidents_handled=5,
+        incidents_runtime_backed=3,
+        incidents_inferred=2,
+        total_triage_time_saved_minutes=60,
+        handoff_completion_count=4,
+        repeat_incident_reuse_count=2,
+        tenant_id=auth.tenant_id,
+    )
+    packet = build_pilot_closeout_package(
+        tenant_id=auth.tenant_id,
+        scorecard=scorecard,
+        artifact_summary=get_artifact_summary(),
+    )
+    await write_audit_log(
+        "tenant.pilot_closeout_package.read",
+        auth.tenant_id,
+        {"user_id": auth.user_id},
+    )
+    return packet
 
 
 @app.put("/api/v1/tenant/bootstrap-config")

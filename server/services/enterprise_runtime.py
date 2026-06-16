@@ -4,6 +4,7 @@ import json
 import os
 import time
 from collections.abc import Awaitable, Callable
+from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from statistics import mean
@@ -39,6 +40,10 @@ from server.services.replica_runtime import (
 
 
 TRACE_OWNERSHIP_MAP_PATH = Path(__file__).with_name("trace_ownership_map.json")
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 class RuntimeState(TypedDict):
@@ -1655,6 +1660,129 @@ def build_pilot_scorecard(
         "value_summary": " · ".join(value_proposition)
         or "Pilot scorecard is available once incidents are processed through NEXUS.",
         "readiness": "baseline" if incidents_handled == 0 else "active",
+    }
+
+
+def _pilot_family_coverage_rows() -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for incident_id in ["INC001", "INC002", "INC003", "INC005", "INC007"]:
+        details = get_incident_details(incident_id)
+        triage = details.get("triage", {}) if isinstance(details.get("triage"), dict) else {}
+        rows.append(
+            {
+                "incident_id": incident_id,
+                "label": str(details.get("summary") or incident_id),
+                "issue_family": str(triage.get("issue_family") or infer_issue_family("", str(details.get("summary") or incident_id))),
+                "support_posture": "runtime-backed" if incident_id in {"INC001", "INC002"} else "inference-first",
+            }
+        )
+    return rows
+
+
+def build_weekly_pilot_review_package(
+    *,
+    tenant_id: str,
+    scorecard: dict[str, object],
+    artifact_summary: dict[str, int],
+) -> dict[str, object]:
+    coverage_rows = _pilot_family_coverage_rows()
+    runtime_ratio = float(((scorecard.get("runtime_backed_ratio") or {}).get("value") or 0))
+    handoff_rate = float(((scorecard.get("handoff_completion") or {}).get("value") or 0))
+    residual_risks: list[str] = []
+    if runtime_ratio < 60:
+        residual_risks.append("Runtime-backed ratio is below the target threshold, so more cases remain inference-first than desired.")
+    if handoff_rate < 70:
+        residual_risks.append("Handoff completion is below the target threshold, so engineering follow-through still needs review.")
+    if artifact_summary.get("guardian_reviews", 0) == 0:
+        residual_risks.append("Guardian review volume is low, so the governance trail is still thin for pilot proof.")
+    if not residual_risks:
+        residual_risks.append("No blocking residual risk was detected in the current bounded pilot baseline.")
+
+    package_text = f"""# Weekly Pilot Review — {tenant_id}
+
+Generated: {_utc_now_iso()}
+
+## Scorecard Snapshot
+- Incidents handled: {((scorecard.get("incidents_handled") or {}).get("value") or 0)}
+- Runtime-backed ratio: {runtime_ratio}%
+- Inference-first ratio: {((scorecard.get("inference_ratio") or {}).get("value") or 0)}%
+- Average triage time saved: {((scorecard.get("triage_time_saved") or {}).get("value") or 0)} minutes
+- Handoff completion: {handoff_rate}%
+- Repeat reuse: {((scorecard.get("repeat_incident_reuse") or {}).get("value") or 0)}
+
+## Coverage Snapshot
+{chr(10).join([f"- {row['incident_id']} — {row['issue_family']} ({row['support_posture']})" for row in coverage_rows])}
+
+## Value Proof
+- {scorecard.get("value_summary") or "Pilot value summary not available."}
+- Audit events observed: {artifact_summary.get("audit_events", 0)}
+- Guardian reviews recorded: {artifact_summary.get("guardian_reviews", 0)}
+- Training snapshots available: {artifact_summary.get("training_snapshots", 0)}
+
+## Residual Risk
+{chr(10).join([f"- {item}" for item in residual_risks])}
+"""
+
+    return {
+        "tenant_id": tenant_id,
+        "package_type": "weekly_review",
+        "generated_at": _utc_now_iso(),
+        "scorecard": scorecard,
+        "coverage_rows": coverage_rows,
+        "artifact_summary": artifact_summary,
+        "residual_risks": residual_risks,
+        "package_text": package_text,
+    }
+
+
+def build_pilot_closeout_package(
+    *,
+    tenant_id: str,
+    scorecard: dict[str, object],
+    artifact_summary: dict[str, int],
+) -> dict[str, object]:
+    runtime_ratio = float(((scorecard.get("runtime_backed_ratio") or {}).get("value") or 0))
+    handoff_rate = float(((scorecard.get("handoff_completion") or {}).get("value") or 0))
+    recommendation = (
+        "Continue → Same Scope"
+        if runtime_ratio >= 60 and handoff_rate >= 70
+        else "Pause & Reassess"
+        if runtime_ratio < 40
+        else "Continue → Scope Expansion"
+    )
+    closeout_text = f"""# Pilot Closeout Package — {tenant_id}
+
+Generated: {_utc_now_iso()}
+
+## Recommendation
+{recommendation}
+
+## Final Scorecard
+- Incidents handled: {((scorecard.get("incidents_handled") or {}).get("value") or 0)}
+- Runtime-backed ratio: {runtime_ratio}%
+- Inference-first ratio: {((scorecard.get("inference_ratio") or {}).get("value") or 0)}%
+- Handoff completion: {handoff_rate}%
+- Repeat reuse: {((scorecard.get("repeat_incident_reuse") or {}).get("value") or 0)}
+
+## Evidence And Governance Footprint
+- Audit events captured: {artifact_summary.get("audit_events", 0)}
+- Guardian reviews captured: {artifact_summary.get("guardian_reviews", 0)}
+- Training snapshots captured: {artifact_summary.get("training_snapshots", 0)}
+
+## Current Wedge
+- Five bounded outage families remain the active pilot surface.
+- Runtime-backed validation is limited to curated packs only.
+- Unsupported incidents must still downgrade explicitly.
+"""
+
+    return {
+        "tenant_id": tenant_id,
+        "package_type": "pilot_closeout",
+        "generated_at": _utc_now_iso(),
+        "recommendation": recommendation,
+        "scorecard": scorecard,
+        "artifact_summary": artifact_summary,
+        "package_text": closeout_text,
     }
 
 

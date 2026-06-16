@@ -2,6 +2,8 @@
 
 _Use this template at the end of each tenant's evaluation window (typically 4–6 weeks)_
 
+Use the generated pilot closeout package from `Learning & Controls` as the first draft. This template is the operator review frame for validating and extending that generated output.
+
 ---
 
 ## Executive Summary

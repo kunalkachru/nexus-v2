@@ -207,7 +207,7 @@
     "id": 123,
     "title": "Weekly pilot review package and closeout automation",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Automate the weekly pilot review and closeout packet so operators do not have to assemble proof and governance state by hand. This should pull together scorecards, outcome summaries, coverage posture, and unresolved risks.",
     "implementation_tasks": [
       "Generate a bounded weekly review package from the existing pilot metrics and audit surfaces.",

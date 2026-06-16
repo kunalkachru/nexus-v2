@@ -2,6 +2,8 @@
 
 Use this checklist in your weekly pilot sync to stay aligned on progress, blockers, and team trust.
 
+The current product can now generate a bounded weekly review packet directly from `Learning & Controls`. Use the generated packet as the meeting pre-read, then use this checklist to discuss the result.
+
 ## Before the Meeting (15 min)
 
 ### Incident Review

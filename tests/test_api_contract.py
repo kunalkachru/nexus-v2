@@ -1499,6 +1499,27 @@ def test_governance_packet_exposes_reviewer_traceability(client: TestClient, aut
     assert "evidence_posture" in payload["approval_timeline"][0]
 
 
+def test_weekly_review_package_is_generated_from_product_state(client: TestClient, auth_headers) -> None:
+    response = client.get("/api/v1/tenant/weekly-review-package", headers=auth_headers())
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["package_type"] == "weekly_review"
+    assert payload["scorecard"]["tenant_id"] == "tenant-a"
+    assert payload["coverage_rows"]
+    assert "Weekly Pilot Review" in payload["package_text"]
+
+
+def test_pilot_closeout_package_is_generated_from_product_state(client: TestClient, auth_headers) -> None:
+    response = client.get("/api/v1/tenant/pilot-closeout-package", headers=auth_headers())
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["package_type"] == "pilot_closeout"
+    assert payload["recommendation"]
+    assert "Pilot Closeout Package" in payload["package_text"]
+
+
 def test_handoff_send_persists_delivery_status(client: TestClient, seeded_incident: IncidentRecord, auth_headers) -> None:
     incident_id = seeded_incident.nexus_incident_id
 

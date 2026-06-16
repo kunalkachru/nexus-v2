@@ -29,6 +29,18 @@ function titleCase(value) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function downloadTextFile(text, filename) {
+  const blob = new Blob([text], { type: "text/markdown" });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
 function postureLabel(value) {
   const posture = String(value || "").toLowerCase();
   if (posture === "healthy") {
@@ -537,6 +549,42 @@ async function renderPilotScorecard() {
   }
 }
 
+function wirePilotPacketDownloads() {
+  document.getElementById("downloadWeeklyReviewBtn")?.addEventListener("click", async () => {
+    const button = document.getElementById("downloadWeeklyReviewBtn");
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Generating weekly review...";
+    }
+    try {
+      const packet = await fetchAuthedJson("/api/v1/tenant/weekly-review-package");
+      downloadTextFile(packet.package_text || "Weekly review package unavailable.", "nexus-weekly-review.md");
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Download weekly review";
+      }
+    }
+  });
+
+  document.getElementById("downloadCloseoutBtn")?.addEventListener("click", async () => {
+    const button = document.getElementById("downloadCloseoutBtn");
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Generating closeout...";
+    }
+    try {
+      const packet = await fetchAuthedJson("/api/v1/tenant/pilot-closeout-package");
+      downloadTextFile(packet.package_text || "Pilot closeout package unavailable.", "nexus-pilot-closeout.md");
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Download closeout package";
+      }
+    }
+  });
+}
+
 function renderProductHealth(healthData) {
   const health = healthData || {};
   const status = health.status || "unknown";
@@ -605,6 +653,7 @@ function renderProductHealth(healthData) {
 
 window.addEventListener("load", async () => {
   wireTrainingNavigation();
+  wirePilotPacketDownloads();
   const [trainingData, platformData, capabilitiesData, executionStateData, healthData] = await Promise.all([
     fetchAuthedJson("/api/v1/training/summary").catch(() => loadMetrics()),
     fetchAuthedJson("/api/v1/platform/status").catch(() => loadMetrics()),
