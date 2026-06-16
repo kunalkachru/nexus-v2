@@ -1219,9 +1219,12 @@ function renderDeliveryHistory(data) {
       ? ` · ${entry.actor_user_id}${Array.isArray(entry.actor_roles) && entry.actor_roles.length ? ` (${entry.actor_roles.join(", ")})` : ""}`
       : "";
     const feedbackInfo = entry.feedback_state ? ` · feedback ${entry.feedback_state}` : "";
+    const postureInfo = entry.failure_posture ? ` · ${titleCase(String(entry.failure_posture).replace(/_/g, " "))}` : "";
+    const duplicateInfo = entry.duplicate_semantics ? ` · ${titleCase(String(entry.duplicate_semantics).replace(/_/g, " "))}` : "";
     return {
       label: `${icon} ${String(entry.target || "unknown").toUpperCase()} — ${statusLabel}${attemptInfo}${backing}${reason}`,
-      detail: `Sent at ${formatTimestamp(entry.sent_at)}${actorInfo}${feedbackInfo}`,
+      detail: `Sent at ${formatTimestamp(entry.sent_at)}${actorInfo}${feedbackInfo}${postureInfo}${duplicateInfo}`,
+      guidance: entry.operator_guidance || "",
       entry: entry,
     };
   });
@@ -1229,7 +1232,7 @@ function renderDeliveryHistory(data) {
   renderList("deliveryHistory", items, (item) => {
     const retryBtn = item.entry.status === "retrying" || item.entry.status === "failed" ?
       ` <button class="small-action-btn" data-delivery-retry="${item.entry.target}">Retry</button>` : "";
-    return `<div><strong>${item.label}</strong><br><span class="section-note">${item.detail}</span>${retryBtn}</div>`;
+    return `<div><strong>${item.label}</strong><br><span class="section-note">${item.detail}</span>${item.guidance ? `<br><span class="section-note">${item.guidance}</span>` : ""}${retryBtn}</div>`;
   });
 
   document.querySelectorAll("[data-delivery-retry]").forEach((btn) => {
@@ -1246,6 +1249,9 @@ function renderDeliveryHistory(data) {
           btn.textContent = "✓ Sent";
         } else if (response.status === "terminal_failure") {
           btn.textContent = "✗ Terminal failure";
+          if (response.operator_guidance) {
+            alert(response.operator_guidance);
+          }
         }
       } catch (error) {
         btn.textContent = "✗ Retry failed";
@@ -1271,8 +1277,9 @@ function renderEngineeringFeedback(data) {
   const items = feedback.map((entry) => {
     const icon = entry.status === "accepted" ? "✓" : entry.status === "rejected" ? "✗" : entry.status === "resolved" ? "→" : "⧖";
     const reason = entry.reason ? ` — ${entry.reason}` : "";
+    const continuity = entry.status_continuity ? ` · ${titleCase(String(entry.status_continuity).replace(/_/g, " "))}` : "";
     return {
-      label: `${icon} ${String(entry.status || "pending").toUpperCase()}${reason}`,
+      label: `${icon} ${String(entry.status || "pending").toUpperCase()}${reason}${continuity}`,
       detail: `Recorded at ${formatTimestamp(entry.recorded_at)}`,
     };
   });

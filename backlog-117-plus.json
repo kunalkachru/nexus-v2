@@ -173,7 +173,7 @@
     "id": 122,
     "title": "Operational resilience for downstream delivery, replay, and feedback loops",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Make downstream sends, replay submission, and engineering feedback more resilient. The product should handle transient delivery failures, duplicate sends, and partial feedback gracefully, with clear retry posture and honest status.",
     "implementation_tasks": [
       "Deepen delivery lifecycle semantics for manual retry, duplicate prevention, and terminal failure visibility.",

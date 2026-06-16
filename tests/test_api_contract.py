@@ -1519,11 +1519,90 @@ def test_handoff_send_persists_delivery_status(client: TestClient, seeded_incide
             delivery_history = normalized_evidence.get("delivery_history", [])
             assert len(delivery_history) > 0
             assert delivery_history[0]["target"] == "github"
-            assert delivery_history[0]["status"] in ["delivered", "failed"]
+            assert delivery_history[0]["status"] in ["delivered", "failed", "retrying", "terminal_failure"]
         finally:
             await session.close()
 
     asyncio.run(verify_persistence())
+
+
+def test_handoff_send_marks_duplicate_semantics_on_repeat_send(
+    client: TestClient,
+    seeded_incident: IncidentRecord,
+    auth_headers,
+) -> None:
+    incident_id = seeded_incident.nexus_incident_id
+    first = client.post(
+        f"/api/v1/incidents/{incident_id}/handoff-send",
+        json={"target": "github"},
+        headers=auth_headers(tenant_id="tenant-a"),
+    )
+    second = client.post(
+        f"/api/v1/incidents/{incident_id}/handoff-send",
+        json={"target": "github"},
+        headers=auth_headers(tenant_id="tenant-a"),
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["duplicate_semantics"] == "first_send"
+    assert second.json()["duplicate_semantics"] == "repeat_send_after_delivery"
+
+
+def test_handoff_send_retryable_failure_surfaces_retryable_posture(
+    client: TestClient,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def raising_handoff(*args, **kwargs):
+        raise TimeoutError("connection timeout to github")
+
+    monkeypatch.setattr("server.services.incidents.IncidentService.build_engineering_handoff", raising_handoff)
+
+    response = client.post(
+        "/api/v1/incidents/INC001/handoff-send",
+        json={"target": "github"},
+        headers=auth_headers(),
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "retrying"
+    assert payload["retryable"] is True
+    assert payload["failure_posture"] == "retryable_failure"
+
+
+def test_handoff_retry_blocks_terminal_failure_with_structured_response(
+    client: TestClient,
+    seeded_incident: IncidentRecord,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    incident_id = seeded_incident.nexus_incident_id
+
+    async def raising_handoff(*args, **kwargs):
+        raise RuntimeError("invalid destination credentials")
+
+    monkeypatch.setattr("server.services.incidents.IncidentService.build_engineering_handoff", raising_handoff)
+
+    first = client.post(
+        f"/api/v1/incidents/{incident_id}/handoff-send",
+        json={"target": "github"},
+        headers=auth_headers(tenant_id="tenant-a"),
+    )
+    retry = client.post(
+        f"/api/v1/incidents/{incident_id}/handoff-retry",
+        json={"target": "github"},
+        headers=auth_headers(tenant_id="tenant-a"),
+    )
+
+    assert first.status_code == 200
+    assert first.json()["status"] == "terminal_failure"
+    assert retry.status_code == 200
+    retry_payload = retry.json()
+    assert retry_payload["status"] == "terminal_failure"
+    assert retry_payload["retryable"] is False
+    assert retry_payload["duplicate_semantics"] == "retry_blocked_after_terminal_failure"
 
 
 def test_engineering_feedback_endpoint_records_status(client: TestClient, auth_headers) -> None:

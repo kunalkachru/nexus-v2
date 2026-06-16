@@ -2252,6 +2252,26 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 return attempt
         return None
 
+    def _delivery_failure_posture(self, *, status: str, retryable: bool = False) -> str:
+        if status == "delivered":
+            return "delivered"
+        if status == "retrying" or retryable:
+            return "retryable_failure"
+        if status in {"terminal_failure", "failed"}:
+            return "terminal_failure"
+        return "partial_failure"
+
+    def _delivery_operator_guidance(self, *, status: str, retryable: bool = False, duplicate_semantics: str = "first_send") -> str:
+        if duplicate_semantics == "repeat_send_after_delivery":
+            return "This target already received a handoff. Re-send only if the downstream reviewer explicitly asked for an updated packet."
+        if status == "delivered":
+            return "Delivery completed. Wait for downstream review before retrying or sending a duplicate packet."
+        if status == "retrying" or retryable:
+            return "This failure appears retryable. Use the retry action after connectivity or destination health is restored."
+        if status == "terminal_failure":
+            return "This failure is terminal for the current configuration. Fix the destination or credentials before trying again."
+        return "Review downstream state before taking another delivery action."
+
     async def send_engineering_handoff(
         self,
         nexus_incident_id: str,
@@ -2276,6 +2296,14 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
 
             normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
             delivery_history = self._get_or_init_delivery_history(normalized_evidence)
+            last_attempt = self._find_delivery_attempt(delivery_history, target)
+            duplicate_semantics = (
+                "repeat_send_after_delivery"
+                if last_attempt and last_attempt.get("status") == "delivered"
+                else "retry_after_failure"
+                if last_attempt
+                else "first_send"
+            )
 
             delivery_entry = {
                 "target": target,
@@ -2284,6 +2312,12 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "evidence_backing": handoff.get("backing_evidence"),
                 "validated_items": handoff.get("validated_items", {}),
                 "attempt_count": len([a for a in delivery_history if a.get("target") == target]) + 1,
+                "duplicate_semantics": duplicate_semantics,
+                "failure_posture": "delivered",
+                "operator_guidance": self._delivery_operator_guidance(
+                    status="delivered",
+                    duplicate_semantics=duplicate_semantics,
+                ),
                 "actor_user_id": actor_user_id,
                 "actor_roles": actor_roles or [],
                 "tenant_id": tenant_id or "tenant-system",
@@ -2304,6 +2338,9 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "sent_at": delivery_entry["sent_at"],
                 "backing_evidence": delivery_entry["evidence_backing"],
                 "attempt_count": delivery_entry["attempt_count"],
+                "duplicate_semantics": duplicate_semantics,
+                "failure_posture": delivery_entry["failure_posture"],
+                "operator_guidance": delivery_entry["operator_guidance"],
                 "actor_user_id": actor_user_id,
                 "actor_roles": actor_roles or [],
             }
@@ -2329,6 +2366,15 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "failure_reason": str(e),
                 "attempt_count": attempt_count,
                 "retryable": is_retryable,
+                "duplicate_semantics": "retry_after_failure" if attempt_count > 1 else "first_send",
+                "failure_posture": self._delivery_failure_posture(
+                    status="retrying" if is_retryable and attempt_count < 3 else "terminal_failure",
+                    retryable=is_retryable,
+                ),
+                "operator_guidance": self._delivery_operator_guidance(
+                    status="retrying" if is_retryable and attempt_count < 3 else "terminal_failure",
+                    retryable=is_retryable,
+                ),
                 "actor_user_id": actor_user_id,
                 "actor_roles": actor_roles or [],
                 "tenant_id": tenant_id or "tenant-system",
@@ -2350,6 +2396,9 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "failure_reason": str(e),
                 "attempt_count": attempt_count,
                 "retryable": is_retryable,
+                "duplicate_semantics": delivery_entry["duplicate_semantics"],
+                "failure_posture": delivery_entry["failure_posture"],
+                "operator_guidance": delivery_entry["operator_guidance"],
                 "actor_user_id": actor_user_id,
                 "actor_roles": actor_roles or [],
             }
@@ -2380,7 +2429,20 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
             raise ValueError(f"No previous delivery attempt found for target {target}")
 
         if last_attempt.get("status") == "terminal_failure":
-            raise ValueError(f"Cannot retry terminal failure for target {target}")
+            return {
+                "incident_id": nexus_incident_id,
+                "target": target,
+                "status": "terminal_failure",
+                "failure_posture": "terminal_failure",
+                "retryable": False,
+                "duplicate_semantics": "retry_blocked_after_terminal_failure",
+                "operator_guidance": "Retry is blocked because the last delivery failed terminally. Fix the destination configuration before sending again.",
+                "sent_at": last_attempt.get("sent_at"),
+                "attempt_count": last_attempt.get("attempt_count", 0),
+                "failure_reason": last_attempt.get("failure_reason", f"Cannot retry terminal failure for target {target}"),
+                "actor_user_id": actor_user_id,
+                "actor_roles": actor_roles or [],
+            }
 
         return await self.send_engineering_handoff(
             nexus_incident_id,
@@ -2440,6 +2502,20 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 delivery_history[-1]["feedback_recorded_at"] = feedback_entry["recorded_at"]
                 delivery_history[-1]["feedback_actor_user_id"] = actor_user_id
                 delivery_history[-1]["feedback_actor_roles"] = actor_roles or []
+                delivery_history[-1]["status_continuity"] = (
+                    "closed_with_feedback"
+                    if feedback_status in {"accepted", "resolved", "acted_on"}
+                    else "partial_follow_up"
+                    if feedback_status in {"follow_up_needed", "acknowledged"}
+                    else "rejected_downstream"
+                )
+                delivery_history[-1]["operator_guidance"] = (
+                    "Downstream team confirmed the packet. Capture final incident closure or validation notes."
+                    if feedback_status in {"accepted", "resolved", "acted_on"}
+                    else "Downstream team needs more follow-up. Keep the case open and attach the next debugging update."
+                    if feedback_status in {"follow_up_needed", "acknowledged"}
+                    else "Downstream team rejected the packet. Review evidence posture and prepare a corrected handoff before resending."
+                )
                 normalized_evidence["delivery_history"] = delivery_history
 
             await self._session.incidents.update_incident_normalized_evidence(
@@ -2451,6 +2527,13 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 "incident_id": nexus_incident_id,
                 "feedback_status": feedback_status,
                 "delivery_state": delivery_state,
+                "status_continuity": (
+                    "closed_with_feedback"
+                    if feedback_status in {"accepted", "resolved", "acted_on"}
+                    else "partial_follow_up"
+                    if feedback_status in {"follow_up_needed", "acknowledged"}
+                    else "rejected_downstream"
+                ),
                 "recorded_at": feedback_entry["recorded_at"],
                 "actor_user_id": actor_user_id,
                 "actor_roles": actor_roles or [],

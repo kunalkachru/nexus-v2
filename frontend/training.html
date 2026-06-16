@@ -168,6 +168,15 @@
                     </ul>
                     <p class="section-note" style="margin-top: 1em;">Guidance stays bounded to the current pilot workflow. NEXUS does not imply autonomous incident operations here.</p>
                 </div>
+                <div class="detail-card">
+                    <div class="badge">Failure vocabulary</div>
+                    <ul class="simple-list">
+                        <li><strong>Delivered</strong> — the downstream action completed and the packet is now awaiting human review.</li>
+                        <li><strong>Retryable failure</strong> — the action can be retried after restoring connectivity or destination health.</li>
+                        <li><strong>Terminal failure</strong> — retry is blocked until configuration or destination state is fixed.</li>
+                        <li><strong>Partial follow-up</strong> — downstream acknowledged the packet but still needs more evidence or debugging work.</li>
+                    </ul>
+                </div>
             </div>
         </section>
 

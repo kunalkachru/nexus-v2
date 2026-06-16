@@ -22,6 +22,7 @@ Use this checklist in your weekly pilot sync to stay aligned on progress, blocke
 - [ ] Did any engineering teams comment on recent handoffs?
 - [ ] Any GitHub/Slack threads about NEXUS guidance quality?
 - [ ] Notable trust wins or trust gaps?
+- [ ] Any retryable failures, terminal failures, or partial follow-up states that need explanation in the review?
 
 ## During the Meeting (30 min)
 
@@ -93,6 +94,7 @@ Escalate immediately if you see:
 - **Consistent downgrade to unsupported**: incident families are leaking outside bounded scope — reassess coverage
 - **Test suite degradation**: baseline regressions indicate product stability issue — fix before continuing
 - **Runtime replay failures**: Docker path or compose contracts are broken — needs triage before rollout
+- **Repeated duplicate sends**: operators are resending packets without explicit downstream need — clarify duplicate semantics and control usage
 
 ## Notes Section
 
