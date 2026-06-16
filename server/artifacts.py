@@ -68,116 +68,160 @@ def _load_artifacts() -> dict[str, list[dict[str, object]]]:
     return {key: list(value) for key, value in result.items()}
 
 
+def _validate_artifacts_payload(payload: dict[str, list[dict[str, object]]]) -> None:
+    required_keys = {
+        "replay_launches",
+        "training_snapshots",
+        "learning_contracts",
+        "audit_events",
+        "guardian_reviews",
+        "execution_events",
+        "runtime_queue_jobs",
+    }
+    if not isinstance(payload, dict):
+        raise ValueError("Payload must be a dict")
+    for key in required_keys:
+        if key not in payload:
+            raise ValueError(f"Missing required key: {key}")
+        if not isinstance(payload[key], list):
+            raise ValueError(f"Key {key} must be a list, got {type(payload[key])}")
+
+
 def _persist_artifacts(payload: dict[str, list[dict[str, object]]]) -> None:
     global _ARTIFACT_CACHE
     path = _artifact_path()
 
     try:
+        _validate_artifacts_payload(payload)
         path.parent.mkdir(parents=True, exist_ok=True)
         temp_path = path.with_suffix(".tmp")
         serialized = json.dumps(payload, indent=2, sort_keys=True)
         temp_path.write_text(serialized)
         temp_path.replace(path)
         _ARTIFACT_CACHE = {key: list(value) for key, value in payload.items()}
-    except Exception as e:
-        logger.exception("Failed to persist artifacts to %s: %s", path, e)
+    except (OSError, json.JSONDecodeError, ValueError) as e:
+        logger.exception("Failed to persist artifacts to %s", path)
         raise
 
 
 async def record_replay_launch(record: dict[str, object]) -> None:
-    async with _ARTIFACT_LOCK:
-        payload = _load_artifacts()
-        payload["replay_launches"].append(
-            {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                **record,
-            }
-        )
-        _persist_artifacts(payload)
+    try:
+        async with _ARTIFACT_LOCK:
+            payload = _load_artifacts()
+            payload["replay_launches"].append(
+                {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    **record,
+                }
+            )
+            _persist_artifacts(payload)
+    except Exception as e:
+        logger.warning("Failed to record replay launch (non-fatal): %s", e)
 
 
 async def record_training_snapshot(record: dict[str, object]) -> None:
-    async with _ARTIFACT_LOCK:
-        payload = _load_artifacts()
-        payload["training_snapshots"].append(
-            {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                **record,
-            }
-        )
-        _persist_artifacts(payload)
+    try:
+        async with _ARTIFACT_LOCK:
+            payload = _load_artifacts()
+            payload["training_snapshots"].append(
+                {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    **record,
+                }
+            )
+            _persist_artifacts(payload)
+    except Exception as e:
+        logger.warning("Failed to record training snapshot (non-fatal): %s", e)
 
 
 async def record_learning_contract(record: dict[str, object]) -> None:
-    async with _ARTIFACT_LOCK:
-        payload = _load_artifacts()
-        payload["learning_contracts"].append(
-            {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                **record,
-            }
-        )
-        _persist_artifacts(payload)
+    try:
+        async with _ARTIFACT_LOCK:
+            payload = _load_artifacts()
+            payload["learning_contracts"].append(
+                {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    **record,
+                }
+            )
+            _persist_artifacts(payload)
+    except Exception as e:
+        logger.warning("Failed to record learning contract (non-fatal): %s", e)
 
 
 async def record_audit_event(record: dict[str, object]) -> None:
-    async with _ARTIFACT_LOCK:
-        payload = _load_artifacts()
-        payload["audit_events"].append(
-            {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                **record,
-            }
-        )
-        _persist_artifacts(payload)
+    try:
+        async with _ARTIFACT_LOCK:
+            payload = _load_artifacts()
+            payload["audit_events"].append(
+                {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    **record,
+                }
+            )
+            _persist_artifacts(payload)
+    except Exception as e:
+        logger.warning("Failed to record audit event (non-fatal): %s", e)
 
 
 async def record_guardian_review(record: dict[str, object]) -> None:
-    async with _ARTIFACT_LOCK:
-        payload = _load_artifacts()
-        payload["guardian_reviews"].append(
-            {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                **record,
-            }
-        )
-        _persist_artifacts(payload)
+    try:
+        async with _ARTIFACT_LOCK:
+            payload = _load_artifacts()
+            payload["guardian_reviews"].append(
+                {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    **record,
+                }
+            )
+            _persist_artifacts(payload)
+    except Exception as e:
+        logger.warning("Failed to record guardian review (non-fatal): %s", e)
 
 
 async def record_execution_event(record: dict[str, object]) -> None:
-    async with _ARTIFACT_LOCK:
-        payload = _load_artifacts()
-        payload["execution_events"].append(
-            {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                **record,
-            }
-        )
-        _persist_artifacts(payload)
+    try:
+        async with _ARTIFACT_LOCK:
+            payload = _load_artifacts()
+            payload["execution_events"].append(
+                {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    **record,
+                }
+            )
+            _persist_artifacts(payload)
+    except Exception as e:
+        logger.warning("Failed to record execution event (non-fatal): %s", e)
 
 
 async def record_runtime_queue_job(record: dict[str, object]) -> None:
-    async with _ARTIFACT_LOCK:
-        payload = _load_artifacts()
-        payload["runtime_queue_jobs"].append(
-            {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                **record,
-            }
-        )
-        _persist_artifacts(payload)
+    try:
+        async with _ARTIFACT_LOCK:
+            payload = _load_artifacts()
+            payload["runtime_queue_jobs"].append(
+                {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    **record,
+                }
+            )
+            _persist_artifacts(payload)
+    except Exception as e:
+        logger.warning("Failed to record runtime queue job (non-fatal): %s", e)
 
 
 async def update_runtime_queue_job(job_id: str, updates: dict[str, object]) -> None:
-    async with _ARTIFACT_LOCK:
-        payload = _load_artifacts()
-        jobs = payload.get("runtime_queue_jobs", [])
-        for job in jobs:
-            if isinstance(job, dict) and job.get("job_id") == job_id:
-                job.update(updates)
-                job["updated_at"] = datetime.now(timezone.utc).isoformat()
-                break
-        _persist_artifacts(payload)
+    try:
+        async with _ARTIFACT_LOCK:
+            payload = _load_artifacts()
+            jobs = payload.get("runtime_queue_jobs", [])
+            for job in jobs:
+                if isinstance(job, dict) and job.get("job_id") == job_id:
+                    job.update(updates)
+                    job["updated_at"] = datetime.now(timezone.utc).isoformat()
+                    break
+            _persist_artifacts(payload)
+    except Exception as e:
+        logger.warning("Failed to update runtime queue job (non-fatal): %s", e)
 
 
 def get_runtime_queue_jobs() -> list[dict[str, object]]:

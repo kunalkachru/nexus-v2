@@ -109,6 +109,6 @@ def _persist_audit_logs(entries: list[dict[str, object]]) -> None:
         temp_path.write_text(serialized)
         temp_path.replace(path)
         _AUDIT_CACHE = list(entries)
-    except Exception as e:
-        logger.exception("Failed to persist audit logs to %s: %s", path, e)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.exception("Failed to persist audit logs to %s", path)
         raise
