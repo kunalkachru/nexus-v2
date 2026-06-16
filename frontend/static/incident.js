@@ -90,13 +90,15 @@ function getRelayNodes() {
   return [
     document.getElementById("relaySentinel"),
     document.getElementById("relayPrism"),
+    document.getElementById("relayReplica"),
+    document.getElementById("relayTrace"),
     document.getElementById("relayForge"),
     document.getElementById("relayGuardian"),
   ].filter(Boolean);
 }
 
 function setRelayNodeState(index, state) {
-  const labels = ["relaySentinelState", "relayPrismState", "relayForgeState", "relayGuardianState"];
+  const labels = ["relaySentinelState", "relayPrismState", "relayReplicaState", "relayTraceState", "relayForgeState", "relayGuardianState"];
   setText(labels[index], state);
 }
 
@@ -224,6 +226,29 @@ function markRelaySeen(incidentId) {
   } catch {
     // Ignore storage failures.
   }
+}
+
+function showFreshIntakeLanding(data) {
+  settleRelayState(data);
+  setText(
+    "relayStageBanner",
+    "Fresh intake loaded. Start at the incident summary first, then replay the handoff only if you want to inspect the crew transition."
+  );
+  setText(
+    "guardianRelayPrompt",
+    "Guardian already has the prepared packet. Review the top summary now, or use Replay handoff when you want to watch the bounded specialist sequence."
+  );
+  setText(
+    "operatorNextStep",
+    "Review the incident summary and the proposed action first. Replay handoff is optional and no longer interrupts the landing view."
+  );
+  setText(
+    "collaborationOutcome",
+    data.execution_result === "executed"
+      ? "Execution already completed. Stay on the summary first, then inspect outcome and audit evidence below."
+      : "You are landing on the top-level incident brief first. Replay handoff is available if you want to inspect how the crew reached this packet."
+  );
+  window.scrollTo({ top: 0, behavior: "auto" });
 }
 
 function persistLastTriageSummary(data) {
@@ -392,6 +417,47 @@ function renderThread(data) {
   );
 }
 
+function renderHandoffFlow(data) {
+  const handoff = data.handoff_flow || {};
+  const owner = String(handoff.current_owner || "-");
+  const previousOwner = String(handoff.previous_owner || "-");
+  const nextOwner = String(handoff.next_owner || "-");
+  const transferReason = String(handoff.transfer_reason || "Handoff in progress");
+
+  setText("handoffCurrentOwner", owner);
+  setText("handoffPreviousOwner", previousOwner);
+  setText("handoffNextOwner", nextOwner);
+  setText("handoffTransferReason", transferReason);
+
+  const ownerNode = document.getElementById("handoffCurrentOwner");
+  if (ownerNode) {
+    ownerNode.className = "handoff-owner";
+    ownerNode.setAttribute("data-owner", owner.toLowerCase());
+  }
+
+  const agentMap = {
+    "SENTINEL": 0,
+    "PRISM": 1,
+    "REPLICA": 2,
+    "TRACE": 3,
+    "FORGE": 4,
+    "GUARDIAN": 5,
+  };
+
+  const agentIndex = agentMap[owner] || -1;
+  const relayNodes = getRelayNodes();
+  relayNodes.forEach((node, index) => {
+    node.classList.remove("relay-node-active", "relay-node-complete", "relay-node-waiting");
+    if (index < agentIndex) {
+      node.classList.add("relay-node-complete");
+    } else if (index === agentIndex) {
+      node.classList.add("relay-node-active");
+    } else {
+      node.classList.add("relay-node-waiting");
+    }
+  });
+}
+
 function renderCrew(data) {
   const triage = data.triage_summary || {};
   setText("sentinelFlowMeta", `${percent(data.classification.confidence)} confidence`);
@@ -404,6 +470,16 @@ function renderCrew(data) {
   setText("prismFlowMeta", `${percent(data.diagnosis.confidence)} confidence`);
   setText("prismReasoning", data.diagnosis.correlation_analysis || data.diagnosis.reasoning);
   setText("prismFlowTransfer", "PRISM broke the issue into evidence, change, and history branches before merging one diagnosis packet.");
+
+  setText("replicaFlowMeta", "Reproduction ready");
+  const replica = data.replica_summary || {};
+  setText("replicaReasoning", replica.reasoning || "Awaiting sandbox validation.");
+  setText("replicaFlowTransfer", "REPLICA validates the diagnosis in a bounded sandbox environment.");
+
+  setText("traceFlowMeta", "Debugging ready");
+  const trace = data.trace_summary || {};
+  setText("traceReasoning", trace.reasoning || "Awaiting code path inspection.");
+  setText("traceFlowTransfer", "TRACE narrows the likely failing path in the codebase.");
 
   const forgeConfidence = data.runbook.candidate_fixes?.length
     ? Math.max(...data.runbook.candidate_fixes.map((item) => item.success_rate))
@@ -1334,23 +1410,30 @@ function settleRelayState(data) {
 }
 
 async function loadAndRenderIncident(incidentId, options = {}) {
-  const [data, status, auditLogs] = await Promise.all([
-    loadIncident(incidentId, options),
-    fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/status`),
-    fetchAuthedJson(`/api/v1/audit-logs/${encodeURIComponent(incidentId)}`),
-  ]);
+  const data = await loadIncident(incidentId, options);
 
   renderSummary(data);
   renderThread(data);
+  renderHandoffFlow(data);
   renderCrew(data);
   renderEnterprise(data);
   renderSourcePayload(data.incident);
   renderEvidence(data);
-  renderAudit(status, auditLogs, data);
   renderExecutionOutcome(data);
   renderDeliveryHistory(data);
   renderEngineeringFeedback(data);
   setupEngineeringFeedbackHandlers(incidentId);
+  setText("workflowSummary", `${data.incident.id} flowing from ${data.incident.source_channel || "webhook"} to verified outcome`);
+  setText("workflowSummaryCopy", "Loading the audit timeline and reviewer traceability now.");
+  setText("statusStage", "Loading...");
+  setText("statusQueuePosition", "...");
+  setText("statusEta", "...");
+  setText("statusSource", data.incident.source_channel || "webhook");
+  setText("auditEntryCount", "...");
+  setText("auditLatestEvent", "Loading...");
+  setText("auditLatestActor", "Loading...");
+  setText("auditLatestState", "Loading...");
+  setText("auditSummaryCaption", "Loading audit trail and reviewer traceability.");
   setText(
     "guardianGateState",
     `${data.guardian.reasoning}${data.guardian.required_approval_level ? ` Approval level: ${data.guardian.required_approval_level}.` : ""}${data.guardian.rollback_readiness ? ` Rollback: ${data.guardian.rollback_readiness}.` : ""}`
@@ -1358,14 +1441,26 @@ async function loadAndRenderIncident(incidentId, options = {}) {
   const outcomeEmoji = data.execution_outcome ? "✓" : "⧖";
   setText("resultBanner", `${formatIncidentHandle(data.incident.id)} · ${String(data.guardian.decision).toUpperCase()} · ${data.execution_result === "executed" ? `${outcomeEmoji} EXECUTED` : "PENDING"}`);
   persistLastTriageSummary(data);
+
+  try {
+    const [status, auditLogs] = await Promise.all([
+      fetchAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/status`),
+      fetchAuthedJson(`/api/v1/audit-logs/${encodeURIComponent(incidentId)}`),
+    ]);
+    renderAudit(status, auditLogs, data);
+  } catch (error) {
+    setText("auditSummaryCaption", `Audit trail is temporarily unavailable: ${error.message}`);
+    setText("statusStage", "Unavailable");
+    setText("auditLatestEvent", "Audit unavailable");
+  }
   return data;
 }
 
 async function maybePlayInitialRelay(incidentId, data) {
   if (isFreshTriageIncident(incidentId)) {
-    await playAgentRelay(data, { focusGuardian: true, revealOutcome: false });
     markRelaySeen(incidentId);
     clearFreshTriageIncident(incidentId);
+    showFreshIntakeLanding(data);
     return;
   }
 
@@ -1774,6 +1869,7 @@ Generated: ${proof.export_timestamp}
       const response = await postAuthedJson(`/api/v1/incidents/${encodeURIComponent(incidentId)}/replica-replay`, {});
       currentIncidentData = await refreshIncident();
       renderSummary(currentIncidentData);
+      renderHandoffFlow(currentIncidentData);
       renderEnterprise(currentIncidentData);
       setText("replicaReplayStatus", response.message || "Replay request completed.");
     } catch (error) {

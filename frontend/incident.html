@@ -35,7 +35,7 @@
 
         <div class="top-actions">
             <a class="nav-link" href="queue" data-context-back-link data-fallback-href="queue" data-fallback-label="Back to command center">Back to command center</a>
-            <a class="nav-link channel-ghost" href="inputs" data-preserve-return>Inspect intake</a>
+            <a class="nav-link channel-ghost" href="inputs" data-preserve-return data-loading-label="Opening input channels...">Inspect intake</a>
         </div>
 
         <section class="hero">
@@ -84,6 +84,24 @@
                     <button class="nav-link channel-ghost" id="exportProofBtn" type="button">Export case proof</button>
                 </div>
                 <div class="relay-banner" id="relayStageBanner">Waiting for the orchestration relay to start.</div>
+                <div class="handoff-control-strip">
+                    <div class="handoff-current">
+                        <div class="handoff-label">Current control</div>
+                        <div class="handoff-owner" id="handoffCurrentOwner">-</div>
+                    </div>
+                    <div class="handoff-flow">
+                        <div class="handoff-previous">
+                            <div class="handoff-label">Previous</div>
+                            <div class="handoff-owner-name" id="handoffPreviousOwner">-</div>
+                        </div>
+                        <div class="handoff-arrow">→</div>
+                        <div class="handoff-next">
+                            <div class="handoff-label">Next</div>
+                            <div class="handoff-owner-name" id="handoffNextOwner">-</div>
+                        </div>
+                    </div>
+                    <div class="handoff-reason" id="handoffTransferReason">Transfer reason will appear here</div>
+                </div>
                 <div class="orchestration-rail" aria-label="Agent relay">
                     <article class="relay-node" id="relaySentinel">
                         <div class="relay-node-name">SENTINEL</div>
@@ -93,6 +111,16 @@
                     <article class="relay-node" id="relayPrism">
                         <div class="relay-node-name">PRISM</div>
                         <div class="relay-node-state" id="relayPrismState">Waiting</div>
+                    </article>
+                    <div class="relay-link"></div>
+                    <article class="relay-node" id="relayReplica">
+                        <div class="relay-node-name">REPLICA</div>
+                        <div class="relay-node-state" id="relayReplicaState">Waiting</div>
+                    </article>
+                    <div class="relay-link"></div>
+                    <article class="relay-node" id="relayTrace">
+                        <div class="relay-node-name">TRACE</div>
+                        <div class="relay-node-state" id="relayTraceState">Waiting</div>
                     </article>
                     <div class="relay-link"></div>
                     <article class="relay-node" id="relayForge">
@@ -129,6 +157,18 @@
                         <p class="crew-bot-role">Diagnosis bot</p>
                         <p class="crew-bot-task" id="prismReasoning">Waiting for correlated evidence.</p>
                         <p class="crew-bot-handoff" id="prismFlowTransfer">Evidence becomes a diagnosis packet.</p>
+                    </article>
+                    <article class="crew-bot" data-tone="replica">
+                        <div class="crew-bot-top"><span class="crew-bot-name">REPLICA</span><span class="crew-bot-state" id="replicaFlowMeta">Awaiting data</span></div>
+                        <p class="crew-bot-role">Reproduction bot</p>
+                        <p class="crew-bot-task" id="replicaReasoning">Waiting to validate in sandbox.</p>
+                        <p class="crew-bot-handoff" id="replicaFlowTransfer">Diagnosis becomes a reproduction packet.</p>
+                    </article>
+                    <article class="crew-bot" data-tone="trace">
+                        <div class="crew-bot-top"><span class="crew-bot-name">TRACE</span><span class="crew-bot-state" id="traceFlowMeta">Awaiting data</span></div>
+                        <p class="crew-bot-role">Debugging bot</p>
+                        <p class="crew-bot-task" id="traceReasoning">Waiting to inspect code paths.</p>
+                        <p class="crew-bot-handoff" id="traceFlowTransfer">Reproduction becomes a debug packet.</p>
                     </article>
                     <article class="crew-bot" data-tone="forge">
                         <div class="crew-bot-top"><span class="crew-bot-name">FORGE</span><span class="crew-bot-state" id="forgeFlowMeta">Awaiting data</span></div>

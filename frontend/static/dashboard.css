@@ -211,6 +211,74 @@ body::after {
   margin-bottom: 14px;
 }
 
+.route-transition-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(248, 242, 234, 0.58);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+  z-index: 2000;
+}
+
+.route-transition-overlay.is-visible {
+  opacity: 1;
+}
+
+.route-transition-card {
+  width: min(460px, calc(100vw - 48px));
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 24px;
+  border: 1px solid var(--border-accent);
+  background: rgba(255, 250, 245, 0.92);
+  box-shadow: 0 28px 60px rgba(150, 95, 44, 0.18);
+}
+
+.route-transition-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(219, 107, 28, 0.18);
+  border-top-color: var(--accent);
+  animation: routeSpin 720ms linear infinite;
+}
+
+.route-transition-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.route-transition-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.route-transition-note {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+body.route-pending {
+  cursor: progress;
+}
+
+@keyframes routeSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .hero,
 .layout,
 .detail-grid {
@@ -220,12 +288,12 @@ body::after {
 
 .hero,
 .layout {
-  grid-template-columns: 1.25fr 0.9fr;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.9fr);
   align-items: stretch;
 }
 
 .detail-grid {
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
 }
 
 .hero-panel,
@@ -235,6 +303,7 @@ body::after {
 .metric-card,
 .agent-card,
 .stat {
+  min-width: 0;
   background: var(--panel);
   background-image: var(--gradient-subtle);
   border: 1px solid var(--border);
@@ -445,6 +514,7 @@ h3 {
   line-height: 1.56;
   font-size: 0.94rem;
   max-width: 72ch;
+  overflow-wrap: anywhere;
 }
 
 .journey-path {
@@ -1649,6 +1719,7 @@ h3 {
 .shell-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -1663,9 +1734,78 @@ h3 {
   line-height: 1.45;
 }
 
+.handoff-control-strip {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+  margin-top: 14px;
+}
+
+.handoff-current {
+  display: grid;
+  gap: 6px;
+}
+
+.handoff-label {
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.handoff-owner {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-on-accent);
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--surface-accent);
+  display: inline-block;
+  max-width: fit-content;
+}
+
+.handoff-flow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.handoff-previous,
+.handoff-next {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+}
+
+.handoff-owner-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.handoff-arrow {
+  font-size: 1.4rem;
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
+.handoff-reason {
+  grid-column: 1 / -1;
+  font-size: 0.84rem;
+  color: var(--muted);
+  line-height: 1.4;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-soft);
+}
+
 .orchestration-rail {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr);
   gap: 10px;
   align-items: center;
   margin-top: 14px;
@@ -1708,6 +1848,15 @@ h3 {
 .relay-node-complete {
   border-color: var(--border-success-strong);
   background: linear-gradient(180deg, rgba(74, 222, 128, 0.12), rgba(10, 18, 32, 0.58));
+}
+
+.relay-node-waiting {
+  opacity: 0.6;
+}
+
+.relay-node-blocked {
+  border-color: var(--border-status);
+  background: linear-gradient(180deg, rgba(255, 143, 82, 0.08), rgba(24, 18, 32, 0.58));
 }
 
 .relay-link {
@@ -1771,6 +1920,15 @@ h3 {
   color: var(--muted);
 }
 
+#openaiKeyStatus,
+#liveReasoningDetail,
+#operatorNextStep,
+#relayLoopNote,
+#runbookExplainer,
+#guardianGateState {
+  overflow-wrap: anywhere;
+}
+
 .theme-toggle {
   appearance: none;
   cursor: pointer;
@@ -1811,6 +1969,88 @@ h3 {
 .input-details {
   display: grid;
   gap: 12px;
+}
+
+.submit-progress {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.submit-progress-step {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.submit-progress-index {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--surface-inset);
+  border: 1px solid var(--border-soft);
+}
+
+.submit-progress-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.submit-progress-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.submit-progress-note {
+  font-size: 0.87rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.submit-progress-step.is-active {
+  border-color: var(--border-accent-strong);
+  background: rgba(255, 248, 240, 0.92);
+  box-shadow: 0 16px 30px rgba(219, 107, 28, 0.12);
+  transform: translateY(-1px);
+}
+
+.submit-progress-step.is-active .submit-progress-index {
+  color: var(--text-on-status);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+}
+
+.submit-progress-step.is-complete {
+  border-color: rgba(74, 222, 128, 0.3);
+  background: rgba(241, 255, 246, 0.88);
+}
+
+.submit-progress-step.is-complete .submit-progress-index {
+  color: var(--text-on-success);
+  background: linear-gradient(135deg, #3fb56d, #63d789);
+  border-color: transparent;
+}
+
+.submit-progress-step.is-complete .submit-progress-label::after {
+  content: "Done";
+  margin-left: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2e8b57;
 }
 
 .input-code {

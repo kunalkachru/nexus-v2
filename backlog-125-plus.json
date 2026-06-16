@@ -32,7 +32,7 @@
     "id": 126,
     "title": "Current-owner state and baton rail in the incident console",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make the incident page show who currently owns the case, who handed it off, who is next, and why control moved across a six-agent chain. This should feel like a real baton transfer rather than static agent panels.",
     "implementation_tasks": [
       "Add current owner, previous owner, next owner, transfer reason, and current state placeholders to the incident UI.",

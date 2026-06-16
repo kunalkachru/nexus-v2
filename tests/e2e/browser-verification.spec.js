@@ -45,7 +45,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page).toHaveTitle(/Incident Detail/);
     await expect(page.getByRole("heading", { name: /INC001/ })).toBeVisible();
     await expect(page.getByText("Specialist crew")).toBeVisible();
-    await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(4);
+    await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(6);
     await expect(page.getByRole("heading", { name: "Investigation Summary & Operator Path" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Enterprise Task Board" })).toBeVisible();
     await expect(page.getByText("Investigation depth · REPLICA")).toBeVisible();
@@ -81,6 +81,23 @@ test.describe("NEXUS browser verification", () => {
     await page.screenshot({ path: "artifacts/browser/incident-detail-expanded.png", fullPage: true });
   });
 
+  test("incident detail does not introduce horizontal overflow at common laptop widths", async ({ page }) => {
+    for (const width of [1365, 1280, 1180]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/incident?nexus_incident_id=INC001");
+      await page.waitForLoadState("networkidle");
+
+      const layout = await page.evaluate(() => ({
+        innerWidth: window.innerWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        bodyScrollWidth: document.body.scrollWidth,
+      }));
+
+      expect(layout.scrollWidth, `document overflow at ${width}px`).toBeLessThanOrEqual(layout.innerWidth);
+      expect(layout.bodyScrollWidth, `body overflow at ${width}px`).toBeLessThanOrEqual(layout.innerWidth);
+    }
+  });
+
   test("incident detail keeps BYO key masked and request-scoped", async ({ page }) => {
     await page.goto("/incident?nexus_incident_id=INC001");
     await page.waitForLoadState("networkidle");
@@ -97,6 +114,30 @@ test.describe("NEXUS browser verification", () => {
     await page.getByRole("button", { name: "Clear key" }).click();
     await page.waitForLoadState("networkidle");
     await expect(page.locator("#openaiKeyStatus")).toContainText("No user key attached");
+  });
+
+  test("using a BYO OpenAI key does not cause incident-detail horizontal truncation", async ({ page }) => {
+    for (const width of [1365, 1280, 1180]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/incident?nexus_incident_id=INC001");
+      await page.waitForLoadState("networkidle");
+
+      await page.locator("#openaiApiKeyInput").fill("sk-test-1234567890");
+      await page.getByRole("button", { name: "Use this key" }).click();
+      await page.waitForLoadState("networkidle");
+
+      await expect(page.locator("#openaiKeyStatus")).toContainText("sk-t...7890");
+      await expect(page.locator("#liveReasoningState")).toContainText("ON");
+
+      const layout = await page.evaluate(() => ({
+        innerWidth: window.innerWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        bodyScrollWidth: document.body.scrollWidth,
+      }));
+
+      expect(layout.scrollWidth, `document overflow after key use at ${width}px`).toBeLessThanOrEqual(layout.innerWidth);
+      expect(layout.bodyScrollWidth, `body overflow after key use at ${width}px`).toBeLessThanOrEqual(layout.innerWidth);
+    }
   });
 
   test("learning and controls leads with progress while keeping RL artifacts collapsed", async ({ page }) => {
@@ -165,6 +206,9 @@ test.describe("NEXUS browser verification", () => {
 
     await expect(page.locator("#rawDetectedPosture")).toContainText("Awaiting input");
     await expect(page.locator("#rawMissingSignals")).toContainText("Add logs");
+    await expect(page.locator("#submitProgress")).toContainText("Normalize intake");
+    await expect(page.locator("#submitProgress")).toContainText("Create incident");
+    await expect(page.locator("#submitProgress")).toContainText("Open workspace");
 
     await page.getByRole("button", { name: "Load example logs" }).click();
     await expect(page.locator("#rawDetectedPosture")).toContainText(/Strong|Partial/);
@@ -173,10 +217,21 @@ test.describe("NEXUS browser verification", () => {
 
     await expect(page).toHaveURL(/\/incident\?[^#]*nexus_incident_id=nxs_[a-z0-9]+/i, { timeout: 10000 });
     await expect(page.locator("#incidentTitle")).toContainText("INC-");
+    await expect(page.locator("#relayStageBanner")).toContainText("Start at the incident summary first");
     await expect(page.locator("#sentinelReasoning")).not.toHaveText("Waiting for incident context.");
     await expect(page.locator("#threadSentinelCopy")).not.toHaveText("Waiting for incident context.");
     await expect(page.locator("#guardianReasoning")).toContainText(/Guardian review is pending|recorded|safe/i);
     await expect(page.locator("#replicaHypothesisSummary")).toContainText(/Prove|bounded/);
+
+    const landing = await page.evaluate(() => ({
+      scrollY: window.scrollY,
+      titleTop: document.getElementById("incidentTitle")?.getBoundingClientRect().top ?? null,
+      guardianTop: document.querySelector(".guardian-gate-card")?.getBoundingClientRect().top ?? null,
+    }));
+
+    expect(landing.scrollY).toBeLessThan(80);
+    expect(landing.titleTop).toBeLessThan(360);
+    expect(landing.guardianTop).toBeGreaterThan(landing.titleTop);
   });
 
   // ── NEW TESTS added for items 9-12 ──────────────────────────────────────────
