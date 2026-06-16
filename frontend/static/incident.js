@@ -460,16 +460,26 @@ function renderThread(data) {
 
 function renderHandoffFlow(data) {
   const handoff = data.handoff_flow || {};
-  const owner = String(handoff.current_owner || "-");
-  const previousOwner = String(handoff.previous_owner || "-");
-  const nextOwner = String(handoff.next_owner || "-");
-  const transferReason = String(handoff.transfer_reason || "Handoff in progress");
-  const events = handoff.events || [];
+  const replay = window.__nexusHandoffReplayState || null;
+  const events = Array.isArray(handoff.events) ? handoff.events : [];
+  const replayActive = replay && Number.isInteger(replay.currentStep) && replay.currentStep >= 0 && replay.currentStep < events.length;
+  const activeEvent = replayActive ? events[replay.currentStep] : null;
+  const nextReplayEvent = replayActive ? events[replay.currentStep + 1] : null;
+  const owner = String(activeEvent?.to || handoff.current_owner || "-");
+  const previousOwner = String(activeEvent?.from || handoff.previous_owner || "-");
+  const nextOwner = String(nextReplayEvent?.to || handoff.next_owner || "-");
+  const transferReason = String(activeEvent?.reason || activeEvent?.title || handoff.transfer_reason || "Handoff in progress");
 
   setText("handoffCurrentOwner", owner);
   setText("handoffPreviousOwner", previousOwner);
   setText("handoffNextOwner", nextOwner);
   setText("handoffTransferReason", transferReason);
+  setText(
+    "handoffCurrentOwnerCaption",
+    replayActive
+      ? `${owner} owns the case at this replay step after receiving the packet from ${previousOwner}.`
+      : `${owner} is the active relay owner right now. ${owner === "REPLICA" || owner === "TRACE" ? "Its contribution remains bounded to the current supported packs and outage families." : "Review its packet, then decide whether to inspect deeper technical detail."}`
+  );
 
   const ownerNode = document.getElementById("handoffCurrentOwner");
   if (ownerNode) {
@@ -499,13 +509,24 @@ function renderHandoffFlow(data) {
     }
   });
 
-  const receivedPacketEvent = events.find((e) => e.from !== owner && e.event_type === "packet_emitted");
-  const emittedPacketEvent = events.find((e) => e.from === owner && e.event_type === "packet_emitted");
+  const receivedPacketEvent = replayActive
+    ? activeEvent
+    : [...events].reverse().find((e) => e.to === owner && e.event_type === "packet_emitted");
+  const emittedPacketEvent = replayActive
+    ? nextReplayEvent
+    : [...events].reverse().find((e) => e.from === owner && e.event_type === "packet_emitted");
 
   if (receivedPacketEvent && receivedPacketEvent.packet) {
     const packet = receivedPacketEvent.packet;
     setText("handoffReceivedPacketTitle", String(packet.packet_type || "packet"));
-    setText("handoffReceivedPacketSummary", String(packet.summary || ""));
+    setText(
+      "handoffReceivedPacketMeta",
+      `${receivedPacketEvent.from || "Unknown"} → ${receivedPacketEvent.to || owner} · ${titleCase(receivedPacketEvent.status || "recorded")}`
+    );
+    setText(
+      "handoffReceivedPacketSummary",
+      `This is what ${receivedPacketEvent.from || "the previous agent"} handed to ${receivedPacketEvent.to || owner}. ${String(packet.summary || "")}`.trim()
+    );
     const fieldsContainer = document.getElementById("handoffReceivedPacketFields");
     if (fieldsContainer && Array.isArray(packet.fields)) {
       fieldsContainer.innerHTML = packet.fields
@@ -514,12 +535,26 @@ function renderHandoffFlow(data) {
         )
         .join("");
     }
+  } else {
+    setText("handoffReceivedPacketTitle", "No packet yet");
+    setText("handoffReceivedPacketMeta", "No inbound handoff yet");
+    setText("handoffReceivedPacketSummary", "The current owner has not received a visible packet yet.");
+    document.getElementById("handoffReceivedPacketFields").innerHTML = "";
   }
 
   if (emittedPacketEvent && emittedPacketEvent.packet) {
     const packet = emittedPacketEvent.packet;
     setText("handoffEmittedPacketTitle", String(packet.packet_type || "packet"));
-    setText("handoffEmittedPacketSummary", String(packet.summary || ""));
+    setText(
+      "handoffEmittedPacketMeta",
+      `${emittedPacketEvent.from || owner} → ${emittedPacketEvent.to || "Unknown"} · ${titleCase(emittedPacketEvent.status || "planned")}`
+    );
+    setText(
+      "handoffEmittedPacketSummary",
+      replayActive
+        ? `If you advance replay, ${emittedPacketEvent.from || owner} will hand this to ${emittedPacketEvent.to || "the next owner"}. ${String(packet.summary || "")}`.trim()
+        : `This is the next responsibility transfer from ${emittedPacketEvent.from || owner} to ${emittedPacketEvent.to || "the next owner"}. ${String(packet.summary || "")}`.trim()
+    );
     const fieldsContainer = document.getElementById("handoffEmittedPacketFields");
     if (fieldsContainer && Array.isArray(packet.fields)) {
       fieldsContainer.innerHTML = packet.fields
@@ -530,7 +565,8 @@ function renderHandoffFlow(data) {
     }
   } else {
     setText("handoffEmittedPacketTitle", "No packet yet");
-    setText("handoffEmittedPacketSummary", `${owner} has not emitted a packet yet`);
+    setText("handoffEmittedPacketMeta", "No outbound handoff yet");
+    setText("handoffEmittedPacketSummary", `${owner} does not have another visible handoff after this point.`);
     document.getElementById("handoffEmittedPacketFields").innerHTML = "";
   }
 
@@ -539,7 +575,7 @@ function renderHandoffFlow(data) {
     ledgerContainer.innerHTML = events
       .map(
         (event, index) => {
-          const isCurrentEvent = emittedPacketEvent && emittedPacketEvent.id === event.id;
+          const isCurrentEvent = replayActive ? replay.currentStep === index : emittedPacketEvent && emittedPacketEvent.id === event.id;
           return `<div class="ledger-entry${isCurrentEvent ? " active" : ""}">
           <div class="ledger-entry-header">
             <div>${event.from || "Unknown"}</div>
@@ -547,7 +583,7 @@ function renderHandoffFlow(data) {
             <div>${event.to || "Unknown"}</div>
             <div class="ledger-entry-status">${event.status || "pending"}</div>
           </div>
-          <div class="ledger-entry-reason">${event.reason || event.title || ""}</div>
+          <div class="ledger-entry-reason">${event.reason || event.title || ""}${event.packet?.summary ? ` ${event.packet.summary}` : ""}</div>
         </div>`;
         }
       )
@@ -1736,22 +1772,37 @@ window.addEventListener("DOMContentLoaded", async () => {
     const isRunning = replayState.inProgress;
     const hasEvents = replayState.events.length > 0;
     const isAtEnd = replayState.currentStep >= replayState.events.length - 1;
+    const activeEvent = replayState.currentStep >= 0 ? replayState.events[replayState.currentStep] : null;
+    const upcomingEvent = replayState.currentStep >= 0 ? replayState.events[replayState.currentStep + 1] : replayState.events[0];
 
     if (handoffReplayStart) handoffReplayStart.disabled = isRunning || !hasEvents;
     if (handoffReplayNext) handoffReplayNext.disabled = isRunning || !hasEvents || isAtEnd;
     if (handoffReplayReset) handoffReplayReset.disabled = !isRunning && replayState.currentStep === -1;
+    if (handoffReplayNext) {
+      handoffReplayNext.textContent = upcomingEvent ? `Next: ${upcomingEvent.to || "step"}` : "Replay complete";
+    }
 
     const stateLabel = isRunning
-      ? `Replaying step ${replayState.currentStep + 1} of ${replayState.events.length}`
+      ? activeEvent
+        ? `Step ${replayState.currentStep + 1} of ${replayState.events.length} · ${activeEvent.to || "Unknown"} now owns the case`
+        : `Replay armed · ${replayState.events.length} baton transfers available`
       : replayState.currentStep >= 0
         ? `Paused at step ${replayState.currentStep + 1}`
         : "Ready to replay";
     setText("handoffReplayState", stateLabel);
+    setText(
+      "handoffReplayHint",
+      activeEvent
+        ? `${activeEvent.from || "Unknown"} handed responsibility to ${activeEvent.to || "Unknown"}. ${upcomingEvent ? `Next up: ${upcomingEvent.from || activeEvent.to || "Unknown"} → ${upcomingEvent.to || "Unknown"}.` : "This is the final visible handoff in the chain."}`
+        : "Use replay when you want to step through baton transfer one handoff at a time."
+    );
   }
 
   handoffReplayStart?.addEventListener("click", () => {
     if (currentIncidentData?.handoff_flow?.events) {
-      replayState = { inProgress: true, currentStep: -1, events: currentIncidentData.handoff_flow.events };
+      replayState = { inProgress: true, currentStep: 0, events: currentIncidentData.handoff_flow.events };
+      window.__nexusHandoffReplayState = replayState;
+      renderHandoffFlow(currentIncidentData);
       updateReplayUI();
     }
   });
@@ -1759,12 +1810,15 @@ window.addEventListener("DOMContentLoaded", async () => {
   handoffReplayNext?.addEventListener("click", () => {
     if (replayState.inProgress && replayState.currentStep < replayState.events.length - 1) {
       replayState.currentStep += 1;
+      window.__nexusHandoffReplayState = replayState;
+      renderHandoffFlow(currentIncidentData);
       updateReplayUI();
     }
   });
 
   handoffReplayReset?.addEventListener("click", () => {
     replayState = { inProgress: false, currentStep: -1, events: [] };
+    window.__nexusHandoffReplayState = null;
     updateReplayUI();
     if (currentIncidentData) {
       renderHandoffFlow(currentIncidentData);

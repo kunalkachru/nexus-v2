@@ -50,11 +50,14 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByRole("heading", { name: /INC001/ })).toBeVisible();
     await expect(page.getByText("Specialist crew")).toBeVisible();
     await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(6);
+    await expect(page.locator("#handoffCurrentOwnerCaption")).toContainText(/active relay owner|owns the case/i);
+    await expect(page.locator("#handoffReceivedPacketMeta")).toContainText(/→|No inbound handoff yet/i);
+    await expect(page.locator("#handoffReplayHint")).toContainText(/replay|baton transfer/i);
     await expect(page.getByRole("heading", { name: "Investigation Summary & Operator Path" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Enterprise Task Board" })).toBeVisible();
-    await expect(page.getByText("Recommended action")).toBeVisible();
-    await expect(page.getByText("Runtime posture")).toBeVisible();
-    await expect(page.getByText("Inspect here first")).toBeVisible();
+    await expect(page.locator("#focusRecommendedAction")).toBeVisible();
+    await expect(page.locator("#focusRuntimePosture")).toBeVisible();
+    await expect(page.locator("#focusInspectHere")).toBeVisible();
     await expect(page.locator(".enterprise-depth-details")).not.toHaveAttribute("open", "");
     await expect(page.getByRole("heading", { name: "What is the incident?" })).toBeVisible();
     await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
@@ -82,6 +85,9 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#replicaTrustSummary")).toContainText("Replay trust packet");
     await expect(page.locator("#traceInspectionPoint")).not.toContainText("TRACE has not narrowed");
     await expect(page.locator("#traceDeveloperHandoff")).toContainText("trace_ownership_map.json");
+    await page.getByRole("button", { name: "Start replay" }).click();
+    await expect(page.locator("#handoffReplayState")).toContainText(/Step 1 of|Replay armed/i);
+    await expect(page.locator("#handoffCurrentOwner")).toContainText(/PRISM|REPLICA|TRACE|FORGE|GUARDIAN/);
     await page.locator(".section-collapsible summary").click();
     await expect(page.locator("#rawInputText")).toBeVisible();
     await expect(page.locator("#workflowTimeline")).toBeVisible();

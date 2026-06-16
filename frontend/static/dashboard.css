@@ -1841,6 +1841,12 @@ html[data-theme="dark"] .path-card-primary {
   gap: 6px;
 }
 
+.handoff-owner-caption {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
 .handoff-label {
   color: var(--muted);
   font-size: 0.74rem;
@@ -1922,6 +1928,13 @@ html[data-theme="dark"] .path-card-primary {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text);
+}
+
+.packet-meta {
+  font-size: 0.76rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .packet-summary {
@@ -2042,6 +2055,12 @@ html[data-theme="dark"] .path-card-primary {
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--text);
+}
+
+.replay-hint {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.45;
 }
 
 .orchestration-rail {

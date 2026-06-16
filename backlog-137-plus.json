@@ -57,7 +57,7 @@
     "id": 139,
     "title": "Six-agent relay legibility v2",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Make the baton rail, packet cards, and handoff ledger easier to follow during a stakeholder demo, especially for fresh incidents where the user needs a clearer narrative of who owns the case right now and why the baton moved.",
     "implementation_tasks": [
       "Tighten current-owner, previous-owner, and next-owner labels and supporting copy.",

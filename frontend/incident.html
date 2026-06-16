@@ -96,17 +96,18 @@
                 <div class="relay-banner" id="relayStageBanner">Waiting for the orchestration relay to start.</div>
                 <div class="handoff-control-strip">
                     <div class="handoff-current">
-                        <div class="handoff-label">Current control</div>
+                        <div class="handoff-label">Current owner</div>
                         <div class="handoff-owner" id="handoffCurrentOwner">-</div>
+                        <div class="handoff-owner-caption" id="handoffCurrentOwnerCaption">The active relay owner will appear here.</div>
                     </div>
                     <div class="handoff-flow">
                         <div class="handoff-previous">
-                            <div class="handoff-label">Previous</div>
+                            <div class="handoff-label">Just finished</div>
                             <div class="handoff-owner-name" id="handoffPreviousOwner">-</div>
                         </div>
                         <div class="handoff-arrow">→</div>
                         <div class="handoff-next">
-                            <div class="handoff-label">Next</div>
+                            <div class="handoff-label">Waiting next</div>
                             <div class="handoff-owner-name" id="handoffNextOwner">-</div>
                         </div>
                     </div>
@@ -114,14 +115,16 @@
                 </div>
                 <div class="handoff-packets">
                     <div class="handoff-packet-card">
-                        <div class="packet-label">Received packet</div>
+                        <div class="packet-label">Packet received by current owner</div>
                         <div class="packet-title" id="handoffReceivedPacketTitle">-</div>
+                        <div class="packet-meta" id="handoffReceivedPacketMeta">No inbound handoff yet</div>
                         <div class="packet-summary" id="handoffReceivedPacketSummary">No packet received yet</div>
                         <div class="packet-fields" id="handoffReceivedPacketFields"></div>
                     </div>
                     <div class="handoff-packet-card">
-                        <div class="packet-label">Emitted packet</div>
+                        <div class="packet-label">Next packet in the relay</div>
                         <div class="packet-title" id="handoffEmittedPacketTitle">-</div>
+                        <div class="packet-meta" id="handoffEmittedPacketMeta">No outbound handoff yet</div>
                         <div class="packet-summary" id="handoffEmittedPacketSummary">No packet emitted yet</div>
                         <div class="packet-fields" id="handoffEmittedPacketFields"></div>
                     </div>
@@ -135,6 +138,7 @@
                 <div class="handoff-replay-controls">
                     <div class="replay-label">Handoff chain demo mode</div>
                     <div class="replay-state" id="handoffReplayState">Ready to replay</div>
+                    <div class="replay-hint" id="handoffReplayHint">Use replay when you want to step through baton transfer one handoff at a time.</div>
                     <div class="shell-actions">
                         <button class="nav-link channel-cta" id="handoffReplayStart" type="button">Start replay</button>
                         <button class="nav-link channel-ghost" id="handoffReplayNext" type="button" disabled>Next step</button>
