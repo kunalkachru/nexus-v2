@@ -1891,6 +1891,13 @@ h3 {
   background: var(--surface-soft);
   font-size: 0.82rem;
   line-height: 1.4;
+  transition: border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
+}
+
+.ledger-entry.active {
+  border-color: var(--border-accent-strong);
+  background: linear-gradient(180deg, rgba(255, 143, 82, 0.12), rgba(24, 18, 32, 0.88));
+  box-shadow: 0 0 0 1px var(--border-accent);
 }
 
 .ledger-entry-header {
@@ -1937,7 +1944,16 @@ h3 {
   border-radius: 20px;
   border: 1px solid var(--border-soft);
   background: var(--surface-soft);
-  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease, opacity 180ms ease;
+}
+
+@keyframes pulse-active {
+  0%, 100% {
+    box-shadow: 0 0 0 0px var(--border-accent-strong);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--border-accent);
+  }
 }
 
 .relay-node-name {
@@ -1958,6 +1974,7 @@ h3 {
   border-color: var(--border-accent-strong);
   background: linear-gradient(180deg, rgba(255, 143, 82, 0.16), rgba(24, 18, 32, 0.88));
   box-shadow: 0 0 0 1px var(--border-accent), var(--shadow);
+  animation: pulse-active 2s ease-in-out infinite;
 }
 
 .relay-node-active .relay-node-state {

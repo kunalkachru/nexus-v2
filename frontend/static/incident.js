@@ -497,7 +497,9 @@ function renderHandoffFlow(data) {
   if (ledgerContainer && Array.isArray(events)) {
     ledgerContainer.innerHTML = events
       .map(
-        (event) => `<div class="ledger-entry">
+        (event, index) => {
+          const isCurrentEvent = emittedPacketEvent && emittedPacketEvent.id === event.id;
+          return `<div class="ledger-entry${isCurrentEvent ? " active" : ""}">
           <div class="ledger-entry-header">
             <div>${event.from || "Unknown"}</div>
             <div class="ledger-entry-arrow">→</div>
@@ -505,7 +507,8 @@ function renderHandoffFlow(data) {
             <div class="ledger-entry-status">${event.status || "pending"}</div>
           </div>
           <div class="ledger-entry-reason">${event.reason || event.title || ""}</div>
-        </div>`
+        </div>`;
+        }
       )
       .join("");
   }

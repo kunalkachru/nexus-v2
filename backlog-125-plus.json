@@ -88,7 +88,7 @@
     "id": 128,
     "title": "Clearer transfer animations and acceptance states",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Make handoff movement feel real during replay or staged viewing. The UI should show who emitted, who accepted, and why control advanced across SENTINEL, PRISM, REPLICA, TRACE, FORGE, and GUARDIAN, without turning into motion-heavy marketing animation.",
     "implementation_tasks": [
       "Refactor relay stepping to consume handoff events instead of only a stage index.",
