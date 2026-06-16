@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 
 from fastapi import HTTPException, Request
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 
 class AuthenticatedContext(BaseModel):
@@ -117,10 +120,28 @@ async def require_auth(request: Request) -> AuthenticatedContext:
     roles = [role.strip() for role in roles_header.split(",") if role.strip()]
 
     if not user_id or not tenant_id:
+        logger.warning(
+            "auth_failed_missing_credentials",
+            extra={
+                "path": request.url.path,
+                "has_user_id": bool(user_id),
+                "has_tenant_id": bool(tenant_id),
+                "method": request.method,
+            }
+        )
         raise HTTPException(status_code=401, detail="authentication required")
 
     allowed_tenants = getattr(getattr(request.app.state, "config", None), "allowed_tenant_ids", ["tenant-a", "tenant-system"])
     if tenant_id not in allowed_tenants:
+        logger.warning(
+            "auth_failed_invalid_tenant",
+            extra={
+                "tenant_id": tenant_id,
+                "user_id": user_id,
+                "path": request.url.path,
+                "method": request.method,
+            }
+        )
         raise HTTPException(status_code=403, detail="tenant not allowed")
 
     return AuthenticatedContext(user_id=user_id, tenant_id=tenant_id, roles=roles)
@@ -129,6 +150,10 @@ async def require_auth(request: Request) -> AuthenticatedContext:
 async def verify_webhook_signature(request: Request) -> None:
     provided = request.headers.get("x-signature", "").strip()
     if not provided.startswith("sha256="):
+        logger.warning(
+            "webhook_signature_invalid_format",
+            extra={"path": request.url.path}
+        )
         raise HTTPException(status_code=401, detail="invalid webhook signature")
 
     raw_body = await request.body()
@@ -136,13 +161,22 @@ async def verify_webhook_signature(request: Request) -> None:
     expected_digest = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
     expected = f"sha256={expected_digest}"
     if not hmac.compare_digest(provided, expected):
+        logger.warning(
+            "webhook_signature_mismatch",
+            extra={"path": request.url.path}
+        )
         raise HTTPException(status_code=401, detail="invalid webhook signature")
 
 
 async def require_runtime_host_auth(request: Request) -> None:
     configured = getattr(getattr(request.app.state, "config", None), "runtime_host_shared_token", "").strip()
     if not configured:
+        logger.warning("runtime_host_token_not_configured", extra={"path": request.url.path})
         raise HTTPException(status_code=503, detail="runtime host token not configured")
     provided = request.headers.get("x-runtime-host-token", "").strip()
     if not provided or not hmac.compare_digest(provided, configured):
+        logger.warning(
+            "runtime_host_auth_failed",
+            extra={"path": request.url.path, "has_token": bool(provided)}
+        )
         raise HTTPException(status_code=401, detail="invalid runtime host token")

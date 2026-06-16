@@ -1737,11 +1737,7 @@ class IncidentService:
             }
 
         if executed:
-            stored_incident = (
-                await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
-                if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
-                else await self._session.incidents.get_incident(nexus_incident_id)
-            )
+            stored_incident = await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
             normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
             normalized_evidence["execution_outcome"] = outcome_summary
             await self._session.incidents.update_incident_normalized_evidence(
@@ -1937,11 +1933,7 @@ class IncidentService:
                 }
             )
 
-        stored_incident = (
-            await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
-            if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
-            else await self._session.incidents.get_incident(nexus_incident_id)
-        )
+        stored_incident = await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
         normalized_evidence = await self._persist_latest_replay_packet(
             incident=stored_incident,
             status=status,
@@ -2433,11 +2425,7 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
                 tenant_id=tenant_id,
             )
 
-            stored_incident = (
-                await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
-                if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
-                else await self._session.incidents.get_incident(nexus_incident_id)
-            )
+            stored_incident = await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
 
             normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
             delivery_history = self._get_or_init_delivery_history(normalized_evidence)
@@ -2492,11 +2480,7 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
         except Exception as e:
             logger.error(f"Failed to send handoff for {nexus_incident_id} to {target}: {str(e)}")
 
-            stored_incident = (
-                await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
-                if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
-                else await self._session.incidents.get_incident(nexus_incident_id)
-            )
+            stored_incident = await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
 
             normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
             delivery_history = self._get_or_init_delivery_history(normalized_evidence)
@@ -2557,11 +2541,7 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
         actor_user_id: str | None = None,
         actor_roles: list[str] | None = None,
     ) -> dict[str, object]:
-        stored_incident = (
-            await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
-            if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
-            else await self._session.incidents.get_incident(nexus_incident_id)
-        )
+        stored_incident = await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
 
         if not stored_incident:
             raise ValueError(f"Incident {nexus_incident_id} not found")
@@ -2608,11 +2588,7 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
         actor_roles: list[str] | None = None,
     ) -> dict[str, object]:
         try:
-            stored_incident = (
-                await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
-                if tenant_id and hasattr(self._session.incidents, "get_incident_for_tenant")
-                else await self._session.incidents.get_incident(nexus_incident_id)
-            )
+            stored_incident = await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
 
             normalized_evidence = dict(stored_incident.normalized_evidence or {}) if stored_incident else {}
             if "engineering_feedback" not in normalized_evidence:
