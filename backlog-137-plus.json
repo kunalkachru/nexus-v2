@@ -173,7 +173,7 @@
     "id": 143,
     "title": "Full browser-truth pass for core review surfaces",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Run and tighten the browser-verified truth pass across the routes that matter most for demos so layout truncation, hidden overflow, and broken transitions do not slip through a green backend baseline.",
     "implementation_tasks": [
       "Review `/queue`, `/inputs`, seeded incidents, a fresh incident flow, `/training`, and `/settings` for layout or navigation regressions.",

@@ -6,6 +6,23 @@ async function disableLiveReasoning(page) {
   });
 }
 
+async function assertNoHorizontalOverflow(page, url, widths = [1365, 1280, 1180]) {
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(url);
+    await page.waitForLoadState("networkidle");
+
+    const layout = await page.evaluate(() => ({
+      innerWidth: window.innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      bodyScrollWidth: document.body.scrollWidth,
+    }));
+
+    expect(layout.scrollWidth, `document overflow at ${width}px for ${url}`).toBeLessThanOrEqual(layout.innerWidth);
+    expect(layout.bodyScrollWidth, `body overflow at ${width}px for ${url}`).toBeLessThanOrEqual(layout.innerWidth);
+  }
+}
+
 test.describe("NEXUS browser verification", () => {
   test.beforeEach(async ({ page }) => {
     await disableLiveReasoning(page);
@@ -97,20 +114,7 @@ test.describe("NEXUS browser verification", () => {
   });
 
   test("incident detail does not introduce horizontal overflow at common laptop widths", async ({ page }) => {
-    for (const width of [1365, 1280, 1180]) {
-      await page.setViewportSize({ width, height: 900 });
-      await page.goto("/incident?nexus_incident_id=INC001");
-      await page.waitForLoadState("networkidle");
-
-      const layout = await page.evaluate(() => ({
-        innerWidth: window.innerWidth,
-        scrollWidth: document.documentElement.scrollWidth,
-        bodyScrollWidth: document.body.scrollWidth,
-      }));
-
-      expect(layout.scrollWidth, `document overflow at ${width}px`).toBeLessThanOrEqual(layout.innerWidth);
-      expect(layout.bodyScrollWidth, `body overflow at ${width}px`).toBeLessThanOrEqual(layout.innerWidth);
-    }
+    await assertNoHorizontalOverflow(page, "/incident?nexus_incident_id=INC001");
   });
 
   test("incident detail keeps BYO key masked and request-scoped", async ({ page }) => {
@@ -152,6 +156,12 @@ test.describe("NEXUS browser verification", () => {
 
       expect(layout.scrollWidth, `document overflow after key use at ${width}px`).toBeLessThanOrEqual(layout.innerWidth);
       expect(layout.bodyScrollWidth, `body overflow after key use at ${width}px`).toBeLessThanOrEqual(layout.innerWidth);
+    }
+  });
+
+  test("queue, inputs, training, and settings avoid horizontal overflow at common laptop widths", async ({ page }) => {
+    for (const route of ["/queue", "/inputs", "/training", "/settings"]) {
+      await assertNoHorizontalOverflow(page, route);
     }
   });
 
@@ -240,6 +250,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#threadSentinelCopy")).not.toHaveText("Waiting for incident context.");
     await expect(page.locator("#guardianReasoning")).toContainText(/Guardian review is pending|recorded|safe/i);
     await expect(page.locator("#replicaHypothesisSummary")).toContainText(/Prove|bounded/);
+    expect(page.url()).not.toContain("fresh_launch=1");
 
     const landing = await page.evaluate(() => ({
       scrollY: window.scrollY,

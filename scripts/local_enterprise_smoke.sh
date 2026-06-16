@@ -9,7 +9,20 @@ echo "[1] Health check"
 curl -fsS "${BASE_URL}/health" >/dev/null
 echo "    OK"
 
-echo "[2] INC001 incident HTML markers"
+echo "[2] Queue HTML markers"
+queue_html="$(curl -fsS "${BASE_URL}/queue")"
+[[ "${queue_html}" == *"Choose your path"* ]]
+[[ "${queue_html}" == *"Supported five-family wedge"* ]]
+echo "    OK"
+
+echo "[3] Inputs HTML markers"
+inputs_html="$(curl -fsS "${BASE_URL}/inputs")"
+[[ "${inputs_html}" == *"Guided demo bundles"* ]]
+[[ "${inputs_html}" == *"Raw Incident Intake Preview"* ]]
+[[ "${inputs_html}" == *"Open workspace"* ]]
+echo "    OK"
+
+echo "[4] INC001 incident HTML markers"
 inc001_html="$(curl -fsS "${BASE_URL}/incident?nexus_incident_id=INC001")"
 [[ "${inc001_html}" == *"Enterprise Task Board"* ]]
 [[ "${inc001_html}" == *"Memory-grounded context"* ]]
@@ -17,18 +30,24 @@ inc001_html="$(curl -fsS "${BASE_URL}/incident?nexus_incident_id=INC001")"
 [[ "${inc001_html}" == *"Investigation depth"* ]]
 echo "    OK"
 
-echo "[3] INC002 incident HTML markers"
+echo "[5] INC002 incident HTML markers"
 inc002_html="$(curl -fsS "${BASE_URL}/incident?nexus_incident_id=INC002")"
 [[ "${inc002_html}" == *"Enterprise Task Board"* ]]
 [[ "${inc002_html}" == *"Investigation depth"* ]]
 echo "    OK"
 
-echo "[4] Training HTML markers"
+echo "[6] Training HTML markers"
 training_html="$(curl -fsS "${BASE_URL}/training")"
 [[ "${training_html}" == *"Enterprise runtime summary"* ]]
 echo "    OK"
 
-echo "[5] INC001 context API — core fields, FORGE reasoning, GUARDIAN posture, TRACE"
+echo "[7] Settings HTML markers"
+settings_html="$(curl -fsS "${BASE_URL}/settings")"
+[[ "${settings_html}" == *"Runtime Host"* ]]
+[[ "${settings_html}" == *"Deployment Readiness"* ]]
+echo "    OK"
+
+echo "[8] INC001 context API — core fields, FORGE reasoning, GUARDIAN posture, TRACE"
 python3 - "${BASE_URL}" << 'PY'
 import json, sys, urllib.request
 
@@ -81,7 +100,7 @@ assert gd.get("confidence", 0) > 0, "INC001 guardian confidence is zero"
 print("    INC001 checks passed.")
 PY
 
-echo "[6] INC002 context API — FORGE reasoning, GUARDIAN posture, TRACE"
+echo "[9] INC002 context API — FORGE reasoning, GUARDIAN posture, TRACE"
 python3 - "${BASE_URL}" << 'PY'
 import json, sys, urllib.request
 
@@ -118,7 +137,7 @@ assert any(w in guardian_reasoning for w in ["reproduced","validated","inferred"
 print("    INC002 checks passed.")
 PY
 
-echo "[7] INC001 memory enrichment check"
+echo "[10] INC001 memory enrichment check"
 python3 - "${BASE_URL}" << 'PY'
 import json, sys, urllib.request
 
@@ -137,7 +156,7 @@ print("    Memory enrichment check passed.")
 PY
 
 if [[ "${EXPECT_RUNTIME_HOST_RELAY:-0}" == "1" ]]; then
-  echo "[8] Relay-backed replay path"
+  echo "[11] Relay-backed replay path"
   python3 - "${BASE_URL}" << 'PY'
 import json, sys, urllib.request
 
@@ -164,7 +183,7 @@ assert replay["replica_summary"]["runtime_mode"] == "relay_runtime_scaffold", re
 print("    Relay replay check passed.")
 PY
 
-  echo "[9] Fresh nxs incident retains replay evidence and relay provenance after refresh"
+  echo "[12] Fresh nxs incident retains replay evidence and relay provenance after refresh"
   python3 - "${BASE_URL}" << 'PY'
 import json, sys, urllib.request
 
