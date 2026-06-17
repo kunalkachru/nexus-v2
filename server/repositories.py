@@ -108,6 +108,7 @@ class IncidentRepository:
         nexus_incident_id: str,
         *,
         status: str,
+        tenant_id: str | None = None,
         guardian_decision: str | None = None,
         guardian_reasoning: str | None = None,
         guardian_reviewed_at: str | None = None,
@@ -116,9 +117,12 @@ class IncidentRepository:
         guardian_policy_basis: str | None = None,
     ) -> IncidentRecord | None:
         """Update incident status and guardian decision."""
+        # Use provided tenant_id or fall back to default
+        lookup_tenant_id = tenant_id or self._tenant_id
+
         # Get existing incident
         incident_data = await self._database.get_incident_for_tenant(
-            nexus_incident_id, self._tenant_id
+            nexus_incident_id, lookup_tenant_id
         )
         if not incident_data:
             return None
@@ -148,7 +152,7 @@ class IncidentRepository:
         # Persist to database
         data = updated.model_dump(mode="json")
         result = await self._database.update_incident(
-            nexus_incident_id, self._tenant_id, data
+            nexus_incident_id, lookup_tenant_id, data
         )
 
         return updated if result else None

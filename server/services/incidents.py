@@ -1270,6 +1270,7 @@ class IncidentService:
             loaded = await self._session.incidents.get_incident(nexus_incident_id)
         else:
             loaded = await self._session.incidents.get_incident_for_tenant(nexus_incident_id, tenant_id)
+
         if loaded is None:
             raise HTTPException(status_code=404, detail="incident not found")
 
@@ -1287,6 +1288,7 @@ class IncidentService:
         updated = await self._session.incidents.update_incident_status(
             nexus_incident_id,
             status=next_status,
+            tenant_id=tenant_id,
             guardian_decision=payload.decision,
             guardian_reasoning=payload.reasoning or "",
             guardian_reviewed_at=reviewed_at,
