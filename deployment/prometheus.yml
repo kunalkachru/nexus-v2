@@ -1,0 +1,50 @@
+# Prometheus Configuration for NEXUS
+# Scrapes metrics from NEXUS /metrics endpoint
+# Version: 1.0
+
+global:
+  scrape_interval: 15s          # Scrape metrics every 15 seconds
+  evaluation_interval: 15s       # Evaluate alert rules every 15 seconds
+  external_labels:
+    environment: production
+    service: nexus
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []            # Configured separately if needed
+
+# Load alert rules
+rule_files:
+  - 'alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # NEXUS metrics endpoint
+  - job_name: 'nexus'
+    static_configs:
+      - targets: ['localhost:7860']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    scheme: http
+
+    # Relabel configs (optional, for advanced setups)
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 15s
+
+# Storage configuration
+storage:
+  tsdb:
+    path: './data/prometheus'
+    retention:
+      time: 30d                  # Keep metrics for 30 days
+      size: '50GB'               # Or until 50GB limit reached
