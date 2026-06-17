@@ -1,0 +1,80 @@
+---
+# NEXUS Alert Rules for Prometheus
+# Version: 1.0
+# Last Updated: 2026-06-17
+
+groups:
+  - name: nexus_alerts
+    interval: 15s
+    rules:
+      # CRITICAL: Service Down
+      - alert: NexusDown
+        expr: up{job="nexus"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: nexus
+        annotations:
+          summary: "NEXUS service is down"
+          description: "NEXUS service on {{ $labels.instance }} has been down for more than 5 minutes."
+          runbook_url: "https://wiki.example.com/runbooks/nexus-down"
+
+      # HIGH: Auth Attack Detection
+      - alert: SuspiciousAuthFailures
+        expr: rate(nexus_auth_failures_total[5m]) > 0.2
+        for: 5m
+        labels:
+          severity: high
+          service: nexus
+        annotations:
+          summary: "High auth failure rate detected"
+          description: "Auth failures on NEXUS are spiking ({{ $value }} failures/sec over last 5m). Possible attack or misconfiguration."
+          runbook_url: "https://wiki.example.com/runbooks/auth-failures"
+
+      # HIGH: Database Performance Degradation
+      - alert: ArtifactPersistenceSlow
+        expr: histogram_quantile(0.99, nexus_artifact_persistence_latency_ms_bucket) > 1000
+        for: 10m
+        labels:
+          severity: high
+          service: nexus
+        annotations:
+          summary: "Artifact persistence latency degraded"
+          description: "p99 artifact persistence latency is {{ $value }}ms (threshold: 1000ms). Database performance issue suspected."
+          runbook_url: "https://wiki.example.com/runbooks/slow-persistence"
+
+      # MEDIUM: GUARDIAN Approval Rate Change
+      - alert: GuardianApprovalRateLow
+        expr: (rate(nexus_guardian_decisions_total{decision="approve"}[1h]) / rate(nexus_guardian_decisions_total[1h])) < 0.5
+        for: 30m
+        labels:
+          severity: medium
+          service: nexus
+        annotations:
+          summary: "GUARDIAN approval rate below baseline"
+          description: "GUARDIAN approval rate dropped to {{ $value | humanizePercentage }} (threshold: 50%). Review pending decisions."
+          runbook_url: "https://wiki.example.com/runbooks/guardian-approval-rate"
+
+      # MEDIUM: Pending Reviews Accumulating
+      - alert: PendingGuardianReviewsHigh
+        expr: nexus_pending_guardian_reviews > 50
+        for: 30m
+        labels:
+          severity: medium
+          service: nexus
+        annotations:
+          summary: "High pending GUARDIAN reviews"
+          description: "{{ $value }} incidents awaiting GUARDIAN review (threshold: 50). Review queue backing up."
+          runbook_url: "https://wiki.example.com/runbooks/pending-reviews-backlog"
+
+      # LOW: Database Size Growing Fast
+      - alert: DatabaseGrowthFast
+        expr: rate(nexus_database_size_bytes[24h]) > 1000000000
+        for: 2h
+        labels:
+          severity: low
+          service: nexus
+        annotations:
+          summary: "Database growth rate elevated"
+          description: "Database growing at {{ $value | humanize }}B/day (threshold: 1GB/day). Monitor for retention issues."
+          runbook_url: "https://wiki.example.com/runbooks/database-growth"

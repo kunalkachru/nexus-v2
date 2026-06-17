@@ -48,7 +48,7 @@ def test_alert_rules_referenced(prometheus_config):
     rule_files = prometheus_config['rule_files']
 
     assert len(rule_files) > 0
-    assert 'alerts.yml' in rule_files[0]
+    assert 'prometheus/alerts.yml' in rule_files[0]
 
 
 def test_scrape_configs_present(prometheus_config):
