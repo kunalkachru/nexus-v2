@@ -76,13 +76,16 @@ class TestDisasterRecoveryDrill:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
 
-            # Source database
-            db_file = get_artifacts_dir() / 'incidents.json'
+            # Source database (can be SQLite or JSON)
+            artifacts_dir = get_artifacts_dir()
+            db_file = artifacts_dir / 'incidents.db'
+            if not db_file.exists():
+                db_file = artifacts_dir / 'incidents.json'
             if not db_file.exists():
                 pytest.skip("Database file not found")
 
             # Create test backup
-            backup_file = tmpdir_path / 'test_backup.json.gz'
+            backup_file = tmpdir_path / 'test_backup.gz'
 
             # Compress database
             with open(db_file, 'rb') as f_in:
@@ -93,12 +96,13 @@ class TestDisasterRecoveryDrill:
             assert backup_file.exists(), "Backup file was not created"
             assert backup_file.stat().st_size > 0, "Backup file is empty"
 
-            # Verify backup integrity
+            # Verify backup can be decompressed
             try:
                 with gzip.open(backup_file, 'rb') as f:
-                    data = json.load(f)
-                    assert data is not None
-            except (gzip.BadGzipFile, json.JSONDecodeError) as e:
+                    # Just verify it can be decompressed, content depends on format
+                    data = f.read()
+                    assert len(data) > 0, "Decompressed data is empty"
+            except gzip.BadGzipFile as e:
                 assert False, f"Backup file is corrupted: {e}"
 
     def test_dr_drill_simulate_corruption(self):

@@ -1534,7 +1534,7 @@ def test_handoff_send_persists_delivery_status(client: TestClient, seeded_incide
     async def verify_persistence() -> None:
         session = app.state.db_session_factory()
         try:
-            incident = await session.incidents.get_incident(incident_id)
+            incident = await session.incidents.get_incident_for_tenant(incident_id, seeded_incident.tenant_id)
             assert incident is not None
             normalized_evidence = incident.normalized_evidence or {}
             delivery_history = normalized_evidence.get("delivery_history", [])
@@ -1654,7 +1654,7 @@ def test_engineering_feedback_persists_in_incident(client: TestClient, seeded_in
     async def verify_persistence() -> None:
         session = app.state.db_session_factory()
         try:
-            incident = await session.incidents.get_incident(incident_id)
+            incident = await session.incidents.get_incident_for_tenant(incident_id, seeded_incident.tenant_id)
             assert incident is not None
             normalized_evidence = incident.normalized_evidence or {}
             feedback = normalized_evidence.get("engineering_feedback", [])

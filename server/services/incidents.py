@@ -332,6 +332,7 @@ class IncidentService:
                 latest_replay=replay_entry,
                 replay_entry=replay_entry,
                 replay_limit=_REPLAY_HISTORY_LIMIT,
+                tenant_id=incident.tenant_id,
             )
             return dict(updated.normalized_evidence or {}) if updated is not None else None
 
@@ -347,6 +348,7 @@ class IncidentService:
         updated = await self._session.incidents.update_incident_normalized_evidence(
             incident.nexus_incident_id,
             normalized_evidence=normalized_evidence,
+            tenant_id=incident.tenant_id,
         )
         return dict(updated.normalized_evidence or normalized_evidence) if updated is not None else normalized_evidence
 
@@ -1745,10 +1747,12 @@ class IncidentService:
             await self._session.incidents.update_incident_normalized_evidence(
                 nexus_incident_id,
                 normalized_evidence=normalized_evidence,
+                tenant_id=tenant_id,
             )
             updated = await self._session.incidents.update_incident_status(
                 nexus_incident_id,
                 status="resolved",
+                tenant_id=tenant_id,
             )
             if updated is not None:
                 lifecycle["status"] = updated.status
@@ -2464,6 +2468,7 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
             await self._session.incidents.update_incident_normalized_evidence(
                 nexus_incident_id,
                 normalized_evidence=normalized_evidence,
+                tenant_id=tenant_id,
             )
 
             return {
@@ -2517,6 +2522,7 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
             await self._session.incidents.update_incident_normalized_evidence(
                 nexus_incident_id,
                 normalized_evidence=normalized_evidence,
+                tenant_id=tenant_id,
             )
 
             return {
@@ -2644,6 +2650,7 @@ Full incident details: NEXUS | {incident.get('id', 'unknown')}
             await self._session.incidents.update_incident_normalized_evidence(
                 nexus_incident_id,
                 normalized_evidence=normalized_evidence,
+                tenant_id=tenant_id,
             )
 
             return {
