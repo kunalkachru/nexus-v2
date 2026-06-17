@@ -147,6 +147,53 @@ async def require_auth(request: Request) -> AuthenticatedContext:
     return AuthenticatedContext(user_id=user_id, tenant_id=tenant_id, roles=roles)
 
 
+class WebhookVerifier:
+    """Verifies webhook signatures with support for zero-downtime secret rotation.
+
+    During secret rotation, accepts both current and previous secret for a grace period.
+    This allows customers to rotate their secret without service interruption.
+    """
+
+    def __init__(self, current_secret: str, previous_secret: str | None = None):
+        self.current_secret = current_secret
+        self.previous_secret = previous_secret
+
+    def verify(self, signature: str, body: bytes) -> bool:
+        """Verify signature against current or previous secret.
+
+        Returns True if signature matches either the current or previous secret.
+        This enables zero-downtime rotation: customer can rotate their key while
+        we accept both old and new signatures.
+        """
+        # Compute expected signature with current secret
+        expected_current = self._compute_signature(body, self.current_secret)
+
+        # Compute expected signature with previous secret (if rotation in progress)
+        expected_previous = None
+        if self.previous_secret:
+            expected_previous = self._compute_signature(body, self.previous_secret)
+
+        # Accept signature if it matches current secret
+        if hmac.compare_digest(signature, expected_current):
+            return True
+
+        # Accept signature if it matches previous secret (during rotation grace period)
+        if expected_previous and hmac.compare_digest(signature, expected_previous):
+            logger.info(
+                "webhook_signature_verified_with_previous_secret",
+                extra={"rotation_in_progress": True}
+            )
+            return True
+
+        return False
+
+    @staticmethod
+    def _compute_signature(body: bytes, secret: str) -> str:
+        """Compute HMAC-SHA256 signature."""
+        digest = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
+        return f"sha256={digest}"
+
+
 async def verify_webhook_signature(request: Request) -> None:
     provided = request.headers.get("x-signature", "").strip()
     if not provided.startswith("sha256="):
@@ -157,10 +204,12 @@ async def verify_webhook_signature(request: Request) -> None:
         raise HTTPException(status_code=401, detail="invalid webhook signature")
 
     raw_body = await request.body()
-    secret = getattr(getattr(request.app.state, "config", None), "webhook_signing_secret", "")
-    expected_digest = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
-    expected = f"sha256={expected_digest}"
-    if not hmac.compare_digest(provided, expected):
+    config = getattr(request.app.state, "config", None)
+    current_secret = getattr(config, "webhook_signing_secret", "")
+    previous_secret = getattr(config, "webhook_signing_secret_previous", None)
+
+    verifier = WebhookVerifier(current_secret=current_secret, previous_secret=previous_secret)
+    if not verifier.verify(provided, raw_body):
         logger.warning(
             "webhook_signature_mismatch",
             extra={"path": request.url.path}
