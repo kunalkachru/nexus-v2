@@ -3,7 +3,7 @@ import json
 import logging
 import sqlite3
 from collections.abc import AsyncIterator, Callable
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -188,7 +188,7 @@ class SQLiteDatabase:
             def insert():
                 conn = self._get_connection()
                 try:
-                    now = datetime.utcnow().isoformat()
+                    now = datetime.now(UTC).isoformat()
                     conn.execute(
                         """
                         INSERT INTO incidents
@@ -234,7 +234,7 @@ class SQLiteDatabase:
                     if not existing:
                         return None
 
-                    now = datetime.utcnow().isoformat()
+                    now = datetime.now(UTC).isoformat()
                     conn.execute(
                         """
                         UPDATE incidents
@@ -277,7 +277,7 @@ class SQLiteDatabase:
             def insert():
                 conn = self._get_connection()
                 try:
-                    now = datetime.utcnow().isoformat()
+                    now = datetime.now(UTC).isoformat()
                     cursor = conn.execute(
                         """
                         INSERT INTO audit_logs
