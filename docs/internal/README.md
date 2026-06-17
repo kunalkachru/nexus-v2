@@ -1,33 +1,66 @@
 # NEXUS Internal Docs
 
-Use this set for operating, validating, or extending the current product.
+**Updated:** 2026-06-17
 
-Core documents:
+Use this set for operating, validating, extending, or troubleshooting the current production system.
 
-- [Operations](/Users/kunalkachru/Documents/nexus-v3/docs/internal/OPERATIONS.md)
-- [Operator runbook](/Users/kunalkachru/Documents/nexus-v3/docs/internal/OPERATOR_RUNBOOK.md)
-- [Pilot operations](/Users/kunalkachru/Documents/nexus-v3/docs/internal/PILOT_OPERATIONS_RUNBOOK.md)
-- [Tenant setup guide](/Users/kunalkachru/Documents/nexus-v3/docs/internal/TENANT_SETUP_GUIDE.md)
-- [Browser verification checklist](/Users/kunalkachru/Documents/nexus-v3/docs/internal/BROWSER_VERIFICATION_CHECKLIST.md)
-- [Verification pass/fail checklist](/Users/kunalkachru/Documents/nexus-v3/docs/internal/VERIFICATION_PASS_FAIL_CHECKLIST.md)
-- [HF staging verification](/Users/kunalkachru/Documents/nexus-v3/docs/internal/HF_STAGING_LIVE_VERIFICATION.md)
-- [Curated runtime pack contract](/Users/kunalkachru/Documents/nexus-v3/docs/internal/CURATED_PACK_CONTRACT.md)
-- [Loop runbook](/Users/kunalkachru/Documents/nexus-v3/docs/internal/LOOPS_RUNBOOK.md)
-- [Loop memory contract](/Users/kunalkachru/Documents/nexus-v3/docs/internal/LOOP_MEMORY.md)
-- [Now / Next / Later GTM ladder](/Users/kunalkachru/Documents/nexus-v3/docs/internal/NOW_NEXT_LATER_GTM_LADDER.md)
-- [Post-116 ops maturity plan](/Users/kunalkachru/Documents/nexus-v3/docs/internal/POST_116_OPS_MATURITY_PLAN.md)
-- [Post-131 pilot UX hardening plan](/Users/kunalkachru/Documents/nexus-v3/docs/internal/POST_131_PILOT_UX_HARDENING_PLAN.md)
-- [Most recent completed backlog](/Users/kunalkachru/Documents/nexus-v3/backlog-145-plus.json)
+---
 
-Top-level control docs still used by agents:
+## Setup & Configuration
 
-- [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
-- [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
+- **[Master Setup and Testing Guide](/Users/kunalkachru/Documents/nexus-v3/MASTER_SETUP_AND_TESTING_GUIDE.md)** — Complete setup instructions, config reference, testing checklist, and troubleshooting (START HERE)
+- [Tenant setup guide](/Users/kunalkachru/Documents/nexus-v3/docs/internal/TENANT_SETUP_GUIDE.md) — Adding new tenants to pilot program
+- [Curated runtime pack contract](/Users/kunalkachru/Documents/nexus-v3/docs/internal/CURATED_PACK_CONTRACT.md) — Architecture of demo packs and how to create new ones
 
-Current checkpoint:
+---
 
-- the five-family strategy is wrapped
-- the guided demo-intake phase is wrapped
-- the pilot UX hardening and live-intake trust pass is wrapped
-- the documentation and demo-truth consistency pass is wrapped
-- no new implementation loop should start until a new narrow backlog is written
+## Operations & Runbooks
+
+- [Operations manual](/Users/kunalkachru/Documents/nexus-v3/docs/internal/OPERATIONS.md) — Operator responsibilities, daily tasks, escalation
+- [Operator runbook](/Users/kunalkachru/Documents/nexus-v3/docs/internal/OPERATOR_RUNBOOK.md) — Quick reference for common operational tasks
+- [Production deployment guide](/Users/kunalkachru/Documents/nexus-v3/docs/internal/production-deployment-guide.md) — Detailed deployment procedures
+- [Deployment checklist](/Users/kunalkachru/Documents/nexus-v3/docs/internal/deployment-checklist.md) — Pre/post-deployment validation steps
+
+---
+
+## Monitoring & Response
+
+- [24-hour monitoring playbook](/Users/kunalkachru/Documents/nexus-v3/docs/internal/monitoring-playbook-24hr.md) — First day post-deployment monitoring procedures
+- [Alert response procedures](/Users/kunalkachru/Documents/nexus-v3/docs/internal/alert-response-procedures.md) — How to respond to each alert type
+- [Incident runbooks](/Users/kunalkachru/Documents/nexus-v3/docs/runbooks/) — Specific procedures for each runbook (6 incident types + monthly DR)
+
+---
+
+## Team Training & Handoff
+
+- [Ops team training guide](/Users/kunalkachru/Documents/nexus-v3/docs/internal/ops-team-training-guide.md) — 5-module curriculum for operations team
+- [Ops team hands-on lab](/Users/kunalkachru/Documents/nexus-v3/docs/internal/ops-team-training-hands-on-lab.md) — 4 practical scenarios for team to execute
+- [Ops team training completion](/Users/kunalkachru/Documents/nexus-v3/docs/internal/ops-team-training-completion.md) — Sign-off tracking for team members
+- [Ops handoff procedures](/Users/kunalkachru/Documents/nexus-v3/docs/internal/ops-handoff-procedures.md) — 6-phase handoff plan from dev to ops
+
+---
+
+## Pilot & Project Management
+
+- [Weekly pilot review checklist](/Users/kunalkachru/Documents/nexus-v3/docs/internal/WEEKLY_PILOT_REVIEW_CHECKLIST.md) — Weekly metrics and review process
+- [Pilot closeout template](/Users/kunalkachru/Documents/nexus-v3/docs/internal/PILOT_CLOSEOUT_TEMPLATE.md) — Closing a pilot evaluation
+
+---
+
+## Control Docs (Project Status)
+
+- [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md) — Current work instructions and agent responsibilities
+- [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md) — Current project status, boundaries, and next phase
+- [Most recent completed backlog](/Users/kunalkachru/Documents/nexus-v3/backlog-145-plus.json) — Last completed work items
+
+---
+
+## Current Status
+
+✅ **Five-family strategy:** Complete and production-ready  
+✅ **Production readiness:** All 23 tasks delivered  
+✅ **Ops maturity:** Durable with clear recovery semantics  
+✅ **Pilot UX:** Hardened for self-serve demos  
+✅ **Documentation:** Complete and consistent  
+
+**Next phase:** Only if a concrete pilot-hardening or bug-fix frontier is agreed upon

@@ -1,27 +1,83 @@
 # NEXUS Documentation Index
 
-Current as of 2026-06-16.
+**Updated:** 2026-06-17  
+**Status:** Production Ready
 
-This repo now keeps only active documentation.
+This documentation is organized into three paths:
 
-Two explicit surfaces exist:
+---
 
-- [Public docs](/Users/kunalkachru/Documents/nexus-v3/docs/public/README.md): market, buyer, demo, and presentation-facing material
-- [Internal docs](/Users/kunalkachru/Documents/nexus-v3/docs/internal/README.md): operator, pilot, verification, and control material
+## 🚀 Quick Start (New to NEXUS)
 
-Recommended starting point for hands-on product review:
+1. **[MASTER_SETUP_AND_TESTING_GUIDE.md](/Users/kunalkachru/Documents/nexus-v3/MASTER_SETUP_AND_TESTING_GUIDE.md)** ← START HERE
+   - Setup in 5-30 minutes
+   - Configuration reference
+   - Complete testing checklist
+   - Troubleshooting guide
 
-- [Master operator demo guide](/Users/kunalkachru/Documents/nexus-v3/docs/public/MASTER_OPERATOR_DEMO_GUIDE.md)
+2. **[MASTER_OPERATOR_DEMO_GUIDE.md](public/MASTER_OPERATOR_DEMO_GUIDE.md)**
+   - What NEXUS does
+   - What's real vs. bounded
+   - Step-by-step product walkthrough
 
-Current public truth:
+---
 
-- the five-family product wedge is complete
-- the near-production ops maturity phase is complete
-- the guided demo-intake phase is complete
-- the documentation and demo-truth consistency pass is complete
-- the strongest live walkthrough is now `queue -> seeded incident -> Inspect intake -> /inputs -> fresh nxs incident`
+## 📊 For Operators & DevOps
 
-Current internal truth:
+Go to: **[Internal Docs](internal/README.md)**
 
-- active implementation work, if any, is tracked in `AGENTS.md`, `WORKING_STATE.md`, and the active backlog file
-- use the internal docs surface for operator controls, loop state, and execution frontiers
+Includes:
+- Operations manual
+- Deployment procedures
+- Runbooks for each incident type
+- Monitoring and alerting
+- Team training curriculum
+- 24-hour post-deployment procedures
+
+---
+
+## 🎯 For Buyers & Presenters
+
+Go to: **[Public Docs](public/README.md)**
+
+Includes:
+- Product strategy and Go-To-Market
+- Demo walkthrough and cheat sheet
+- Buyer proof package
+- Presentation slides
+- Architecture diagrams
+
+---
+
+## 📚 By Topic
+
+| Topic | Document | Audience |
+|-------|----------|----------|
+| **Setup & Install** | [Master Setup Guide](/Users/kunalkachru/Documents/nexus-v3/MASTER_SETUP_AND_TESTING_GUIDE.md) | Everyone |
+| **Testing & Validation** | [Master Setup Guide - Testing](/Users/kunalkachru/Documents/nexus-v3/MASTER_SETUP_AND_TESTING_GUIDE.md#testing--validation) | QA, Operators |
+| **Database Schema** | [DATABASE.md](DATABASE.md) | Developers, Operators |
+| **Troubleshooting** | [TROUBLESHOOTING_GUIDE.md](TROUBLESHOOTING_GUIDE.md) | Operators, On-Call |
+| **Incident Runbooks** | [runbooks/](runbooks/) | Operators, On-Call |
+| **Security** | [security-review-checklist.md](security-review-checklist.md) | Security team |
+| **Deployments** | [internal/production-deployment-guide.md](internal/production-deployment-guide.md) | DevOps, Release |
+| **Tenant Setup** | [internal/TENANT_SETUP_GUIDE.md](internal/TENANT_SETUP_GUIDE.md) | Operations |
+| **Demo Packs** | [internal/CURATED_PACK_CONTRACT.md](internal/CURATED_PACK_CONTRACT.md) | Developers |
+
+---
+
+## ✅ Current Status
+
+- **Five-family product:** Complete and production-ready
+- **Production readiness:** All 23 tasks delivered
+- **Ops maturity:** Durable with clear procedures
+- **Pilot UX:** Hardened for self-serve demos
+- **Documentation:** Complete and verified (12 obsolete docs removed)
+- **Test coverage:** 410 backend + 16 browser tests (all passing)
+
+---
+
+## Project Control Docs
+
+- [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md) — Current work and agent responsibilities
+- [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md) — Project boundaries and status
+- [REPOSITORY_REVIEW_2026-06-17.md](/Users/kunalkachru/Documents/nexus-v3/REPOSITORY_REVIEW_2026-06-17.md) — Complete repository assessment

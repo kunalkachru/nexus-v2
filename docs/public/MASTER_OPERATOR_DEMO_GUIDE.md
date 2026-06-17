@@ -1,6 +1,6 @@
 # NEXUS Master Operator Demo Guide
 
-Current as of 2026-06-16.
+Current as of 2026-06-17 (Updated: Test baselines and database path corrected)
 
 This is the single document to use when you want to:
 
@@ -124,7 +124,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 
 Expected baseline:
 
-- `pytest tests/ -q` -> `169 passed`
+- `pytest tests/ -q` -> `410 passed` (76 core + 334 production readiness/load testing/DR/ops training tests)
 - `npm run browser:verify` -> `16 passed`
 - `python demo.py` -> passes
 - Docker smoke path -> passes

@@ -110,10 +110,12 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 
 Current validated baseline:
 
-- `pytest tests/ -q` -> `383 passed`
-- `npm run browser:verify` -> `16 passed`
+- `pytest tests/ -q` -> `410 passed` (76 core + 334 production readiness/load/DR/ops tests)
+- `npm run browser:verify` -> `16 passed` (browser verification)
 - `python demo.py` -> passes
 - Docker rebuild and enterprise smoke path -> passes
+
+**For complete setup and testing instructions:** See [MASTER_SETUP_AND_TESTING_GUIDE.md](MASTER_SETUP_AND_TESTING_GUIDE.md)
 
 ## Roadmap Status
 
