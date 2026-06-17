@@ -11,12 +11,16 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - `INC003` deploy regression / 5xx spike
   - `INC005` queue / worker backlog affecting transaction completion
   - `INC007` auth dependency slowdown / token validation failures
-- Current validated baseline:
-  - `pytest tests/ -q` -> `169 passed`
+- Current validated baseline (Updated 2026-06-17):
+  - `pytest tests/ -q` -> `410 passed` (76 core + 334 production readiness/load/DR/ops tests)
   - `npm run browser:verify` -> `16 passed`
   - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
+  - **Master setup and testing guide** created with comprehensive coverage
+  - **Documentation thoroughly reviewed** and cleaned (50 → 38 active docs)
+  - **All environment variables** documented with examples
+  - **100+ feature validation** checkpoints created
   - **Premium visual system** across queue, inputs, incident, training, replay
   - **Improved incident console** with clearer operator story from triage to Guardian approval
   - **Fresh incident parity** with explicit scaffold-only vs runtime-backed language
