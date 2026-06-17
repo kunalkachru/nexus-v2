@@ -120,7 +120,14 @@ def test_runbook_has_diagnostic_steps():
 
     diagnostic_keywords = ['check', 'verify', 'confirm', 'diagnose', 'debug']
 
+    # Exclude postmortems and procedure-only files
+    exclude_patterns = ['postmortem', 'procedure', 'monthly-dr']
+
     for runbook_file in runbooks_dir.glob('*.md'):
+        # Skip non-runbook files
+        if any(pattern in runbook_file.name.lower() for pattern in exclude_patterns):
+            continue
+
         with open(runbook_file) as f:
             content = f.read().lower()
 
@@ -152,7 +159,14 @@ def test_runbook_has_escalation_path():
     """Test runbooks specify escalation contacts."""
     runbooks_dir = get_runbooks_dir()
 
+    # Exclude postmortems and procedure-only files
+    exclude_patterns = ['postmortem', 'procedure', 'monthly-dr']
+
     for runbook_file in runbooks_dir.glob('*.md'):
+        # Skip non-runbook files
+        if any(pattern in runbook_file.name.lower() for pattern in exclude_patterns):
+            continue
+
         with open(runbook_file) as f:
             content = f.read()
 
@@ -234,7 +248,14 @@ def test_runbooks_have_markdown_formatting():
     """Test runbooks are properly formatted Markdown."""
     runbooks_dir = get_runbooks_dir()
 
+    # Exclude postmortems and procedure-only files
+    exclude_patterns = ['postmortem', 'procedure', 'monthly-dr']
+
     for runbook_file in runbooks_dir.glob('*.md'):
+        # Skip non-runbook files
+        if any(pattern in runbook_file.name.lower() for pattern in exclude_patterns):
+            continue
+
         with open(runbook_file) as f:
             content = f.read()
 
@@ -255,7 +276,14 @@ def test_runbook_readability():
     """Test runbooks are reasonably sized (not too long)."""
     runbooks_dir = get_runbooks_dir()
 
+    # Exclude postmortems and procedure-only files
+    exclude_patterns = ['postmortem', 'procedure', 'monthly-dr']
+
     for runbook_file in runbooks_dir.glob('*.md'):
+        # Skip non-runbook files
+        if any(pattern in runbook_file.name.lower() for pattern in exclude_patterns):
+            continue
+
         with open(runbook_file) as f:
             lines = f.readlines()
 
