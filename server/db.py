@@ -38,52 +38,59 @@ class SQLiteDatabase:
         """Create database and schema if not exists."""
         Path(self._path).parent.mkdir(parents=True, exist_ok=True)
 
-        with sqlite3.connect(self._path) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
+        try:
+            with sqlite3.connect(self._path) as conn:
+                conn.execute("PRAGMA foreign_keys = ON")
 
-            # Create incidents table
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS incidents (
-                    nexus_incident_id TEXT PRIMARY KEY,
-                    tenant_id TEXT NOT NULL,
-                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    data JSONB NOT NULL,
-                    UNIQUE(tenant_id, nexus_incident_id),
-                    CHECK (length(nexus_incident_id) > 0),
-                    CHECK (length(tenant_id) > 0),
-                    CHECK (json_valid(data))
-                )
-            """)
+                # Create incidents table
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS incidents (
+                        nexus_incident_id TEXT PRIMARY KEY,
+                        tenant_id TEXT NOT NULL,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        data JSONB NOT NULL,
+                        UNIQUE(tenant_id, nexus_incident_id),
+                        CHECK (length(nexus_incident_id) > 0),
+                        CHECK (length(tenant_id) > 0),
+                        CHECK (json_valid(data))
+                    )
+                """)
 
-            # Create audit_logs table
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS audit_logs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    event_type TEXT NOT NULL,
-                    tenant_id TEXT NOT NULL,
-                    user_id TEXT,
-                    data JSONB NOT NULL,
-                    CHECK (length(event_type) > 0),
-                    CHECK (length(tenant_id) > 0),
-                    CHECK (json_valid(data))
-                )
-            """)
+                # Create audit_logs table
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS audit_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        event_type TEXT NOT NULL,
+                        tenant_id TEXT NOT NULL,
+                        user_id TEXT,
+                        data JSONB NOT NULL,
+                        CHECK (length(event_type) > 0),
+                        CHECK (length(tenant_id) > 0),
+                        CHECK (json_valid(data))
+                    )
+                """)
 
-            # Create indexes
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_incidents_tenant_id ON incidents(tenant_id)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_incidents_created_at ON incidents(created_at DESC)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_incidents_updated_at ON incidents(updated_at DESC)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_incidents_tenant_created ON incidents(tenant_id, created_at DESC)")
+                # Create indexes
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_incidents_tenant_id ON incidents(tenant_id)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_incidents_created_at ON incidents(created_at DESC)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_incidents_updated_at ON incidents(updated_at DESC)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_incidents_tenant_created ON incidents(tenant_id, created_at DESC)")
 
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_id ON audit_logs(tenant_id)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_event_type ON audit_logs(event_type)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_created ON audit_logs(tenant_id, created_at DESC)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_event ON audit_logs(tenant_id, event_type)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_id ON audit_logs(tenant_id)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_event_type ON audit_logs(event_type)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_created ON audit_logs(tenant_id, created_at DESC)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_event ON audit_logs(tenant_id, event_type)")
 
-            conn.commit()
+                conn.commit()
+        except sqlite3.DatabaseError:
+            if self._path.exists():
+                backup_path = self._path.with_suffix(self._path.suffix + ".backup")
+                self._path.rename(backup_path)
+                logger.info(f"Migrated old database from {self._path} to {backup_path}")
+            self._ensure_schema()
 
     def _get_connection(self) -> sqlite3.Connection:
         """Get database connection."""
