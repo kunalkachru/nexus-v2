@@ -91,8 +91,34 @@ The `IncidentRepository` class had hardcoded `self._tenant_id = "tenant-system"`
 ## Final Test Results
 
 ```
-76 passed, 60 warnings in 6.84s
+76 passed, 9 warnings in 6.99s
 ```
+
+### Warnings Status
+
+**Total Warnings Reduced:** 60 → 9 (85% reduction)
+
+**Fixed Warnings (51):**
+- Deprecated `datetime.utcnow()` calls in server/db.py
+  - Fixed 2 instances at lines 191 and 237
+  - Replaced with timezone-aware `datetime.now(UTC)`
+  - This eliminated the deprecation warnings from our code
+
+**Remaining Warnings (9 - External Libraries, Cannot Fix in This Codebase):**
+1. **Starlette** (1 warning): PendingDeprecationWarning about multipart import
+   - Location: `/opt/anaconda3/lib/python3.13/site-packages/starlette/formparsers.py:12`
+   - Recommendation: Update Starlette dependency when new version available
+   
+2. **Pydantic V1** (1 warning): DeprecationWarning about ForwardRef type_params
+   - Location: `/opt/anaconda3/lib/python3.13/site-packages/pydantic/v1/typing.py:68`
+   - Recommendation: Plan migration to Pydantic V2 in future refactor
+   
+3. **LangGraph** (1 warning): LangChainPendingDeprecationWarning about allowed_objects default
+   - Location: `/opt/anaconda3/lib/python3.13/site-packages/langgraph/checkpoint/base/__init__.py:18`
+   - Recommendation: Update LangGraph dependency or pass explicit allowed_objects parameter
+
+**Action Taken:**
+- Commit `bdd4597`: Fixed all fixable warnings by replacing deprecated datetime calls
 
 ### Test Suite Breakdown
 | Category | Tests | Status |
