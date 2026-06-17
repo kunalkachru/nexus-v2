@@ -1,19 +1,25 @@
-from collections.abc import Callable
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from server.models import IncidentRecord
 
+if TYPE_CHECKING:
+    from server.db import SQLiteDatabase
+
 
 class IncidentRepository:
-    def __init__(
-        self,
-        incident_store: dict[str, IncidentRecord],
-        flush_callback: Callable[[], Any],
-    ) -> None:
-        self._incident_store = incident_store
-        self._flush_callback = flush_callback
+    """Database repository for incidents with SQLite backing."""
+
+    def __init__(self, database: "SQLiteDatabase") -> None:
+        """
+        Initialize repository with SQLite database.
+
+        Args:
+            database: SQLiteDatabase instance for persistence
+        """
+        self._database = database
+        self._tenant_id = "tenant-system"  # Default tenant (can be overridden)
 
     async def create_incident(
         self,
@@ -27,9 +33,13 @@ class IncidentRepository:
         raw_input_text: str = "",
         normalized_evidence: dict[str, object] | None = None,
     ) -> IncidentRecord:
+        """Create a new incident in the database."""
         timestamp = datetime.now(timezone.utc).isoformat()
+        nexus_incident_id = f"nxs_{uuid4().hex[:12]}"
+
+        # Create Pydantic model
         incident = IncidentRecord(
-            nexus_incident_id=f"nxs_{uuid4().hex[:12]}",
+            nexus_incident_id=nexus_incident_id,
             external_id=external_id,
             title=title,
             severity=severity,
@@ -48,32 +58,50 @@ class IncidentRepository:
             created_at=timestamp,
             updated_at=timestamp,
         )
-        self._incident_store[incident.nexus_incident_id] = incident
-        try:
-            await self._flush_callback()
-        except Exception:
-            self._incident_store.pop(incident.nexus_incident_id, None)
-            raise
+
+        # Persist to database
+        data = incident.model_dump(mode="json")
+        await self._database.create_incident(nexus_incident_id, tenant_id, data)
+
         return incident
 
     async def get_incident(self, nexus_incident_id: str) -> IncidentRecord | None:
-        return self._incident_store.get(nexus_incident_id)
+        """Get incident by ID (system tenant)."""
+        incident_data = await self._database.get_incident_for_tenant(
+            nexus_incident_id, self._tenant_id
+        )
+        if not incident_data:
+            return None
+        return IncidentRecord.model_validate(incident_data['data'])
 
     async def get_incident_for_tenant(
         self,
         nexus_incident_id: str,
         tenant_id: str,
     ) -> IncidentRecord | None:
-        incident = self._incident_store.get(nexus_incident_id)
-        if incident is None or incident.tenant_id != tenant_id:
+        """Get incident for specific tenant with isolation."""
+        incident_data = await self._database.get_incident_for_tenant(
+            nexus_incident_id, tenant_id
+        )
+        if not incident_data:
             return None
-        return incident
+        return IncidentRecord.model_validate(incident_data['data'])
 
     async def list_incidents(self) -> list[IncidentRecord]:
-        return list(self._incident_store.values())
+        """List all incidents (system tenant)."""
+        incidents_data = await self._database.list_incidents_for_tenant(self._tenant_id)
+        return [
+            IncidentRecord.model_validate(incident['data'])
+            for incident in incidents_data
+        ]
 
     async def list_incidents_for_tenant(self, tenant_id: str) -> list[IncidentRecord]:
-        return [incident for incident in self._incident_store.values() if incident.tenant_id == tenant_id]
+        """List incidents for specific tenant."""
+        incidents_data = await self._database.list_incidents_for_tenant(tenant_id)
+        return [
+            IncidentRecord.model_validate(incident['data'])
+            for incident in incidents_data
+        ]
 
     async def update_incident_status(
         self,
@@ -87,10 +115,17 @@ class IncidentRepository:
         guardian_policy_name: str | None = None,
         guardian_policy_basis: str | None = None,
     ) -> IncidentRecord | None:
-        incident = self._incident_store.get(nexus_incident_id)
-        if incident is None:
+        """Update incident status and guardian decision."""
+        # Get existing incident
+        incident_data = await self._database.get_incident_for_tenant(
+            nexus_incident_id, self._tenant_id
+        )
+        if not incident_data:
             return None
 
+        incident = IncidentRecord.model_validate(incident_data['data'])
+
+        # Build updates
         updates: dict[str, object] = {
             "status": status,
             "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -108,16 +143,15 @@ class IncidentRepository:
         if guardian_policy_basis is not None:
             updates["guardian_policy_basis"] = guardian_policy_basis
 
-        updated = incident.model_copy(
-            update=updates
+        updated = incident.model_copy(update=updates)
+
+        # Persist to database
+        data = updated.model_dump(mode="json")
+        result = await self._database.update_incident(
+            nexus_incident_id, self._tenant_id, data
         )
-        self._incident_store[nexus_incident_id] = updated
-        try:
-            await self._flush_callback()
-        except Exception:
-            self._incident_store[nexus_incident_id] = incident
-            raise
-        return updated
+
+        return updated if result else None
 
     async def update_incident_normalized_evidence(
         self,
@@ -125,9 +159,15 @@ class IncidentRepository:
         *,
         normalized_evidence: dict[str, object],
     ) -> IncidentRecord | None:
-        incident = self._incident_store.get(nexus_incident_id)
-        if incident is None:
+        """Update incident normalized evidence."""
+        # Get existing incident
+        incident_data = await self._database.get_incident_for_tenant(
+            nexus_incident_id, self._tenant_id
+        )
+        if not incident_data:
             return None
+
+        incident = IncidentRecord.model_validate(incident_data['data'])
 
         updated = incident.model_copy(
             update={
@@ -135,13 +175,14 @@ class IncidentRepository:
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }
         )
-        self._incident_store[nexus_incident_id] = updated
-        try:
-            await self._flush_callback()
-        except Exception:
-            self._incident_store[nexus_incident_id] = incident
-            raise
-        return updated
+
+        # Persist to database
+        data = updated.model_dump(mode="json")
+        result = await self._database.update_incident(
+            nexus_incident_id, self._tenant_id, data
+        )
+
+        return updated if result else None
 
     async def append_incident_replay_evidence(
         self,
@@ -151,9 +192,15 @@ class IncidentRepository:
         replay_entry: dict[str, object],
         replay_limit: int = 5,
     ) -> IncidentRecord | None:
-        incident = self._incident_store.get(nexus_incident_id)
-        if incident is None:
+        """Append replay evidence to incident."""
+        # Get existing incident
+        incident_data = await self._database.get_incident_for_tenant(
+            nexus_incident_id, self._tenant_id
+        )
+        if not incident_data:
             return None
+
+        incident = IncidentRecord.model_validate(incident_data['data'])
 
         normalized_evidence = dict(incident.normalized_evidence or {})
         existing_history = normalized_evidence.get("replay_history")
@@ -170,10 +217,11 @@ class IncidentRepository:
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }
         )
-        self._incident_store[nexus_incident_id] = updated
-        try:
-            await self._flush_callback()
-        except Exception:
-            self._incident_store[nexus_incident_id] = incident
-            raise
-        return updated
+
+        # Persist to database
+        data = updated.model_dump(mode="json")
+        result = await self._database.update_incident(
+            nexus_incident_id, self._tenant_id, data
+        )
+
+        return updated if result else None
