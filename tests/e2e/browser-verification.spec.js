@@ -65,23 +65,30 @@ test.describe("NEXUS browser verification", () => {
 
     await expect(page).toHaveTitle(/Incident Detail/);
     await expect(page.getByRole("heading", { name: /INC001/ })).toBeVisible();
-    await expect(page.getByText("Specialist crew")).toBeVisible();
-    await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(6);
-    await expect(page.locator("#handoffCurrentOwnerCaption")).toContainText(/active relay owner|owns the case/i);
-    await expect(page.locator("#handoffReceivedPacketMeta")).toContainText(/→|No inbound handoff yet/i);
-    await expect(page.locator("#handoffReplayHint")).toContainText(/replay|baton transfer/i);
     await expect(page.getByRole("heading", { name: "Investigation Summary & Operator Path" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Enterprise Task Board" })).toBeVisible();
     await expect(page.locator("#focusRecommendedAction")).toBeVisible();
     await expect(page.locator("#focusRuntimePosture")).toBeVisible();
     await expect(page.locator("#focusInspectHere")).toBeVisible();
-    await expect(page.locator(".enterprise-depth-details")).not.toHaveAttribute("open", "");
+    await expect(page.locator(".enterprise-depth-details")).not.toHaveAttribute("open");
     await expect(page.getByRole("heading", { name: "What is the incident?" })).toBeVisible();
+    // Collapsed sections should not be open by default
+    const collapsibles = await page.locator(".section-collapsible").all();
+    for (const elem of collapsibles) {
+      await expect(elem).not.toHaveAttribute("open");
+    }
+    await expect(page.locator("#incidentHeroId")).toContainText(/INC(?:-|)\w+/);
+
+    // Expand Agent Relay & Crew Details section to verify crew content
+    await page.locator('div:has-text("Agent Relay & Crew Details") + .details-body, details:has(h2:text("Agent Relay & Crew Details")) summary').first().click();
+    await expect(page.getByText("Specialist crew")).toBeVisible();
+    await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(6);
+    await expect(page.locator("#handoffCurrentOwnerCaption")).toContainText(/active relay owner|owns the case/i);
+    await expect(page.locator("#handoffReceivedPacketMeta")).toContainText(/→|No inbound handoff yet/i);
+    await expect(page.locator("#handoffReplayHint")).toContainText(/replay|baton transfer/i);
     await expect(page.locator(".guardian-gate-card .badge")).toHaveText("Governance Bot");
     await expect(page.locator(".byo-key-card .badge")).toHaveText("Bring your own OpenAI key");
-    await expect(page.locator(".section-collapsible")).not.toHaveAttribute("open", "");
     await expect(page.locator("#liveReasoningState")).toContainText("OFF");
-    await expect(page.locator("#incidentHeroId")).toContainText(/INC(?:-|)\w+/);
 
     await page.screenshot({ path: "artifacts/browser/incident-detail-default.png", fullPage: true });
 
@@ -105,7 +112,8 @@ test.describe("NEXUS browser verification", () => {
     await page.getByRole("button", { name: "Start replay" }).click();
     await expect(page.locator("#handoffReplayState")).toContainText(/Step 1 of|Replay armed/i);
     await expect(page.locator("#handoffCurrentOwner")).toContainText(/PRISM|REPLICA|TRACE|FORGE|GUARDIAN/);
-    await page.locator(".section-collapsible summary").click();
+    // Click the "Expand technical detail" section
+    await page.locator('details:has(h2:text("Expand technical detail")) summary').first().click();
     await expect(page.locator("#rawInputText")).toBeVisible();
     await expect(page.locator("#workflowTimeline")).toBeVisible();
     await expect(page.locator("#incidentAuditLogs")).toBeVisible();
@@ -119,6 +127,10 @@ test.describe("NEXUS browser verification", () => {
 
   test("incident detail keeps BYO key masked and request-scoped", async ({ page }) => {
     await page.goto("/incident?nexus_incident_id=INC001");
+    await page.waitForLoadState("networkidle");
+
+    // Expand Agent Relay & Crew Details section to access BYO key input
+    await page.locator('details:has(h2:text("Agent Relay & Crew Details")) summary').first().click();
     await page.waitForLoadState("networkidle");
 
     await expect(page.locator("#openaiKeyStatus")).toContainText("No user key attached");
@@ -139,6 +151,10 @@ test.describe("NEXUS browser verification", () => {
     for (const width of [1365, 1280, 1180]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/incident?nexus_incident_id=INC001");
+      await page.waitForLoadState("networkidle");
+
+      // Expand Agent Relay & Crew Details section to access BYO key input
+      await page.locator('details:has(h2:text("Agent Relay & Crew Details")) summary').first().click();
       await page.waitForLoadState("networkidle");
 
       await page.locator("#openaiApiKeyInput").fill("sk-test-1234567890");
@@ -170,17 +186,27 @@ test.describe("NEXUS browser verification", () => {
     await page.waitForLoadState("networkidle");
 
     await expect(page).toHaveTitle(/Learning & Controls/);
-    await expect(page.getByRole("heading", { name: "Make the last triage legible. Keep the rest of the learning stack in reserve." })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Enterprise runtime summary" })).toBeVisible();
+    // Hero section is visible with key stats
+    await expect(page.getByRole("heading", { name: "Operational memory, runtime posture, and learning" })).toBeVisible();
+    // Last live triage section is visible
+    await expect(page.getByRole("heading", { name: "Last live triage in this browser" })).toBeVisible();
+    // Collapsed sections should not be open by default
+    const collapsibles = await page.locator("details.section-collapsible").all();
+    for (const elem of collapsibles) {
+      await expect(elem).not.toHaveAttribute("open");
+    }
+
+    await page.screenshot({ path: "artifacts/browser/training-learning-controls-default.png", fullPage: true });
+
+    // Expand Learning & Governance section
+    await page.locator('details:has(h2:text("Learning & Governance")) summary').first().click();
     await expect(page.getByRole("heading", { name: "Learning summary" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Governance summary" })).toBeVisible();
     await expect(page.locator("#rewardCurve > div")).toHaveCount(30);
     await expect(page.locator("#agentStats .summary-card")).toHaveCount(4);
-    await expect(page.locator(".section-collapsible")).not.toHaveAttribute("open", "");
 
-    await page.screenshot({ path: "artifacts/browser/training-learning-controls-default.png", fullPage: true });
-
-    await page.locator(".section-collapsible summary").click();
+    // Expand Advanced Artifacts section
+    await page.locator('details:has(h2:text("Advanced Artifacts")) summary').first().click();
     await expect(page.locator("#episodeTable")).toBeVisible();
     await expect(page.locator("#trajectoryTable")).toBeVisible();
     await expect(page.locator("#stateMap")).toBeVisible();
