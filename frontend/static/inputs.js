@@ -669,6 +669,18 @@ window.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    // Validate raw_text channel has content before submission
+    if (selectedChannel.dataset.channel === "raw_text") {
+      const rawLogInput = document.getElementById("rawLogInput");
+      const rawText = rawLogInput?.value || "";
+      if (!rawText.trim()) {
+        if (result) {
+          result.textContent = "Please select a demo bundle or paste raw logs before submitting.";
+        }
+        return;
+      }
+    }
+
     if (result) {
       result.textContent = "Step 1 of 3: shaping the raw evidence into one bounded incident case.";
     }
