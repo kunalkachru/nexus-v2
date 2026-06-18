@@ -36,8 +36,7 @@
         <section class="hero">
             <div class="hero-panel">
                 <div class="eyebrow">Learning &amp; Controls</div>
-                <h1>Make the last triage legible. Keep the rest of the learning stack in reserve.</h1>
-                <p class="hero-copy">Start with the live incident this team just worked, then read runtime health and broader improvement signals without drowning the page in internal artifacts.</p>
+                <h1>Operational memory, runtime posture, and learning</h1>
                 <div class="hero-stats hero-stats-tight">
                     <div class="stat"><div class="stat-label">Baseline</div><div class="stat-value" id="baselineReward">-</div></div>
                     <div class="stat"><div class="stat-label">Trained</div><div class="stat-value" id="trainedReward">-</div></div>
@@ -45,20 +44,8 @@
                     <div class="stat"><div class="stat-label">Improvement</div><div class="stat-value" id="rewardImprovement">-</div></div>
                     <div class="stat"><div class="stat-label">Governance</div><div class="stat-value" id="platformPolicies">-</div></div>
                 </div>
-            </div>
-            <div class="hero-panel">
-                <div class="eyebrow">Navigation focus</div>
-                <div class="tab-strip" aria-label="Learning surface tabs">
-                    <button class="tab-pill active" id="navLearning" data-target="learningSection" type="button">Learning summary</button>
-                    <button class="tab-pill" id="navGovernance" data-target="governanceSection" type="button">Governance summary</button>
-                    <button class="tab-pill" id="navAdvanced" data-target="advancedSection" type="button">Advanced artifacts</button>
-                </div>
-                <div class="flow-callout">
-                    <div class="label">Primary story</div>
-                    <div class="value" id="trainingPageLead">Start with the latest live triage, then read runtime health, then learning progress, and open advanced artifacts only when you need the raw trail.</div>
-                </div>
-                <div class="command-context-links">
-                    <a class="nav-link channel-ghost" href="settings" data-preserve-return>Open settings route</a>
+                <div class="shell-actions" style="margin-top: 1rem;">
+                    <a class="nav-link channel-ghost" href="settings" data-preserve-return>Settings</a>
                     <a class="nav-link channel-ghost" href="replay" data-preserve-return>Replay scenarios</a>
                 </div>
             </div>
@@ -87,7 +74,15 @@
             </div>
         </section>
 
-        <section class="section" id="pilotScorecardSection">
+        <details class="section section-collapsible">
+            <summary class="section-summary">
+                <div>
+                    <h2>Operational Metrics & Health</h2>
+                    <div class="section-note">Pilot scorecard, product health, runtime status, and ROI metrics.</div>
+                </div>
+            </summary>
+            <div class="details-body">
+                <section class="section" id="pilotScorecardSection">
             <div class="section-header">
                 <h2>Pilot scorecard dashboard</h2>
                 <div class="section-note">Per-tenant pilot value metrics for operational and buyer-facing conversations.</div>
@@ -359,9 +354,19 @@
                     </div>
                 </div>
             </div>
-        </section>
+                </section>
+            </div>
+        </details>
 
-        <section class="section" id="learningSection">
+        <details class="section section-collapsible">
+            <summary class="section-summary">
+                <div>
+                    <h2>Learning & Governance</h2>
+                    <div class="section-note">Training progress, governance policies, runtime capabilities, and advanced artifacts.</div>
+                </div>
+            </summary>
+            <div class="details-body">
+                <section class="section" id="learningSection">
             <div class="section-header">
                 <h2>Learning summary</h2>
                 <div class="section-note">One compact reward story and one compact view of how each bot contributes.</div>
@@ -435,7 +440,9 @@
                     <p class="section-note" id="runtimeHostStatus">Runtime-host relay status will appear here once capabilities load.</p>
                 </div>
             </div>
-        </section>
+                </section>
+            </div>
+        </details>
 
         <details class="section section-collapsible training-artifact-shell" id="advancedSection">
             <summary class="section-summary">
