@@ -172,6 +172,23 @@
             </div>
         </details>
 
+        <div class="detail-card compact-note guardian-gate-card">
+            <div class="relay-callout" id="guardianRelayPrompt">Guardian will become the active decision point once the crew finishes its handoff.</div>
+            <div class="badge">Governance Bot</div>
+            <p class="hero-copy">Guardian is the explicit safety gate. Execution stays subordinate to bot collaboration until this check is clear.</p>
+            <div class="runbook-explainer">
+                <div class="runbook-explainer-title">What Guardian is reviewing</div>
+                <p class="hero-copy" id="runbookExplainer">The runbook summary will appear here so the operator understands what approval would actually execute.</p>
+                <p class="section-note" id="runbookImpact">Execution impact and rollback posture will appear here once the incident loads.</p>
+            </div>
+            <div class="shell-actions guardian-gate-actions">
+                <button class="nav-link channel-cta" id="guardianApproveBtn" type="button">Approve runbook</button>
+                <button class="nav-link channel-cta" id="guardianBlockBtn" type="button">Block runbook</button>
+                <button class="nav-link channel-cta" id="guardianModifyBtn" type="button">Request modification</button>
+            </div>
+            <p class="section-note" id="guardianGateState">Decision pending.</p>
+        </div>
+
         <details class="section section-collapsible">
             <summary class="section-summary">
                 <div>
@@ -336,22 +353,6 @@
                             <p class="crew-bot-task" id="guardianReasoning">Waiting to approve or block execution.</p>
                             <p class="crew-bot-handoff" id="guardianFlowTransfer">Runbook proposal becomes a governance decision.</p>
                         </article>
-                    </div>
-                    <div class="detail-card compact-note guardian-gate-card">
-                        <div class="relay-callout" id="guardianRelayPrompt">Guardian will become the active decision point once the crew finishes its handoff.</div>
-                        <div class="badge">Governance Bot</div>
-                        <p class="hero-copy">Guardian is the explicit safety gate. Execution stays subordinate to bot collaboration until this check is clear.</p>
-                        <div class="runbook-explainer">
-                            <div class="runbook-explainer-title">What Guardian is reviewing</div>
-                            <p class="hero-copy" id="runbookExplainer">The runbook summary will appear here so the operator understands what approval would actually execute.</p>
-                            <p class="section-note" id="runbookImpact">Execution impact and rollback posture will appear here once the incident loads.</p>
-                        </div>
-                        <div class="shell-actions guardian-gate-actions">
-                            <button class="nav-link channel-cta" id="guardianApproveBtn" type="button">Approve runbook</button>
-                            <button class="nav-link channel-cta" id="guardianBlockBtn" type="button">Block runbook</button>
-                            <button class="nav-link channel-cta" id="guardianModifyBtn" type="button">Request modification</button>
-                        </div>
-                        <p class="section-note" id="guardianGateState">Decision pending.</p>
                     </div>
                 </div>
             </div>
