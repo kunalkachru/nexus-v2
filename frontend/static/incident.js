@@ -218,7 +218,7 @@ function scrollToOutcomePanel() {
 }
 
 function showResolvedGuardianState(data) {
-  setRelayStep(3);
+  setRelayStep(5);
   setText(
     "relayStageBanner",
     data.execution_result === "executed"
@@ -231,7 +231,7 @@ function showResolvedGuardianState(data) {
 async function playAgentRelay(data, { focusGuardian = false, revealOutcome = false } = {}) {
   const relayToken = ++relayRunToken;
   const decision = String(data.guardian.decision || "").toLowerCase();
-  const finalStep = data.execution_result === "executed" || decision === "approve" ? 3 : 3;
+  const finalStep = data.execution_result === "executed" || decision === "approve" ? 5 : 5;
 
   for (let index = 0; index <= finalStep; index += 1) {
     if (relayToken !== relayRunToken) {
@@ -1665,7 +1665,7 @@ function setupEngineeringFeedbackHandlers(incidentId) {
 function settleRelayState(data) {
   const decision = String(data.guardian?.decision || "").toLowerCase();
   if (data.execution_result === "executed" || ["approve", "reject", "request_modification"].includes(decision)) {
-    setRelayStep(3);
+    setRelayStep(5);
     setText(
       "relayStageBanner",
       data.execution_result === "executed"
@@ -1675,7 +1675,7 @@ function settleRelayState(data) {
     updateGuardianPrompt(data);
     return;
   }
-  setRelayStep(3);
+  setRelayStep(5);
 }
 
 async function loadAndRenderIncident(incidentId, options = {}) {
