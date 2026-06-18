@@ -166,7 +166,12 @@ function getRelayNodes() {
 
 function setRelayNodeState(index, state) {
   const labels = ["relaySentinelState", "relayPrismState", "relayReplicaState", "relayTraceState", "relayForgeState", "relayGuardianState"];
+  const progressLabels = ["agentProgressSentinel", "agentProgressPrism", "agentProgressReplica", "agentProgressTrace", "agentProgressForge", "agentProgressGuardian"];
   setText(labels[index], state);
+  // Also update the Agent Progress card in first viewport
+  if (progressLabels[index]) {
+    setText(progressLabels[index], state);
+  }
 }
 
 function setRelayStep(index) {

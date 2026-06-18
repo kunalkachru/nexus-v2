@@ -54,6 +54,35 @@
                     <p class="section-note" id="operatorNextStep">Next operator action will appear here once the incident loads.</p>
                     <p class="section-note">SENTINEL handed evidence to PRISM, PRISM synthesized the diagnosis, FORGE prepared the runbook, and GUARDIAN now controls the final safety gate.</p>
                 </div>
+                <div class="detail-card compact-note" style="background-color: rgba(100, 150, 200, 0.05); border-left: 4px solid rgba(100, 150, 200, 0.3);">
+                    <div class="badge">Agent Progress</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;">
+                        <div style="padding: 6px; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                            <div style="font-weight: 500; font-size: 0.85rem;">SENTINEL</div>
+                            <div id="agentProgressSentinel" style="font-size: 0.75rem; color: var(--text-secondary);">Waiting</div>
+                        </div>
+                        <div style="padding: 6px; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                            <div style="font-weight: 500; font-size: 0.85rem;">PRISM</div>
+                            <div id="agentProgressPrism" style="font-size: 0.75rem; color: var(--text-secondary);">Waiting</div>
+                        </div>
+                        <div style="padding: 6px; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                            <div style="font-weight: 500; font-size: 0.85rem;">REPLICA</div>
+                            <div id="agentProgressReplica" style="font-size: 0.75rem; color: var(--text-secondary);">Waiting</div>
+                        </div>
+                        <div style="padding: 6px; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                            <div style="font-weight: 500; font-size: 0.85rem;">TRACE</div>
+                            <div id="agentProgressTrace" style="font-size: 0.75rem; color: var(--text-secondary);">Waiting</div>
+                        </div>
+                        <div style="padding: 6px; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                            <div style="font-weight: 500; font-size: 0.85rem;">FORGE</div>
+                            <div id="agentProgressForge" style="font-size: 0.75rem; color: var(--text-secondary);">Waiting</div>
+                        </div>
+                        <div style="padding: 6px; background-color: rgba(255,255,255,0.05); border-radius: 4px;">
+                            <div style="font-weight: 500; font-size: 0.85rem;">GUARDIAN</div>
+                            <div id="agentProgressGuardian" style="font-size: 0.75rem; color: var(--text-secondary);">Waiting</div>
+                        </div>
+                    </div>
+                </div>
                 <div class="detail-card compact-note demo-origin-card" id="demoOriginCard" hidden>
                     <div class="badge">Demo intake origin</div>
                     <h3 id="demoOriginTitle">Fresh incident demo context</h3>
