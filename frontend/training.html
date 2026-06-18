@@ -51,28 +51,32 @@
             </div>
         </section>
 
-        <section class="section" id="latestTriageSection">
-            <div class="section-header">
-                <h2>Last live triage in this browser</h2>
-                <div class="section-note">This section connects the most recent incident you ran in this browser to the runtime and learning signals shown below.</div>
-            </div>
-            <div class="story-grid">
-                <div class="detail-card episode-detail" id="sessionTriageSummary">
-                    <div class="badge">Latest live run</div>
-                    <p class="hero-copy">Run a fresh triage to bring one specific incident, its Guardian decision, and its execution outcome into this page.</p>
+        <details class="section section-collapsible" id="latestTriageSection">
+            <summary class="section-summary">
+                <div>
+                    <h2>Last live triage in this browser</h2>
+                    <div class="section-note">This section connects the most recent incident you ran in this browser to the runtime and learning signals shown below.</div>
                 </div>
-                <div class="detail-card">
-                <div class="badge">How to interpret it</div>
-                    <div class="episode-step-list" id="sessionTriageImpact">
-                        <div class="episode-step">No recent live triage has been recorded in this browser session yet.</div>
+            </summary>
+            <div class="details-body">
+                <div class="story-grid">
+                    <div class="detail-card episode-detail" id="sessionTriageSummary">
+                        <div class="badge">Latest live run</div>
+                        <p class="hero-copy">Run a fresh triage to bring one specific incident, its Guardian decision, and its execution outcome into this page.</p>
+                    </div>
+                    <div class="detail-card">
+                    <div class="badge">How to interpret it</div>
+                        <div class="episode-step-list" id="sessionTriageImpact">
+                            <div class="episode-step">No recent live triage has been recorded in this browser session yet.</div>
+                        </div>
                     </div>
                 </div>
+                <div class="detail-card compact-note" style="margin-top: 14px;">
+                    <div class="badge">How to read the rest of this page</div>
+                    <p class="hero-copy" id="sessionTrainingBridge">After a live triage, this page should tell you what incident just ran, what Guardian decided, and how that run maps to the orchestration and learning summaries below.</p>
+                </div>
             </div>
-            <div class="detail-card compact-note" style="margin-top: 14px;">
-                <div class="badge">How to read the rest of this page</div>
-                <p class="hero-copy" id="sessionTrainingBridge">After a live triage, this page should tell you what incident just ran, what Guardian decided, and how that run maps to the orchestration and learning summaries below.</p>
-            </div>
-        </section>
+        </details>
 
         <details class="section section-collapsible">
             <summary class="section-summary">
