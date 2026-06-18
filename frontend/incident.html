@@ -42,7 +42,6 @@
             <div class="hero-panel">
                 <div class="eyebrow">Incident Detail</div>
                 <h1 id="incidentTitle">Incident detail</h1>
-                <p class="hero-copy" id="incidentSubtitle">Watch one production case move from noisy evidence to a prepared remediation decision, then open the deeper technical detail only when you need it.</p>
                 <div class="hero-stats hero-stats-tight">
                     <div class="stat"><div class="stat-label">Current incident</div><div class="stat-value" id="incidentHeroId">-</div></div>
                     <div class="stat"><div class="stat-label">Severity</div><div class="stat-value" id="incidentHeroSeverity">-</div></div>
@@ -52,9 +51,7 @@
                 <div class="detail-card compact-note working-memory-shell">
                     <div class="badge">Working memory</div>
                     <p class="hero-copy" id="incidentOverviewNote">Waiting for incident selection.</p>
-                    <p class="section-note" id="liveReasoningDetail">Live reasoning mode will be shown here after the incident loads.</p>
                     <p class="section-note" id="operatorNextStep">Next operator action will appear here once the incident loads.</p>
-                    <p class="section-note">SENTINEL handed evidence to PRISM, PRISM synthesized the diagnosis, FORGE prepared the runbook, and GUARDIAN now controls the final safety gate.</p>
                 </div>
                 <div class="detail-card compact-note demo-origin-card" id="demoOriginCard" hidden>
                     <div class="badge">Demo intake origin</div>
@@ -92,182 +89,6 @@
                             <ul class="simple-list" id="freshTruthUncertaintyList"></ul>
                         </div>
                     </details>
-                </div>
-            </div>
-            <div class="hero-panel controls">
-                <div class="eyebrow">Specialist crew</div>
-                <p class="hero-copy">Each specialist has a role, a current task, and a visible handoff. The page should feel like a premium coordination room, not a report.</p>
-                <div class="shell-actions">
-                    <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
-                    <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
-                    <button class="nav-link channel-ghost" id="replayRelayBtn" type="button">Replay handoff</button>
-                    <div style="position: relative; display: inline-block;">
-                        <button class="nav-link channel-ghost" id="exportHandoffBtn" type="button">Export to engineering</button>
-                        <div class="export-dropdown" id="exportDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: var(--surface-raised); border: 1px solid var(--border-subtle); border-radius: 4px; min-width: 160px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                            <button class="export-option" data-format="markdown" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">Markdown</button>
-                            <button class="export-option" data-format="github" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">GitHub Issue</button>
-                            <button class="export-option" data-format="jira" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">Jira Ticket</button>
-                            <button class="export-option" data-format="slack" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem;">Slack Message</button>
-                        </div>
-                    </div>
-                    <div style="position: relative; display: inline-block;">
-                        <button class="nav-link channel-ghost" id="sendHandoffBtn" type="button">Send to engineering</button>
-                        <div class="send-dropdown" id="sendDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: var(--surface-raised); border: 1px solid var(--border-subtle); border-radius: 4px; min-width: 160px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-                            <button class="send-option" data-target="github" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">Send to GitHub</button>
-                            <button class="send-option" data-target="slack" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem;">Send to Slack</button>
-                        </div>
-                    </div>
-                    <button class="nav-link channel-ghost" id="exportGovernanceBtn" type="button">Export governance</button>
-                    <button class="nav-link channel-ghost" id="exportProofBtn" type="button">Export case proof</button>
-                </div>
-                <div class="relay-banner" id="relayStageBanner">Waiting for the orchestration relay to start.</div>
-                <div class="handoff-control-strip">
-                    <div class="handoff-current">
-                        <div class="handoff-label">Current owner</div>
-                        <div class="handoff-owner" id="handoffCurrentOwner">-</div>
-                        <div class="handoff-owner-caption" id="handoffCurrentOwnerCaption">The active relay owner will appear here.</div>
-                    </div>
-                    <div class="handoff-flow">
-                        <div class="handoff-previous">
-                            <div class="handoff-label">Just finished</div>
-                            <div class="handoff-owner-name" id="handoffPreviousOwner">-</div>
-                        </div>
-                        <div class="handoff-arrow">→</div>
-                        <div class="handoff-next">
-                            <div class="handoff-label">Waiting next</div>
-                            <div class="handoff-owner-name" id="handoffNextOwner">-</div>
-                        </div>
-                    </div>
-                    <div class="handoff-reason" id="handoffTransferReason">Transfer reason will appear here</div>
-                </div>
-                <div class="handoff-packets">
-                    <div class="handoff-packet-card">
-                        <div class="packet-label">Packet received by current owner</div>
-                        <div class="packet-title" id="handoffReceivedPacketTitle">-</div>
-                        <div class="packet-meta" id="handoffReceivedPacketMeta">No inbound handoff yet</div>
-                        <div class="packet-summary" id="handoffReceivedPacketSummary">No packet received yet</div>
-                        <div class="packet-fields" id="handoffReceivedPacketFields"></div>
-                    </div>
-                    <div class="handoff-packet-card">
-                        <div class="packet-label">Next packet in the relay</div>
-                        <div class="packet-title" id="handoffEmittedPacketTitle">-</div>
-                        <div class="packet-meta" id="handoffEmittedPacketMeta">No outbound handoff yet</div>
-                        <div class="packet-summary" id="handoffEmittedPacketSummary">No packet emitted yet</div>
-                        <div class="packet-fields" id="handoffEmittedPacketFields"></div>
-                    </div>
-                </div>
-                <div class="handoff-ledger">
-                    <div class="ledger-label">Handoff ledger</div>
-                    <div class="ledger-entries" id="handoffLedger">
-                        <div class="ledger-entry">Handoff events will appear here</div>
-                    </div>
-                </div>
-                <div class="handoff-replay-controls">
-                    <div class="replay-label">Handoff chain demo mode</div>
-                    <div class="replay-state" id="handoffReplayState">Ready to replay</div>
-                    <div class="replay-hint" id="handoffReplayHint">Use replay when you want to step through baton transfer one handoff at a time.</div>
-                    <div class="shell-actions">
-                        <button class="nav-link channel-cta" id="handoffReplayStart" type="button">Start replay</button>
-                        <button class="nav-link channel-ghost" id="handoffReplayNext" type="button" disabled>Next step</button>
-                        <button class="nav-link channel-ghost" id="handoffReplayReset" type="button" disabled>Reset</button>
-                    </div>
-                </div>
-                <div class="orchestration-rail" aria-label="Agent relay">
-                    <article class="relay-node" id="relaySentinel">
-                        <div class="relay-node-name">SENTINEL</div>
-                        <div class="relay-node-state" id="relaySentinelState">Waiting</div>
-                    </article>
-                    <div class="relay-link"></div>
-                    <article class="relay-node" id="relayPrism">
-                        <div class="relay-node-name">PRISM</div>
-                        <div class="relay-node-state" id="relayPrismState">Waiting</div>
-                    </article>
-                    <div class="relay-link"></div>
-                    <article class="relay-node" id="relayReplica">
-                        <div class="relay-node-name">REPLICA</div>
-                        <div class="relay-node-state" id="relayReplicaState">Waiting</div>
-                    </article>
-                    <div class="relay-link"></div>
-                    <article class="relay-node" id="relayTrace">
-                        <div class="relay-node-name">TRACE</div>
-                        <div class="relay-node-state" id="relayTraceState">Waiting</div>
-                    </article>
-                    <div class="relay-link"></div>
-                    <article class="relay-node" id="relayForge">
-                        <div class="relay-node-name">FORGE</div>
-                        <div class="relay-node-state" id="relayForgeState">Waiting</div>
-                    </article>
-                    <div class="relay-link"></div>
-                    <article class="relay-node" id="relayGuardian">
-                        <div class="relay-node-name">GUARDIAN</div>
-                        <div class="relay-node-state" id="relayGuardianState">Waiting</div>
-                    </article>
-                </div>
-                <p class="section-note" id="relayLoopNote">LangGraph orchestrates the crew, so the diagnosis can loop back to earlier evidence if a later branch changes the confidence story.</p>
-                <div class="detail-card compact-note byo-key-card">
-                    <div class="badge">Bring your own OpenAI key</div>
-                    <p class="hero-copy">Default mode stays deterministic. Add your own key only when you want live FORGE reasoning for this session.</p>
-                    <label class="section-note" for="openaiApiKeyInput">OpenAI API key</label>
-                    <input class="key-input" id="openaiApiKeyInput" type="password" autocomplete="off" placeholder="sk-..." spellcheck="false">
-                    <div class="shell-actions">
-                        <button class="nav-link channel-cta" id="saveOpenAIKeyBtn" type="button">Use this key</button>
-                        <button class="nav-link channel-ghost" id="clearOpenAIKeyBtn" type="button">Clear key</button>
-                    </div>
-                    <p class="section-note" id="openaiKeyStatus">No user key attached. The app is in deterministic demo mode.</p>
-                </div>
-                <div class="crew-bot-stack">
-                    <article class="crew-bot crew-active" data-tone="sentinel">
-                        <div class="crew-bot-top"><span class="crew-bot-name">SENTINEL</span><span class="crew-bot-state" id="sentinelFlowMeta">Awaiting data</span></div>
-                        <p class="crew-bot-role">Classification bot</p>
-                        <p class="crew-bot-task" id="sentinelReasoning">Waiting for incident context.</p>
-                        <p class="crew-bot-handoff" id="sentinelFlowTransfer">Raw input becomes an evidence bundle.</p>
-                    </article>
-                    <article class="crew-bot" data-tone="prism">
-                        <div class="crew-bot-top"><span class="crew-bot-name">PRISM</span><span class="crew-bot-state" id="prismFlowMeta">Awaiting data</span></div>
-                        <p class="crew-bot-role">Diagnosis bot</p>
-                        <p class="crew-bot-task" id="prismReasoning">Waiting for correlated evidence.</p>
-                        <p class="crew-bot-handoff" id="prismFlowTransfer">Evidence becomes a diagnosis packet.</p>
-                    </article>
-                    <article class="crew-bot" data-tone="replica">
-                        <div class="crew-bot-top"><span class="crew-bot-name">REPLICA</span><span class="crew-bot-state" id="replicaFlowMeta">Awaiting data</span></div>
-                        <p class="crew-bot-role">Reproduction bot</p>
-                        <p class="crew-bot-task" id="replicaReasoning">Waiting to validate in sandbox.</p>
-                        <p class="crew-bot-handoff" id="replicaFlowTransfer">Diagnosis becomes a reproduction packet.</p>
-                    </article>
-                    <article class="crew-bot" data-tone="trace">
-                        <div class="crew-bot-top"><span class="crew-bot-name">TRACE</span><span class="crew-bot-state" id="traceFlowMeta">Awaiting data</span></div>
-                        <p class="crew-bot-role">Debugging bot</p>
-                        <p class="crew-bot-task" id="traceReasoning">Waiting to inspect code paths.</p>
-                        <p class="crew-bot-handoff" id="traceFlowTransfer">Reproduction becomes a debug packet.</p>
-                    </article>
-                    <article class="crew-bot" data-tone="forge">
-                        <div class="crew-bot-top"><span class="crew-bot-name">FORGE</span><span class="crew-bot-state" id="forgeFlowMeta">Awaiting data</span></div>
-                        <p class="crew-bot-role">Remediation bot</p>
-                        <p class="crew-bot-task" id="forgeReasoning">Waiting to shape the safest runbook.</p>
-                        <p class="crew-bot-handoff" id="forgeFlowTransfer">Diagnosis becomes a runbook proposal.</p>
-                    </article>
-                    <article class="crew-bot" data-tone="guardian">
-                        <div class="crew-bot-top"><span class="crew-bot-name">GUARDIAN</span><span class="crew-bot-state" id="guardianFlowMeta">Awaiting data</span></div>
-                        <p class="crew-bot-role">Governance Bot</p>
-                        <p class="crew-bot-task" id="guardianReasoning">Waiting to approve or block execution.</p>
-                        <p class="crew-bot-handoff" id="guardianFlowTransfer">Runbook proposal becomes a governance decision.</p>
-                    </article>
-                </div>
-                <div class="detail-card compact-note guardian-gate-card">
-                    <div class="relay-callout" id="guardianRelayPrompt">Guardian will become the active decision point once the crew finishes its handoff.</div>
-                    <div class="badge">Governance Bot</div>
-                    <p class="hero-copy">Guardian is the explicit safety gate. Execution stays subordinate to bot collaboration until this check is clear.</p>
-                    <div class="runbook-explainer">
-                        <div class="runbook-explainer-title">What Guardian is reviewing</div>
-                        <p class="hero-copy" id="runbookExplainer">The runbook summary will appear here so the operator understands what approval would actually execute.</p>
-                        <p class="section-note" id="runbookImpact">Execution impact and rollback posture will appear here once the incident loads.</p>
-                    </div>
-                    <div class="shell-actions guardian-gate-actions">
-                        <button class="nav-link channel-cta" id="guardianApproveBtn" type="button">Approve runbook</button>
-                        <button class="nav-link channel-cta" id="guardianBlockBtn" type="button">Block runbook</button>
-                        <button class="nav-link channel-cta" id="guardianModifyBtn" type="button">Request modification</button>
-                    </div>
-                    <p class="section-note" id="guardianGateState">Decision pending.</p>
                 </div>
             </div>
         </section>
@@ -316,6 +137,191 @@
                 </article>
             </div>
         </section>
+
+        <details class="section section-collapsible">
+            <summary class="section-summary">
+                <div>
+                    <h2>Agent Relay & Crew Details</h2>
+                    <div class="section-note">Specialist crew status, orchestration flow, handoff packets, and governance controls.</div>
+                </div>
+            </summary>
+            <div class="details-body">
+                <div style="padding: 16px;">
+                    <div class="shell-actions" style="margin-bottom: 16px;">
+                        <div class="badge" id="liveReasoningState">Live reasoning: ON</div>
+                        <button class="nav-link channel-cta" id="liveReasoningToggle" type="button">Turn live reasoning off</button>
+                        <button class="nav-link channel-ghost" id="replayRelayBtn" type="button">Replay handoff</button>
+                        <div style="position: relative; display: inline-block;">
+                            <button class="nav-link channel-ghost" id="exportHandoffBtn" type="button">Export to engineering</button>
+                            <div class="export-dropdown" id="exportDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: var(--surface-raised); border: 1px solid var(--border-subtle); border-radius: 4px; min-width: 160px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                                <button class="export-option" data-format="markdown" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">Markdown</button>
+                                <button class="export-option" data-format="github" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">GitHub Issue</button>
+                                <button class="export-option" data-format="jira" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">Jira Ticket</button>
+                                <button class="export-option" data-format="slack" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem;">Slack Message</button>
+                            </div>
+                        </div>
+                        <div style="position: relative; display: inline-block;">
+                            <button class="nav-link channel-ghost" id="sendHandoffBtn" type="button">Send to engineering</button>
+                            <div class="send-dropdown" id="sendDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: var(--surface-raised); border: 1px solid var(--border-subtle); border-radius: 4px; min-width: 160px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                                <button class="send-option" data-target="github" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle);">Send to GitHub</button>
+                                <button class="send-option" data-target="slack" style="display: block; width: 100%; padding: 8px 12px; text-align: left; border: none; background: none; cursor: pointer; font-size: 0.9rem;">Send to Slack</button>
+                            </div>
+                        </div>
+                        <button class="nav-link channel-ghost" id="exportGovernanceBtn" type="button">Export governance</button>
+                        <button class="nav-link channel-ghost" id="exportProofBtn" type="button">Export case proof</button>
+                    </div>
+                    <div class="relay-banner" id="relayStageBanner">Waiting for the orchestration relay to start.</div>
+                    <div class="handoff-control-strip">
+                        <div class="handoff-current">
+                            <div class="handoff-label">Current owner</div>
+                            <div class="handoff-owner" id="handoffCurrentOwner">-</div>
+                            <div class="handoff-owner-caption" id="handoffCurrentOwnerCaption">The active relay owner will appear here.</div>
+                        </div>
+                        <div class="handoff-flow">
+                            <div class="handoff-previous">
+                                <div class="handoff-label">Just finished</div>
+                                <div class="handoff-owner-name" id="handoffPreviousOwner">-</div>
+                            </div>
+                            <div class="handoff-arrow">→</div>
+                            <div class="handoff-next">
+                                <div class="handoff-label">Waiting next</div>
+                                <div class="handoff-owner-name" id="handoffNextOwner">-</div>
+                            </div>
+                        </div>
+                        <div class="handoff-reason" id="handoffTransferReason">Transfer reason will appear here</div>
+                    </div>
+                    <div class="handoff-packets">
+                        <div class="handoff-packet-card">
+                            <div class="packet-label">Packet received by current owner</div>
+                            <div class="packet-title" id="handoffReceivedPacketTitle">-</div>
+                            <div class="packet-meta" id="handoffReceivedPacketMeta">No inbound handoff yet</div>
+                            <div class="packet-summary" id="handoffReceivedPacketSummary">No packet received yet</div>
+                            <div class="packet-fields" id="handoffReceivedPacketFields"></div>
+                        </div>
+                        <div class="handoff-packet-card">
+                            <div class="packet-label">Next packet in the relay</div>
+                            <div class="packet-title" id="handoffEmittedPacketTitle">-</div>
+                            <div class="packet-meta" id="handoffEmittedPacketMeta">No outbound handoff yet</div>
+                            <div class="packet-summary" id="handoffEmittedPacketSummary">No packet emitted yet</div>
+                            <div class="packet-fields" id="handoffEmittedPacketFields"></div>
+                        </div>
+                    </div>
+                    <div class="handoff-ledger">
+                        <div class="ledger-label">Handoff ledger</div>
+                        <div class="ledger-entries" id="handoffLedger">
+                            <div class="ledger-entry">Handoff events will appear here</div>
+                        </div>
+                    </div>
+                    <div class="handoff-replay-controls">
+                        <div class="replay-label">Handoff chain demo mode</div>
+                        <div class="replay-state" id="handoffReplayState">Ready to replay</div>
+                        <div class="replay-hint" id="handoffReplayHint">Use replay when you want to step through baton transfer one handoff at a time.</div>
+                        <div class="shell-actions">
+                            <button class="nav-link channel-cta" id="handoffReplayStart" type="button">Start replay</button>
+                            <button class="nav-link channel-ghost" id="handoffReplayNext" type="button" disabled>Next step</button>
+                            <button class="nav-link channel-ghost" id="handoffReplayReset" type="button" disabled>Reset</button>
+                        </div>
+                    </div>
+                    <div class="orchestration-rail" aria-label="Agent relay">
+                        <article class="relay-node" id="relaySentinel">
+                            <div class="relay-node-name">SENTINEL</div>
+                            <div class="relay-node-state" id="relaySentinelState">Waiting</div>
+                        </article>
+                        <div class="relay-link"></div>
+                        <article class="relay-node" id="relayPrism">
+                            <div class="relay-node-name">PRISM</div>
+                            <div class="relay-node-state" id="relayPrismState">Waiting</div>
+                        </article>
+                        <div class="relay-link"></div>
+                        <article class="relay-node" id="relayReplica">
+                            <div class="relay-node-name">REPLICA</div>
+                            <div class="relay-node-state" id="relayReplicaState">Waiting</div>
+                        </article>
+                        <div class="relay-link"></div>
+                        <article class="relay-node" id="relayTrace">
+                            <div class="relay-node-name">TRACE</div>
+                            <div class="relay-node-state" id="relayTraceState">Waiting</div>
+                        </article>
+                        <div class="relay-link"></div>
+                        <article class="relay-node" id="relayForge">
+                            <div class="relay-node-name">FORGE</div>
+                            <div class="relay-node-state" id="relayForgeState">Waiting</div>
+                        </article>
+                        <div class="relay-link"></div>
+                        <article class="relay-node" id="relayGuardian">
+                            <div class="relay-node-name">GUARDIAN</div>
+                            <div class="relay-node-state" id="relayGuardianState">Waiting</div>
+                        </article>
+                    </div>
+                    <p class="section-note" id="relayLoopNote">LangGraph orchestrates the crew, so the diagnosis can loop back to earlier evidence if a later branch changes the confidence story.</p>
+                    <div class="detail-card compact-note byo-key-card">
+                        <div class="badge">Bring your own OpenAI key</div>
+                        <p class="hero-copy">Default mode stays deterministic. Add your own key only when you want live FORGE reasoning for this session.</p>
+                        <label class="section-note" for="openaiApiKeyInput">OpenAI API key</label>
+                        <input class="key-input" id="openaiApiKeyInput" type="password" autocomplete="off" placeholder="sk-..." spellcheck="false">
+                        <div class="shell-actions">
+                            <button class="nav-link channel-cta" id="saveOpenAIKeyBtn" type="button">Use this key</button>
+                            <button class="nav-link channel-ghost" id="clearOpenAIKeyBtn" type="button">Clear key</button>
+                        </div>
+                        <p class="section-note" id="openaiKeyStatus">No user key attached. The app is in deterministic demo mode.</p>
+                    </div>
+                    <div class="crew-bot-stack">
+                        <article class="crew-bot crew-active" data-tone="sentinel">
+                            <div class="crew-bot-top"><span class="crew-bot-name">SENTINEL</span><span class="crew-bot-state" id="sentinelFlowMeta">Awaiting data</span></div>
+                            <p class="crew-bot-role">Classification bot</p>
+                            <p class="crew-bot-task" id="sentinelReasoning">Waiting for incident context.</p>
+                            <p class="crew-bot-handoff" id="sentinelFlowTransfer">Raw input becomes an evidence bundle.</p>
+                        </article>
+                        <article class="crew-bot" data-tone="prism">
+                            <div class="crew-bot-top"><span class="crew-bot-name">PRISM</span><span class="crew-bot-state" id="prismFlowMeta">Awaiting data</span></div>
+                            <p class="crew-bot-role">Diagnosis bot</p>
+                            <p class="crew-bot-task" id="prismReasoning">Waiting for correlated evidence.</p>
+                            <p class="crew-bot-handoff" id="prismFlowTransfer">Evidence becomes a diagnosis packet.</p>
+                        </article>
+                        <article class="crew-bot" data-tone="replica">
+                            <div class="crew-bot-top"><span class="crew-bot-name">REPLICA</span><span class="crew-bot-state" id="replicaFlowMeta">Awaiting data</span></div>
+                            <p class="crew-bot-role">Reproduction bot</p>
+                            <p class="crew-bot-task" id="replicaReasoning">Waiting to validate in sandbox.</p>
+                            <p class="crew-bot-handoff" id="replicaFlowTransfer">Diagnosis becomes a reproduction packet.</p>
+                        </article>
+                        <article class="crew-bot" data-tone="trace">
+                            <div class="crew-bot-top"><span class="crew-bot-name">TRACE</span><span class="crew-bot-state" id="traceFlowMeta">Awaiting data</span></div>
+                            <p class="crew-bot-role">Debugging bot</p>
+                            <p class="crew-bot-task" id="traceReasoning">Waiting to inspect code paths.</p>
+                            <p class="crew-bot-handoff" id="traceFlowTransfer">Reproduction becomes a debug packet.</p>
+                        </article>
+                        <article class="crew-bot" data-tone="forge">
+                            <div class="crew-bot-top"><span class="crew-bot-name">FORGE</span><span class="crew-bot-state" id="forgeFlowMeta">Awaiting data</span></div>
+                            <p class="crew-bot-role">Remediation bot</p>
+                            <p class="crew-bot-task" id="forgeReasoning">Waiting to shape the safest runbook.</p>
+                            <p class="crew-bot-handoff" id="forgeFlowTransfer">Diagnosis becomes a runbook proposal.</p>
+                        </article>
+                        <article class="crew-bot" data-tone="guardian">
+                            <div class="crew-bot-top"><span class="crew-bot-name">GUARDIAN</span><span class="crew-bot-state" id="guardianFlowMeta">Awaiting data</span></div>
+                            <p class="crew-bot-role">Governance Bot</p>
+                            <p class="crew-bot-task" id="guardianReasoning">Waiting to approve or block execution.</p>
+                            <p class="crew-bot-handoff" id="guardianFlowTransfer">Runbook proposal becomes a governance decision.</p>
+                        </article>
+                    </div>
+                    <div class="detail-card compact-note guardian-gate-card">
+                        <div class="relay-callout" id="guardianRelayPrompt">Guardian will become the active decision point once the crew finishes its handoff.</div>
+                        <div class="badge">Governance Bot</div>
+                        <p class="hero-copy">Guardian is the explicit safety gate. Execution stays subordinate to bot collaboration until this check is clear.</p>
+                        <div class="runbook-explainer">
+                            <div class="runbook-explainer-title">What Guardian is reviewing</div>
+                            <p class="hero-copy" id="runbookExplainer">The runbook summary will appear here so the operator understands what approval would actually execute.</p>
+                            <p class="section-note" id="runbookImpact">Execution impact and rollback posture will appear here once the incident loads.</p>
+                        </div>
+                        <div class="shell-actions guardian-gate-actions">
+                            <button class="nav-link channel-cta" id="guardianApproveBtn" type="button">Approve runbook</button>
+                            <button class="nav-link channel-cta" id="guardianBlockBtn" type="button">Block runbook</button>
+                            <button class="nav-link channel-cta" id="guardianModifyBtn" type="button">Request modification</button>
+                        </div>
+                        <p class="section-note" id="guardianGateState">Decision pending.</p>
+                    </div>
+                </div>
+            </div>
+        </details>
 
         <section class="section">
             <div class="section-header">
