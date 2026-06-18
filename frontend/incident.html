@@ -123,50 +123,54 @@
             </div>
         </section>
 
-        <section class="section">
-            <div class="section-header">
-                <h2>Investigation Summary & Operator Path</h2>
-                <div class="section-note">The crew's analysis flows from classification through diagnosis, action preparation, and final safety review.</div>
+        <details class="section section-collapsible">
+            <summary class="section-summary">
+                <div>
+                    <h2>Investigation Summary & Operator Path</h2>
+                    <div class="section-note">The crew's analysis flows from classification through diagnosis, action preparation, and final safety review.</div>
+                </div>
+            </summary>
+            <div class="details-body">
+                <div class="collaboration-strip">
+                    <article class="collaboration-card collaboration-card-lead">
+                        <div class="badge">Current control</div>
+                        <h3 id="collaborationLead">Loading active collaboration state.</h3>
+                        <p class="hero-copy" id="collaborationNarrative">The current incident story will appear here once the workspace loads.</p>
+                    </article>
+                    <article class="collaboration-card">
+                        <div class="badge">Why the crew trusts this path</div>
+                        <p class="hero-copy" id="collaborationConfidence">Waiting for evidence, prior incidents, and policy checks.</p>
+                    </article>
+                    <article class="collaboration-card">
+                        <div class="badge">Operator next step</div>
+                        <p class="hero-copy" id="collaborationOutcome">Waiting for the crew to reach a governed decision.</p>
+                    </article>
+                </div>
+                <div class="incident-summary" id="incidentSummary"></div>
+                <div class="handoff-thread" id="handoffThread">
+                    <article class="handoff-entry handoff-entry-active" id="handoffSentinel">
+                        <div class="handoff-entry-top"><span class="badge">SENTINEL</span><span class="section-note">Classification bot</span></div>
+                        <h3>What is the incident?</h3>
+                        <p class="hero-copy" id="threadSentinelCopy">Waiting for incident context.</p>
+                    </article>
+                    <article class="handoff-entry" id="handoffPrism">
+                        <div class="handoff-entry-top"><span class="badge">PRISM</span><span class="section-note">Diagnosis bot</span></div>
+                        <h3>What went wrong?</h3>
+                        <p class="hero-copy" id="threadPrismCopy">Waiting for correlated evidence.</p>
+                    </article>
+                    <article class="handoff-entry" id="handoffForge">
+                        <div class="handoff-entry-top"><span class="badge">FORGE</span><span class="section-note">Remediation bot</span></div>
+                        <h3>What should we do?</h3>
+                        <p class="hero-copy" id="threadForgeCopy">Waiting to produce a rollback-ready proposal.</p>
+                    </article>
+                    <article class="handoff-entry" id="handoffGuardian">
+                        <div class="handoff-entry-top"><span class="badge">GUARDIAN</span><span class="section-note">Governance Bot</span></div>
+                        <h3>Is it safe to execute?</h3>
+                        <p class="hero-copy" id="threadGuardianCopy">Waiting for the runbook to clear safety review.</p>
+                    </article>
+                </div>
             </div>
-            <div class="collaboration-strip">
-                <article class="collaboration-card collaboration-card-lead">
-                    <div class="badge">Current control</div>
-                    <h3 id="collaborationLead">Loading active collaboration state.</h3>
-                    <p class="hero-copy" id="collaborationNarrative">The current incident story will appear here once the workspace loads.</p>
-                </article>
-                <article class="collaboration-card">
-                    <div class="badge">Why the crew trusts this path</div>
-                    <p class="hero-copy" id="collaborationConfidence">Waiting for evidence, prior incidents, and policy checks.</p>
-                </article>
-                <article class="collaboration-card">
-                    <div class="badge">Operator next step</div>
-                    <p class="hero-copy" id="collaborationOutcome">Waiting for the crew to reach a governed decision.</p>
-                </article>
-            </div>
-            <div class="incident-summary" id="incidentSummary"></div>
-            <div class="handoff-thread" id="handoffThread">
-                <article class="handoff-entry handoff-entry-active" id="handoffSentinel">
-                    <div class="handoff-entry-top"><span class="badge">SENTINEL</span><span class="section-note">Classification bot</span></div>
-                    <h3>What is the incident?</h3>
-                    <p class="hero-copy" id="threadSentinelCopy">Waiting for incident context.</p>
-                </article>
-                <article class="handoff-entry" id="handoffPrism">
-                    <div class="handoff-entry-top"><span class="badge">PRISM</span><span class="section-note">Diagnosis bot</span></div>
-                    <h3>What went wrong?</h3>
-                    <p class="hero-copy" id="threadPrismCopy">Waiting for correlated evidence.</p>
-                </article>
-                <article class="handoff-entry" id="handoffForge">
-                    <div class="handoff-entry-top"><span class="badge">FORGE</span><span class="section-note">Remediation bot</span></div>
-                    <h3>What should we do?</h3>
-                    <p class="hero-copy" id="threadForgeCopy">Waiting to produce a rollback-ready proposal.</p>
-                </article>
-                <article class="handoff-entry" id="handoffGuardian">
-                    <div class="handoff-entry-top"><span class="badge">GUARDIAN</span><span class="section-note">Governance Bot</span></div>
-                    <h3>Is it safe to execute?</h3>
-                    <p class="hero-copy" id="threadGuardianCopy">Waiting for the runbook to clear safety review.</p>
-                </article>
-            </div>
-        </section>
+        </details>
 
         <details class="section section-collapsible">
             <summary class="section-summary">

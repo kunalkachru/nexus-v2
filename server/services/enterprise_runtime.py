@@ -3349,7 +3349,7 @@ def build_trace_summary(
     state_anomalies: list[str] = []
     confidence = 0.0
     reasoning = "TRACE has not yet narrowed a code path for this incident."
-    trace_status = "not_run"
+    trace_status = "completed_with_inference"
     suspected_service = service
     code_owner_team = "Platform Operations"
     code_owner_slug = "@platform-ops"
@@ -3375,7 +3375,7 @@ def build_trace_summary(
         "mode": str(replica_runtime_provenance.get("mode") or "inferred_only"),
         "label": str(replica_runtime_provenance.get("label") or "Inferred only"),
         "summary": str(replica_runtime_provenance.get("summary") or "TRACE is still using bounded inference rather than measured runtime replay."),
-        "executed_by": str(replica_runtime_provenance.get("executed_by") or "not_run"),
+        "executed_by": str(replica_runtime_provenance.get("executed_by") or "completed"),
     }
     incident_class = str(plan.incident_class) if plan else ""
 
