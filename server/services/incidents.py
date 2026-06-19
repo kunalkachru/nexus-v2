@@ -162,9 +162,10 @@ class IncidentService:
         self._governance = GovernanceService()
         self._raw_parser = RawIncidentParser()
         self._tenancy_service = TenancyService()
+        self.sentinel = SentinelAgent()
         self._enterprise_runtime = EnterpriseNexusRuntime(
             observability=observability,
-            sentinel=SentinelAgent(),
+            sentinel=self.sentinel,
             prism=PrismAgent(observability=observability),
             forge=ForgeAgent(client=TrainingForgeClient()),
             guardian=GuardianAgent(),
@@ -694,6 +695,48 @@ class IncidentService:
             severity_hint=payload.severity_hint,
             tenant_service_hints=self._tenant_service_hints(tenant_id),
         )
+
+        # Check if this incident matches any supported family
+        SUPPORTED_FAMILIES = {"INC001", "INC002", "INC003", "INC005", "INC007"}
+        try:
+            system_context = SystemContext(
+                service=parsed.service,
+                language="Unknown",
+                infra="Unknown",
+                dependencies=[],
+            )
+            classification = self.sentinel.classify(
+                raw_symptoms=parsed.symptoms,
+                system_context=system_context,
+            )
+            # Check if this matches one of the 5 supported families
+            if classification.incident_id not in SUPPORTED_FAMILIES:
+                from fastapi import HTTPException
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": "unsupported_incident_type",
+                        "message": (
+                            "This incident doesn't match any of the 5 supported families: "
+                            "1) Timeout/Retry Amplification (INC001), "
+                            "2) DB Pool Exhaustion (INC002), "
+                            "3) Deploy Regression / 5xx Spike (INC003), "
+                            "4) Queue / Worker Backlog (INC005), "
+                            "5) Auth Dependency Slowdown (INC007). "
+                            "Please check your input or contact support."
+                        ),
+                        "confidence": float(classification.confidence),
+                        "matched_family": classification.incident_name,
+                        "matched_id": classification.incident_id,
+                    },
+                )
+        except Exception as e:
+            if hasattr(e, "status_code") and e.status_code == 400:
+                raise
+            # If classification fails for other reasons, proceed with incident creation
+            import logging
+            logging.warning(f"SENTINEL classification failed for raw text submission: {e}")
+
         created = await self._session.incidents.create_incident(
             external_id=f"raw_{parsed.service}_{uuid4().hex[:8]}",
             title=parsed.title,
