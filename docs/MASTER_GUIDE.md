@@ -104,7 +104,59 @@ bash scripts/test-live.sh https://nexus-uny5.onrender.com
 
 ---
 
-## PART 4 — DEPLOYING TO CLOUD
+## PART 4 — RELEASE GATE (pre-deployment verification)
+
+**Run before any deployment, pilot handoff, or major release.**
+
+The release gate is the single source of truth for "is NEXUS ready?"
+
+### Run the release gate
+```bash
+bash scripts/run-release-gate.sh
+```
+
+Expected output (runtime: ~2-3 minutes):
+```
+✅ NEXUS RELEASE GATE: PASSED
+   Ready for deployment/pilot
+```
+
+### What the release gate checks
+
+| Section | What it verifies | Pass threshold |
+|---------|---|---|
+| 1. Unit tests | All 450 tests pass | 450/450 ✅ |
+| 2. Server startup | FastAPI server healthy | Responds within 30s |
+| 3. API contracts | Health, pages, webhooks, auth | 10/10 endpoints |
+| 4. Browser sim | Scroll depth, viewport clarity, approval flow | Visual verification |
+| 5. Production | Live server health check | nexus-triage.duckdns.org responding |
+| 6. Security | Webhook signatures, no data leaks | 3/3 checks pass |
+
+### Exit codes
+
+- **Exit 0** = Gate PASSED, safe to deploy
+- **Exit 1** = Gate FAILED, do not deploy
+
+### Typical failure reasons
+
+- Unit test count < 450 → fix the failing test
+- Server won't start → check port 7861 not in use
+- API tests fail → check endpoint paths and auth
+- Browser tests fail → check Playwright install
+- Production unreachable → wait for network/infrastructure
+
+### Next step after passing
+
+```bash
+git add -A
+git commit -m "chore: pre-deployment verification passed"
+git push origin master
+# Then verify in production (see PART 5)
+```
+
+---
+
+## PART 5 — DEPLOYING TO CLOUD
 
 Every `git push origin master` automatically deploys to both Render and Oracle Cloud.
 
@@ -125,7 +177,7 @@ curl https://nexus-uny5.onrender.com/health
 
 ---
 
-## PART 5 — SSH INTO ORACLE CLOUD
+## PART 6 — SSH INTO ORACLE CLOUD
 
 ```bash
 ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239
@@ -142,7 +194,7 @@ free -h
 
 ---
 
-## PART 6 — STANDARD CODE CHANGE WORKFLOW
+## PART 7 — STANDARD CODE CHANGE WORKFLOW
 
 ```bash
 source venv/bin/activate
@@ -157,7 +209,7 @@ bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860
 
 ---
 
-## PART 7 — TROUBLESHOOTING
+## PART 8 — TROUBLESHOOTING
 
 ### Port 7860 already in use
 ```bash
@@ -181,7 +233,7 @@ Go to https://github.com/kunalkachru/nexus-v2/actions and check the error. Most 
 
 ---
 
-## PART 8 — ENVIRONMENT VARIABLES
+## PART 9 — ENVIRONMENT VARIABLES
 
 | Variable | Default | Description |
 |---|---|---|
@@ -193,7 +245,7 @@ Go to https://github.com/kunalkachru/nexus-v2/actions and check the error. Most 
 
 ---
 
-## PART 9 — KEY FILES
+## PART 10 — KEY FILES
 
 | File | Purpose |
 |---|---|
@@ -209,7 +261,7 @@ Go to https://github.com/kunalkachru/nexus-v2/actions and check the error. Most 
 
 ---
 
-## PART 10 — PRE-DEMO CHECKLIST
+## PART 11 — PRE-DEMO CHECKLIST
 
 Run 5 minutes before any demo:
 
