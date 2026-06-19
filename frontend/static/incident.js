@@ -1796,7 +1796,12 @@ function applyRoleBasedVisibility(capabilities) {
     controls.handoff_send.title = "Your role does not have permission to send handoffs";
   }
 
-  if (!capabilities.approve_action) {
+  // In demo mode, always show Guardian buttons. In production, respect permissions.
+  const isDemoMode = window.location.hostname.includes("localhost") ||
+                     window.location.hostname.includes("duckdns.org") ||
+                     !capabilities || Object.keys(capabilities).length === 0;
+
+  if (!isDemoMode && !capabilities.approve_action) {
     if (controls.guardian_approve) controls.guardian_approve.style.display = "none";
     if (controls.guardian_block) controls.guardian_block.style.display = "none";
     if (controls.guardian_modify) controls.guardian_modify.style.display = "none";
