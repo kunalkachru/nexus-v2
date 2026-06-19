@@ -1,0 +1,34 @@
+name: Deploy to Oracle Cloud
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to Oracle Cloud
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          SERVER_IP: 92.5.47.239
+        run: |
+          echo "$SSH_PRIVATE_KEY" > /tmp/oracle-key.pem
+          chmod 600 /tmp/oracle-key.pem
+          ssh -i /tmp/oracle-key.pem -o StrictHostKeyChecking=no ubuntu@$SERVER_IP << 'ENDSSH'
+            cd nexus-v2
+            git pull origin master
+            sudo docker build -t nexus .
+            sudo docker stop nexus || true
+            sudo docker rm nexus || true
+            sudo docker run -d --name nexus --restart always -p 7860:7860 \
+              -e NEXUS_DATABASE_PATH=/app/artifacts/incidents.json \
+              -e NEXUS_ALLOWED_TENANT_IDS=tenant-a,tenant-system \
+              -e NEXUS_FORGE_MODEL_NAME=gpt-4o \
+              -e NEXUS_USE_OPENAI=0 \
+              -e NEXUS_WEBHOOK_SIGNING_SECRET=f2f2e2cde69e33707da3e368a88f0856705aaf7d54d1dca3d283bb1f7e8cd021 \
+              -v nexus-data:/app/artifacts nexus
+            curl -s http://localhost:7860/health
+          ENDSSH
