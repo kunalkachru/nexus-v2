@@ -13,6 +13,7 @@ jobs:
       - name: Deploy to Oracle Cloud
         env:
           SSH_PRIVATE_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          WEBHOOK_SECRET: ${{ secrets.ORACLE_WEBHOOK_SECRET }}
           SERVER_IP: 92.5.47.239
         run: |
           echo "$SSH_PRIVATE_KEY" > /tmp/oracle-key.pem
@@ -28,7 +29,7 @@ jobs:
               -e NEXUS_ALLOWED_TENANT_IDS=tenant-a,tenant-system \
               -e NEXUS_FORGE_MODEL_NAME=gpt-4o \
               -e NEXUS_USE_OPENAI=0 \
-              -e NEXUS_WEBHOOK_SIGNING_SECRET=f2f2e2cde69e33707da3e368a88f0856705aaf7d54d1dca3d283bb1f7e8cd021 \
+              -e NEXUS_WEBHOOK_SIGNING_SECRET=$WEBHOOK_SECRET \
               -v nexus-data:/app/artifacts nexus
             curl -s http://localhost:7860/health
           ENDSSH
