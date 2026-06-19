@@ -128,6 +128,24 @@
             </div>
         </section>
 
+        <div class="detail-card compact-note guardian-gate-card" style="margin-bottom: 16px;">
+            <div class="badge">Governance Bot</div>
+            <p class="section-note" id="guardianGateState">Decision pending.</p>
+            <div class="shell-actions guardian-gate-actions" style="gap: 4px; flex-wrap: nowrap;">
+                <button class="nav-link channel-cta" id="guardianApproveBtn" type="button" style="font-size: 0.85rem; padding: 6px 8px;">Approve</button>
+                <button class="nav-link channel-cta" id="guardianBlockBtn" type="button" style="font-size: 0.85rem; padding: 6px 8px;">Block</button>
+                <button class="nav-link channel-cta" id="guardianModifyBtn" type="button" style="font-size: 0.85rem; padding: 6px 8px;">Modify</button>
+            </div>
+            <details class="agent-details" style="margin-top: 12px;">
+                <summary>What Guardian is reviewing</summary>
+                <div class="agent-details-body">
+                    <p class="hero-copy">Guardian is the explicit safety gate. Execution stays subordinate to bot collaboration until this check is clear.</p>
+                    <p class="hero-copy" id="runbookExplainer">The runbook summary will appear here so the operator understands what approval would actually execute.</p>
+                    <p class="section-note" id="runbookImpact">Execution impact and rollback posture will appear here once the incident loads.</p>
+                </div>
+            </details>
+        </div>
+
         <details class="section section-collapsible">
             <summary class="section-summary">
                 <div>
@@ -176,24 +194,6 @@
                 </div>
             </div>
         </details>
-
-        <div class="detail-card compact-note guardian-gate-card">
-            <div class="badge">Governance Bot</div>
-            <p class="section-note" id="guardianGateState">Decision pending.</p>
-            <div class="shell-actions guardian-gate-actions" style="gap: 4px; flex-wrap: nowrap;">
-                <button class="nav-link channel-cta" id="guardianApproveBtn" type="button" style="font-size: 0.85rem; padding: 6px 8px;">Approve</button>
-                <button class="nav-link channel-cta" id="guardianBlockBtn" type="button" style="font-size: 0.85rem; padding: 6px 8px;">Block</button>
-                <button class="nav-link channel-cta" id="guardianModifyBtn" type="button" style="font-size: 0.85rem; padding: 6px 8px;">Modify</button>
-            </div>
-            <details class="agent-details" style="margin-top: 12px;">
-                <summary>What Guardian is reviewing</summary>
-                <div class="agent-details-body">
-                    <p class="hero-copy">Guardian is the explicit safety gate. Execution stays subordinate to bot collaboration until this check is clear.</p>
-                    <p class="hero-copy" id="runbookExplainer">The runbook summary will appear here so the operator understands what approval would actually execute.</p>
-                    <p class="section-note" id="runbookImpact">Execution impact and rollback posture will appear here once the incident loads.</p>
-                </div>
-            </details>
-        </div>
 
         <details class="section section-collapsible">
             <summary class="section-summary">
