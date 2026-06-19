@@ -63,32 +63,39 @@ def test_webhook_requires_valid_signature(client: TestClient) -> None:
 
     missing_signature = client.post(
         "/webhooks/incident",
-        headers={"x-tenant-id": "tenant-system"},
+        headers={
+            "x-tenant-id": "tenant-system",
+            "content-type": "application/json",
+        },
         content=payload,
     )
-    # FastAPI returns 422 for validation errors (missing required headers like x-signature)
-    assert missing_signature.status_code == 422
+    # Missing signature header should return 401 (unauthorized)
+    assert missing_signature.status_code == 401
 
     secret = app.state.config.webhook_signing_secret
     digest = hmac.new(secret.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256).hexdigest()
     missing_tenant = client.post(
         "/webhooks/incident",
-        headers={"x-signature": f"sha256={digest}"},
+        headers={
+            "x-signature": f"sha256={digest}",
+            "content-type": "application/json",
+        },
         content=payload,
     )
-    # FastAPI returns 422 for validation errors (missing required headers like x-tenant-id)
-    assert missing_tenant.status_code == 422
+    # Missing tenant header should return 403 (forbidden)
+    assert missing_tenant.status_code == 403
 
     bad_signature = client.post(
         "/webhooks/incident",
         headers={
             "x-tenant-id": "tenant-system",
             "x-signature": "sha256=deadbeef",
+            "content-type": "application/json",
         },
         content=payload,
     )
-    # Invalid signature also returns 422 (validation error in webhook processing)
-    assert bad_signature.status_code == 422
+    # Invalid/mismatched signature should return 401 (unauthorized)
+    assert bad_signature.status_code == 401
 
     valid_signature = client.post(
         "/webhooks/incident",
