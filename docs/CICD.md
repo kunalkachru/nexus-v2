@@ -305,3 +305,7 @@ If you suspect the SQLite database is corrupted:
 | SSH into Oracle Cloud | `ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239` |
 | View container logs | `ssh ... && sudo docker logs nexus` |
 | Check health | `curl http://nexus-triage.duckdns.org:7860/health` |
+
+---
+
+*Last verified: 2026-06-19 (GitHub Actions deployment with corrected SSH key in secrets)*
