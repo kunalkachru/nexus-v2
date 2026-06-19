@@ -330,6 +330,24 @@ class ReplicaInvestigationResult(BaseModel):
     reasoning: str = ""
 
 
+class DebugChecklistStep(BaseModel):
+    step_number: int
+    description: str
+    expected_outcome: str
+    action_if_fails: str
+
+
+class DebugChecklist(BaseModel):
+    incident_id: str
+    service: str
+    issue_family: str
+    steps: list[DebugChecklistStep] = Field(default_factory=list)
+    summary: str = ""
+    posture: Literal["bounded_debugger", "validated_runtime", "inferred_only"] = "bounded_debugger"
+    requires_openai: bool = False
+    confidence: float = Field(ge=0.0, le=1.0, default=0.0)
+
+
 class TraceInvestigationResult(BaseModel):
     incident_id: str
     service: str
