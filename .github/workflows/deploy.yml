@@ -16,10 +16,7 @@ jobs:
           WEBHOOK_SECRET: ${{ secrets.ORACLE_WEBHOOK_SECRET }}
           SERVER_IP: 92.5.47.239
         run: |
-          mkdir -p ~/.ssh
-          cat > /tmp/oracle-key.pem << 'EOF'
-          ${{ secrets.ORACLE_SSH_KEY }}
-          EOF
+          echo "$SSH_PRIVATE_KEY" | base64 -d > /tmp/oracle-key.pem
           chmod 600 /tmp/oracle-key.pem
           ssh -i /tmp/oracle-key.pem -o StrictHostKeyChecking=no ubuntu@$SERVER_IP << 'ENDSSH'
             cd nexus-v2
