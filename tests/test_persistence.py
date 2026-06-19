@@ -44,7 +44,7 @@ def test_incoming_webhook_rejects_invalid_severity() -> None:
 def test_incident_repository_persists_and_reads_status(tmp_path: Path) -> None:
     async def scenario() -> None:
         path = tmp_path / "incidents.db"
-        session_factory = create_session_factory(AppConfig(database_path=path))
+        session_factory, _ = create_session_factory(AppConfig(database_path=path))
         session = session_factory()
         incident_id = None
         try:
@@ -58,7 +58,7 @@ def test_incident_repository_persists_and_reads_status(tmp_path: Path) -> None:
         finally:
             await session.close()
 
-        reloaded_session = create_session_factory(AppConfig(database_path=path))()
+        reloaded_session = create_session_factory(AppConfig(database_path=path))[0]()
         try:
             loaded = await reloaded_session.incidents.get_incident(incident_id)
             assert loaded is not None
@@ -73,7 +73,7 @@ def test_incident_repository_persists_and_reads_status(tmp_path: Path) -> None:
 def test_incident_repository_does_not_mutate_store_if_flush_fails(tmp_path: Path) -> None:
     async def scenario() -> None:
         path = tmp_path / "incidents.db"
-        session_factory = create_session_factory(AppConfig(database_path=path))
+        session_factory, _ = create_session_factory(AppConfig(database_path=path))
         session = session_factory()
         try:
             incident = await session.incidents.create_incident(
@@ -92,7 +92,7 @@ def test_incident_repository_does_not_mutate_store_if_flush_fails(tmp_path: Path
 def test_incident_repository_persists_normalized_evidence_updates(tmp_path: Path) -> None:
     async def scenario() -> None:
         path = tmp_path / "incidents.db"
-        session_factory = create_session_factory(AppConfig(database_path=path))
+        session_factory, _ = create_session_factory(AppConfig(database_path=path))
         session = session_factory()
         incident_id = None
         try:
@@ -119,7 +119,7 @@ def test_incident_repository_persists_normalized_evidence_updates(tmp_path: Path
         finally:
             await session.close()
 
-        reloaded_session = create_session_factory(AppConfig(database_path=path))()
+        reloaded_session = create_session_factory(AppConfig(database_path=path))[0]()
         try:
             loaded = await reloaded_session.incidents.get_incident(incident_id)
             assert loaded is not None
@@ -133,7 +133,7 @@ def test_incident_repository_persists_normalized_evidence_updates(tmp_path: Path
 def test_incident_repository_appends_bounded_replay_history(tmp_path: Path) -> None:
     async def scenario() -> None:
         path = tmp_path / "incidents.db"
-        session_factory = create_session_factory(AppConfig(database_path=path))
+        session_factory, _ = create_session_factory(AppConfig(database_path=path))
         session = session_factory()
         incident_id = None
         try:
@@ -247,7 +247,7 @@ def test_incident_repository_appends_bounded_replay_history(tmp_path: Path) -> N
         finally:
             await session.close()
 
-        reloaded_session = create_session_factory(AppConfig(database_path=path))()
+        reloaded_session = create_session_factory(AppConfig(database_path=path))[0]()
         try:
             loaded = await reloaded_session.incidents.get_incident(incident_id)
             assert loaded is not None
@@ -267,7 +267,7 @@ def test_database_load_recovers_from_corrupted_json(tmp_path: Path) -> None:
         path = tmp_path / "incidents.db"
         path.write_text("{not-valid-json")
 
-        session = create_session_factory(AppConfig(database_path=path))()
+        session = create_session_factory(AppConfig(database_path=path))[0]()
         try:
             loaded = await session.incidents.get_incident("missing")
             assert loaded is None
@@ -281,7 +281,7 @@ def test_database_load_recovers_from_invalid_persisted_record(tmp_path: Path) ->
     async def scenario() -> None:
         path = tmp_path / "incidents.db"
 
-        session = create_session_factory(AppConfig(database_path=path))()
+        session = create_session_factory(AppConfig(database_path=path))[0]()
         try:
             loaded = await session.incidents.get_incident("nxs_bad")
             assert loaded is None
@@ -295,7 +295,7 @@ def test_database_load_recovers_from_wrong_root_shape(tmp_path: Path) -> None:
     async def scenario() -> None:
         path = tmp_path / "incidents.db"
 
-        session = create_session_factory(AppConfig(database_path=path))()
+        session = create_session_factory(AppConfig(database_path=path))[0]()
         try:
             loaded = await session.incidents.get_incident("missing")
             assert loaded is None
@@ -309,7 +309,7 @@ def test_database_load_recovers_from_non_mapping_incidents_value(tmp_path: Path)
     async def scenario() -> None:
         path = tmp_path / "incidents.db"
 
-        session = create_session_factory(AppConfig(database_path=path))()
+        session = create_session_factory(AppConfig(database_path=path))[0]()
         try:
             loaded = await session.incidents.get_incident("missing")
             assert loaded is None
@@ -322,7 +322,7 @@ def test_database_load_recovers_from_non_mapping_incidents_value(tmp_path: Path)
 def test_database_load_keeps_valid_records_when_one_record_is_invalid(tmp_path: Path) -> None:
     async def scenario() -> None:
         path = tmp_path / "incidents.db"
-        session_factory = create_session_factory(AppConfig(database_path=path))
+        session_factory, _ = create_session_factory(AppConfig(database_path=path))
         session = session_factory()
         try:
             good = await session.incidents.create_incident(
@@ -351,7 +351,7 @@ def test_database_load_recovers_when_path_is_a_directory(tmp_path: Path) -> None
         path = tmp_path / "incidents-dir"
         path.mkdir()
 
-        session = create_session_factory(AppConfig(database_path=path))()
+        session = create_session_factory(AppConfig(database_path=path))[0]()
         try:
             loaded = await session.incidents.get_incident("missing")
             assert loaded is None

@@ -37,7 +37,7 @@ def test_get_db_uses_app_scoped_factory(tmp_path: Path) -> None:
     async def scenario() -> None:
         custom_app = FastAPI()
         custom_app.state.config = AppConfig(database_path=tmp_path / "app-scoped-incidents.json")
-        custom_app.state.db_session_factory = create_session_factory(custom_app.state.config)
+        custom_app.state.db_session_factory, _ = create_session_factory(custom_app.state.config)
         scope = {"type": "http", "app": custom_app, "headers": [], "query_string": b""}
         generator = get_db(Request(scope))
         session = await anext(generator)

@@ -131,8 +131,9 @@ class RuntimeExecutionState:
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     config = AppConfig()
     app.state.config = config
-    app.state.db_session_factory = create_session_factory(config)
-    app.state.rate_limiter = RateLimiter()
+    db_session_factory, database = create_session_factory(config)
+    app.state.db_session_factory = db_session_factory
+    app.state.rate_limiter = RateLimiter(database=database)
     app.state.tenancy_service = TenancyService()
     app.state.runtime_execution_state = RuntimeExecutionState()
     yield

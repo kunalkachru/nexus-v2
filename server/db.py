@@ -31,7 +31,6 @@ class SQLiteDatabase:
             self._path = Path(config)
         else:
             self._path = config.database_path
-        self._lock = asyncio.Lock()
         self._ensure_schema()
 
     def _ensure_schema(self) -> None:
@@ -41,6 +40,8 @@ class SQLiteDatabase:
         try:
             with sqlite3.connect(self._path) as conn:
                 conn.execute("PRAGMA foreign_keys = ON")
+                conn.execute("PRAGMA journal_mode=WAL")
+                conn.execute("PRAGMA busy_timeout=5000")
 
                 # Create incidents table
                 conn.execute("""
@@ -108,29 +109,28 @@ class SQLiteDatabase:
         if not tenant_id or not nexus_incident_id:
             raise ValueError("tenant_id and nexus_incident_id required")
 
-        async with self._lock:
-            def query():
-                conn = self._get_connection()
-                try:
-                    row = conn.execute(
-                        "SELECT * FROM incidents WHERE nexus_incident_id = ? AND tenant_id = ?",
-                        (nexus_incident_id, tenant_id)
-                    ).fetchone()
+        def query():
+            conn = self._get_connection()
+            try:
+                row = conn.execute(
+                    "SELECT * FROM incidents WHERE nexus_incident_id = ? AND tenant_id = ?",
+                    (nexus_incident_id, tenant_id)
+                ).fetchone()
 
-                    if not row:
-                        return None
+                if not row:
+                    return None
 
-                    return {
-                        'nexus_incident_id': row['nexus_incident_id'],
-                        'tenant_id': row['tenant_id'],
-                        'created_at': row['created_at'],
-                        'updated_at': row['updated_at'],
-                        'data': json.loads(row['data'])
-                    }
-                finally:
-                    conn.close()
+                return {
+                    'nexus_incident_id': row['nexus_incident_id'],
+                    'tenant_id': row['tenant_id'],
+                    'created_at': row['created_at'],
+                    'updated_at': row['updated_at'],
+                    'data': json.loads(row['data'])
+                }
+            finally:
+                conn.close()
 
-            return await asyncio.to_thread(query)
+        return await asyncio.to_thread(query)
 
     async def list_incidents_for_tenant(
         self,
@@ -145,34 +145,33 @@ class SQLiteDatabase:
         limit = max(1, min(limit, 1000))
         offset = max(0, offset)
 
-        async with self._lock:
-            def query():
-                conn = self._get_connection()
-                try:
-                    rows = conn.execute(
-                        """
-                        SELECT * FROM incidents
-                        WHERE tenant_id = ?
-                        ORDER BY created_at DESC
-                        LIMIT ? OFFSET ?
-                        """,
-                        (tenant_id, limit, offset)
-                    ).fetchall()
+        def query():
+            conn = self._get_connection()
+            try:
+                rows = conn.execute(
+                    """
+                    SELECT * FROM incidents
+                    WHERE tenant_id = ?
+                    ORDER BY created_at DESC
+                    LIMIT ? OFFSET ?
+                    """,
+                    (tenant_id, limit, offset)
+                ).fetchall()
 
-                    return [
-                        {
-                            'nexus_incident_id': row['nexus_incident_id'],
-                            'tenant_id': row['tenant_id'],
-                            'created_at': row['created_at'],
-                            'updated_at': row['updated_at'],
-                            'data': json.loads(row['data'])
-                        }
-                        for row in rows
-                    ]
-                finally:
-                    conn.close()
+                return [
+                    {
+                        'nexus_incident_id': row['nexus_incident_id'],
+                        'tenant_id': row['tenant_id'],
+                        'created_at': row['created_at'],
+                        'updated_at': row['updated_at'],
+                        'data': json.loads(row['data'])
+                    }
+                    for row in rows
+                ]
+            finally:
+                conn.close()
 
-            return await asyncio.to_thread(query)
+        return await asyncio.to_thread(query)
 
     async def create_incident(
         self,
@@ -184,32 +183,31 @@ class SQLiteDatabase:
         if not tenant_id or not nexus_incident_id:
             raise ValueError("tenant_id and nexus_incident_id required")
 
-        async with self._lock:
-            def insert():
-                conn = self._get_connection()
-                try:
-                    now = datetime.now(UTC).isoformat()
-                    conn.execute(
-                        """
-                        INSERT INTO incidents
-                        (nexus_incident_id, tenant_id, data, created_at, updated_at)
-                        VALUES (?, ?, ?, ?, ?)
-                        """,
-                        (nexus_incident_id, tenant_id, json.dumps(data), now, now)
-                    )
-                    conn.commit()
+        def insert():
+            conn = self._get_connection()
+            try:
+                now = datetime.now(UTC).isoformat()
+                conn.execute(
+                    """
+                    INSERT INTO incidents
+                    (nexus_incident_id, tenant_id, data, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (nexus_incident_id, tenant_id, json.dumps(data), now, now)
+                )
+                conn.commit()
 
-                    return {
-                        'nexus_incident_id': nexus_incident_id,
-                        'tenant_id': tenant_id,
-                        'created_at': now,
-                        'updated_at': now,
-                        'data': data
-                    }
-                finally:
-                    conn.close()
+                return {
+                    'nexus_incident_id': nexus_incident_id,
+                    'tenant_id': tenant_id,
+                    'created_at': now,
+                    'updated_at': now,
+                    'data': data
+                }
+            finally:
+                conn.close()
 
-            return await asyncio.to_thread(insert)
+        return await asyncio.to_thread(insert)
 
     async def update_incident(
         self,
@@ -221,46 +219,45 @@ class SQLiteDatabase:
         if not tenant_id or not nexus_incident_id:
             raise ValueError("tenant_id and nexus_incident_id required")
 
-        async with self._lock:
-            def update():
-                conn = self._get_connection()
-                try:
-                    # Check if exists (tenant isolation)
-                    existing = conn.execute(
-                        "SELECT * FROM incidents WHERE nexus_incident_id = ? AND tenant_id = ?",
-                        (nexus_incident_id, tenant_id)
-                    ).fetchone()
+        def update():
+            conn = self._get_connection()
+            try:
+                # Check if exists (tenant isolation)
+                existing = conn.execute(
+                    "SELECT * FROM incidents WHERE nexus_incident_id = ? AND tenant_id = ?",
+                    (nexus_incident_id, tenant_id)
+                ).fetchone()
 
-                    if not existing:
-                        return None
+                if not existing:
+                    return None
 
-                    now = datetime.now(UTC).isoformat()
-                    conn.execute(
-                        """
-                        UPDATE incidents
-                        SET data = ?, updated_at = ?
-                        WHERE nexus_incident_id = ? AND tenant_id = ?
-                        """,
-                        (json.dumps(data), now, nexus_incident_id, tenant_id)
-                    )
-                    conn.commit()
+                now = datetime.now(UTC).isoformat()
+                conn.execute(
+                    """
+                    UPDATE incidents
+                    SET data = ?, updated_at = ?
+                    WHERE nexus_incident_id = ? AND tenant_id = ?
+                    """,
+                    (json.dumps(data), now, nexus_incident_id, tenant_id)
+                )
+                conn.commit()
 
-                    row = conn.execute(
-                        "SELECT * FROM incidents WHERE nexus_incident_id = ? AND tenant_id = ?",
-                        (nexus_incident_id, tenant_id)
-                    ).fetchone()
+                row = conn.execute(
+                    "SELECT * FROM incidents WHERE nexus_incident_id = ? AND tenant_id = ?",
+                    (nexus_incident_id, tenant_id)
+                ).fetchone()
 
-                    return {
-                        'nexus_incident_id': row['nexus_incident_id'],
-                        'tenant_id': row['tenant_id'],
-                        'created_at': row['created_at'],
-                        'updated_at': row['updated_at'],
-                        'data': json.loads(row['data'])
-                    }
-                finally:
-                    conn.close()
+                return {
+                    'nexus_incident_id': row['nexus_incident_id'],
+                    'tenant_id': row['tenant_id'],
+                    'created_at': row['created_at'],
+                    'updated_at': row['updated_at'],
+                    'data': json.loads(row['data'])
+                }
+            finally:
+                conn.close()
 
-            return await asyncio.to_thread(update)
+        return await asyncio.to_thread(update)
 
     async def add_audit_log(
         self,
@@ -273,25 +270,24 @@ class SQLiteDatabase:
         if not event_type or not tenant_id:
             raise ValueError("event_type and tenant_id required")
 
-        async with self._lock:
-            def insert():
-                conn = self._get_connection()
-                try:
-                    now = datetime.now(UTC).isoformat()
-                    cursor = conn.execute(
-                        """
-                        INSERT INTO audit_logs
-                        (event_type, tenant_id, user_id, data, created_at)
-                        VALUES (?, ?, ?, ?, ?)
-                        """,
-                        (event_type, tenant_id, user_id, json.dumps(data), now)
-                    )
-                    conn.commit()
-                    return cursor.lastrowid
-                finally:
-                    conn.close()
+        def insert():
+            conn = self._get_connection()
+            try:
+                now = datetime.now(UTC).isoformat()
+                cursor = conn.execute(
+                    """
+                    INSERT INTO audit_logs
+                    (event_type, tenant_id, user_id, data, created_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (event_type, tenant_id, user_id, json.dumps(data), now)
+                )
+                conn.commit()
+                return cursor.lastrowid
+            finally:
+                conn.close()
 
-            return await asyncio.to_thread(insert)
+        return await asyncio.to_thread(insert)
 
 class DatabaseSession:
     """Database session with repository interface."""
@@ -305,14 +301,14 @@ class DatabaseSession:
         pass
 
 
-def create_session_factory(config: AppConfig) -> Callable[[], DatabaseSession]:
-    """Create a session factory function."""
+def create_session_factory(config: AppConfig) -> tuple[Callable[[], DatabaseSession], SQLiteDatabase]:
+    """Create a session factory function and return the database instance."""
     database = SQLiteDatabase(config)
 
     def factory() -> DatabaseSession:
         return DatabaseSession(database)
 
-    return factory
+    return factory, database
 
 
 async def get_db(request: Request) -> AsyncIterator[DatabaseSession]:
