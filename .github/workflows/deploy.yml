@@ -19,7 +19,7 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/oracle-key.pem
           chmod 600 ~/.ssh/oracle-key.pem
-          ssh -i ~/.ssh/oracle-key.pem -o StrictHostKeyChecking=no ubuntu@$SERVER_IP << 'ENDSSH'
+          ssh -v -i ~/.ssh/oracle-key.pem -o ConnectTimeout=30 -o StrictHostKeyChecking=no ubuntu@$SERVER_IP << 'ENDSSH'
             cd nexus-v2
             git pull origin master
             sudo docker build -t nexus .
