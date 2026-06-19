@@ -110,3 +110,75 @@ def test_receive_raw_text_accepts_deploy_regression(client, auth_headers):
     )
 
     assert response.status_code in [200, 201, 202]
+
+
+def test_receive_raw_text_accepts_valid_docker_compose(client, auth_headers):
+    """Verify incidents with valid Docker Compose are accepted."""
+    compose = """
+version: '3.8'
+services:
+  web:
+    image: nginx:latest
+    ports:
+      - "80:80"
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: testdb
+"""
+    response = client.post(
+        "/api/v1/incidents/raw-text",
+        json={
+            "raw_text": (
+                "checkout-svc is timing out after 30 seconds. "
+                "The service is retrying requests which is amplifying the problem."
+            ),
+            "severity_hint": "P1",
+            "source_hint": "manual_form",
+            "reported_by": "eng@example.com",
+            "team": "platform",
+            "docker_compose_content": compose,
+        },
+        headers=auth_headers(),
+    )
+
+    # Should succeed and include Docker Compose in response
+    assert response.status_code in [200, 201, 202]
+    data = response.json()
+    assert "nexus_incident_id" in data or "incident_id" in data
+
+
+def test_receive_raw_text_rejects_invalid_docker_compose(client, auth_headers):
+    """Verify incidents with invalid Docker Compose are rejected."""
+    invalid_compose = """
+version: '3.8'
+services:
+  app:
+    image: nginx:latest
+    privileged: true
+"""
+    response = client.post(
+        "/api/v1/incidents/raw-text",
+        json={
+            "raw_text": (
+                "checkout-svc is timing out after 30 seconds."
+            ),
+            "severity_hint": "P1",
+            "source_hint": "manual_form",
+            "reported_by": "eng@example.com",
+            "team": "platform",
+            "docker_compose_content": invalid_compose,
+        },
+        headers=auth_headers(),
+    )
+
+    # Should reject with 400 error
+    assert response.status_code == 400
+    data = response.json()
+
+    if isinstance(data.get("detail"), dict):
+        detail = data["detail"]
+        assert detail.get("error") == "invalid_docker_compose"
+        assert "privileged" in detail.get("message", "").lower()
+    else:
+        assert "invalid" in str(data.get("detail", "")).lower()

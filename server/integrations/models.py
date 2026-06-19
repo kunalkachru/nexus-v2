@@ -62,6 +62,7 @@ class RawIncidentTextRequest(BaseModel):
     reported_by: str | None = Field(None, max_length=255)
     team: str | None = Field(None, max_length=255)
     severity_hint: str | None = Field(None, max_length=255)
+    docker_compose_content: str | None = Field(None, max_length=100000, description="Optional Docker Compose YAML content for REPLICA replay")
 
 
 class GuardianDecisionRequest(BaseModel):

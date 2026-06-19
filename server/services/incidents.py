@@ -737,6 +737,37 @@ class IncidentService:
             import logging
             logging.warning(f"SENTINEL classification failed for raw text submission: {e}")
 
+        # Validate Docker Compose if provided
+        docker_compose_content = None
+        if payload.docker_compose_content:
+            from server.services.compose_validator import ComposeValidator, ComposeValidationError
+            try:
+                ComposeValidator.validate_compose_content(payload.docker_compose_content)
+                docker_compose_content = payload.docker_compose_content
+            except ComposeValidationError as e:
+                from fastapi import HTTPException
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": "invalid_docker_compose",
+                        "message": f"Docker Compose validation failed: {str(e)}",
+                    },
+                )
+
+        normalized_evidence_dict = {
+            "service": parsed.service,
+            "severity": parsed.severity,
+            "signature": parsed.signature,
+            "evidence": parsed.evidence,
+            "symptoms": parsed.symptoms,
+            "input_quality": parsed.input_quality,
+            "source_hint": payload.source_hint,
+            "reported_by": payload.reported_by,
+            "team": payload.team,
+        }
+        if docker_compose_content:
+            normalized_evidence_dict["docker_compose"] = docker_compose_content
+
         created = await self._session.incidents.create_incident(
             external_id=f"raw_{parsed.service}_{uuid4().hex[:8]}",
             title=parsed.title,
@@ -745,17 +776,7 @@ class IncidentService:
             source="raw_text",
             service=parsed.service,
             raw_input_text=payload.raw_text,
-            normalized_evidence={
-                "service": parsed.service,
-                "severity": parsed.severity,
-                "signature": parsed.signature,
-                "evidence": parsed.evidence,
-                "symptoms": parsed.symptoms,
-                "input_quality": parsed.input_quality,
-                "source_hint": payload.source_hint,
-                "reported_by": payload.reported_by,
-                "team": payload.team,
-            },
+            normalized_evidence=normalized_evidence_dict,
         )
         incident = IncidentRecord.model_validate(created)
         recent_deployments = await self._deployment_lookup.get_recent_deployments(incident.service)
