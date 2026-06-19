@@ -775,26 +775,37 @@ window.addEventListener("DOMContentLoaded", async () => {
         // Ignore storage failures; the incident console still opens normally.
       }
       // Navigate to the new incident immediately after successful creation
-      const liveReasoning = getLiveReasoningPreference() ? "1" : "0";
+      if (!response.nexus_incident_id) {
+        if (result) {
+          result.textContent = `Error: No incident ID in response`;
+        }
+        return;
+      }
+
       const targetIncidentId = response.nexus_incident_id;
-      const targetHref = withFreshLaunchFlag(incidentHref(targetIncidentId, liveReasoning));
+      const liveReasoning = getLiveReasoningPreference() ? "1" : "0";
+      let targetHref = `incident?nexus_incident_id=${encodeURIComponent(targetIncidentId)}`;
+      if (liveReasoning) {
+        targetHref += `&live_reasoning=${liveReasoning}`;
+      }
+      targetHref = withFreshLaunchFlag(targetHref);
 
       if (result) {
-        result.textContent = `Step 3 of 3: opening ${targetIncidentId}. You will land on the top incident brief first, then inspect replay or deeper technical detail only if needed.`;
+        result.textContent = `Step 3 of 3: opening ${targetIncidentId}. Redirecting now...`;
       }
       setSubmitProgress(3);
 
-      // Update launch button for UI consistency
+      // Update launch button for consistency
       if (launch) {
         launch.href = targetHref;
         launch.dataset.incidentId = targetIncidentId;
-        launch.textContent = `Open ${targetIncidentId} incident workspace`;
+        launch.textContent = `Open ${targetIncidentId}`;
       }
 
-      // Navigate to the incident
-      window.NexusNavigation?.beginRouteTransition?.("Opening top incident brief...");
-      window.location.assign(targetHref);
-      return;
+      // Navigate directly - use href instead of assign for better compatibility
+      setTimeout(() => {
+        window.location.href = targetHref;
+      }, 100);
     } catch (error) {
       if (result) {
         result.textContent = `Submission failed: ${error.message}`;
