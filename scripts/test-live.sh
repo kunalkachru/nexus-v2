@@ -45,13 +45,13 @@ else
   exit 1
 fi
 
-# Test 5: API incidents endpoint
-echo "Test 5: API incidents endpoint..."
-API=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/incidents" -H "X-Tenant-ID: tenant-a" -H "X-User-ID: test-user")
+# Test 5: API queue endpoint
+echo "Test 5: API queue endpoint..."
+API=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/v1/incidents/queue" -H "X-Tenant-ID: tenant-a" -H "X-User-ID: test-user")
 if [ "$API" = "200" ] || [ "$API" = "401" ]; then
-  echo "  ✅ API endpoint responding (HTTP $API)"
+  echo "  ✅ API queue endpoint responding (HTTP $API)"
 else
-  echo "  ❌ API endpoint failed (HTTP $API)"
+  echo "  ❌ API queue endpoint failed (HTTP $API)"
   exit 1
 fi
 
