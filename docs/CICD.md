@@ -308,4 +308,4 @@ If you suspect the SQLite database is corrupted:
 
 ---
 
-*Last verified: 2026-06-19 (GitHub Actions deployment with webfactory/ssh-agent)*
+*Last verified: 2026-06-19 (GitHub Actions deployment with printf SSH key handling)*
