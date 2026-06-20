@@ -43,6 +43,12 @@ class AppConfig(BaseModel):
     use_live_llm: bool = Field(default_factory=lambda: _env("NEXUS_USE_OPENAI", "0") == "1")
     runtime_host_base_url: str = Field(default_factory=lambda: _env("NEXUS_RUNTIME_HOST_BASE_URL", "").strip())
     runtime_host_shared_token: str = Field(default_factory=lambda: _env("NEXUS_RUNTIME_HOST_SHARED_TOKEN", "").strip())
+    allowed_origins: list[str] = Field(default_factory=lambda: _env_list("NEXUS_ALLOWED_ORIGINS", [
+        "http://nexus-triage.duckdns.org:7860",
+        "https://nexus-uny5.onrender.com",
+        "http://localhost:7860",
+        "http://127.0.0.1:7860",
+    ]))
 
 
 def _get_webhook_secret() -> str:

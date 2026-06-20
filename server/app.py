@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -8,6 +9,8 @@ from typing import Any, Coroutine
 import logging
 
 from fastapi import Depends, FastAPI, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +56,9 @@ from server.services.deployment_readiness import DeploymentReadiness
 from server.services.governance import GovernanceService
 from server.services.incidents import IncidentService
 from server.services.enterprise_runtime import build_pilot_safe_subsystem, summarize_pilot_surface
+from server.services.health_service import HealthService
 from server.services.live_demo import build_demo_payload
+from server.services.metrics_service import PilotMetricsService
 from server.services.observability import ObservabilityService
 from server.services.replica_runtime import execute_runtime_host_replay, runtime_host_supported_packs, build_runtime_host_relay_status, probe_runtime_host
 from server.services.surface_payloads import build_platform_status, load_metrics_payload
@@ -133,13 +138,52 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.config = config
     db_session_factory, database = create_session_factory(config)
     app.state.db_session_factory = db_session_factory
+    app.state.database = database
     app.state.rate_limiter = RateLimiter(database=database)
     app.state.tenancy_service = TenancyService()
     app.state.runtime_execution_state = RuntimeExecutionState()
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="NEXUS Incident Investigation API",
+    description="AI-powered incident triage and investigation with human governance gate",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# Configure CORS from environment
+_allowed_origins = os.environ.get("NEXUS_ALLOWED_ORIGINS")
+if _allowed_origins:
+    allowed_origins_list = [item.strip() for item in _allowed_origins.split(",") if item.strip()]
+else:
+    allowed_origins_list = [
+        "http://nexus-triage.duckdns.org:7860",
+        "https://nexus-uny5.onrender.com",
+        "http://localhost:7860",
+        "http://127.0.0.1:7860",
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins_list,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-User-ID", "X-Tenant-ID", "X-Roles", "X-Signature", "X-Runtime-Host-Token"],
+)
+
+
+@app.middleware("http")
+async def limit_request_size(request: Request, call_next):
+    max_size = int(os.environ.get("NEXUS_MAX_REQUEST_SIZE_BYTES", 1048576))
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > max_size:
+        return JSONResponse(
+            status_code=413,
+            content={"detail": f"Request body too large. Maximum size is {max_size} bytes."},
+        )
+    return await call_next(request)
+
 
 app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
@@ -155,7 +199,7 @@ def get_incident_service(
         observability=ObservabilityService(deployment_lookup=deployment_lookup),
     )
 
-@app.get("/")
+@app.get("/", tags=["UI"], summary="Dashboard root")
 async def root() -> FileResponse:
     return FileResponse("frontend/queue.html", media_type="text/html")
 
@@ -205,7 +249,7 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/api/v1/observability/health")
+@app.get("/api/v1/observability/health", tags=["Observability"], summary="Check platform health")
 async def get_product_health(
     request: Request,
     auth: AuthenticatedContext = Depends(require_auth),
@@ -222,95 +266,39 @@ async def get_product_health(
 
         queue = await service.list_queue_items(tenant_id=auth.tenant_id)
         queue_items = queue.items if hasattr(queue, "items") else queue.get("items", [])
-        queue_health = "healthy" if len(queue_items) < 100 else "degraded" if len(queue_items) < 500 else "unhealthy"
-        queue_guidance = []
-        if queue_health == "degraded":
-            queue_guidance.append("Queue depth is elevated. Review incident backlog and consider pausing intake.")
-        elif queue_health == "unhealthy":
-            queue_guidance.append("Queue is critically backlogged. Pause incident intake and investigate queue processing.")
-        queue_next_checks = []
-        if queue_health == "degraded":
-            queue_next_checks = [
-                "Review the queue backlog and confirm intake is not spiking faster than operators can close cases.",
-                "Pause non-critical manual intake if queue depth keeps rising.",
-            ]
-        elif queue_health == "unhealthy":
-            queue_next_checks = [
-                "Pause new intake until the backlog returns to the bounded operating range.",
-                "Check queue processing throughput and any database or worker contention behind the backlog.",
-            ]
+
+        health_service = HealthService()
+        queue_subsystem = health_service.check_queue_health(queue_items)
+        queue_health = queue_subsystem.status
+        queue_guidance = queue_subsystem.guidance
+        queue_next_checks = queue_subsystem.next_checks
 
         execution_health = "idle" if execution_state.current_state == "idle" else "running"
         runtime_recovery = RuntimeQueueManager.get_runtime_recovery_posture()
         deployment_readiness = DeploymentReadiness.get_deployment_readiness()
 
         # Memory service health (knowledge base availability)
-        memory_health = "available"
-        memory_guidance = []
-        if not hasattr(service, 'memory') or service.memory is None:
-            memory_health = "unavailable"
-            memory_guidance.append("Memory service (knowledge base) is not available. Incidents will be triaged without historical context.")
-        memory_next_checks = (
-            [
-                "Confirm the bounded memory layer is loaded before treating historical matches as available.",
-                "Proceed with inference-first triage until memory becomes available again.",
-            ]
-            if memory_health != "available"
-            else []
-        )
+        memory_subsystem = health_service.check_memory_health(service)
+        memory_health = memory_subsystem.status
+        memory_guidance = memory_subsystem.guidance
+        memory_next_checks = memory_subsystem.next_checks
 
         # Delivery service health (downstream integrations)
-        delivery_health = "healthy"
-        delivery_guidance = []
-        delivery_next_checks = []
-        deployment_readiness_str = deployment_readiness.get("readiness", "")
-        if deployment_readiness_str == "partially_available":
-            delivery_health = "degraded"
-            delivery_guidance.append("Some downstream integrations are unavailable. Check GitHub and Slack connectivity.")
-            delivery_next_checks = [
-                "Check which delivery destinations are degraded before promising downstream handoff completion.",
-                "Retry only the affected destination once connectivity or configuration is restored.",
-            ]
-        elif deployment_readiness_str != "fully_available":
-            delivery_health = "unhealthy"
-            delivery_guidance.append("Downstream delivery is blocked. Verify integration configuration and connectivity.")
-            delivery_next_checks = [
-                "Treat downstream export and send actions as blocked until integration readiness returns.",
-                "Verify destination credentials, network reachability, and runtime-host dependent features before retrying.",
-            ]
+        delivery_subsystem = health_service.check_delivery_health(deployment_readiness)
+        delivery_health = delivery_subsystem.status
+        delivery_guidance = delivery_subsystem.guidance
+        delivery_next_checks = delivery_subsystem.next_checks
 
         # Replay health with guidance
-        replay_health = execution_health
-        replay_guidance = []
-        replay_next_checks = []
-        if execution_health == "running":
-            replay_guidance.append("Replay is currently executing. Monitor the bounded pack progress.")
-            replay_next_checks = [
-                "Wait for the current bounded replay to finish before starting another replay for the same incident.",
-            ]
-        elif not deployment_readiness.get("docker", {}).get("available", False):
-            replay_health = "unavailable"
-            replay_guidance.append("Docker is not available. Bounded replay requires Docker to be installed and running.")
-            replay_next_checks = [
-                "Restore Docker or enable the runtime-host relay before claiming runtime-backed validation.",
-                "Use inference-first triage and keep approval language bounded until replay is available again.",
-            ]
+        replay_subsystem = health_service.check_replay_health(execution_state, deployment_readiness)
+        replay_health = replay_subsystem.status
+        replay_guidance = replay_subsystem.guidance
+        replay_next_checks = replay_subsystem.next_checks
 
-        runtime_queue_status = runtime_recovery.get("recovery_status") or "unknown"
-        runtime_queue_guidance = []
-        runtime_queue_next_checks = []
-        if runtime_queue_status == "recovering":
-            runtime_queue_guidance.append("Runtime queue recovered recent replay work after an interruption. Review recovered jobs before relaunching.")
-            runtime_queue_next_checks = [
-                "Review recovered runtime jobs before rerunning the same incident replay.",
-                "Confirm the latest replay outcome was persisted before approving follow-on actions.",
-            ]
-        elif runtime_queue_status == "degraded":
-            runtime_queue_guidance.append("Runtime queue has failed or stranded work that needs operator review.")
-            runtime_queue_next_checks = [
-                "Inspect failed or stranded runtime jobs before launching more replay work.",
-                "Retry only jobs marked retryable and avoid duplicate launches for the same incident until state is clear.",
-            ]
+        runtime_queue_subsystem = health_service.check_runtime_queue_health(runtime_recovery)
+        runtime_queue_status = runtime_queue_subsystem.status
+        runtime_queue_guidance = runtime_queue_subsystem.guidance
+        runtime_queue_next_checks = runtime_queue_subsystem.next_checks
 
         pilot_subsystems = [
             build_pilot_safe_subsystem(
@@ -472,7 +460,7 @@ async def get_product_health(
         }
 
 
-@app.get("/api/v1/incidents/queue")
+@app.get("/api/v1/incidents/queue", tags=["Incidents"], summary="List incident queue")
 async def get_incident_queue(
     request: Request,
     service: IncidentService = Depends(get_incident_service),
@@ -679,7 +667,7 @@ async def get_tenant_bootstrap_config(
     return config
 
 
-@app.get("/api/v1/tenant/pilot-scorecard")
+@app.get("/api/v1/tenant/pilot-scorecard", tags=["Tenant"], summary="Get pilot program scorecard")
 async def get_pilot_scorecard(
     request: Request,
     auth: AuthenticatedContext = Depends(require_auth),
@@ -687,15 +675,21 @@ async def get_pilot_scorecard(
     from server.services.enterprise_runtime import build_pilot_scorecard
 
     await request.app.state.rate_limiter.check(auth=auth, route_key="tenant_bootstrap")
+
+    metrics_service = PilotMetricsService()
+    metrics = await metrics_service.compute_pilot_metrics(auth.tenant_id, request.app.state.database)
+
     scorecard = build_pilot_scorecard(
-        incidents_handled=5,
-        incidents_runtime_backed=3,
-        incidents_inferred=2,
-        total_triage_time_saved_minutes=60,
-        handoff_completion_count=4,
-        repeat_incident_reuse_count=2,
+        incidents_handled=metrics["incidents_handled"],
+        incidents_runtime_backed=metrics["incidents_runtime_backed"],
+        incidents_inferred=metrics["incidents_inferred"],
+        total_triage_time_saved_minutes=metrics["total_triage_time_saved_minutes"],
+        handoff_completion_count=metrics["handoff_completion_count"],
+        repeat_incident_reuse_count=0,
         tenant_id=auth.tenant_id,
     )
+    scorecard["computed_at"] = metrics["computed_at"]
+
     await write_audit_log(
         "tenant.pilot_scorecard.read",
         auth.tenant_id,
@@ -712,15 +706,21 @@ async def get_weekly_review_package(
     from server.services.enterprise_runtime import build_pilot_scorecard, build_weekly_pilot_review_package
 
     await request.app.state.rate_limiter.check(auth=auth, route_key="tenant_bootstrap")
+
+    metrics_service = PilotMetricsService()
+    metrics = await metrics_service.compute_pilot_metrics(auth.tenant_id, request.app.state.database)
+
     scorecard = build_pilot_scorecard(
-        incidents_handled=5,
-        incidents_runtime_backed=3,
-        incidents_inferred=2,
-        total_triage_time_saved_minutes=60,
-        handoff_completion_count=4,
-        repeat_incident_reuse_count=2,
+        incidents_handled=metrics["incidents_handled"],
+        incidents_runtime_backed=metrics["incidents_runtime_backed"],
+        incidents_inferred=metrics["incidents_inferred"],
+        total_triage_time_saved_minutes=metrics["total_triage_time_saved_minutes"],
+        handoff_completion_count=metrics["handoff_completion_count"],
+        repeat_incident_reuse_count=0,
         tenant_id=auth.tenant_id,
     )
+    scorecard["computed_at"] = metrics["computed_at"]
+
     packet = build_weekly_pilot_review_package(
         tenant_id=auth.tenant_id,
         scorecard=scorecard,
@@ -742,15 +742,21 @@ async def get_pilot_closeout_package(
     from server.services.enterprise_runtime import build_pilot_closeout_package, build_pilot_scorecard
 
     await request.app.state.rate_limiter.check(auth=auth, route_key="tenant_bootstrap")
+
+    metrics_service = PilotMetricsService()
+    metrics = await metrics_service.compute_pilot_metrics(auth.tenant_id, request.app.state.database)
+
     scorecard = build_pilot_scorecard(
-        incidents_handled=5,
-        incidents_runtime_backed=3,
-        incidents_inferred=2,
-        total_triage_time_saved_minutes=60,
-        handoff_completion_count=4,
-        repeat_incident_reuse_count=2,
+        incidents_handled=metrics["incidents_handled"],
+        incidents_runtime_backed=metrics["incidents_runtime_backed"],
+        incidents_inferred=metrics["incidents_inferred"],
+        total_triage_time_saved_minutes=metrics["total_triage_time_saved_minutes"],
+        handoff_completion_count=metrics["handoff_completion_count"],
+        repeat_incident_reuse_count=0,
         tenant_id=auth.tenant_id,
     )
+    scorecard["computed_at"] = metrics["computed_at"]
+
     packet = build_pilot_closeout_package(
         tenant_id=auth.tenant_id,
         scorecard=scorecard,
@@ -830,7 +836,7 @@ async def runtime_host_replica_replay(
     return response.model_dump(mode="json")
 
 
-@app.post("/api/v1/incidents/manual-report", status_code=202)
+@app.post("/api/v1/incidents/manual-report", tags=["Incidents"], summary="Create manual incident report", status_code=202)
 async def receive_manual_report(
     request: Request,
     payload: ManualIncidentReport,
@@ -844,7 +850,7 @@ async def receive_manual_report(
     return response
 
 
-@app.post("/api/v1/incidents/raw-text", status_code=202)
+@app.post("/api/v1/incidents/raw-text", tags=["Incidents"], summary="Submit raw incident text", status_code=202)
 async def receive_raw_text(
     request: Request,
     payload: RawIncidentTextRequest,
@@ -858,7 +864,7 @@ async def receive_raw_text(
     return response
 
 
-@app.post("/api/v1/incidents/batch-import", status_code=202)
+@app.post("/api/v1/incidents/batch-import", tags=["Incidents"], summary="Batch import incidents", status_code=202)
 async def receive_batch_import(
     request: Request,
     payload: BatchImportRequest,
