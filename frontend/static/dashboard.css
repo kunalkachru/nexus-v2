@@ -2137,6 +2137,13 @@ html[data-theme="dark"] .path-card-primary {
 
 .guardian-gate-card {
   min-height: 100%;
+  pointer-events: none;
+}
+
+.guardian-gate-card button,
+.guardian-gate-card .agent-details,
+.guardian-gate-card summary {
+  pointer-events: auto;
 }
 
 .relay-callout {
