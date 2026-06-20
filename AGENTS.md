@@ -11,9 +11,9 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - `INC003` deploy regression / 5xx spike
   - `INC005` queue / worker backlog affecting transaction completion
   - `INC007` auth dependency slowdown / token validation failures
-- Current validated baseline (Updated 2026-06-17):
-  - `pytest tests/ -q` -> `410 passed` (76 core + 334 production readiness/load/DR/ops tests)
-  - `npm run browser:verify` -> `16 passed`
+- Current validated baseline (Updated 2026-06-20):
+  - `pytest tests/ -q` -> `470 passed` (excludes test_production_gate3.py which requires live server)
+  - `npm run browser:verify` -> `10 passed` (6 failed—browser test suite needs review)
   - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
@@ -114,6 +114,19 @@ feat(#<id>): <title>
 - tests: <key gates that passed>
 ```
 
+## Governance Rules for Autonomous Sessions
+
+These rules apply to all Claude Code autonomous loop sessions:
+
+- Launch with: `claude --max-turns 30` (hard turn cap)
+- Set before launching: `export CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=50`
+- 2-failure retry limit per item — mark blocked and move on, never retry a third time
+- Checkpoint and report every 3 completed items
+- Never call ScheduleWakeup under any circumstances
+- Use `--dangerously-skip-permissions` only for bounded repo work (not system commands)
+- `/compact` and `/context` must be typed directly by the user — cannot be invoked via bash tool calls
+- Compact at 50% context without waiting to be told
+
 ## Hard Rules
 
 - Never mark an item `done` without running its listed test gates.
@@ -125,6 +138,17 @@ feat(#<id>): <title>
 - Any packaged-app runtime claim must be verified through the `:7860` Docker path before the item is marked done.
 - Keep seeded/static and live incident paths semantically aligned.
 - Never leave `AGENTS.md`, `WORKING_STATE.md`, or `docs/internal/LOOPS_RUNBOOK.md` stale after a backlog reaches zero pending items.
+
+## Production Deployments
+
+| Environment | URL | Auto-deploys on |
+|---|---|---|
+| Oracle Cloud | http://nexus-triage.duckdns.org:7860 | git push origin master via GitHub Actions |
+| Render | https://nexus-uny5.onrender.com | git push origin master |
+
+SSH access: `ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239`
+Smoke test: `bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860`
+Release gate: `bash scripts/run-release-gate.sh`
 
 ## Current Code Map
 

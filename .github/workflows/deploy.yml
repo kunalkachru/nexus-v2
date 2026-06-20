@@ -5,7 +5,27 @@ on:
     branches: [master]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: pytest tests/ --ignore=tests/test_production_gate3.py -q
+
+      - name: Report test count
+        run: pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -44,3 +64,9 @@ jobs:
             sudo docker logs nexus --tail 50
             exit 1
           ENDSSH
+
+      - name: Wait for deployment to stabilize
+        run: sleep 30
+
+      - name: Smoke test production
+        run: bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860
