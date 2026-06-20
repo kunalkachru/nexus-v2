@@ -101,11 +101,11 @@ Implementation:
    
    | Environment | URL | Auto-deploys on |
    |---|---|---|
-   | Oracle Cloud | http://nexus-triage.duckdns.org:7860 | git push origin master via GitHub Actions |
+   | Oracle Cloud | https://nexus-triage.duckdns.org | git push origin master via GitHub Actions |
    | Render | https://nexus-uny5.onrender.com | git push origin master |
    
    SSH access: ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239
-   Smoke test: bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860
+   Smoke test: bash scripts/test-live.sh https://nexus-triage.duckdns.org
    Release gate: bash scripts/run-release-gate.sh
 
 6. Read WORKING_STATE.md and update the baseline numbers to match current state
@@ -129,7 +129,7 @@ Write 2 paragraphs explaining:
 - What makes it different: the evidence posture system (runtime-backed vs inference-first) tells operators exactly how confident to be in each finding — not "AI says this" but "we reproduced this in your environment"
 
 SECTION 2 — Your pilot access
-- Production URL: http://nexus-triage.duckdns.org:7860
+- Production URL: https://nexus-triage.duckdns.org
 - How to authenticate: include X-Tenant-ID: tenant-a and X-User-ID: your-name headers on API calls
 - The 5 demo incidents (INC001-INC007) are pre-loaded and always available
 - To submit a real incident: go to /inputs and describe the symptoms in plain text
@@ -206,7 +206,7 @@ Implementation:
      run: sleep 30
    
    - name: Smoke test production
-     run: bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860
+     run: bash scripts/test-live.sh https://nexus-triage.duckdns.org
 
 5. Commit and push a test commit to verify the pipeline runs correctly:
    git commit --allow-empty -m "ci: verify release gate pipeline"
@@ -224,7 +224,7 @@ Done when:
 AFTER ALL ITEMS:
 
 1. Run final verification:
-   bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860
+   bash scripts/test-live.sh https://nexus-triage.duckdns.org
    Report all 5 results
 
 2. Commit all remaining changes:

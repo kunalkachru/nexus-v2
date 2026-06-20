@@ -42,7 +42,7 @@ async def test_suite_1_scroll_depths():
     print("TEST SUITE 1: Scroll Depth Verification on Production")
     print("="*80)
 
-    base_url = "http://nexus-triage.duckdns.org:7860"
+    base_url = "https://nexus-triage.duckdns.org"
     results = []
 
     async with async_playwright() as p:
@@ -78,7 +78,7 @@ async def test_suite_2_full_workflow():
     print("TEST SUITE 2: Full Workflow End-to-End")
     print("="*80)
 
-    base_url = "http://nexus-triage.duckdns.org:7860"
+    base_url = "https://nexus-triage.duckdns.org"
     results = {}
 
     async with async_playwright() as p:
@@ -222,7 +222,7 @@ async def test_suite_3_unknown_incident():
     print("TEST SUITE 3: Unknown Incident Type Handling")
     print("="*80)
 
-    base_url = "http://nexus-triage.duckdns.org:7860"
+    base_url = "https://nexus-triage.duckdns.org"
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -273,7 +273,7 @@ async def main():
     print("\n" + "="*80)
     print("GATE 3 PRODUCTION VALIDATION")
     print("="*80)
-    print(f"Production URL: http://nexus-triage.duckdns.org:7860")
+    print(f"Production URL: https://nexus-triage.duckdns.org")
 
     # TEST SUITE 1: Scroll depths
     scroll_results = await test_suite_1_scroll_depths()

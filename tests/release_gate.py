@@ -519,10 +519,10 @@ def test_section_4_browser_simulation():
 def test_section_5_production_checks():
     """Check production environment."""
     print("=" * 80)
-    print("SECTION 5 — Production Environment (http://nexus-triage.duckdns.org:7860)")
+    print("SECTION 5 — Production Environment (https://nexus-triage.duckdns.org)")
     print("=" * 80)
 
-    base_url = "http://nexus-triage.duckdns.org:7860"
+    base_url = "https://nexus-triage.duckdns.org"
     tests_passed = 0
 
     # Health check

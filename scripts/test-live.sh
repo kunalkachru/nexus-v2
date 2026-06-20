@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-BASE_URL="${1:-http://nexus-triage.duckdns.org:7860}"
+BASE_URL="${1:-https://nexus-triage.duckdns.org}"
 
 echo "=== Running smoke tests against $BASE_URL ==="
 

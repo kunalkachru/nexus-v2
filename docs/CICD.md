@@ -7,7 +7,7 @@ NEXUS is deployed to two environments that serve different purposes:
 | Environment | URL | Purpose | Persistence |
 |---|---|---|---|
 | **Render** | https://nexus-uny5.onrender.com | Public demo instance | None (ephemeral) |
-| **Oracle Cloud** | http://nexus-triage.duckdns.org:7860 | Production with persistent data | Named volume (nexus-data) |
+| **Oracle Cloud** | https://nexus-triage.duckdns.org | Production with persistent data | Named volume (nexus-data) |
 
 ### How code gets from your laptop to production
 
@@ -148,7 +148,7 @@ After deployment, run the smoke test suite to verify the deployment:
 
 ```bash
 # Test against Oracle Cloud
-bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860
+bash scripts/test-live.sh https://nexus-triage.duckdns.org
 
 # Test against Render
 bash scripts/test-live.sh https://nexus-uny5.onrender.com
@@ -219,7 +219,7 @@ OPENAI_API_KEY=your-key-here
 
 1. **Check the `/health` endpoint**:
    ```bash
-   curl http://nexus-triage.duckdns.org:7860/health
+   curl https://nexus-triage.duckdns.org/health
    ```
 
 2. **If health check returns an error, check Docker logs**:
@@ -304,7 +304,7 @@ If you suspect the SQLite database is corrupted:
 | Check Oracle Cloud status | GitHub Actions tab → Deploy to Oracle Cloud workflow |
 | SSH into Oracle Cloud | `ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239` |
 | View container logs | `ssh ... && sudo docker logs nexus` |
-| Check health | `curl http://nexus-triage.duckdns.org:7860/health` |
+| Check health | `curl https://nexus-triage.duckdns.org/health` |
 
 ---
 

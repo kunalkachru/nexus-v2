@@ -569,7 +569,7 @@ function setSubmissionPending(pending, label = "") {
     }
     submit.disabled = pending;
     submit.dataset.pending = pending ? "1" : "0";
-    submit.textContent = pending ? (label || "Submitting intake...") : (submit.dataset.defaultLabel || submit.textContent);
+    submit.textContent = pending ? (label || "Submitting...") : (submit.dataset.defaultLabel || submit.textContent);
   }
   if (launch) {
     launch.classList.toggle("is-disabled", pending);
@@ -582,6 +582,20 @@ function setSubmissionPending(pending, label = "") {
   }
   if (!pending) {
     setSubmitProgress(0);
+  }
+}
+
+function resetSubmitButton() {
+  setSubmissionPending(false);
+}
+
+function showError(message) {
+  const result = document.getElementById("channelResult");
+  if (result) {
+    result.textContent = message;
+    result.style.color = "#d32f2f";
+    result.style.fontWeight = "500";
+    result.style.marginTop = "8px";
   }
 }
 
@@ -674,9 +688,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const rawLogInput = document.getElementById("rawLogInput");
       const rawText = rawLogInput?.value || "";
       if (!rawText.trim()) {
-        if (result) {
-          result.textContent = "Please select a demo bundle or paste raw logs before submitting.";
-        }
+        showError("Please select a demo bundle or paste raw logs before submitting.");
         return;
       }
     }
@@ -802,14 +814,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         launch.textContent = `Open ${targetIncidentId}`;
       }
 
-      // Navigate directly - use href instead of assign for better compatibility
-      setTimeout(() => {
-        window.location.href = targetHref;
-      }, 100);
+      // Navigate directly without setTimeout - happens immediately after fetch completes
+      window.location.href = targetHref;
     } catch (error) {
-      if (result) {
-        result.textContent = `Submission failed: ${error.message}`;
-      }
+      showError(`Failed to submit incident. Please try again. ${error.message}`);
+      resetSubmitButton();
     } finally {
       setSubmissionPending(false);
     }

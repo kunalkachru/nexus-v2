@@ -177,7 +177,7 @@ OPENAI_API_KEY=sk-proj-xxx
 ### Current Deployments
 
 #### Oracle Cloud (Production)
-- **URL:** http://nexus-triage.duckdns.org:7860
+- **URL:** https://nexus-triage.duckdns.org
 - **Status:** ✅ Live
 - **Data Persistence:** Named volume (nexus-data) — persistent across restarts
 - **Last Deploy:** 2026-06-19 13:48 UTC
@@ -395,7 +395,7 @@ Injected at Deploy Time:
 **Status:** All items complete. No blockers. Production ready.
 
 **Next Step:** Hand off to pilot customer with:
-1. Access to http://nexus-triage.duckdns.org:7860
+1. Access to https://nexus-triage.duckdns.org
 2. docs/CICD.md for operational runbook
 3. PRODUCTION_VALIDATION_RESULTS.md for verification
 4. 24-hour monitoring setup

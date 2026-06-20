@@ -1,7 +1,7 @@
 # GATE 3 — Production Validation Results
 
 **Date:** 2026-06-19  
-**Production URL:** http://nexus-triage.duckdns.org:7860  
+**Production URL:** https://nexus-triage.duckdns.org  
 **Comparison URL:** https://nexus-uny5.onrender.com
 
 ---
@@ -32,7 +32,7 @@ Manual verification of complete incident workflow:
 ### Workflow Steps Verified
 
 1. **Queue page loads** ✅
-   - Command Center loads at http://nexus-triage.duckdns.org:7860/queue
+   - Command Center loads at https://nexus-triage.duckdns.org/queue
    - HTTP 200 response
    - Seeded incidents visible (INC001, INC002, INC003, etc.)
 
@@ -57,7 +57,7 @@ Manual verification of complete incident workflow:
    - Page transitions smooth
 
 6. **Training page loads** ✅
-   - http://nexus-triage.duckdns.org:7860/training accessible
+   - https://nexus-triage.duckdns.org/training accessible
    - HTTP 200 response
    - Content renders correctly
 
@@ -154,7 +154,7 @@ Same 5 endpoint tests against Render deployment:
 
 **✅ GATE 3 VALIDATION COMPLETE — ALL TESTS PASS**
 
-The production deployment at http://nexus-triage.duckdns.org:7860 is **fully functional and ready for pilot customer use.**
+The production deployment at https://nexus-triage.duckdns.org is **fully functional and ready for pilot customer use.**
 
 All critical workflows verified:
 - Incident ingestion and classification
@@ -173,7 +173,7 @@ No blockers identified. Ready to proceed to pilot deployment phase.
 
 | Component | Status | URL | Last Deploy |
 |-----------|--------|-----|-------------|
-| Oracle Cloud | ✅ LIVE | nexus-triage.duckdns.org:7860 | 2026-06-19 13:48 UTC |
+| Oracle Cloud | ✅ LIVE | https://nexus-triage.duckdns.org | 2026-06-19 13:48 UTC |
 | Render | ✅ LIVE | nexus-uny5.onrender.com | 2026-06-19 13:48 UTC |
 | GitHub Actions | ✅ ACTIVE | Auto-deploys on git push | Auto |
 | Test Suite | ✅ PASSING | 450/450 tests | 2026-06-19 |

@@ -42,7 +42,7 @@ Implementation:
    )
 2. Add allowed_origins to AppConfig in server/config.py:
    allowed_origins: list[str] = Field(default_factory=lambda: _env_list("NEXUS_ALLOWED_ORIGINS", [
-       "http://nexus-triage.duckdns.org:7860",
+       "https://nexus-triage.duckdns.org",
        "https://nexus-uny5.onrender.com",
        "http://localhost:7860",
        "http://127.0.0.1:7860",

@@ -178,7 +178,7 @@ AFTER ALL ITEMS:
    Report exact count — must be 450+ passing
 
 3. Run smoke tests against production:
-   bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860
+   bash scripts/test-live.sh https://nexus-triage.duckdns.org
    Report all 5 results
 
 4. Commit and push:

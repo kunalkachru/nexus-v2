@@ -158,7 +158,7 @@ if _allowed_origins:
     allowed_origins_list = [item.strip() for item in _allowed_origins.split(",") if item.strip()]
 else:
     allowed_origins_list = [
-        "http://nexus-triage.duckdns.org:7860",
+        "https://nexus-triage.duckdns.org",
         "https://nexus-uny5.onrender.com",
         "http://localhost:7860",
         "http://127.0.0.1:7860",

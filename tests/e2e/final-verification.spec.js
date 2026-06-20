@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 
 test("Final verification - all three critical features", async ({ page }) => {
-  const baseUrl = "http://nexus-triage.duckdns.org:7860";
+  const baseUrl = "https://nexus-triage.duckdns.org";
   const results = {
     submissionNavigation: null,
     guardianButtonsVisible: null,

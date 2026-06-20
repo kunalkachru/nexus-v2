@@ -9,7 +9,7 @@ Everything you need to set up locally, run the full test suite, and deploy to pr
 | Environment | URL | Auto-deploys on |
 |---|---|---|
 | Local dev | http://localhost:7860 | Manual |
-| Oracle Cloud (Production) | http://nexus-triage.duckdns.org:7860 | git push origin master |
+| Oracle Cloud (Production) | https://nexus-triage.duckdns.org | git push origin master |
 | Render (Demo) | https://nexus-uny5.onrender.com | git push origin master |
 
 **Test baseline:** 450 tests passing  
@@ -98,7 +98,7 @@ Expected: 21 passed
 ### Smoke tests against any environment
 ```bash
 bash scripts/test-live.sh http://localhost:7860
-bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860
+bash scripts/test-live.sh https://nexus-triage.duckdns.org
 bash scripts/test-live.sh https://nexus-uny5.onrender.com
 ```
 
@@ -171,7 +171,7 @@ ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239 "cd nexus-v2 && git
 
 ### Verify after deploy
 ```bash
-curl http://nexus-triage.duckdns.org:7860/health
+curl https://nexus-triage.duckdns.org/health
 curl https://nexus-uny5.onrender.com/health
 ```
 
@@ -204,7 +204,7 @@ git add -A
 git commit -m "your message"
 git push origin master
 # wait 5 minutes then verify:
-bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860
+bash scripts/test-live.sh https://nexus-triage.duckdns.org
 ```
 
 ---
@@ -270,10 +270,10 @@ Run 5 minutes before any demo:
 curl https://nexus-uny5.onrender.com/health
 
 # Verify Oracle Cloud
-curl http://nexus-triage.duckdns.org:7860/health
+curl https://nexus-triage.duckdns.org/health
 ```
 
-Open in incognito: http://nexus-triage.duckdns.org:7860/queue
+Open in incognito: https://nexus-triage.duckdns.org/queue
 
 **Demo flow:**
 1. /queue — show Command Center with 5 incidents

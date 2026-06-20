@@ -10,7 +10,7 @@ What makes NEXUS different from generic LLM debugging: the evidence posture syst
 
 ## Your Pilot Access
 
-**Production URL**: http://nexus-triage.duckdns.org:7860
+**Production URL**: https://nexus-triage.duckdns.org
 
 **Authentication**: Include these headers on all API calls:
 - `X-Tenant-ID: tenant-a`
@@ -85,4 +85,4 @@ For each incident type, describe the symptoms you observe—timeouts, errors, la
 
 ---
 
-**Ready to start?** Go to http://nexus-triage.duckdns.org:7860 and explore incident INC001.
+**Ready to start?** Go to https://nexus-triage.duckdns.org and explore incident INC001.

@@ -69,4 +69,4 @@ jobs:
         run: sleep 30
 
       - name: Smoke test production
-        run: bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860
+        run: bash scripts/test-live.sh https://nexus-triage.duckdns.org

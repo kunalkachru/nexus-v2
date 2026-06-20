@@ -40,4 +40,4 @@ ssh -i ~/Downloads/ssh-key-2026-06-19.key -o StrictHostKeyChecking=no ubuntu@92.
 ENDSSH
 
 echo "=== Oracle Cloud deployment successful ==="
-echo "URL: http://nexus-triage.duckdns.org:7860/queue"
+echo "URL: https://nexus-triage.duckdns.org/queue"

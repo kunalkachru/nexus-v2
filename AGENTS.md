@@ -143,11 +143,11 @@ These rules apply to all Claude Code autonomous loop sessions:
 
 | Environment | URL | Auto-deploys on |
 |---|---|---|
-| Oracle Cloud | http://nexus-triage.duckdns.org:7860 | git push origin master via GitHub Actions |
+| Oracle Cloud | https://nexus-triage.duckdns.org | git push origin master via GitHub Actions |
 | Render | https://nexus-uny5.onrender.com | git push origin master |
 
 SSH access: `ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239`
-Smoke test: `bash scripts/test-live.sh http://nexus-triage.duckdns.org:7860`
+Smoke test: `bash scripts/test-live.sh https://nexus-triage.duckdns.org`
 Release gate: `bash scripts/run-release-gate.sh`
 
 ## Current Code Map

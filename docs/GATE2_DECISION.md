@@ -69,7 +69,7 @@
 - [x] API contract verified (all 5 endpoints returning correct structure)
 
 ### Handover to Pilot Customer
-1. **Access:** Provide login to http://nexus-triage.duckdns.org:7860
+1. **Access:** Provide login to https://nexus-triage.duckdns.org
 2. **Runbook:** Use docs/CICD.md for operations (deploy, health check, troubleshooting)
 3. **Monitoring:** Check dashboard at Oracle Cloud console (CPU, memory, network)
 4. **Support:** 24-hour monitoring during first week. Escalate issues to engineering.
@@ -132,7 +132,7 @@ If pilot succeeds (70%+ incident classification accuracy, no critical bugs), pro
 
 | Environment | URL | Status | Data Persistence |
 |---|---|---|---|
-| **Oracle Cloud** | http://nexus-triage.duckdns.org:7860 | ✅ Live | Persistent (named volume) |
+| **Oracle Cloud** | https://nexus-triage.duckdns.org | ✅ Live | Persistent (named volume) |
 | **Render** | https://nexus-uny5.onrender.com | ✅ Live | Ephemeral (demo only) |
 
 ### Configuration
