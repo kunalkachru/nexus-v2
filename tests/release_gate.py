@@ -16,7 +16,7 @@ from server.app import app
 def test_section_1_unit_tests():
     """Run full test suite and verify count."""
     print("\n" + "=" * 80)
-    print("SECTION 1 — Unit Tests (450 tests, no server)")
+    print("SECTION 1 — Unit Tests (470 tests, no server)")
     print("=" * 80)
 
     result = subprocess.run(
@@ -29,11 +29,11 @@ def test_section_1_unit_tests():
     output = result.stdout + result.stderr
     print(output)
 
-    if "450 passed" not in output:
-        pytest.fail(f"Expected 450 passed tests. Output:\n{output}")
+    if "470 passed" not in output:
+        pytest.fail(f"Expected 470 passed tests. Output:\n{output}")
 
     assert result.returncode == 0, f"Unit tests failed with return code {result.returncode}"
-    print("✅ SECTION 1 PASSED: 450 tests passed\n")
+    print("✅ SECTION 1 PASSED: 470 tests passed\n")
 
 
 # ============================================================================
