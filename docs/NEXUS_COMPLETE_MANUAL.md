@@ -108,6 +108,31 @@ X-User-ID: your-name
 
 ---
 
+### 1.5 Running with Docker (alternative to Python setup)
+
+If you have Docker Desktop installed and don't want to manage a Python virtual environment:
+
+**Quick start:**
+```bash
+./scripts/docker_fresh.sh
+```
+
+**With REPLICA runtime replay:**
+```bash
+ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
+```
+
+Open http://127.0.0.1:7860/queue once the script prints "Fresh container is ready."
+
+**Stop:**
+```bash
+docker compose down
+```
+
+This is equivalent to the Python direct run but uses the same Docker container as the production deployment, making it a closer approximation of production behavior.
+
+---
+
 ## PART 2 — THE FIVE SCREENS
 
 ### 2.1 Command Center (/queue)

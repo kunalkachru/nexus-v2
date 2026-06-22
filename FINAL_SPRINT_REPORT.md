@@ -10,7 +10,7 @@
 NEXUS has successfully completed all technical debt and validation items required for pilot deployment. The product is **fully functional, tested, and deployed to production**.
 
 ### Key Metrics
-- **Test Coverage:** 450/450 core tests passing ✅
+- **Test Coverage:** 470/470 core tests passing ✅
 - **Deployment:** Both Oracle Cloud and Render live and responding ✅
 - **Production Validation:** All 5 test suites passing ✅
 - **Documentation:** Complete (CICD.md, Gate 2 decision package, troubleshooting guide) ✅
@@ -33,7 +33,7 @@ NEXUS has successfully completed all technical debt and validation items require
 - Invalid compose files return structured error messages identifying specific rule violations
 
 ### Tests
-- ✅ All 450 tests passing
+- ✅ All 470 tests passing
 - ✅ Docker Compose validation tests included in test suite
 - ✅ No regressions from baseline
 
@@ -61,7 +61,7 @@ NEXUS has successfully completed all technical debt and validation items require
 - **inferred_only:** Fallback for completely unknown incident types
 
 ### Tests
-- ✅ All 450 tests passing
+- ✅ All 470 tests passing
 - ✅ Debug checklist tests passing (generate_default, generate_llm, fallback behavior)
 - ✅ Graceful degradation verified
 
@@ -86,12 +86,12 @@ OPENAI_API_KEY=sk-proj-xxx
 
 ### Key Sections
 1. **Technical Readiness Summary**
-   - Test coverage: 450/450 passing
+   - Test coverage: 470/470 passing
    - Known limitations clearly documented
    - Known risks with mitigations
 
 2. **GO Criteria**
-   - All 450 tests passing ✅
+   - All 470 tests passing ✅
    - Smoke tests passing on both deployments ✅
    - CI/CD automated ✅
    - Security audit passed ✅
@@ -219,7 +219,7 @@ Both deployments live (Oracle Cloud + Render)
 
 ### Local Test Baseline
 ```
-========================== 450 passed, 9 warnings ==========================
+========================== 470 passed, 9 warnings ==========================
 ```
 
 ### Test Breakdown by Category
@@ -369,7 +369,7 @@ Injected at Deploy Time:
 - Guardian approval process
 - Persistent database on Oracle Cloud
 - Auto-deploy pipeline
-- 450 passing tests
+- 470 passing tests
 - Production validation passed
 - Documentation (ops runbook, troubleshooting guide, Gate 2 decision)
 
@@ -411,7 +411,7 @@ Injected at Deploy Time:
 **Decision Point:** After first week, assess:
 - GO to Gate 4 (multi-tenant hardening)
 - EXTEND pilot by 1 week for more data
-- NO-GO if critical issues found (unlikely given 450 passing tests)
+- NO-GO if critical issues found (unlikely given 470 passing tests)
 
 ---
 

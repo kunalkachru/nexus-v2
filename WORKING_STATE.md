@@ -11,7 +11,7 @@ NEXUS is an AI-assisted support-to-engineering investigation product: noisy logs
 - Branch: `master`
 - Current bounded wedge: five supported outage families
 - `pytest tests/ -q` → target baseline: **470 passed** (excludes test_production_gate3.py which requires live server)
-- `npm run browser:verify` → target baseline: **10 passed** (6 failed—browser test suite needs review)
+- `npm run browser:verify` → target baseline: **16 passed**
 - `python demo.py` → demo incidents complete
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
 - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` → passes

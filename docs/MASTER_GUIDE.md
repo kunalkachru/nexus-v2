@@ -12,7 +12,7 @@ Everything you need to set up locally, run the full test suite, and deploy to pr
 | Oracle Cloud (Production) | https://nexus-triage.duckdns.org | git push origin master |
 | Render (Demo) | https://nexus-uny5.onrender.com | git push origin master |
 
-**Test baseline:** 450 tests passing  
+**Test baseline:** 470 tests passing  
 **GitHub repo:** https://github.com/kunalkachru/nexus-v2  
 **Oracle Cloud server:** 92.5.47.239 (SSH key: ~/Downloads/ssh-key-2026-06-19.key)
 
@@ -62,6 +62,38 @@ Open http://localhost:7860/queue to confirm it works.
 
 ## PART 2 — RUNNING THE APP LOCALLY
 
+### Option A — Docker (recommended, clean environment)
+
+The fastest way to run NEXUS locally without managing Python dependencies:
+
+**Standard run:**
+```bash
+./scripts/docker_fresh.sh
+```
+
+**With REPLICA runtime replay (enables 🟢 runtime-backed evidence posture):**
+```bash
+ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
+```
+
+The script stops any existing containers, prunes the Docker build cache, rebuilds the image from scratch, and waits for the health check to pass before exiting. Once complete, open http://127.0.0.1:7860/queue.
+
+Environment variables accepted by docker_fresh.sh:
+
+| Variable | Default | Effect |
+|---|---|---|
+| ENABLE_RUNTIME_HOST_RELAY | 0 | Set to 1 to enable REPLICA runtime replay |
+| NO_CACHE | 1 | Set to 0 to use Docker layer cache (faster rebuilds) |
+| HOST | 127.0.0.1 | Host to health-check against |
+| PORT | 7860 | Port to health-check against |
+
+**Stop all containers:**
+```bash
+docker compose down
+```
+
+### Option B — Python direct (for active development)
+
 ### Start the server (every session)
 ```bash
 cd nexus-v2
@@ -87,13 +119,29 @@ python -m uvicorn server.app:app --host 0.0.0.0 --port 7860 --reload
 source venv/bin/activate
 pytest tests/ -q
 ```
-Expected: 450 passed
+Expected: 470 passed
 
 ### Browser tests (server must be running)
 ```bash
 npm run browser:verify
 ```
-Expected: 21 passed
+Expected: 16 passed
+
+### Deep enterprise smoke tests (requires server running)
+
+The enterprise smoke script runs 10-12 deeper checks including API contract verification, FORGE reasoning quality, GUARDIAN posture, TRACE fields, and memory enrichment:
+
+```bash
+# Basic smoke (10 checks, no relay)
+BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
+
+# Full smoke with runtime relay verification (12 checks, requires ENABLE_RUNTIME_HOST_RELAY=1)
+EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
+```
+
+Expected output: `=== All smoke checks passed ===`
+
+These tests verify deeper product correctness than the unit or browser tests — they check that INC001/INC002 FORGE reasoning cites runtime outcomes, GUARDIAN confidence is non-zero, TRACE inspection points are substantive, and memory enrichment runbooks have why_now_fit notes.
 
 ### Smoke tests against any environment
 ```bash
@@ -125,7 +173,7 @@ Expected output (runtime: ~2-3 minutes):
 
 | Section | What it verifies | Pass threshold |
 |---------|---|---|
-| 1. Unit tests | All 450 tests pass | 450/450 ✅ |
+| 1. Unit tests | All 470 tests pass | 470/470 ✅ |
 | 2. Server startup | FastAPI server healthy | Responds within 30s |
 | 3. API contracts | Health, pages, webhooks, auth | 10/10 endpoints |
 | 4. Browser sim | Scroll depth, viewport clarity, approval flow | Visual verification |
@@ -139,7 +187,7 @@ Expected output (runtime: ~2-3 minutes):
 
 ### Typical failure reasons
 
-- Unit test count < 450 → fix the failing test
+- Unit test count < 470 → fix the failing test
 - Server won't start → check port 7861 not in use
 - API tests fail → check endpoint paths and auth
 - Browser tests fail → check Playwright install
@@ -166,8 +214,10 @@ Every `git push origin master` automatically deploys to both Render and Oracle C
 
 ### Manual deploy to Oracle Cloud
 ```bash
-ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239 "cd nexus-v2 && git pull origin master && sudo docker build -t nexus . && sudo docker stop nexus || true && sudo docker rm nexus || true && sudo docker run -d --name nexus --restart always -p 7860:7860 -e NEXUS_DATABASE_PATH=/app/artifacts/incidents.json -e NEXUS_ALLOWED_TENANT_IDS=tenant-a,tenant-system -e NEXUS_FORGE_MODEL_NAME=gpt-4o -e NEXUS_USE_OPENAI=0 -e NEXUS_WEBHOOK_SIGNING_SECRET=f2f2e2cde69e33707da3e368a88f0856705aaf7d54d1dca3d283bb1f7e8cd021 -v nexus-data:/app/artifacts nexus"
+NEXUS_WEBHOOK_SIGNING_SECRET=your-secret-here bash scripts/deploy-oracle.sh
 ```
+
+To retrieve your webhook secret: go to https://github.com/kunalkachru/nexus-v2/settings/secrets/actions and find ORACLE_WEBHOOK_SECRET.
 
 ### Verify after deploy
 ```bash
@@ -252,7 +302,7 @@ Go to https://github.com/kunalkachru/nexus-v2/actions and check the error. Most 
 | server/app.py | FastAPI entry point |
 | server/agents/ | All 6 agents |
 | frontend/ | UI files |
-| tests/ | 450 tests |
+| tests/ | 470 tests |
 | scripts/deploy-oracle.sh | Manual deploy |
 | scripts/test-live.sh | Smoke tests |
 | .github/workflows/deploy.yml | CI/CD |

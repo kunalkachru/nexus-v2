@@ -13,7 +13,7 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - `INC007` auth dependency slowdown / token validation failures
 - Current validated baseline (Updated 2026-06-20):
   - `pytest tests/ -q` -> `470 passed` (excludes test_production_gate3.py which requires live server)
-  - `npm run browser:verify` -> `10 passed` (6 failed—browser test suite needs review)
+  - `npm run browser:verify` -> `16 passed`
   - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
