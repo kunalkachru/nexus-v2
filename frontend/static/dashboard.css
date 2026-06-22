@@ -366,6 +366,7 @@ body.route-pending {
 summary.section-summary {
   list-style: none;
   cursor: pointer;
+  user-select: none;
 }
 
 summary.section-summary::-webkit-details-marker {
@@ -374,16 +375,21 @@ summary.section-summary::-webkit-details-marker {
 
 .section-summary {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
+  gap: 12px;
   border-radius: 22px;
-  padding: 18px;
+  padding: 16px;
   border: 1px solid var(--border);
   background: var(--panel);
   box-shadow: var(--shadow);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  transition: opacity 0.15s ease;
+}
+
+.section-summary:hover {
+  opacity: 0.9;
 }
 
 .section-summary::before {
@@ -396,29 +402,59 @@ summary.section-summary::-webkit-details-marker {
   opacity: 0.55;
 }
 
-.section-summary::after {
-  content: "View details";
-  flex: 0 0 auto;
-  align-self: flex-start;
-  margin-top: 2px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border-accent);
-  background: var(--surface-accent);
-  color: var(--text-on-accent);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.section-summary > div:first-child {
+  flex: 1;
 }
 
-.section-collapsible[open] > .section-summary::after {
-  content: "Hide details";
+.summary-chevron {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  color: currentColor;
+}
+
+.section-summary:hover .summary-chevron {
+  opacity: 0.8;
+}
+
+details[open] > .section-summary .summary-chevron {
+  transform: rotate(90deg);
+  opacity: 1;
 }
 
 .section-collapsible[open] > .section-summary {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
+}
+
+.summary-hint {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  margin-top: 4px;
+  font-weight: normal;
+  line-height: 1.4;
+}
+
+.summary-preview {
+  font-size: 0.75rem;
+  opacity: 0.5;
+  margin-top: 6px;
+  font-weight: normal;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.summary-preview-tag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  white-space: nowrap;
 }
 
 .details-body {
