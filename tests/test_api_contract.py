@@ -117,6 +117,87 @@ def test_webhook_creates_nexus_incident(client: TestClient) -> None:
     assert payload["recent_deployments"] == []
 
 
+def test_datadog_webhook_creates_nexus_incident(client: TestClient) -> None:
+    import hmac
+    import hashlib
+    from datetime import datetime, timezone
+
+    body = {
+        "title": "High error rate on payment-svc",
+        "priority": "P1",
+        "id": "dd_12345",
+        "tags": ["service:payment-svc", "env:prod"],
+        "url": "https://app.datadoghq.com/monitors/123456",
+    }
+    payload = json.dumps(body, separators=(",", ":"))
+
+    timestamp = str(int(datetime.now(timezone.utc).timestamp()))
+    secret = app.state.config.webhook_signing_secret
+    message = f"{timestamp}.{payload}"
+    signature = "v1," + hmac.new(
+        secret.encode("utf-8"),
+        message.encode("utf-8"),
+        hashlib.sha256
+    ).hexdigest()
+
+    response = client.post(
+        "/webhooks/datadog",
+        headers={
+            "x-tenant-id": "tenant-system",
+            "x-datadog-signature": signature,
+            "dd-timestamp": timestamp,
+            "content-type": "application/json",
+        },
+        content=payload,
+    )
+
+    assert response.status_code == 202
+    response_payload = response.json()
+    assert "nexus_incident_id" in response_payload
+    assert response_payload["status"] == "investigating"
+
+
+def test_pagerduty_webhook_creates_nexus_incident(client: TestClient) -> None:
+    import hmac
+    import hashlib
+
+    body = {
+        "event": {"type": "incident.triggered"},
+        "incident": {
+            "incident_number": 99,
+            "title": "Database connection pool exhausted",
+            "urgency": "high",
+            "service": {"summary": "checkout-service"},
+            "created_at": "2026-05-25T14:32:00Z",
+            "body": {"details": "Connection pool at 100/100 capacity"}
+        }
+    }
+    payload = json.dumps(body, separators=(",", ":"))
+    payload_bytes = payload.encode("utf-8")
+
+    secret = app.state.config.webhook_signing_secret
+    signature = "v1=" + hmac.new(
+        secret.encode("utf-8"),
+        payload_bytes,
+        hashlib.sha256
+    ).hexdigest()
+
+    response = client.post(
+        "/webhooks/pagerduty",
+        headers={
+            "x-tenant-id": "tenant-system",
+            "x-webhook-signature": signature,
+            "content-type": "application/json",
+        },
+        content=payload,
+    )
+
+    assert response.status_code == 202
+    response_payload = response.json()
+    assert "nexus_incident_id" in response_payload
+    assert response_payload["status"] == "investigating"
+
+
 def test_incident_status_returns_persisted_lifecycle(
     client: TestClient,
     seeded_incident: IncidentRecord,
@@ -565,6 +646,72 @@ def test_raw_text_contract_surfaces_weak_partial_input_quality(client: TestClien
     assert "service" in context_payload["incident"]["input_quality"]["missing_signals"]
     assert "severity" in context_payload["incident"]["input_quality"]["missing_signals"]
     assert "scaffold-only" in context_payload["classification"]["reasoning"].lower()
+
+
+def test_raw_text_returns_investigation_guidance_for_unsupported_incidents(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": "CDN edge nodes returning stale cached responses after price updates. Fastly purge API returning 200 but cache showing old content.",
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "platform",
+            "severity_hint": "P2",
+        },
+    )
+
+    assert response.status_code == 400
+    payload = response.json()
+    assert payload["detail"]["error"] == "unsupported_incident_type"
+    assert "general_investigation" in payload["detail"]
+    assert payload["detail"]["general_investigation"]["category"] == "CDN / Caching"
+    assert len(payload["detail"]["general_investigation"]["steps"]) >= 3
+    assert payload["detail"]["general_investigation"]["steps"][0]["action"]
+    assert payload["detail"]["supported"] is False
+    assert "supported_families" in payload["detail"]
+
+
+def test_raw_text_returns_ml_investigation_guidance_for_unsupported_incidents(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": "Recommendation engine returning generic suggestions instead of personalized ones. Model accuracy degraded after latest deployment.",
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "platform",
+            "severity_hint": "P2",
+        },
+    )
+
+    assert response.status_code == 400
+    payload = response.json()
+    assert payload["detail"]["error"] == "unsupported_incident_type"
+    assert "general_investigation" in payload["detail"]
+    assert payload["detail"]["general_investigation"]["category"] == "ML / Model Degradation"
+    assert len(payload["detail"]["general_investigation"]["steps"]) >= 3
+
+
+def test_raw_text_returns_geographic_investigation_guidance_for_unsupported_incidents(client: TestClient, auth_headers) -> None:
+    response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": "Users in European regions reporting extreme latency while US users see normal performance. Affects Italian and Spanish ISPs specifically.",
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "platform",
+            "severity_hint": "P2",
+        },
+    )
+
+    assert response.status_code == 400
+    payload = response.json()
+    assert payload["detail"]["error"] == "unsupported_incident_type"
+    assert "general_investigation" in payload["detail"]
+    assert payload["detail"]["general_investigation"]["category"] == "Geographic / Routing"
+    assert len(payload["detail"]["general_investigation"]["steps"]) >= 3
 
 
 def test_raw_text_contract_uses_tenant_bootstrap_service_hints(

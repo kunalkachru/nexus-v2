@@ -12,7 +12,7 @@ Everything you need to set up locally, run the full test suite, and deploy to pr
 | Oracle Cloud (Production) | https://nexus-triage.duckdns.org | git push origin master |
 | Render (Demo) | https://nexus-uny5.onrender.com | git push origin master |
 
-**Test baseline:** 470 tests passing  
+**Test baseline:** 485 tests passing  
 **GitHub repo:** https://github.com/kunalkachru/nexus-v2  
 **Oracle Cloud server:** 92.5.47.239 (SSH key: ~/Downloads/ssh-key-2026-06-19.key)
 
@@ -376,14 +376,93 @@ Go to https://github.com/kunalkachru/nexus-v2/actions and check the error. Most 
 
 ---
 
-## PART 10 — KEY FILES
+## PART 10 — WEBHOOK INTEGRATIONS
+
+NEXUS supports incident ingestion from Datadog and PagerDuty webhooks. This allows real-time incident classification without manual form submission.
+
+### Datadog Integration
+
+**Step 1 — Configure NEXUS to receive Datadog webhooks**
+
+In your Datadog account, create a new webhook integration pointing to:
+```
+https://nexus-triage.duckdns.org/webhooks/datadog
+```
+
+**Step 2 — Set the webhook signing secret**
+
+Datadog will sign each webhook with the `NEXUS_WEBHOOK_SIGNING_SECRET` environment variable. Use the same secret value you've configured on the NEXUS server.
+
+**Step 3 — Test the webhook**
+
+Send a test Datadog alert and verify it appears in the NEXUS queue at `/queue`.
+
+**Example Datadog webhook payload:**
+```json
+{
+  "title": "High error rate on payment-svc",
+  "priority": "P1",
+  "id": "dd_incident_12345",
+  "tags": ["service:payment-svc", "env:prod"],
+  "url": "https://app.datadoghq.com/monitors/123456"
+}
+```
+
+### PagerDuty Integration
+
+**Step 1 — Configure NEXUS to receive PagerDuty webhooks**
+
+In your PagerDuty account, create a new Webhook Extension pointing to:
+```
+https://nexus-triage.duckdns.org/webhooks/pagerduty
+```
+
+**Step 2 — Set the webhook signing secret**
+
+PagerDuty will sign each webhook with the `NEXUS_WEBHOOK_SIGNING_SECRET` environment variable. Use the same secret value you've configured on the NEXUS server.
+
+**Step 3 — Attach to incidents**
+
+Select "Attach to all incidents in this account" or choose specific incident types.
+
+**Step 4 — Test the webhook**
+
+Trigger a test incident in PagerDuty and verify it appears in the NEXUS queue at `/queue`.
+
+**Example PagerDuty webhook payload:**
+```json
+{
+  "event": {"type": "incident.triggered"},
+  "incident": {
+    "incident_number": 99,
+    "title": "Database connection pool exhausted",
+    "urgency": "high",
+    "service": {"summary": "checkout-service"},
+    "created_at": "2026-05-25T14:32:00Z",
+    "body": {"details": "Connection pool at 100/100 capacity"}
+  }
+}
+```
+
+### Webhook Signature Verification
+
+Both Datadog and PagerDuty webhooks are verified using HMAC-SHA256 signatures:
+
+- **Datadog**: Uses `X-Datadog-Signature` header with format `v1,<signature>`
+- **PagerDuty**: Uses `X-Webhook-Signature` header with format `v1=<signature>`
+
+The signature is computed over the request body using the `NEXUS_WEBHOOK_SIGNING_SECRET`. Invalid signatures return HTTP 401.
+
+---
+
+## PART 11 — KEY FILES
 
 | File | Purpose |
 |---|---|
 | server/app.py | FastAPI entry point |
 | server/agents/ | All 6 agents |
 | frontend/ | UI files |
-| tests/ | 470 tests |
+| tests/ | 485 tests |
 | scripts/deploy-oracle.sh | Manual deploy |
 | scripts/test-live.sh | Smoke tests |
 | .github/workflows/deploy.yml | CI/CD |

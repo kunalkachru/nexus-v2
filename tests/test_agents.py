@@ -545,3 +545,74 @@ def test_guardian_accuracy_is_at_least_ninety_percent() -> None:
         assert correct / len(cases) >= 0.9
 
     asyncio.run(scenario())
+
+
+def test_sentinel_classifies_cdn_cache_failure() -> None:
+    agent = SentinelAgent()
+    from server.models import SystemContext
+
+    result = agent.classify(
+        raw_symptoms=[
+            "CDN edge nodes returning stale cached responses after product price updates",
+            "Fastly purge API returning 200 but cache showing old content",
+            "Affecting 8% of German users with geographic inconsistency",
+        ],
+        system_context=SystemContext(
+            service="cdn-edge",
+            language="Platform",
+            infra="Fastly",
+            dependencies=["fastly-api"],
+        ),
+    )
+
+    assert result.incident_id == "INC009"
+    assert result.incident_name == "CDN / Cache Invalidation Failure"
+    assert result.confidence >= 0.75
+
+
+def test_sentinel_classifies_ml_model_degradation() -> None:
+    agent = SentinelAgent()
+    from server.models import SystemContext
+
+    result = agent.classify(
+        raw_symptoms=[
+            "Recommendation engine returning generic fallback suggestions",
+            "Model cache hit rate dropping while latency normal",
+            "Quality regression after latest model version deployment",
+            "Feature store health showing data drift signals",
+        ],
+        system_context=SystemContext(
+            service="ml-inference",
+            language="Python/TensorFlow",
+            infra="Kubernetes",
+            dependencies=["feature-store", "model-registry"],
+        ),
+    )
+
+    assert result.incident_id == "INC010"
+    assert result.incident_name == "ML Model Degradation"
+    assert result.confidence >= 0.75
+
+
+def test_sentinel_classifies_geographic_routing_failure() -> None:
+    agent = SentinelAgent()
+    from server.models import SystemContext
+
+    result = agent.classify(
+        raw_symptoms=[
+            "Italian and Spanish users reporting timeouts while US users see normal latency",
+            "Error rate varies significantly by geographic region",
+            "Affects specific IP ranges from European ISPs",
+            "Load balancer configuration mismatch",
+        ],
+        system_context=SystemContext(
+            service="global-routing",
+            language="Platform",
+            infra="Multi-region AWS",
+            dependencies=["route53", "load-balancer"],
+        ),
+    )
+
+    assert result.incident_id == "INC011"
+    assert result.incident_name == "Geographic / Routing Failure"
+    assert result.confidence >= 0.75

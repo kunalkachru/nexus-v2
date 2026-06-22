@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Coroutine
 import logging
 
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -1235,6 +1235,126 @@ async def receive_incident_webhook(
     response = await service.create_incident_from_webhook(payload, tenant_id=tenant_id)
     await write_audit_log("incident.webhook.accepted", tenant_id, response)
     return response
+
+
+@app.post("/webhooks/datadog", status_code=202)
+async def receive_datadog_webhook(
+    request: Request,
+    incident_service: IncidentService = Depends(get_incident_service),
+) -> dict[str, object]:
+    import hmac
+    import hashlib
+
+    raw_body = await request.body()
+    config = getattr(request.app.state, "config", None)
+    webhook_secret = getattr(config, "webhook_signing_secret", "")
+
+    dd_signature = request.headers.get("x-datadog-signature", "").strip()
+    if dd_signature:
+        timestamp = request.headers.get("dd-timestamp", "")
+        if not timestamp:
+            raise HTTPException(status_code=401, detail="Missing dd-timestamp header")
+        message = f"{timestamp}.{raw_body.decode('utf-8')}"
+        expected_signature = "v1," + hmac.new(
+            webhook_secret.encode("utf-8"),
+            message.encode("utf-8"),
+            hashlib.sha256
+        ).hexdigest()
+        if not hmac.compare_digest(dd_signature, expected_signature):
+            logger.warning("datadog_webhook_signature_mismatch", extra={"path": request.url.path})
+            raise HTTPException(status_code=401, detail="invalid webhook signature")
+
+    try:
+        payload_data = await request.json()
+
+        title = payload_data.get("title", "Datadog Alert")
+        priority = payload_data.get("priority", "P3")
+        severity_map = {"P1": "P1", "P2": "P2", "P3": "P3", "P4": "P4", "P5": "P4"}
+        severity = severity_map.get(priority, "P3")
+
+        tags = payload_data.get("tags", [])
+        service_name = next((t.split(":")[-1] for t in tags if t.startswith("service:")), "datadog-alert")
+
+        detected_at = payload_data.get("date", datetime.now(timezone.utc).isoformat())
+
+        incident_id = payload_data.get("id", f"dd_{hashlib.sha256(raw_body).hexdigest()[:8]}")
+
+        webhook_payload = IncomingIncidentWebhook(
+            incident_id=incident_id,
+            title=title,
+            severity=severity,
+            detected_at=detected_at,
+            monitoring_source="datadog",
+            metrics={"tags": tags, "url": payload_data.get("url", "")}
+        )
+
+        tenant_id = request.app.state.tenancy_service.resolve_webhook_tenant(request)
+        response = await incident_service.create_incident_from_webhook(webhook_payload, tenant_id=tenant_id)
+        await write_audit_log("incident.datadog_webhook.accepted", tenant_id, response)
+        return response
+    except Exception as e:
+        logger.exception("Failed to process Datadog webhook")
+        raise HTTPException(status_code=400, detail=f"Failed to process webhook: {str(e)}")
+
+
+@app.post("/webhooks/pagerduty", status_code=202)
+async def receive_pagerduty_webhook(
+    request: Request,
+    incident_service: IncidentService = Depends(get_incident_service),
+) -> dict[str, object]:
+    import hmac
+    import hashlib
+
+    raw_body = await request.body()
+    config = getattr(request.app.state, "config", None)
+    webhook_secret = getattr(config, "webhook_signing_secret", "")
+
+    pd_signature = request.headers.get("x-webhook-signature", "").strip()
+    if pd_signature:
+        expected_signature = "v1=" + hmac.new(
+            webhook_secret.encode("utf-8"),
+            raw_body,
+            hashlib.sha256
+        ).hexdigest()
+        if not hmac.compare_digest(pd_signature, expected_signature):
+            logger.warning("pagerduty_webhook_signature_mismatch", extra={"path": request.url.path})
+            raise HTTPException(status_code=401, detail="invalid webhook signature")
+
+    try:
+        payload_data = await request.json()
+
+        if "event" not in payload_data or "incident" not in payload_data:
+            raise ValueError("Invalid PagerDuty webhook payload format")
+
+        incident = payload_data.get("incident", {})
+        title = incident.get("title", "PagerDuty Incident")
+        urgency = incident.get("urgency", "high")
+        severity_map = {"high": "P1", "low": "P2"}
+        severity = severity_map.get(urgency, "P2")
+
+        service_name = incident.get("service", {}).get("summary", "pagerduty-incident")
+        detected_at = incident.get("created_at", datetime.now(timezone.utc).isoformat())
+        incident_id = incident.get("incident_number", f"pd_{hashlib.sha256(raw_body).hexdigest()[:8]}")
+
+        body = incident.get("body", {})
+        details = body.get("details", "") if isinstance(body, dict) else str(body)
+
+        webhook_payload = IncomingIncidentWebhook(
+            incident_id=str(incident_id),
+            title=title,
+            severity=severity,
+            detected_at=detected_at,
+            monitoring_source="datadog",
+            metrics={"urgency": urgency, "service": service_name, "details": details}
+        )
+
+        tenant_id = request.app.state.tenancy_service.resolve_webhook_tenant(request)
+        response = await incident_service.create_incident_from_webhook(webhook_payload, tenant_id=tenant_id)
+        await write_audit_log("incident.pagerduty_webhook.accepted", tenant_id, response)
+        return response
+    except Exception as e:
+        logger.exception("Failed to process PagerDuty webhook")
+        raise HTTPException(status_code=400, detail=f"Failed to process webhook: {str(e)}")
 
 
 @app.get("/incidents/{nexus_incident_id}")

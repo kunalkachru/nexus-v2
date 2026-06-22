@@ -154,6 +154,66 @@ INCIDENT_TYPES: tuple[IncidentDefinition, ...] = (
         root_cause="Regional failover automation did not switch producers to the standby queue",
         fix="Promote the standby queue endpoint and replay queued messages after traffic recovers",
     ),
+    IncidentDefinition(
+        id="INC009",
+        name="CDN / Cache Invalidation Failure",
+        severity="P2",
+        difficulty="Medium",
+        symptoms=[
+            "CDN cache not propagating after content updates",
+            "Stale responses returned from edge nodes despite purge requests",
+            "Cache purge API returning 200 but content unchanged",
+            "Geographic inconsistency in responses",
+        ],
+        system_context={
+            "service": "cdn-edge",
+            "language": "Platform",
+            "infra": "Fastly/CloudFront",
+            "dependencies": ["fastly-api", "cloudfront", "origin-servers"],
+        },
+        root_cause="Cache invalidation request not propagating to all edge nodes or purge API misconfiguration",
+        fix="Force purge all edge caches, verify propagation across regions, check CDN API configuration and TTL settings",
+    ),
+    IncidentDefinition(
+        id="INC010",
+        name="ML Model Degradation",
+        severity="P2",
+        difficulty="Medium",
+        symptoms=[
+            "Model returning generic or fallback responses to valid requests",
+            "Cache hit rate dropping while latency remains normal",
+            "Model version change correlating with output quality regression",
+            "Feature store health showing data drift or pipeline failures",
+        ],
+        system_context={
+            "service": "ml-inference",
+            "language": "Python/TensorFlow",
+            "infra": "Kubernetes on EKS",
+            "dependencies": ["feature-store", "model-registry", "inference-engine"],
+        },
+        root_cause="Model serving degraded outputs due to version regression, feature pipeline failure, or training data drift",
+        fix="Roll back model version, verify feature pipeline health, check for training data drift, validate inference engine configuration",
+    ),
+    IncidentDefinition(
+        id="INC011",
+        name="Geographic / Routing Failure",
+        severity="P2",
+        difficulty="Medium",
+        symptoms=[
+            "Error rate varies significantly by user geography or region",
+            "Subset of users in specific countries or regions affected",
+            "Affects specific IP ranges or ISP routes",
+            "Load balancer misconfiguration or DNS propagation issues",
+        ],
+        system_context={
+            "service": "global-routing",
+            "language": "Platform",
+            "infra": "Multi-region AWS/GCP",
+            "dependencies": ["route53", "load-balancer", "anycast-dns"],
+        },
+        root_cause="Regional routing misconfiguration, load balancer failover issue, or DNS propagation delay affecting specific geographies",
+        fix="Check regional load balancer configuration, verify DNS propagation across geographies, test from multiple regions, adjust routing policies",
+    ),
 )
 
 
