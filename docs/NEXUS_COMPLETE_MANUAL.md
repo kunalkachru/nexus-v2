@@ -415,8 +415,11 @@ All API calls require headers:
 ```
 X-Tenant-ID: tenant-a
 X-User-ID: your-name
+X-Roles: operator
 Content-Type: application/json
 ```
+
+The `X-Roles` header is required for all write operations (creating, updating, approving incidents). Valid roles: `operator`, `incident_manager`, `guardian`, `admin`.
 
 **Submit a fresh incident:**
 ```bash
@@ -424,6 +427,7 @@ curl -X POST https://nexus-triage.duckdns.org/api/v1/incidents/raw-text \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: tenant-a" \
   -H "X-User-ID: test-user" \
+  -H "X-Roles: operator" \
   -d '{"raw_text": "Database connection pool exhausted, all 50 connections in use"}'
 ```
 Expected: `{"nexus_incident_id": "nxs_...", "status": "created"}`
@@ -432,7 +436,8 @@ Expected: `{"nexus_incident_id": "nxs_...", "status": "created"}`
 ```bash
 curl https://nexus-triage.duckdns.org/api/v1/incidents/queue \
   -H "X-Tenant-ID: tenant-a" \
-  -H "X-User-ID: test-user"
+  -H "X-User-ID: test-user" \
+  -H "X-Roles: operator"
 ```
 Expected: JSON array of incidents
 
@@ -440,7 +445,8 @@ Expected: JSON array of incidents
 ```bash
 curl https://nexus-triage.duckdns.org/api/v1/tenant/pilot-scorecard \
   -H "X-Tenant-ID: tenant-a" \
-  -H "X-User-ID: test-user"
+  -H "X-User-ID: test-user" \
+  -H "X-Roles: operator"
 ```
 Expected: JSON with `incidents_handled`, `incidents_runtime_backed`, `computed_at`
 
@@ -575,7 +581,8 @@ P99 latency went from 120ms to 8400ms. Started 20 minutes ago at 14:32 UTC.
 ```bash
 curl -s https://nexus-triage.duckdns.org/api/v1/tenant/pilot-scorecard \
   -H "X-Tenant-ID: tenant-a" \
-  -H "X-User-ID: test-user" | python3 -m json.tool
+  -H "X-User-ID: test-user" \
+  -H "X-Roles: operator" | python3 -m json.tool
 ```
 ✅ Expected: Response contains `computed_at` field with a recent timestamp
 ✅ Expected: `incidents_handled` matches actual number of incidents you've submitted
@@ -600,6 +607,7 @@ curl -s -o /dev/null -w "%{http_code}" \
   -H "Content-Length: 2000000" \
   -H "X-Tenant-ID: tenant-a" \
   -H "X-User-ID: test-user" \
+  -H "X-Roles: operator" \
   -d '{}'
 ```
 ✅ Expected: 413

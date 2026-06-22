@@ -15,6 +15,9 @@ What makes NEXUS different from generic LLM debugging: the evidence posture syst
 **Authentication**: Include these headers on all API calls:
 - `X-Tenant-ID: tenant-a`
 - `X-User-ID: your-name`
+- `X-Roles: operator`
+
+The `X-Roles` header is required for all API write operations. Valid roles are: `operator`, `incident_manager`, `guardian`, `admin`. Use `operator` for standard incident submission and investigation.
 
 **Demo incidents**: The 5 demo incidents (INC001–INC007) are pre-loaded and always available. Click through each one to see how NEXUS investigates. Try clicking the Guardian approve button on one to see the approval flow.
 
