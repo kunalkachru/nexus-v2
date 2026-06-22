@@ -217,13 +217,94 @@ Every `git push origin master` automatically deploys to both Render and Oracle C
 NEXUS_WEBHOOK_SIGNING_SECRET=your-secret-here bash scripts/deploy-oracle.sh
 ```
 
-To retrieve your webhook secret: go to https://github.com/kunalkachru/nexus-v2/settings/secrets/actions and find ORACLE_WEBHOOK_SECRET.
+Note: Retrieve the secret from GitHub repo Settings → Secrets and variables → Actions → ORACLE_WEBHOOK_SECRET.
 
 ### Verify after deploy
 ```bash
 curl https://nexus-triage.duckdns.org/health
 curl https://nexus-uny5.onrender.com/health
 ```
+
+---
+
+## PART 5B — STARTING ORACLE CLOUD FROM SCRATCH
+
+If the container is not running (e.g. after a VM restart or first-time setup):
+
+### Step 1 — SSH into the server
+```bash
+ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239
+```
+
+### Step 2 — Check if container is running
+```bash
+sudo docker ps
+```
+If you see the `nexus` container listed, it's already running — skip to Step 5.
+
+### Step 3 — Start the container (if not running)
+```bash
+sudo docker run -d \
+  --name nexus \
+  --restart always \
+  -p 7860:7860 \
+  -e NEXUS_DATABASE_PATH=/app/artifacts/incidents.json \
+  -e NEXUS_ALLOWED_TENANT_IDS=tenant-a,tenant-system \
+  -e NEXUS_FORGE_MODEL_NAME=gpt-4o \
+  -e NEXUS_USE_OPENAI=0 \
+  -e NEXUS_WEBHOOK_SIGNING_SECRET=<retrieve from GitHub Secrets ORACLE_WEBHOOK_SECRET> \
+  -v nexus-data:/app/artifacts \
+  nexus
+```
+
+### Step 4 — If image doesn't exist, build it first
+```bash
+cd nexus-v2
+git pull origin master
+sudo docker build -t nexus .
+```
+Then repeat Step 3.
+
+### Step 5 — Verify nginx is running (handles HTTPS)
+```bash
+sudo systemctl status nginx
+```
+If not running: `sudo systemctl start nginx`
+
+### Step 6 — Check iptables allows ports 80 and 443
+```bash
+sudo iptables -L INPUT -n | grep -E "80|443"
+```
+If ports 80 and 443 are not listed, add them:
+```bash
+sudo iptables -I INPUT 5 -p tcp --dport 80 -j ACCEPT
+sudo iptables -I INPUT 6 -p tcp --dport 443 -j ACCEPT
+sudo netfilter-persistent save
+```
+
+### Step 7 — Verify production is live
+```bash
+exit  # exit SSH
+curl https://nexus-triage.duckdns.org/health
+```
+Expected: `{"status": "ok"}`
+
+---
+
+## RENDER — How to restart if sleeping or broken
+
+Render free tier sleeps after 15 minutes of inactivity. To wake it:
+```bash
+curl https://nexus-uny5.onrender.com/health
+```
+Wait up to 60 seconds for `{"status": "ok"}`.
+
+If Render is broken (not just sleeping):
+1. Go to https://dashboard.render.com
+2. Click the nexus-v2 service
+3. Click "Manual Deploy" → "Deploy latest commit"
+4. Wait 3-5 minutes for the deploy to complete
+5. Verify: `curl https://nexus-uny5.onrender.com/health`
 
 ---
 
