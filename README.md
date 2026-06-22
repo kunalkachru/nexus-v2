@@ -1,136 +1,238 @@
-# NEXUS
+# Auth Service – E-Commerce Microservices
 
-NEXUS is an AI-assisted support-to-engineering investigation product for recurring customer-facing application outages.
+A **production-grade Authentication & Authorization microservice** built using **Spring Boot and JWT**, designed as part of a scalable **E-Commerce Microservices Architecture**.
 
-It is built to reduce the manual relay between support and engineering:
+This service is responsible for:
+- User registration
+- User login
+- Password encryption
+- JWT token generation and validation
+- Securing APIs using Spring Security
 
-- noisy logs and incident evidence go in
-- a structured investigation packet comes out
-- one governed human review point remains before action
+---
 
-The shipped workflow is:
+## High-Level Architecture
 
-`SENTINEL -> PRISM -> REPLICA -> TRACE -> FORGE -> GUARDIAN`
+    [ Client (Web / Mobile) ]
+                |
+                v
+        [ Auth Service ]
+                |
+                v
+          [ User Database ]
 
-NEXUS is not a universal incident platform, universal debugger, or arbitrary environment reproduction system.
+- Client authenticates using `/auth/login`
+- JWT token is returned
+- Token must be sent in the `Authorization` header for secured endpoints
+- Stateless authentication using JWT
 
-## What Problem It Solves
+---
 
-Support and triage teams still lose time on:
+## Tech Stack
 
-- collecting logs from multiple systems
-- guessing likely owners
-- searching old incidents manually
-- escalating weak cases to engineering
-- repeating the same investigation work on recurring outages
+| Layer | Technology |
+|-----|-----------|
+| Language | Java 17 |
+| Framework | Spring Boot 3 |
+| Security | Spring Security 6 |
+| Authentication | JWT (jjwt) |
+| ORM | Spring Data JPA (Hibernate) |
+| Database | MySQL / PostgreSQL |
+| Build Tool | Maven |
+| API Testing | Postman / curl |
+| Deployment | Docker + Cloud |
 
-NEXUS compresses that relay into one support-to-engineering investigation workflow.
+---
 
-## Current Product Boundary
+## Project Structure
 
-The current bounded wedge is recurring customer-facing application incidents with strong business impact and repeatable failure patterns.
+    auth-service
+    ├── controller
+    │   └── AuthController.java
+    ├── service
+    │   └── UserService.java
+    ├── security
+    │   ├── JwtUtil.java
+    │   ├── JwtAuthFilter.java
+    │   └── SecurityConfig.java
+    ├── repository
+    │   └── UserRepository.java
+    ├── entity
+    │   └── User.java
+    ├── dto
+    │   ├── AuthRequest.java
+    │   └── AuthResponse.java
+    ├── exception
+    │   └── GlobalExceptionHandler.java
+    └── AuthServiceApplication.java
 
-Supported bounded outage families:
+---
 
-1. `INC001` checkout timeout / retry amplification
-2. `INC002` checkout DB pool exhaustion / session leak
-3. `INC003` deploy regression / 5xx spike
-4. `INC005` queue / worker backlog affecting transaction completion
-5. `INC007` auth dependency slowdown / token validation failures
+## Authentication Flow
 
-Real today:
+1. User registers via `/auth/register`
+2. Password is encrypted using BCrypt
+3. User data is stored in the database
+4. JWT token is generated
+5. Client sends token in every secured request
 
-- fresh incident intake and normalization posture
-- curated demo-bundle intake on `/inputs`
-- memory-backed triage and investigation
-- bounded REPLICA runtime replay for curated packs
-- bounded TRACE developer handoff and debugger guidance
-- runtime-aware mitigation ranking
-- explicit Guardian approval
-- engineering handoff export and pilot proof surfaces
+Authorization header format:
 
-Still bounded:
+    Authorization: Bearer <JWT_TOKEN>
 
-- reproduction only works for curated packs
-- debugging is packet-based, not a universal live debugger
-- execution remains governed and human-approved
+---
 
-## Start Here
+## API Endpoints
 
-- [Master operator demo guide](/Users/kunalkachru/Documents/nexus-v3/docs/public/MASTER_OPERATOR_DEMO_GUIDE.md)
-- [Documentation index](/Users/kunalkachru/Documents/nexus-v3/docs/README.md)
-- [Public docs](/Users/kunalkachru/Documents/nexus-v3/docs/public/README.md)
-- [Internal docs](/Users/kunalkachru/Documents/nexus-v3/docs/internal/README.md)
-- [Current working state](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
+### Register User
 
-## Fastest Hands-On Review
+POST `/auth/register`
 
-If you want the shortest truthful walkthrough:
+Request body:
 
-1. Open [http://127.0.0.1:7860/queue](http://127.0.0.1:7860/queue)
-2. Open the flagship incident workspace
-3. Click `Inspect intake`
-4. On `/inputs`, choose a guided demo bundle and submit raw logs
-5. Review the fresh `nxs_...` incident from the top incident brief first
-6. Then inspect `/training` and `/settings` for proof, health, and governance surfaces
+    {
+      "username": "john",
+      "email": "john@example.com",
+      "password": "password123"
+    }
 
-For the exact step-by-step behavior on every screen, use the [master operator demo guide](/Users/kunalkachru/Documents/nexus-v3/docs/public/MASTER_OPERATOR_DEMO_GUIDE.md).
+Response:
 
-## Local Run
+    {
+      "token": "eyJhbGciOiJIUzM4NCJ9...",
+      "message": "User registered successfully"
+    }
 
-Set `OPENAI_API_KEY` when you want live model-backed reasoning instead of fallback-only behavior.
 
-Preferred packaged path:
 
-```bash
-ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
-```
+### Login User
 
-Then open:
+POST `/auth/login`
 
-- [http://127.0.0.1:7860](http://127.0.0.1:7860)
+Request body:
 
-Direct server path:
+    {
+      "username": "john",
+      "password": "password123"
+    }
 
-```bash
-uvicorn server.app:app --host 0.0.0.0 --port 7860
-```
+Response:
 
-## Validation
+    {
+      "token": "eyJhbGciOiJIUzM4NCJ9...",
+      "message": "Login successful"
+    }
 
-Core validation commands:
+---
 
-```bash
-pytest tests/ -q
-npm run browser:verify
-python demo.py
-ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
-EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
-```
+### Secured Endpoint
 
-Current validated baseline:
+GET `/auth/me`
 
-- `pytest tests/ -q` -> `410 passed` (76 core + 334 production readiness/load/DR/ops tests)
-- `npm run browser:verify` -> `16 passed` (browser verification)
-- `python demo.py` -> passes
-- Docker rebuild and enterprise smoke path -> passes
+Header:
 
-**For complete setup and testing instructions:** See [MASTER_SETUP_AND_TESTING_GUIDE.md](MASTER_SETUP_AND_TESTING_GUIDE.md)
+    Authorization: Bearer <JWT_TOKEN>
 
-## Roadmap Status
+Response:
 
-The current five-family product objective is wrapped for the present strategy.
+    You are authenticated!
 
-Any next work should stay narrow:
+---
 
-- pilot-specific hardening
-- bugfixes
-- explicitly scoped tenant follow-ups
+## Negative Test Scenarios
 
-## Repository Shape
+### Username Already Exists
 
-- `server/` backend APIs, incident pipeline, and runtime pack orchestration
-- `frontend/` operator UI
-- `runtime_host/` Docker-capable replay host for packaged demos
-- `docs/public/` market, buyer, demo, and presentation-facing material
-- `docs/internal/` operator, pilot, verification, and control docs
+HTTP Status: **400 BAD REQUEST**
+
+    {
+      "timestamp": "2026-01-30T01:01:20",
+      "message": "Username already exists",
+      "status": 400
+    }
+
+---
+
+### Invalid Password
+
+HTTP Status: **401 UNAUTHORIZED**
+
+    {
+      "timestamp": "2026-01-30T01:05:12",
+      "message": "Invalid password",
+      "status": 401
+    }
+
+---
+
+### Missing JWT Token
+
+HTTP Status: **403 FORBIDDEN**
+
+    {
+      "status": 403,
+      "error": "Forbidden"
+    }
+
+---
+
+## Security Configuration Highlights
+
+- CSRF disabled (JWT based)
+- Stateless session management
+- Custom JWT authentication filter
+- Public endpoints:
+  - `/auth/register`
+  - `/auth/login`
+- All other endpoints require authentication
+
+Core rule:
+
+    anyRequest().authenticated()
+
+---
+
+## Deployment (Free Tier Friendly)
+
+This service can be deployed on:
+- Railway
+- Render
+- Fly.io
+- AWS EC2 Free Tier
+
+### Docker (Optional)
+
+    docker build -t auth-service .
+    docker run -p 8082:8082 auth-service
+
+---
+
+## Production Readiness Checklist
+
+- JWT-based stateless authentication
+- Encrypted passwords (BCrypt)
+- Global exception handling
+- Clean layered architecture
+- Secure endpoints
+- Cloud deployable
+- GitHub-ready documentation
+
+---
+
+## Future Roadmap
+
+- API Gateway
+- Product Service
+- Order Service
+- Inventory Service
+- Payment Service
+- Centralized Config Server
+- Distributed Tracing
+- CI/CD Pipeline
+
+---
+
+## Author
+
+Built as part of a **Production-Grade E-Commerce Microservices Project**  
+using **Spring Boot and Cloud-Native best practices**.
