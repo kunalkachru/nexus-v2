@@ -648,12 +648,12 @@ def test_raw_text_contract_surfaces_weak_partial_input_quality(client: TestClien
     assert "scaffold-only" in context_payload["classification"]["reasoning"].lower()
 
 
-def test_raw_text_returns_investigation_guidance_for_unsupported_incidents(client: TestClient, auth_headers) -> None:
+def test_raw_text_accepts_cdn_cache_failure_as_supported(client: TestClient, auth_headers) -> None:
     response = client.post(
         "/api/v1/incidents/raw-text",
         headers=auth_headers(),
         json={
-            "raw_text": "CDN edge nodes returning stale cached responses after price updates. Fastly purge API returning 200 but cache showing old content.",
+            "raw_text": "CDN edge nodes are returning stale cached responses. Fastly purge API returns 200 OK but cache still shows old content. Geographic inconsistency affecting German regions.",
             "source_hint": "paste",
             "reported_by": "operator",
             "team": "platform",
@@ -661,18 +661,14 @@ def test_raw_text_returns_investigation_guidance_for_unsupported_incidents(clien
         },
     )
 
-    assert response.status_code == 400
+    # CDN incidents are now supported (INC009 is in SUPPORTED_FAMILIES)
+    assert response.status_code == 202
     payload = response.json()
-    assert payload["detail"]["error"] == "unsupported_incident_type"
-    assert "general_investigation" in payload["detail"]
-    assert payload["detail"]["general_investigation"]["category"] == "CDN / Caching"
-    assert len(payload["detail"]["general_investigation"]["steps"]) >= 3
-    assert payload["detail"]["general_investigation"]["steps"][0]["action"]
-    assert payload["detail"]["supported"] is False
-    assert "supported_families" in payload["detail"]
+    assert payload["status"] == "investigating"
+    assert "nexus_incident_id" in payload
 
 
-def test_raw_text_returns_ml_investigation_guidance_for_unsupported_incidents(client: TestClient, auth_headers) -> None:
+def test_raw_text_accepts_ml_model_degradation_family(client: TestClient, auth_headers) -> None:
     response = client.post(
         "/api/v1/incidents/raw-text",
         headers=auth_headers(),
@@ -685,15 +681,13 @@ def test_raw_text_returns_ml_investigation_guidance_for_unsupported_incidents(cl
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 202
     payload = response.json()
-    assert payload["detail"]["error"] == "unsupported_incident_type"
-    assert "general_investigation" in payload["detail"]
-    assert payload["detail"]["general_investigation"]["category"] == "ML / Model Degradation"
-    assert len(payload["detail"]["general_investigation"]["steps"]) >= 3
+    assert payload["status"] == "investigating"
+    assert "nexus_incident_id" in payload
 
 
-def test_raw_text_returns_geographic_investigation_guidance_for_unsupported_incidents(client: TestClient, auth_headers) -> None:
+def test_raw_text_accepts_geographic_routing_failure_family(client: TestClient, auth_headers) -> None:
     response = client.post(
         "/api/v1/incidents/raw-text",
         headers=auth_headers(),
@@ -706,12 +700,10 @@ def test_raw_text_returns_geographic_investigation_guidance_for_unsupported_inci
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 202
     payload = response.json()
-    assert payload["detail"]["error"] == "unsupported_incident_type"
-    assert "general_investigation" in payload["detail"]
-    assert payload["detail"]["general_investigation"]["category"] == "Geographic / Routing"
-    assert len(payload["detail"]["general_investigation"]["steps"]) >= 3
+    assert payload["status"] == "investigating"
+    assert "nexus_incident_id" in payload
 
 
 def test_raw_text_contract_uses_tenant_bootstrap_service_hints(

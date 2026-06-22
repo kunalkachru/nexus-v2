@@ -886,7 +886,7 @@ class IncidentService:
         )
 
         # Check if this incident matches any supported family
-        SUPPORTED_FAMILIES = {"INC001", "INC002", "INC003", "INC005", "INC007"}
+        SUPPORTED_FAMILIES = {"INC001", "INC002", "INC003", "INC005", "INC007", "INC009", "INC010", "INC011"}
         try:
             system_context = SystemContext(
                 service=parsed.service,
@@ -906,12 +906,15 @@ class IncidentService:
                     detail={
                         "error": "unsupported_incident_type",
                         "message": (
-                            "This incident doesn't match any of the 5 supported families: "
+                            "This incident doesn't match any of the 8 supported families: "
                             "1) Timeout/Retry Amplification (INC001), "
                             "2) DB Pool Exhaustion (INC002), "
                             "3) Deploy Regression / 5xx Spike (INC003), "
                             "4) Queue / Worker Backlog (INC005), "
-                            "5) Auth Dependency Slowdown (INC007). "
+                            "5) Auth Dependency Slowdown (INC007), "
+                            "6) CDN/Cache Invalidation (INC009), "
+                            "7) ML Model Degradation (INC010), "
+                            "8) Geographic/Routing Failure (INC011). "
                             "However, we've provided investigation guidance below to help you troubleshoot."
                         ),
                         "confidence": float(classification.confidence),

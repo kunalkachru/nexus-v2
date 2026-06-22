@@ -36,7 +36,7 @@ def test_receive_raw_text_rejects_unsupported_incident_type(client, auth_headers
     if isinstance(data.get("detail"), dict):
         detail = data["detail"]
         assert detail.get("error") == "unsupported_incident_type"
-        assert "5 supported families" in detail.get("message", "")
+        assert "8 supported families" in detail.get("message", "")
         assert "Timeout/Retry" in detail.get("message", "")
     else:
         # Fallback: message might be in detail string
