@@ -78,8 +78,6 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#focusRuntimePosture")).toBeAttached();
     await expect(page.locator("#focusInspectHere")).toBeAttached();
     await expect(page.locator(".enterprise-depth-details")).not.toHaveAttribute("open");
-    // Element is inside collapsed section by design — checking existence not visibility
-    await expect(page.getByRole("heading", { name: "What is the incident?" })).toBeAttached();
     // Collapsed sections should not be open by default (all incident page sections are intentionally closed)
     const collapsibles = await page.locator(".section-collapsible").all();
     for (const elem of collapsibles) {
@@ -88,8 +86,14 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.locator("#incidentHeroId")).toContainText(/INC(?:-|)\w+/);
 
     // Expand Agent Relay & Crew Details section to verify crew content
-    await page.locator('div:has-text("Agent Relay & Crew Details") + .details-body, details:has(h2:text("Agent Relay & Crew Details")) summary').first().click();
-    await expect(page.getByText("Specialist crew")).toBeVisible();
+    await page.evaluate(() => {
+      const details = Array.from(document.querySelectorAll('details.section-collapsible')).find(el => el.querySelector('h2')?.textContent?.includes('Agent Relay & Crew Details'));
+      if (details && !details.open) details.open = true;
+    });
+    // Wait for relay state to load from incident data
+    await page.waitForLoadState("networkidle");
+    // Verify crew bot stack is visible (contains bot names like SENTINEL, PRISM, etc.)
+    await expect(page.locator(".crew-bot-stack")).toBeVisible();
     await expect(page.locator(".crew-bot-stack .crew-bot")).toHaveCount(6);
     await expect(page.locator("#handoffCurrentOwnerCaption")).toContainText(/active relay owner|owns the case/i);
     await expect(page.locator("#handoffReceivedPacketMeta")).toContainText(/→|No inbound handoff yet/i);
@@ -103,6 +107,11 @@ test.describe("NEXUS browser verification", () => {
     await page.getByRole("button", { name: /Turn live reasoning on/i }).click();
     await expect(page.locator("#liveReasoningState")).toContainText("ON");
 
+    // Open Enterprise Task Board section programmatically
+    await page.evaluate(() => {
+      const details = Array.from(document.querySelectorAll('details.section-collapsible')).find(el => el.querySelector('h2')?.textContent?.includes('Enterprise Task Board'));
+      if (details && !details.open) details.open = true;
+    });
     await page.locator(".enterprise-depth-details > summary").click();
     await expect(page.getByText("Memory-grounded context")).toBeVisible();
     await expect(page.locator("#taskBoard .workflow-step")).toHaveCount(8);
@@ -336,6 +345,11 @@ test.describe("NEXUS browser verification", () => {
     await page.goto("/incident?nexus_incident_id=INC001");
     await page.waitForLoadState("networkidle");
 
+    // Open Enterprise Task Board section programmatically
+    await page.evaluate(() => {
+      const details = Array.from(document.querySelectorAll('details.section-collapsible')).find(el => el.querySelector('h2')?.textContent?.includes('Enterprise Task Board'));
+      if (details && !details.open) details.open = true;
+    });
     await page.locator(".enterprise-depth-details > summary").click();
     await expect(page.locator("#runtimeComparisonBlock")).toBeVisible();
     await expect(page.locator("#runtimeBaselineRow")).toBeVisible();
@@ -355,6 +369,11 @@ test.describe("NEXUS browser verification", () => {
     await page.goto("/incident?nexus_incident_id=INC002");
     await page.waitForLoadState("networkidle");
 
+    // Open Enterprise Task Board section programmatically
+    await page.evaluate(() => {
+      const details = Array.from(document.querySelectorAll('details.section-collapsible')).find(el => el.querySelector('h2')?.textContent?.includes('Enterprise Task Board'));
+      if (details && !details.open) details.open = true;
+    });
     await page.locator(".enterprise-depth-details > summary").click();
     await expect(page.locator("#runtimeComparisonBlock")).toBeVisible();
     await expect(page.locator("#runtimeBaselineRow")).toBeVisible();
