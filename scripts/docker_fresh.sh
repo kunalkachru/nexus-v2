@@ -42,8 +42,8 @@ echo "Pruning dangling Docker build cache..."
 docker builder prune --force >/dev/null 2>&1 || true
 
 echo "Starting a fresh build on ${HOST}:${PORT}..."
-docker compose "${COMPOSE_ARGS[@]}" "${BUILD_ARGS[@]}" "${SERVICES[@]}"
-docker compose "${COMPOSE_ARGS[@]}" "${UP_ARGS[@]}" "${SERVICES[@]}"
+docker compose ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"} "${BUILD_ARGS[@]}" "${SERVICES[@]}"
+docker compose ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"} "${UP_ARGS[@]}" "${SERVICES[@]}"
 
 echo "Waiting for http://${HOST}:${PORT}/health ..."
 for _ in {1..60}; do
