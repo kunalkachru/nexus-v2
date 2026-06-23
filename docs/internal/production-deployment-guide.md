@@ -124,7 +124,7 @@ CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]
 - ✓ PYTHONUNBUFFERED for container logging
 
 **Production Readiness:**
-The current Dockerfile is suitable for production deployment with the APP_ENV set to "product".
+The current Dockerfile is suitable for production deployment with the APP_ENV set to "production".
 
 ### Building Production Image
 
@@ -132,7 +132,7 @@ The current Dockerfile is suitable for production deployment with the APP_ENV se
 # Build with production environment
 docker build \
   -t nexus:prod \
-  --build-arg APP_ENV=product \
+  --build-arg APP_ENV=production \
   --label "version=1.0" \
   --label "build-date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
   .
@@ -186,7 +186,7 @@ docker-compose down
 **Environment Variables:**
 ```bash
 # Create .env file (in production, set via deployment system)
-APP_ENV=product
+APP_ENV=production
 PORT=7860
 NEXUS_RUNTIME_HOST_BASE_URL=http://runtime-host:7860
 NEXUS_RUNTIME_HOST_SHARED_TOKEN=<production-token>
@@ -198,7 +198,7 @@ NEXUS_RUNTIME_HOST_SHARED_TOKEN=<production-token>
 docker run -d \
   --name nexus-prod \
   -p 7860:7860 \
-  -e APP_ENV=product \
+  -e APP_ENV=production \
   -e PYTHONUNBUFFERED=1 \
   -v "$(pwd)/artifacts:/app/artifacts" \
   -v "$(pwd)/.backup:/app/.backup" \
@@ -246,7 +246,7 @@ spec:
           name: http
         env:
         - name: APP_ENV
-          value: "product"
+          value: "production"
         - name: PYTHONUNBUFFERED
           value: "1"
         volumeMounts:
@@ -438,7 +438,7 @@ echo "✓ All smoke tests passed"
 #### During Deployment
 
 - [ ] Pull latest code: `git pull origin main`
-- [ ] Build production image: `docker build -t nexus:prod --build-arg APP_ENV=product .`
+- [ ] Build production image: `docker build -t nexus:prod --build-arg APP_ENV=production .`
 - [ ] Verify image: `docker images nexus:prod`
 - [ ] Deploy container: `docker-compose up -d` or `docker run ...`
 - [ ] Wait 10 seconds for startup
@@ -564,7 +564,7 @@ Deployment is successful when:
 ## Next Steps
 
 1. **Validate procedures locally** — Run pre-deployment validation script
-2. **Build production image** — Create Docker image with APP_ENV=product
+2. **Build production image** — Create Docker image with APP_ENV=production
 3. **Run smoke tests** — Verify deployment readiness
 4. **Task 8.2: Monitor for 24 hours** — Continuous monitoring after deployment
 5. **Task 8.3: Handoff to operations** — Transfer complete knowledge package

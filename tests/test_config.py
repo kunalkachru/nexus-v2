@@ -73,6 +73,16 @@ def test_app_env_production_accepts_configured_tenant_ids():
     assert config.allowed_tenant_ids == ["tenant-prod-a", "tenant-prod-b"]
 
 
+def test_app_env_product_alias_maps_to_production():
+    """Verify legacy product alias is normalized to production."""
+    os.environ["APP_ENV"] = "product"
+    os.environ["NEXUS_ALLOWED_TENANT_IDS"] = "tenant-prod-a,tenant-prod-b"
+
+    config = AppConfig()
+    assert config.app_env == "production"
+    assert config.allowed_tenant_ids == ["tenant-prod-a", "tenant-prod-b"]
+
+
 def test_custom_tenant_ids_in_demo():
     """Verify custom tenant IDs work in demo mode."""
     os.environ["APP_ENV"] = "demo"

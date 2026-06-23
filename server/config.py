@@ -15,8 +15,15 @@ def _env_list(name: str, default: list[str]) -> list[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
+def _normalize_app_env(value: str) -> str:
+    normalized = value.strip().lower()
+    if normalized == "product":
+        return "production"
+    return normalized
+
+
 def _get_app_env() -> str:
-    return _env("APP_ENV", "demo")
+    return _normalize_app_env(_env("APP_ENV", "demo"))
 
 
 def _get_allowed_tenant_ids() -> list[str]:

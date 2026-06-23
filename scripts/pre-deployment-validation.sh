@@ -352,7 +352,7 @@ if [ $FAILED -eq 0 ]; then
     echo ""
     echo "Next steps:"
     echo "  1. Review any warnings above"
-    echo "  2. Build production image: docker build -t nexus:prod --build-arg APP_ENV=product ."
+    echo "  2. Build production image: docker build -t nexus:prod --build-arg APP_ENV=production ."
     echo "  3. Run smoke tests: ./scripts/local_enterprise_smoke.sh"
     echo "  4. Deploy: docker-compose up -d"
     echo ""
