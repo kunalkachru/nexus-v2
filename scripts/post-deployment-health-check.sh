@@ -44,6 +44,47 @@ info() {
     echo -e "${BLUE}ℹ${NC} $1"
 }
 
+database_kind() {
+    python3 - "$1" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+path = Path(sys.argv[1])
+if not path.exists():
+    print("missing")
+    raise SystemExit(0)
+
+header = path.read_bytes()[:16]
+if header.startswith(b"SQLite format 3"):
+    print("sqlite")
+    raise SystemExit(0)
+
+try:
+    with path.open() as handle:
+        json.load(handle)
+except Exception:
+    print("unknown")
+else:
+    print("json")
+PY
+}
+
+sqlite_incident_count() {
+    python3 - "$1" <<'PY'
+import sqlite3
+import sys
+
+connection = sqlite3.connect(sys.argv[1])
+integrity = connection.execute("PRAGMA integrity_check;").fetchone()[0]
+if integrity != "ok":
+    raise SystemExit(1)
+count = connection.execute("SELECT COUNT(*) FROM incidents;").fetchone()[0]
+connection.close()
+print(count)
+PY
+}
+
 # Header
 echo ""
 echo "╔════════════════════════════════════════════╗"
@@ -95,13 +136,20 @@ echo "2. Database connectivity..."
 if [ -f "artifacts/incidents.json" ]; then
     pass "Database file exists"
 
-    if python3 -m json.tool artifacts/incidents.json > /dev/null 2>&1; then
+    DB_KIND=$(database_kind "artifacts/incidents.json")
+    if [ "$DB_KIND" = "sqlite" ]; then
+        if INCIDENT_COUNT=$(sqlite_incident_count "artifacts/incidents.json" 2>/dev/null); then
+            pass "Database SQLite integrity valid"
+            pass "Incidents in database: $INCIDENT_COUNT"
+        else
+            fail "Database SQLite integrity check failed"
+        fi
+    elif [ "$DB_KIND" = "json" ]; then
         pass "Database JSON valid"
-
         INCIDENT_COUNT=$(python3 -c "import json; f=open('artifacts/incidents.json'); d=json.load(f); print(len(d.get('incidents', [])))")
         pass "Incidents in database: $INCIDENT_COUNT"
     else
-        fail "Database JSON invalid"
+        fail "Database file is unreadable"
     fi
 else
     fail "Database file not found"

@@ -20,7 +20,7 @@
 set -e  # Exit on any error
 
 # Configuration
-DATABASE_PATH="${DATABASE_PATH:-.artifacts/incidents.json}"
+DATABASE_PATH="${DATABASE_PATH:-artifacts/incidents.json}"
 LOG_FILE="/var/log/nexus-restore.log"
 
 # Colors for output
@@ -50,6 +50,62 @@ warning() {
 
 info() {
     echo -e "${BLUE}[INFO] $1${NC}" | tee -a "$LOG_FILE"
+}
+
+database_kind() {
+    python3 - "$1" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+path = Path(sys.argv[1])
+if not path.exists():
+    print("missing")
+    raise SystemExit(0)
+
+header = path.read_bytes()[:16]
+if header.startswith(b"SQLite format 3"):
+    print("sqlite")
+    raise SystemExit(0)
+
+try:
+    with path.open() as handle:
+        json.load(handle)
+except Exception:
+    print("unknown")
+else:
+    print("json")
+PY
+}
+
+verify_sqlite_database() {
+    python3 - "$1" <<'PY'
+import sqlite3
+import sys
+
+connection = sqlite3.connect(sys.argv[1])
+result = connection.execute("PRAGMA integrity_check;").fetchone()[0]
+connection.close()
+if result != "ok":
+    raise SystemExit(1)
+PY
+}
+
+count_sqlite_incidents() {
+    python3 - "$1" <<'PY'
+import sqlite3
+import sys
+
+connection = sqlite3.connect(sys.argv[1])
+try:
+    count = connection.execute("SELECT COUNT(*) FROM incidents;").fetchone()[0]
+except sqlite3.Error:
+    print("N/A")
+else:
+    print(count)
+finally:
+    connection.close()
+PY
 }
 
 # Argument validation
@@ -87,7 +143,7 @@ if command -v systemctl &> /dev/null; then
 elif docker ps | grep -q nexus; then
     warning "NEXUS container is running. Restore will require container stop."
     log "Attempting to stop NEXUS container..."
-    docker stop nexus-app || warning "Could not stop NEXUS (may require manual stop)"
+    docker stop nexus || warning "Could not stop NEXUS (may require manual stop)"
 fi
 
 # Create backup of current database (rollback capability)
@@ -135,20 +191,18 @@ if [ ! -s "$DATABASE_PATH" ]; then
 fi
 
 # Verify database integrity
-if [[ "$DATABASE_PATH" == *.db ]] || [[ "$DATABASE_PATH" == *.sqlite ]]; then
-    if command -v sqlite3 &> /dev/null; then
-        if ! sqlite3 "$DATABASE_PATH" "PRAGMA integrity_check;" | grep -q "ok"; then
-            error "Database integrity check failed. Restoring from backup..."
-            if [ -f "$ORIGINAL_BACKUP" ]; then
-                cp "$ORIGINAL_BACKUP" "$DATABASE_PATH"
-                error "Database is corrupted. Original restored from: $ORIGINAL_BACKUP"
-            fi
+DB_KIND=$(database_kind "$DATABASE_PATH")
+
+if [ "$DB_KIND" = "sqlite" ]; then
+    if ! verify_sqlite_database "$DATABASE_PATH"; then
+        error "Database integrity check failed. Restoring from backup..."
+        if [ -f "$ORIGINAL_BACKUP" ]; then
+            cp "$ORIGINAL_BACKUP" "$DATABASE_PATH"
+            error "Database is corrupted. Original restored from: $ORIGINAL_BACKUP"
         fi
-        success "Database integrity verified"
-    else
-        warning "sqlite3 not available. Skipping database integrity check."
     fi
-elif [[ "$DATABASE_PATH" == *.json ]]; then
+    success "Database integrity verified"
+elif [ "$DB_KIND" = "json" ]; then
     # Verify JSON is valid
     if ! python3 -m json.tool "$DATABASE_PATH" > /dev/null 2>&1; then
         error "Restored JSON is invalid. Restoring from backup..."
@@ -158,11 +212,17 @@ elif [[ "$DATABASE_PATH" == *.json ]]; then
         fi
     fi
     success "Database JSON validity verified"
+else
+    error "Restored database format is unrecognized. Restoring from backup..."
+    if [ -f "$ORIGINAL_BACKUP" ]; then
+        cp "$ORIGINAL_BACKUP" "$DATABASE_PATH"
+        error "Restore produced an unreadable database. Original restored from: $ORIGINAL_BACKUP"
+    fi
 fi
 
 # Verify data count
-if command -v sqlite3 &> /dev/null; then
-    INCIDENT_COUNT=$(sqlite3 "$DATABASE_PATH" "SELECT COUNT(*) FROM incidents;" 2>/dev/null || echo "N/A")
+if [ "$DB_KIND" = "sqlite" ]; then
+    INCIDENT_COUNT=$(count_sqlite_incidents "$DATABASE_PATH")
     if [ "$INCIDENT_COUNT" != "N/A" ]; then
         info "Restored database contains $INCIDENT_COUNT incidents"
         if [ "$INCIDENT_COUNT" -eq 0 ]; then
@@ -183,10 +243,10 @@ if command -v systemctl &> /dev/null; then
         warning "Failed to start NEXUS service. Start manually with: systemctl start nexus"
     fi
 elif command -v docker &> /dev/null; then
-    if docker start nexus-app; then
+    if docker start nexus; then
         success "NEXUS container started successfully"
     else
-        warning "Failed to start NEXUS container. Start manually with: docker start nexus-app"
+        warning "Failed to start NEXUS container. Start manually with: docker start nexus"
     fi
 else
     warning "Could not determine how to start NEXUS. Start manually."

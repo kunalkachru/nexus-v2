@@ -68,7 +68,7 @@ pip list | grep -E "^(fastapi|uvicorn|pydantic)" | wc -l | xargs -I {} echo "  �
 
 # 5. Configuration files
 echo "5. Checking configuration..."
-ls -1 prometheus/alerts.yml 2>/dev/null && echo "  ✓ Prometheus alerts configured" || echo "  ✗ Prometheus alerts missing"
+ls -1 deployment/prometheus/alerts.yml 2>/dev/null && echo "  ✓ Prometheus alerts configured" || echo "  ✗ Prometheus alerts missing"
 ls -1 docs/TROUBLESHOOTING_GUIDE.md 2>/dev/null && echo "  ✓ Troubleshooting guide present" || echo "  ✗ Troubleshooting guide missing"
 
 # 6. Backup validated
@@ -342,7 +342,7 @@ fi
 # 3. Database accessible
 echo "3. Database connectivity:"
 if [ -f "artifacts/incidents.json" ]; then
-  INCIDENT_COUNT=$(python3 -c "import json; f=open('artifacts/incidents.json'); d=json.load(f); print(len(d.get('incidents', [])))" 2>/dev/null)
+  INCIDENT_COUNT=$(python3 -c "import sqlite3; conn=sqlite3.connect('artifacts/incidents.json'); print(conn.execute('SELECT COUNT(*) FROM incidents').fetchone()[0]); conn.close()" 2>/dev/null)
   echo "  ✓ Database accessible ($INCIDENT_COUNT incidents)"
 else
   echo "  ✗ Database file not found"
