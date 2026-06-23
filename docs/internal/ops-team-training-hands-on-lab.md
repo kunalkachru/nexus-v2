@@ -47,7 +47,7 @@ This hands-on lab provides practical experience with NEXUS operations, troublesh
    ls -lh artifacts/incidents.json
    
    # Record incident count
-   echo "Pre-lab incident count: $(python3 -c "import json; f=open('artifacts/incidents.json'); d=json.load(f); print(len(d.get('incidents', [])))")"
+   echo "Pre-lab incident count: $(python3 -c 'import sqlite3; conn=sqlite3.connect(\"artifacts/incidents.json\"); print(conn.execute(\"SELECT COUNT(*) FROM incidents\").fetchone()[0]); conn.close()')"
    ```
 
 4. **Create Lab Log File:**
@@ -444,14 +444,14 @@ echo "Start time: $(date)" >> "$LAB_LOG"
 cp artifacts/incidents.json artifacts/incidents.json.pre-disaster
 
 # Count incidents
-INCIDENT_COUNT=$(python3 -c "import json; f=open('artifacts/incidents.json'); d=json.load(f); print(len(d.get('incidents', [])))")
+INCIDENT_COUNT=$(python3 -c 'import sqlite3; conn=sqlite3.connect("artifacts/incidents.json"); print(conn.execute("SELECT COUNT(*) FROM incidents").fetchone()[0]); conn.close()')
 echo "Pre-disaster incident count: $INCIDENT_COUNT" >> "$LAB_LOG"
 
 # Verify database integrity
-if python3 -m json.tool artifacts/incidents.json > /dev/null 2>&1; then
-  echo "Pre-disaster database: VALID JSON" >> "$LAB_LOG"
+if python3 -c 'import sqlite3, sys; conn=sqlite3.connect("artifacts/incidents.json"); result=conn.execute("PRAGMA integrity_check;").fetchone()[0]; conn.close(); sys.exit(0 if result == "ok" else 1)' > /dev/null 2>&1; then
+  echo "Pre-disaster database: SQLite integrity OK" >> "$LAB_LOG"
 else
-  echo "Pre-disaster database: INVALID JSON" >> "$LAB_LOG"
+  echo "Pre-disaster database: SQLite integrity FAILED" >> "$LAB_LOG"
   exit 1
 fi
 
@@ -507,7 +507,7 @@ echo "✓ Disaster simulated" >> "$LAB_LOG"
 # Verify disaster
 if [ ! -f "artifacts/incidents.json" ]; then
   echo "✓ Database is gone (disaster confirmed)"
-elif ! python3 -m json.tool artifacts/incidents.json > /dev/null 2>&1; then
+elif ! python3 -c 'import sqlite3, sys; conn=sqlite3.connect("artifacts/incidents.json"); result=conn.execute("PRAGMA integrity_check;").fetchone()[0]; conn.close(); sys.exit(0 if result == "ok" else 1)' > /dev/null 2>&1; then
   echo "✓ Database is corrupted (disaster confirmed)"
 else
   echo "❌ Disaster simulation failed (database still valid)"
@@ -540,8 +540,8 @@ if [ ! -f "artifacts/incidents.json" ]; then
   exit 1
 fi
 
-if ! python3 -m json.tool artifacts/incidents.json > /dev/null 2>&1; then
-  echo "❌ ERROR: Restored database has invalid JSON"
+if ! python3 -c 'import sqlite3, sys; conn=sqlite3.connect("artifacts/incidents.json"); result=conn.execute("PRAGMA integrity_check;").fetchone()[0]; conn.close(); sys.exit(0 if result == "ok" else 1)' > /dev/null 2>&1; then
+  echo "❌ ERROR: Restored database failed SQLite integrity check"
   exit 1
 fi
 
@@ -552,7 +552,7 @@ echo "✓ Restore completed successfully" >> "$LAB_LOG"
 
 ```bash
 # Verify data recovery
-RESTORED_COUNT=$(python3 -c "import json; f=open('artifacts/incidents.json'); d=json.load(f); print(len(d.get('incidents', [])))")
+RESTORED_COUNT=$(python3 -c 'import sqlite3; conn=sqlite3.connect("artifacts/incidents.json"); print(conn.execute("SELECT COUNT(*) FROM incidents").fetchone()[0]); conn.close()')
 
 echo "Restored incident count: $RESTORED_COUNT"
 echo "Expected incident count: $INCIDENT_COUNT"

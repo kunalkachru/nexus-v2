@@ -357,8 +357,8 @@ ls -lh artifacts/incidents.json
 
 **Database Verification:**
 ```bash
-python3 -m json.tool artifacts/incidents.json
-python3 -c "import json; f=open('artifacts/incidents.json'); d=json.load(f); print(len(d.get('incidents', [])))"
+python3 -c 'import sqlite3, sys; conn=sqlite3.connect("artifacts/incidents.json"); result=conn.execute("PRAGMA integrity_check;").fetchone()[0]; conn.close(); print(result); sys.exit(0 if result == "ok" else 1)'
+python3 -c 'import sqlite3; conn=sqlite3.connect("artifacts/incidents.json"); print(conn.execute("SELECT COUNT(*) FROM incidents").fetchone()[0]); conn.close()'
 ```
 
 ---
