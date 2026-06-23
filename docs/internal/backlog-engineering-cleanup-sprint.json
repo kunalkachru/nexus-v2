@@ -148,7 +148,7 @@
     "id": "EC-005",
     "title": "Extract intake and classification layers from server/services/incidents.py",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Read incidents.py fully and split the intake/normalization and classification responsibilities into focused modules without changing public behavior.",
     "implementation_tasks": [
       "Read server/services/incidents.py end-to-end",

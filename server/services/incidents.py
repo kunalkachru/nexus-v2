@@ -39,6 +39,13 @@ from server.models import (
     SystemContext,
 )
 from server.openai_keys import build_llm_access
+from server.services.classification import validate_supported_raw_text_classification
+from server.services.intake import (
+    build_fresh_intake_truth,
+    build_raw_text_normalized_evidence,
+    raw_input_quality,
+    validate_docker_compose_content,
+)
 from server.services.live_ingest import RawIncidentParser
 from server.services.governance import GovernanceService
 from server.services.priority import normalize_priority_label, priority_rank, priority_snapshot, shift_priority_label
@@ -104,195 +111,6 @@ def _build_replay_lifecycle(
                 "message": final_message,
             },
         ],
-    }
-
-
-def _investigation_guidance_for_keywords(raw_text: str) -> dict[str, object] | None:
-    text_lower = raw_text.lower()
-
-    if any(kw in text_lower for kw in ["cdn", "cache", "fastly", "cloudfront", "stale", "purge", "edge", "cache-control"]):
-        return {
-            "category": "CDN / Caching",
-            "steps": [
-                {
-                    "step": 1,
-                    "action": "Check CDN provider status page",
-                    "expected": "No active incidents reported",
-                    "if_fails": "Open ticket with CDN provider"
-                },
-                {
-                    "step": 2,
-                    "action": "Verify cache purge/invalidation was successful",
-                    "expected": "All edge nodes report cache miss after purge",
-                    "if_fails": "Check CDN API credentials and permissions"
-                },
-                {
-                    "step": 3,
-                    "action": "Check TTL settings and cache headers from origin",
-                    "expected": "Cache-Control headers match intended policy",
-                    "if_fails": "Update origin server cache headers or CDN config"
-                },
-                {
-                    "step": 4,
-                    "action": "Test from multiple geographic regions",
-                    "expected": "Fresh content appears consistently",
-                    "if_fails": "Check regional CDN configuration and propagation status"
-                }
-            ]
-        }
-
-    if any(kw in text_lower for kw in ["model", "ml", "recommendation", "prediction", "accuracy", "inference", "feature store", "generic output"]):
-        return {
-            "category": "ML / Model Degradation",
-            "steps": [
-                {
-                    "step": 1,
-                    "action": "Check model version in production",
-                    "expected": "Expected model version is deployed",
-                    "if_fails": "Verify model deployment pipeline"
-                },
-                {
-                    "step": 2,
-                    "action": "Compare current model outputs to baseline",
-                    "expected": "Quality metrics match or exceed baseline",
-                    "if_fails": "Consider rolling back to previous model version"
-                },
-                {
-                    "step": 3,
-                    "action": "Check feature pipeline health",
-                    "expected": "Feature store has recent data without gaps",
-                    "if_fails": "Investigate feature pipeline failures and data drift"
-                },
-                {
-                    "step": 4,
-                    "action": "Verify training data hasn't changed unexpectedly",
-                    "expected": "Training data distribution matches baseline",
-                    "if_fails": "Retrain model on current data or rollback"
-                }
-            ]
-        }
-
-    if any(kw in text_lower for kw in ["region", "geography", "country", "geo", "routing", "isp", "latency by region", "user location"]):
-        return {
-            "category": "Geographic / Routing",
-            "steps": [
-                {
-                    "step": 1,
-                    "action": "Identify affected geographic regions",
-                    "expected": "Clear pattern of affected vs unaffected regions",
-                    "if_fails": "Check if issue is truly geographic or service-wide"
-                },
-                {
-                    "step": 2,
-                    "action": "Check regional load balancer configuration",
-                    "expected": "All regions have healthy endpoints",
-                    "if_fails": "Update load balancer routing policies"
-                },
-                {
-                    "step": 3,
-                    "action": "Verify DNS propagation across regions",
-                    "expected": "DNS resolves to correct regional endpoints",
-                    "if_fails": "Check Route53 health checks or DNS configuration"
-                },
-                {
-                    "step": 4,
-                    "action": "Test latency and connectivity from affected region",
-                    "expected": "Network path is healthy and routes through proper endpoints",
-                    "if_fails": "Check ISP routing, BGP announcements, or Anycast configuration"
-                }
-            ]
-        }
-
-    if any(kw in text_lower for kw in ["database", "postgres", "mysql", "mongo", "sql"]):
-        return {
-            "category": "Database / Persistence",
-            "steps": [
-                {
-                    "step": 1,
-                    "action": "Check database connection pool status",
-                    "expected": "Available connections above threshold",
-                    "if_fails": "Identify connection leaks or excessive usage"
-                },
-                {
-                    "step": 2,
-                    "action": "Verify query performance",
-                    "expected": "Slow query logs show expected latencies",
-                    "if_fails": "Look for missing indexes or inefficient queries"
-                },
-                {
-                    "step": 3,
-                    "action": "Check database replication lag",
-                    "expected": "Replica lag is within acceptable bounds",
-                    "if_fails": "Investigate replication bottleneck or failover"
-                },
-                {
-                    "step": 4,
-                    "action": "Verify disk space and I/O metrics",
-                    "expected": "No resource exhaustion detected",
-                    "if_fails": "Scale database resources or clean up unused data"
-                }
-            ]
-        }
-
-    if any(kw in text_lower for kw in ["deploy", "release", "rollout", "version", "update"]):
-        return {
-            "category": "Deploy / Rollout",
-            "steps": [
-                {
-                    "step": 1,
-                    "action": "Identify recent deployment that correlates with incident",
-                    "expected": "Clear timeline match between deploy and error spike",
-                    "if_fails": "Look for other infrastructure changes"
-                },
-                {
-                    "step": 2,
-                    "action": "Review changes in the deployment",
-                    "expected": "Find potentially problematic code changes",
-                    "if_fails": "Check configuration changes or dependency updates"
-                },
-                {
-                    "step": 3,
-                    "action": "Consider rollback vs in-place fix",
-                    "expected": "Safe mitigation path identified",
-                    "if_fails": "Escalate to platform team for deployment safety review"
-                },
-                {
-                    "step": 4,
-                    "action": "Execute mitigation and verify recovery",
-                    "expected": "Error rate drops and metrics normalize",
-                    "if_fails": "Check if deployment change was actually the root cause"
-                }
-            ]
-        }
-
-    return {
-        "category": "General Incident Investigation",
-        "steps": [
-            {
-                "step": 1,
-                "action": "Gather comprehensive symptoms and timeline",
-                "expected": "Clear description of when issue started and what changed",
-                "if_fails": "Review monitoring data and correlation with changes"
-            },
-            {
-                "step": 2,
-                "action": "Check all relevant service dependencies",
-                "expected": "Identify which services are affected and healthy",
-                "if_fails": "Expand search to infrastructure and external services"
-            },
-            {
-                "step": 3,
-                "action": "Review recent changes across all systems",
-                "expected": "Identify candidate root causes",
-                "if_fails": "Check for subtle configuration drifts or timing issues"
-            },
-            {
-                "step": 4,
-                "action": "Validate hypothesis with targeted testing",
-                "expected": "Confirm root cause before implementing fix",
-                "if_fails": "Refine hypothesis and test again"
-            }
-        ]
     }
 
 
@@ -382,8 +200,7 @@ class IncidentService:
         return list(dict.fromkeys(hints))
 
     def _raw_input_quality(self, normalized_evidence: dict[str, object]) -> dict[str, object]:
-        quality = normalized_evidence.get("input_quality", {})
-        return dict(quality) if isinstance(quality, dict) else {}
+        return raw_input_quality(normalized_evidence)
 
     def _build_fresh_intake_truth(
         self,
@@ -396,101 +213,15 @@ class IncidentService:
         support_state: str,
         has_runtime_replay: bool,
     ) -> dict[str, object] | None:
-        if not incident.raw_input_text:
-            return None
-
-        service = str(normalized_evidence.get("service") or incident.service or "unknown-service")
-        severity = str(normalized_evidence.get("severity") or incident.severity or "P2")
-        signature = str(normalized_evidence.get("signature") or "General incident")
-        service_source = str(input_quality.get("service_source") or "defaulted")
-        severity_source = str(input_quality.get("severity_source") or "default")
-        evidence_line_count = int(input_quality.get("evidence_line_count") or 0)
-        posture = str(input_quality.get("normalization_posture") or "weak")
-        likely_owner = str(
-            triage_summary.get("likely_owner_team")
-            or triage_summary.get("likely_owner_service")
-            or "Platform Operations"
+        return build_fresh_intake_truth(
+            incident=incident,
+            normalized_evidence=normalized_evidence,
+            input_quality=input_quality,
+            issue_family=issue_family,
+            triage_summary=triage_summary,
+            support_state=support_state,
+            has_runtime_replay=has_runtime_replay,
         )
-
-        extracted_signals: list[dict[str, str]] = []
-        extracted_signals.append({
-            "label": "Service token",
-            "value": service,
-            "source": service_source,
-        })
-        extracted_signals.append({
-            "label": "Severity hint",
-            "value": severity,
-            "source": severity_source,
-        })
-        if signature and signature != "General incident":
-            extracted_signals.append({
-                "label": "Signature",
-                "value": signature,
-                "source": "log pattern",
-            })
-        extracted_signals.append({
-            "label": "Evidence lines",
-            "value": str(evidence_line_count),
-            "source": "raw input",
-        })
-        for match in input_quality.get("tenant_hints_applied", []) or []:
-            extracted_signals.append({
-                "label": "Tenant hint",
-                "value": str(match),
-                "source": "tenant bootstrap",
-            })
-
-        inferred_conclusions = [
-            {
-                "label": "Issue family",
-                "value": issue_family or "Unclassified live incident",
-            },
-            {
-                "label": "Likely owner",
-                "value": likely_owner,
-            },
-            {
-                "label": "Support posture",
-                "value": support_state,
-            },
-            {
-                "label": "Next bounded path",
-                "value": "REPLICA → TRACE → FORGE → GUARDIAN" if support_state != "unsupported" else "FORGE → GUARDIAN with inferred evidence only",
-            },
-        ]
-
-        remaining_uncertainty: list[str] = []
-        for signal in input_quality.get("missing_signals", []) or []:
-            remaining_uncertainty.append(f"Missing {signal} confirmation from the pasted evidence.")
-        for warning in input_quality.get("weak_signals", []) or []:
-            remaining_uncertainty.append(str(warning))
-        if support_state == "unsupported":
-            remaining_uncertainty.append("This incident family is outside the bounded runtime packs, so runtime validation is not available.")
-        elif support_state == "inference-first" and not has_runtime_replay:
-            remaining_uncertainty.append("The current path is still inference-first because bounded runtime replay has not validated this case yet.")
-        elif support_state == "runtime-backed" and not has_runtime_replay:
-            remaining_uncertainty.append("Pack coverage exists, but this fresh incident has not yet been validated through bounded replay in this page view.")
-
-        summary = (
-            f"Fresh intake posture is {posture}. "
-            f"NEXUS extracted {len(extracted_signals)} concrete signal(s) from the logs, inferred {len(inferred_conclusions)} routing and action clue(s), "
-            f"and is tracking {len(remaining_uncertainty)} remaining uncertainty item(s)."
-        )
-
-        return {
-            "is_fresh_incident": True,
-            "normalization_posture": posture,
-            "support_state": support_state,
-            "summary": summary,
-            "operator_guidance": str(
-                input_quality.get("operator_guidance")
-                or "Review the extracted versus inferred split before treating this packet as decision-ready."
-            ),
-            "extracted_signals": extracted_signals,
-            "inferred_conclusions": inferred_conclusions,
-            "remaining_uncertainty": remaining_uncertainty,
-        }
 
     async def _persist_latest_replay_packet(
         self,
@@ -885,52 +616,12 @@ class IncidentService:
             tenant_service_hints=self._tenant_service_hints(tenant_id),
         )
 
-        # Check if this incident matches any supported family
-        SUPPORTED_FAMILIES = {"INC001", "INC002", "INC003", "INC005", "INC007", "INC009", "INC010", "INC011"}
         try:
-            system_context = SystemContext(
-                service=parsed.service,
-                language="Unknown",
-                infra="Unknown",
-                dependencies=[],
+            validate_supported_raw_text_classification(
+                sentinel=self.sentinel,
+                parsed=parsed,
+                raw_text=payload.raw_text,
             )
-            classification = self.sentinel.classify(
-                raw_symptoms=parsed.symptoms,
-                system_context=system_context,
-            )
-            # Check if this matches one of the 5 supported families
-            if classification.incident_id not in SUPPORTED_FAMILIES:
-                investigation_guidance = _investigation_guidance_for_keywords(payload.raw_text)
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "error": "unsupported_incident_type",
-                        "message": (
-                            "This incident doesn't match any of the 8 supported families: "
-                            "1) Timeout/Retry Amplification (INC001), "
-                            "2) DB Pool Exhaustion (INC002), "
-                            "3) Deploy Regression / 5xx Spike (INC003), "
-                            "4) Queue / Worker Backlog (INC005), "
-                            "5) Auth Dependency Slowdown (INC007), "
-                            "6) CDN/Cache Invalidation (INC009), "
-                            "7) ML Model Degradation (INC010), "
-                            "8) Geographic/Routing Failure (INC011). "
-                            "However, we've provided investigation guidance below to help you troubleshoot."
-                        ),
-                        "confidence": float(classification.confidence),
-                        "matched_family": classification.incident_name,
-                        "matched_id": classification.incident_id,
-                        "supported": False,
-                        "general_investigation": investigation_guidance,
-                        "supported_families": [
-                            "Timeout/Retry Amplification",
-                            "DB Pool Exhaustion",
-                            "Deploy Regression / 5xx Spike",
-                            "Queue / Worker Backlog",
-                            "Auth Dependency Slowdown"
-                        ]
-                    },
-                )
         except Exception as e:
             if hasattr(e, "status_code") and e.status_code == 400:
                 raise
@@ -938,35 +629,12 @@ class IncidentService:
             import logging
             logging.warning(f"SENTINEL classification failed for raw text submission: {e}")
 
-        # Validate Docker Compose if provided
-        docker_compose_content = None
-        if payload.docker_compose_content:
-            from server.services.compose_validator import ComposeValidator, ComposeValidationError
-            try:
-                ComposeValidator.validate_compose_content(payload.docker_compose_content)
-                docker_compose_content = payload.docker_compose_content
-            except ComposeValidationError as e:
-                raise HTTPException(
-                    status_code=400,
-                    detail={
-                        "error": "invalid_docker_compose",
-                        "message": f"Docker Compose validation failed: {str(e)}",
-                    },
-                )
-
-        normalized_evidence_dict = {
-            "service": parsed.service,
-            "severity": parsed.severity,
-            "signature": parsed.signature,
-            "evidence": parsed.evidence,
-            "symptoms": parsed.symptoms,
-            "input_quality": parsed.input_quality,
-            "source_hint": payload.source_hint,
-            "reported_by": payload.reported_by,
-            "team": payload.team,
-        }
-        if docker_compose_content:
-            normalized_evidence_dict["docker_compose"] = docker_compose_content
+        docker_compose_content = validate_docker_compose_content(payload.docker_compose_content)
+        normalized_evidence_dict = build_raw_text_normalized_evidence(
+            parsed=parsed,
+            payload=payload,
+            docker_compose_content=docker_compose_content,
+        )
 
         created = await self._session.incidents.create_incident(
             external_id=f"raw_{parsed.service}_{uuid4().hex[:8]}",
