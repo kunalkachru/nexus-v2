@@ -1,8 +1,29 @@
-"""Gate 3 production validation tests using Playwright."""
+"""Gate 3 production validation tests using Playwright.
+
+This file is a manual live-production validation harness. It intentionally
+targets the deployed Oracle Cloud environment via Playwright and can be run
+directly with:
+
+    python tests/test_production_gate3.py
+
+The tests are kept importable by pytest for visibility, but they are skipped
+in the normal suite so `pytest tests/ -q` remains a truthful local/CI signal.
+"""
 
 import asyncio
 import json
+import pytest
 from playwright.async_api import async_playwright
+
+pytestmark = [
+    pytest.mark.asyncio,
+    pytest.mark.skip(
+        reason=(
+            "Manual live-production Playwright validation; run "
+            "`python tests/test_production_gate3.py` against the deployed app."
+        )
+    ),
+]
 
 
 async def measure_scroll_depth(page, url: str, name: str) -> dict:

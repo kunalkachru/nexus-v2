@@ -77,14 +77,14 @@ After this module, you will:
 7. Output
    ↓ Engineering handoff packet
    ↓ Incident summary and analysis
-   └─ Stored in incidents.json, audit log
+   └─ Stored in the SQLite incident store (`artifacts/incidents.json`) and audit log
 ```
 
 ### 1.2 Key Data Files
 
 | File | Purpose | Location | Format |
 |------|---------|----------|--------|
-| `incidents.json` | All incidents and analysis results | `artifacts/incidents.json` | JSON |
+| `incidents.json` | All incidents and analysis results | `artifacts/incidents.json` | SQLite database file |
 | `.nexus_audit_log.json` | Compliance audit trail | `artifacts/.nexus_audit_log.json` | JSON Lines |
 | `prometheus/metrics.db` | Prometheus time-series data | `prometheus/` | TSDB |
 | Backups | Daily compressed backups | `.backup/nexus/` | gzip |
@@ -327,7 +327,7 @@ Started: 2026-06-17 15:30:00 UTC
 |--------|---------|---------|----------|
 | CPU | < 20% | > 50% | > 80% |
 | Memory | 200-500 MB | > 1 GB | > 2 GB |
-| Disk (incidents.json) | 2-3 MB | > 10 MB | > 50 MB |
+| Disk (SQLite incident store) | 2-3 MB | > 10 MB | > 50 MB |
 | Disk (backups) | 1-5 MB | > 100 MB | > 1 GB |
 | Response Time | 10-50ms | > 200ms | > 1000ms |
 
@@ -342,7 +342,7 @@ du -sh .backup/nexus/
 
 # Database size
 ls -lh artifacts/incidents.json
-wc -l artifacts/incidents.json  # Approximate incident count
+python3 -c 'import sqlite3; conn=sqlite3.connect("artifacts/incidents.json"); print(conn.execute("SELECT COUNT(*) FROM incidents").fetchone()[0]); conn.close()'
 ```
 
 ---
@@ -435,14 +435,14 @@ fi
 SIZE=$(du -h "$DB_FILE" | cut -f1)
 echo "✓ Database size: $SIZE"
 
-# Check if valid JSON
-if python3 -m json.tool "$DB_FILE" > /dev/null 2>&1; then
-  echo "✓ JSON is valid"
+# Check SQLite integrity
+if python3 -c 'import sqlite3, sys; conn=sqlite3.connect("'"$DB_FILE"'"); result=conn.execute("PRAGMA integrity_check;").fetchone()[0]; conn.close(); sys.exit(0 if result == "ok" else 1)' > /dev/null 2>&1; then
+  echo "✓ SQLite integrity check passed"
   # Count incidents
-  COUNT=$(python3 -c "import json; f=open('$DB_FILE'); data=json.load(f); print(len(data.get('incidents', [])))")
+  COUNT=$(python3 -c 'import sqlite3; conn=sqlite3.connect("'"$DB_FILE"'"); print(conn.execute("SELECT COUNT(*) FROM incidents").fetchone()[0]); conn.close()')
   echo "✓ Incidents in database: $COUNT"
 else
-  echo "❌ JSON is INVALID (corrupted)"
+  echo "❌ SQLite integrity check failed (corrupted database)"
   echo "   → Follow Module 4 Disaster Recovery procedure"
   exit 1
 fi
@@ -607,11 +607,11 @@ echo "✓ Restore completed"
 
 # STEP 7: Verify restoration
 echo "Step 7: Verifying restored database..."
-if ! python3 -m json.tool artifacts/incidents.json > /dev/null 2>&1; then
-  echo "❌ ERROR: Restored database is invalid JSON"
+if ! python3 -c 'import sqlite3, sys; conn=sqlite3.connect("artifacts/incidents.json"); result=conn.execute("PRAGMA integrity_check;").fetchone()[0]; conn.close(); sys.exit(0 if result == "ok" else 1)' > /dev/null 2>&1; then
+  echo "❌ ERROR: Restored database failed SQLite integrity check"
   exit 1
 fi
-INCIDENT_COUNT=$(python3 -c "import json; f=open('artifacts/incidents.json'); d=json.load(f); print(len(d.get('incidents', [])))")
+INCIDENT_COUNT=$(python3 -c 'import sqlite3; conn=sqlite3.connect("artifacts/incidents.json"); print(conn.execute("SELECT COUNT(*) FROM incidents").fetchone()[0]); conn.close()')
 echo "✓ Restored database valid, contains $INCIDENT_COUNT incidents"
 
 # STEP 8: Restart service

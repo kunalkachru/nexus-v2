@@ -77,7 +77,7 @@ After 24-hour production monitoring (Task 8.2) is complete, we transition operat
 - Walk through SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN pipeline
 - Explain data flow: "Logs come in, analysis happens, recommendations come out"
 - Explain what each stage does and why it matters
-- Key files: incidents.json, audit logs, backups
+- Key files: the SQLite incident store at `artifacts/incidents.json`, audit logs, backups
 
 **4. On-Call Expectations (10 minutes)**
 - What does "on-call" mean?
