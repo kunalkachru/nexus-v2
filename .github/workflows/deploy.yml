@@ -39,41 +39,39 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/oracle-key.pem
           chmod 600 ~/.ssh/oracle-key.pem
-          ssh -i ~/.ssh/oracle-key.pem -o StrictHostKeyChecking=no ubuntu@$SERVER_IP << 'ENDSSH'
-            cd nexus-v2
-            echo "Fetching latest code from GitHub..."
-            if ! git fetch origin; then
-              echo "❌ Failed to fetch from origin"
-              exit 1
-            fi
-            echo "Resetting to latest origin/master..."
-            if ! git reset --hard origin/master; then
-              echo "❌ Failed to reset to origin/master (possible divergent branches)"
-              exit 1
-            fi
-            echo "Repository updated successfully"
-            sudo docker build -t nexus .
-            sudo docker stop nexus || true
-            sudo docker rm nexus || true
-            sudo docker run -d --name nexus --restart always -p 7860:7860 \
-              -e NEXUS_DATABASE_PATH=/app/artifacts/incidents.json \
-              -e NEXUS_ALLOWED_TENANT_IDS=tenant-a,tenant-system \
-              -e NEXUS_FORGE_MODEL_NAME=gpt-4o \
-              -e NEXUS_USE_OPENAI=0 \
-              -e NEXUS_WEBHOOK_SIGNING_SECRET=$WEBHOOK_SECRET \
-              -v nexus-data:/app/artifacts nexus
-            # Wait for container to be ready (up to 30 seconds)
-            for i in {1..30}; do
-              if curl -s http://localhost:7860/health > /dev/null 2>&1; then
-                echo "Container is healthy"
-                exit 0
-              fi
-              sleep 1
-            done
-            echo "Container failed to become healthy"
-            sudo docker logs nexus --tail 50
-            exit 1
-          ENDSSH
+          ssh -i ~/.ssh/oracle-key.pem -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
+            "cd nexus-v2 && \
+             echo 'Fetching latest code from GitHub...' && \
+             git fetch origin || { echo '❌ Failed to fetch from origin'; exit 1; } && \
+             echo 'Resetting to latest origin/master...' && \
+             git reset --hard origin/master || { echo '❌ Failed to reset to origin/master (possible divergent branches)'; exit 1; } && \
+             echo 'Repository updated successfully' && \
+             sudo docker build -t nexus . && \
+             sudo docker stop nexus 2>/dev/null || true && \
+             sudo docker rm nexus 2>/dev/null || true && \
+             sudo docker run -d \
+               --name nexus \
+               --restart always \
+               -p 7860:7860 \
+               -e NEXUS_DATABASE_PATH=/app/artifacts/incidents.json \
+               -e NEXUS_ALLOWED_TENANT_IDS=tenant-a,tenant-system \
+               -e NEXUS_FORGE_MODEL_NAME=gpt-4o \
+               -e NEXUS_USE_OPENAI=0 \
+               -e NEXUS_WEBHOOK_SIGNING_SECRET=$WEBHOOK_SECRET \
+               -v nexus-data:/app/artifacts \
+               nexus && \
+             echo 'Container started' && \
+             sleep 5 && \
+             for i in {1..30}; do \
+               if curl -fs http://localhost:7860/health > /dev/null 2>&1; then \
+                 echo 'Container is healthy'; \
+                 exit 0; \
+               fi; \
+               sleep 1; \
+             done && \
+             echo 'Container failed to become healthy' >&2 && \
+             sudo docker logs nexus --tail 50 && \
+             exit 1"
 
       - name: Wait for deployment to stabilize
         run: sleep 30
