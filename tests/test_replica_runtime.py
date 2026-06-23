@@ -2,6 +2,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from server.services.enterprise_runtime import build_replica_summary, enrich_memory_with_runtime, rank_candidate_fixes_with_runtime
 from server.services.replica_runtime import (
     ReplicaExecutionResult,
@@ -11,6 +13,22 @@ from server.services.replica_runtime import (
     select_environment_pack,
     trace_targets_for_plan,
 )
+
+
+def _docker_engine_accessible() -> bool:
+    docker_binary = shutil.which("docker")
+    if not docker_binary:
+        return False
+    try:
+        result = subprocess.run(
+            [docker_binary, "info"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
 
 
 def test_replica_registry_exposes_two_flagship_packs() -> None:
@@ -107,6 +125,11 @@ def test_trace_targets_follow_selected_pack_source_map() -> None:
     assert ("gateway.timeout_guard", "await_upstream_auth") in targets
 
 
+@pytest.mark.requires_docker
+@pytest.mark.skipif(
+    not _docker_engine_accessible(),
+    reason="Requires local Docker engine access for runtime pack execution.",
+)
 def test_replica_runner_executes_db_pool_pack() -> None:
     plan = build_execution_plan(
         issue_family="Database pool exhaustion / session leak",

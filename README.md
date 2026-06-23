@@ -101,7 +101,7 @@ uvicorn server.app:app --host 0.0.0.0 --port 7860
 Core validation commands:
 
 ```bash
-pytest tests/ -q
+pytest tests/ --ignore=tests/test_production_gate3.py -q
 npm run browser:verify
 python demo.py
 ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
@@ -110,7 +110,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 
 Current validated baseline:
 
-- `pytest tests/ -q` -> `470 passed` (excludes test_production_gate3.py which requires live server)
+- `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `488 passed, 1 skipped` (the skipped test requires local Docker engine access)
 - `npm run browser:verify` -> `16 passed` (browser verification)
 - `python demo.py` -> passes
 - Docker rebuild and enterprise smoke path -> passes
