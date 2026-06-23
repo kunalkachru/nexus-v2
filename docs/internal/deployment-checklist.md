@@ -119,7 +119,7 @@
   ```bash
   docker build \
     -t nexus:prod \
-    --build-arg APP_ENV=product \
+    --build-arg APP_ENV=production \
     --label "version=1.0" \
     --label "build-date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
     .

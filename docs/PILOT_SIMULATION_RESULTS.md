@@ -35,7 +35,7 @@ The system correctly handles the uncertainty inherent in unstructured incident r
 | INC002 | DB Pool Exhaustion | 93.8% | Specific: SQLAlchemy leak | ✅ Approve |
 | INC003 | Deploy Regression | 92.2% | Specific: null-pointer in catalog | ✅ Approve |
 | INC005 | Queue Backlog | 91.9% | Specific: Kafka rebalance failure | ✅ Approve |
-| INC007 | DNS Resolution Failure | 96.2% | Specific: CoreDNS config rollout | ⚠️ Request Modification |
+| INC007 | Auth Dependency Slowdown | 96.2% | Specific: auth cert validation + identity-provider slowdown | ✅ Approve |
 
 **Key Finding:** Demo incidents show NEXUS at its best — highly confident classifications with actionable, specific diagnoses. The system has been trained on well-structured incident data.
 

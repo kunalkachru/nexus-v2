@@ -53,6 +53,7 @@ jobs:
                --name nexus \
                --restart always \
                -p 7860:7860 \
+               -e APP_ENV=production \
                -e NEXUS_DATABASE_PATH=/app/artifacts/incidents.json \
                -e NEXUS_ALLOWED_TENANT_IDS=tenant-a,tenant-system \
                -e NEXUS_FORGE_MODEL_NAME=gpt-4o \

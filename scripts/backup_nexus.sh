@@ -17,21 +17,59 @@ set -e  # Exit on any error
 
 # Configuration
 BACKUP_DIR="${BACKUP_DIR:-.backup/nexus}"
-DATABASE_PATH="${DATABASE_PATH:-.artifacts/incidents.json}"
+DATABASE_PATH="${DATABASE_PATH:-artifacts/incidents.json}"
 S3_BUCKET="${S3_BUCKET:-s3://nexus-backups}"
 LOCAL_RETENTION_DAYS=7
 LOG_FILE="/var/log/nexus-backup.log"
 
 # Timestamp
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-BACKUP_FILENAME="nexus_backup_${TIMESTAMP}.json.gz"
-BACKUP_PATH="${BACKUP_DIR}/${BACKUP_FILENAME}"
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+database_kind() {
+    python3 - "$1" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+path = Path(sys.argv[1])
+if not path.exists():
+    print("missing")
+    raise SystemExit(0)
+
+header = path.read_bytes()[:16]
+if header.startswith(b"SQLite format 3"):
+    print("sqlite")
+    raise SystemExit(0)
+
+try:
+    with path.open() as handle:
+        json.load(handle)
+except Exception:
+    print("unknown")
+else:
+    print("json")
+PY
+}
+
+create_sqlite_snapshot() {
+    python3 - "$1" "$2" <<'PY'
+import sqlite3
+import sys
+
+source_path, snapshot_path = sys.argv[1], sys.argv[2]
+source = sqlite3.connect(f"file:{source_path}?mode=ro", uri=True)
+snapshot = sqlite3.connect(snapshot_path)
+source.backup(snapshot)
+snapshot.close()
+source.close()
+PY
+}
 
 # Functions
 log() {
@@ -60,6 +98,22 @@ fi
 
 mkdir -p "$BACKUP_DIR"
 
+DB_KIND=$(database_kind "$DATABASE_PATH")
+
+case "$DB_KIND" in
+    sqlite)
+        BACKUP_FILENAME="nexus_backup_${TIMESTAMP}.sqlite.gz"
+        ;;
+    json)
+        BACKUP_FILENAME="nexus_backup_${TIMESTAMP}.json.gz"
+        ;;
+    *)
+        error "Database file is neither a readable SQLite database nor valid JSON: $DATABASE_PATH"
+        ;;
+esac
+
+BACKUP_PATH="${BACKUP_DIR}/${BACKUP_FILENAME}"
+
 # Check if database is locked
 if lsof "$DATABASE_PATH" 2>/dev/null | grep -q .; then
     log "Database is in use by processes. Proceeding with snapshot..."
@@ -68,25 +122,16 @@ fi
 # Create backup
 log "Creating backup: $BACKUP_FILENAME"
 
-# If SQLite database
-if [[ "$DATABASE_PATH" == *.db ]] || [[ "$DATABASE_PATH" == *.sqlite ]]; then
-    # Use sqlite3 dump for consistency
-    if command -v sqlite3 &> /dev/null; then
-        sqlite3 "$DATABASE_PATH" ".dump" | gzip > "$BACKUP_PATH"
-        log "SQLite dump created and compressed"
-    else
-        # Fallback to file copy
-        cp "$DATABASE_PATH" - | gzip > "$BACKUP_PATH"
-        log "Database file copied and compressed (sqlite3 not available)"
-    fi
+if [ "$DB_KIND" = "sqlite" ]; then
+    SQLITE_SNAPSHOT=$(mktemp "${TMPDIR:-/tmp}/nexus-backup.XXXXXX.sqlite")
+    trap 'rm -f "$SQLITE_SNAPSHOT"' EXIT
+
+    create_sqlite_snapshot "$DATABASE_PATH" "$SQLITE_SNAPSHOT"
+    gzip < "$SQLITE_SNAPSHOT" > "$BACKUP_PATH"
+    log "SQLite snapshot created and compressed"
 else
-    # JSON file backup
-    if [ -f "$DATABASE_PATH" ]; then
-        gzip < "$DATABASE_PATH" > "$BACKUP_PATH"
-        log "JSON backup created and compressed"
-    else
-        error "Database file not accessible: $DATABASE_PATH"
-    fi
+    gzip < "$DATABASE_PATH" > "$BACKUP_PATH"
+    log "JSON backup created and compressed"
 fi
 
 # Verify backup was created
@@ -142,7 +187,7 @@ if [ -d "$BACKUP_DIR" ]; then
         log "Deleting old backup: $(basename $old_backup)"
         rm -f "$old_backup"
         ((CLEANUP_COUNT++))
-    done < <(find "$BACKUP_DIR" -name "nexus_backup_*.json.gz" -mtime +$LOCAL_RETENTION_DAYS)
+    done < <(find "$BACKUP_DIR" \( -name "nexus_backup_*.sqlite.gz" -o -name "nexus_backup_*.json.gz" \) -mtime +$LOCAL_RETENTION_DAYS)
 fi
 
 if [ $CLEANUP_COUNT -gt 0 ]; then

@@ -45,6 +45,47 @@ info() {
     echo -e "${BLUE}ℹ${NC} $1"
 }
 
+database_kind() {
+    python3 - "$1" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+path = Path(sys.argv[1])
+if not path.exists():
+    print("missing")
+    raise SystemExit(0)
+
+header = path.read_bytes()[:16]
+if header.startswith(b"SQLite format 3"):
+    print("sqlite")
+    raise SystemExit(0)
+
+try:
+    with path.open() as handle:
+        json.load(handle)
+except Exception:
+    print("unknown")
+else:
+    print("json")
+PY
+}
+
+sqlite_incident_count() {
+    python3 - "$1" <<'PY'
+import sqlite3
+import sys
+
+connection = sqlite3.connect(sys.argv[1])
+integrity = connection.execute("PRAGMA integrity_check;").fetchone()[0]
+if integrity != "ok":
+    raise SystemExit(1)
+count = connection.execute("SELECT COUNT(*) FROM incidents;").fetchone()[0]
+connection.close()
+print(count)
+PY
+}
+
 # Header
 echo ""
 echo "╔════════════════════════════════════════════╗"
@@ -63,7 +104,8 @@ REQUIRED_DIRS=(
     "docs"
     "tests"
     "artifacts"
-    "prometheus"
+    "deployment"
+    "deployment/prometheus"
 )
 
 for dir in "${REQUIRED_DIRS[@]}"; do
@@ -88,7 +130,7 @@ REQUIRED_FILES=(
     "artifacts/incidents.json"
     "scripts/backup_nexus.sh"
     "scripts/restore_nexus.sh"
-    "prometheus/alerts.yml"
+    "deployment/prometheus/alerts.yml"
     "docs/TROUBLESHOOTING_GUIDE.md"
 )
 
@@ -185,11 +227,18 @@ if [ -f "$DB_FILE" ]; then
     DB_SIZE=$(du -h "$DB_FILE" | cut -f1)
     pass "Database file exists: $DB_SIZE"
 
-    if python3 -m json.tool "$DB_FILE" > /dev/null 2>&1; then
+    DB_KIND=$(database_kind "$DB_FILE")
+    if [ "$DB_KIND" = "sqlite" ]; then
+        if INCIDENT_COUNT=$(sqlite_incident_count "$DB_FILE" 2>/dev/null); then
+            pass "Database SQLite integrity valid: $INCIDENT_COUNT incidents"
+        else
+            fail "Database SQLite integrity check failed"
+        fi
+    elif [ "$DB_KIND" = "json" ]; then
         INCIDENT_COUNT=$(python3 -c "import json; f=open('$DB_FILE'); d=json.load(f); print(len(d.get('incidents', [])))")
-        pass "Database JSON valid: $INCIDENT_COUNT incidents"
+        warn "Database path contains JSON content instead of SQLite: $INCIDENT_COUNT incidents"
     else
-        fail "Database JSON invalid (corrupted)"
+        fail "Database file is unreadable (not valid SQLite or JSON)"
     fi
 else
     fail "Database file not found: $DB_FILE"
@@ -225,8 +274,8 @@ echo ""
 # 9. Configuration
 echo "9. Checking configuration files..."
 
-if [ -f "prometheus/alerts.yml" ]; then
-    ALERT_COUNT=$(grep -c "alert:" prometheus/alerts.yml || echo "0")
+if [ -f "deployment/prometheus/alerts.yml" ]; then
+    ALERT_COUNT=$(grep -c "alert:" deployment/prometheus/alerts.yml || echo "0")
     pass "Prometheus alerts: $ALERT_COUNT configured"
 else
     warn "Prometheus alerts file missing"
@@ -352,7 +401,7 @@ if [ $FAILED -eq 0 ]; then
     echo ""
     echo "Next steps:"
     echo "  1. Review any warnings above"
-    echo "  2. Build production image: docker build -t nexus:prod --build-arg APP_ENV=product ."
+    echo "  2. Build production image: docker build -t nexus:prod --build-arg APP_ENV=production ."
     echo "  3. Run smoke tests: ./scripts/local_enterprise_smoke.sh"
     echo "  4. Deploy: docker-compose up -d"
     echo ""

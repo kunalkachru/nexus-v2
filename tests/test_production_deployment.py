@@ -101,7 +101,7 @@ class TestProductionDeployment:
             'docker build',
             'docker-compose',
             'docker run',
-            'APP_ENV=product'
+            'APP_ENV=production'
         ]
 
         for term in docker_terms:
@@ -354,7 +354,7 @@ class TestProductionDeployment:
         # Should have runnable Docker build commands
         assert 'docker build' in content, "Missing docker build command"
         assert '-t nexus:prod' in content, "Missing image tag specification"
-        assert 'APP_ENV=product' in content, "Missing production environment variable"
+        assert 'APP_ENV=production' in content, "Missing production environment variable"
 
     def test_deployment_guide_has_health_commands(self):
         """Test deployment guide includes health check commands."""

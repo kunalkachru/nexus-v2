@@ -9,6 +9,7 @@ def cleanup_env():
     """Cleanup environment variables after each test."""
     original_app_env = os.environ.get("APP_ENV")
     original_tenant_ids = os.environ.get("NEXUS_ALLOWED_TENANT_IDS")
+    original_previous_secret = os.environ.get("NEXUS_WEBHOOK_SIGNING_SECRET_PREVIOUS")
 
     yield
 
@@ -22,6 +23,11 @@ def cleanup_env():
         os.environ.pop("NEXUS_ALLOWED_TENANT_IDS", None)
     else:
         os.environ["NEXUS_ALLOWED_TENANT_IDS"] = original_tenant_ids
+
+    if original_previous_secret is None:
+        os.environ.pop("NEXUS_WEBHOOK_SIGNING_SECRET_PREVIOUS", None)
+    else:
+        os.environ["NEXUS_WEBHOOK_SIGNING_SECRET_PREVIOUS"] = original_previous_secret
 
 
 def test_app_env_defaults_to_demo():
@@ -73,6 +79,16 @@ def test_app_env_production_accepts_configured_tenant_ids():
     assert config.allowed_tenant_ids == ["tenant-prod-a", "tenant-prod-b"]
 
 
+def test_app_env_product_alias_maps_to_production():
+    """Verify legacy product alias is normalized to production."""
+    os.environ["APP_ENV"] = "product"
+    os.environ["NEXUS_ALLOWED_TENANT_IDS"] = "tenant-prod-a,tenant-prod-b"
+
+    config = AppConfig()
+    assert config.app_env == "production"
+    assert config.allowed_tenant_ids == ["tenant-prod-a", "tenant-prod-b"]
+
+
 def test_custom_tenant_ids_in_demo():
     """Verify custom tenant IDs work in demo mode."""
     os.environ["APP_ENV"] = "demo"
@@ -80,3 +96,11 @@ def test_custom_tenant_ids_in_demo():
 
     config = AppConfig()
     assert config.allowed_tenant_ids == ["custom-tenant-1", "custom-tenant-2"]
+
+
+def test_webhook_previous_secret_reads_from_env():
+    """Verify previous webhook secret is exposed through typed config."""
+    os.environ["NEXUS_WEBHOOK_SIGNING_SECRET_PREVIOUS"] = "previous-demo-secret"
+
+    config = AppConfig()
+    assert config.webhook_signing_secret_previous == "previous-demo-secret"
