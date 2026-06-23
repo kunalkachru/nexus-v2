@@ -45,6 +45,9 @@ class AppConfig(BaseModel):
     app_env: str = Field(default_factory=_get_app_env)
     database_path: Path = Field(default_factory=lambda: Path(_env("NEXUS_DATABASE_PATH", "artifacts/incidents.json")))
     webhook_signing_secret: str = Field(default_factory=lambda: _get_webhook_secret())
+    webhook_signing_secret_previous: str | None = Field(
+        default_factory=lambda: _env("NEXUS_WEBHOOK_SIGNING_SECRET_PREVIOUS", "").strip() or None
+    )
     allowed_tenant_ids: list[str] = Field(default_factory=_get_allowed_tenant_ids)
     forge_model_name: str = Field(default_factory=lambda: _env("NEXUS_FORGE_MODEL_NAME", "gpt-4o"))
     use_live_llm: bool = Field(default_factory=lambda: _env("NEXUS_USE_OPENAI", "0") == "1")
