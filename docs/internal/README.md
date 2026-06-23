@@ -8,7 +8,7 @@ Use this set for operating, validating, extending, or troubleshooting the curren
 
 ## Setup & Configuration
 
-- **[Master Setup and Testing Guide](/Users/kunalkachru/Documents/nexus-v3/MASTER_SETUP_AND_TESTING_GUIDE.md)** — Complete setup instructions, config reference, testing checklist, and troubleshooting (START HERE)
+- **[Master Setup and Testing Guide](/Users/kunalkachru/Documents/nexus-v3/docs/MASTER_GUIDE.md)** — Complete setup instructions, config reference, testing checklist, and troubleshooting (START HERE)
 - [Tenant setup guide](/Users/kunalkachru/Documents/nexus-v3/docs/internal/TENANT_SETUP_GUIDE.md) — Adding new tenants to pilot program
 - [Curated runtime pack contract](/Users/kunalkachru/Documents/nexus-v3/docs/internal/CURATED_PACK_CONTRACT.md) — Architecture of demo packs and how to create new ones
 

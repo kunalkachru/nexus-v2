@@ -19,7 +19,7 @@ Use this set when presenting NEXUS to buyers, evaluators, or potential customers
 ## Start Here
 
 **For hands-on setup and testing:**
-→ [Master Setup and Testing Guide](/Users/kunalkachru/Documents/nexus-v3/MASTER_SETUP_AND_TESTING_GUIDE.md)
+→ [Master Setup and Testing Guide](/Users/kunalkachru/Documents/nexus-v3/docs/MASTER_GUIDE.md)
 
 **For demo walkthrough:**
 → [Master Operator Demo Guide](/Users/kunalkachru/Documents/nexus-v3/docs/public/MASTER_OPERATOR_DEMO_GUIDE.md)
@@ -30,7 +30,7 @@ Use this set when presenting NEXUS to buyers, evaluators, or potential customers
 
 1. **[Master Operator Demo Guide](/Users/kunalkachru/Documents/nexus-v3/docs/public/MASTER_OPERATOR_DEMO_GUIDE.md)** — Complete walkthrough, what's real, what's bounded, how to demo
 2. **[Top-level README](/Users/kunalkachru/Documents/nexus-v3/README.md)** — Project overview and validation baseline
-3. **[Master Setup and Testing Guide](/Users/kunalkachru/Documents/nexus-v3/MASTER_SETUP_AND_TESTING_GUIDE.md)** — Setup, config, testing, troubleshooting
+3. **[Master Setup and Testing Guide](/Users/kunalkachru/Documents/nexus-v3/docs/MASTER_GUIDE.md)** — Setup, config, testing, troubleshooting
 4. [Product strategy and GTM](/Users/kunalkachru/Documents/nexus-v3/docs/public/PRODUCT_STRATEGY_AND_GTM.md) — Market positioning and Go-To-Market
 5. [Demo walkthrough](/Users/kunalkachru/Documents/nexus-v3/docs/public/DEMO_WALKTHROUGH.md) — Detailed demo script for presentations
 6. [Demo cheat sheet](/Users/kunalkachru/Documents/nexus-v3/docs/public/DEMO_CHEAT_SHEET.md) — Quick reference talking points

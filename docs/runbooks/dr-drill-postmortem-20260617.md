@@ -169,5 +169,4 @@ This drill demonstrates that NEXUS Disaster Recovery is production-ready. The ba
 - [Monthly DR Drill Procedure](./monthly-dr-drill.md)
 - [Backup Automation Script](../../scripts/backup_nexus.sh)
 - [Restore Automation Script](../../scripts/restore_nexus.sh)
-- [Production Readiness Roadmap](../../PRODUCTION_READINESS_ROADMAP.md)
-
+- [Current working state](../../WORKING_STATE.md)

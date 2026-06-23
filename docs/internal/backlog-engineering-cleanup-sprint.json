@@ -3,7 +3,7 @@
     "id": "EC-001",
     "title": "Open engineering cleanup sprint control surface",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Create the active backlog and point control-surface docs at the new engineering cleanup sprint so work proceeds under an explicit governed loop.",
     "implementation_tasks": [
       "Create the sprint backlog file under docs/internal/",
@@ -31,7 +31,7 @@
     "id": "EC-002",
     "title": "Clean obsolete root session artifacts",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Remove confirmed obsolete root-level reports, screenshots, session artifacts, and stale root backlog JSON files after verifying they are not imported or referenced as live product assets.",
     "implementation_tasks": [
       "Reference-audit every deletion candidate with grep/rg before removal",
@@ -91,7 +91,7 @@
     "id": "EC-003",
     "title": "Rehome or reconcile root documentation duplicates",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Move or reconcile important root docs that should not remain in the repo root, specifically DECISIONS.md and any overlapping deployment/setup guides.",
     "implementation_tasks": [
       "Move DECISIONS.md to docs/internal/DECISIONS.md",
@@ -123,7 +123,7 @@
     "id": "EC-004",
     "title": "Assess backup directory and retain only intentional backup assets",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Inspect .backup/ contents, remove only disposable local artifacts if present, and preserve the directory structure because scripts, tests, and docs still reference it.",
     "implementation_tasks": [
       "List .backup/ contents",

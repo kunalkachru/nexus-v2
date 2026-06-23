@@ -9,6 +9,8 @@ NEXUS is deployed to two environments that serve different purposes:
 | **Render** | https://nexus-uny5.onrender.com | Public demo instance | None (ephemeral) |
 | **Oracle Cloud** | https://nexus-triage.duckdns.org | Production with persistent data | Named volume (nexus-data) |
 
+There is also an optional Railway deployment path for ad hoc hosted demos or alternate evaluation environments. Railway is not part of the automatic GitHub Actions production path; it uses the checked-in `Dockerfile` and `railway.toml`.
+
 ### How code gets from your laptop to production
 
 1. **Developer** → Commits code and pushes to GitHub (`git push origin master`)
@@ -42,6 +44,29 @@ The Render free tier uses an ephemeral filesystem, meaning **the SQLite database
 
 ### Deployment time
 Render deployments typically take **3-5 minutes** from push to ready.
+
+---
+
+## SECTION 2B — Optional Railway deployment
+
+Railway is an alternate hosted path when you want a quick externally reachable instance without touching Oracle Cloud. It is configured from the same repository and Docker image, but it is managed inside Railway rather than by GitHub Actions.
+
+### Basic setup
+1. Create a Railway project from the GitHub repository
+2. Let Railway build from the checked-in `Dockerfile` and `railway.toml`
+3. Mount a persistent volume at `/app/artifacts`
+4. Set `NEXUS_DATABASE_PATH=/app/artifacts/incidents.json`
+5. Configure the same core environment variables used elsewhere (`APP_ENV`, `NEXUS_ALLOWED_TENANT_IDS`, `NEXUS_WEBHOOK_SIGNING_SECRET`, optional `OPENAI_API_KEY`)
+
+### Persistence model
+- Railway should also use the legacy-compatible `incidents.json` filename for the SQLite database
+- The file contents remain SQLite even though the filename ends in `.json`
+- Without a mounted volume, redeploys will reset the data
+
+### When to use Railway
+- Temporary hosted demos
+- Buyer or evaluator access outside local Docker
+- Alternate non-production validation environments
 
 ---
 
