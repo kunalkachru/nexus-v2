@@ -12,7 +12,7 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - `INC005` queue / worker backlog affecting transaction completion
   - `INC007` auth dependency slowdown / token validation failures
 - Current validated baseline (Updated 2026-06-23):
-  - `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `488 passed, 1 skipped` (the skipped test requires local Docker engine access)
+  - `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `489 passed` (all tests pass; Docker-coupled replica test runs or skips based on environment)
   - `npm run browser:verify` -> `16 passed`
   - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes

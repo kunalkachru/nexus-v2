@@ -110,7 +110,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 
 Current validated baseline:
 
-- `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `488 passed, 1 skipped` (the skipped test requires local Docker engine access)
+- `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `489 passed` (all tests pass; Docker-coupled replica test runs or skips based on environment)
 - `npm run browser:verify` -> `16 passed` (browser verification)
 - `python demo.py` -> passes
 - Docker rebuild and enterprise smoke path -> passes
