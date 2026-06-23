@@ -24,7 +24,17 @@ echo "=== Deploying NEXUS to Oracle Cloud ==="
 # SSH into Oracle Cloud server and update the deployment
 ssh -i ~/Downloads/ssh-key-2026-06-19.key -o StrictHostKeyChecking=no ubuntu@92.5.47.239 << ENDSSH
   cd nexus-v2
-  git pull origin master
+  echo "Fetching latest code from GitHub..."
+  if ! git fetch origin; then
+    echo "❌ Failed to fetch from origin"
+    exit 1
+  fi
+  echo "Resetting to latest origin/master..."
+  if ! git reset --hard origin/master; then
+    echo "❌ Failed to reset to origin/master (possible divergent branches)"
+    exit 1
+  fi
+  echo "Repository updated successfully"
   sudo docker build -t nexus .
   sudo docker stop nexus || true
   sudo docker rm nexus || true
