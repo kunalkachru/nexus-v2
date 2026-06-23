@@ -51,7 +51,7 @@ Use this set for operating, validating, extending, or troubleshooting the curren
 
 - [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md) — Current work instructions and agent responsibilities
 - [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md) — Current project status, boundaries, and next phase
-- [Most recent completed backlog](/Users/kunalkachru/Documents/nexus-v3/backlog-145-plus.json) — Last completed work items
+- [Current sprint backlog](/Users/kunalkachru/Documents/nexus-v3/docs/internal/backlog-engineering-cleanup-sprint.json) — Active engineering cleanup work items
 
 ---
 

@@ -80,4 +80,4 @@ Includes:
 
 - [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md) — Current work and agent responsibilities
 - [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md) — Project boundaries and status
-- [REPOSITORY_REVIEW_2026-06-17.md](/Users/kunalkachru/Documents/nexus-v3/REPOSITORY_REVIEW_2026-06-17.md) — Complete repository assessment
+- Current engineering cleanup status lives in [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md) and [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)
