@@ -49,9 +49,9 @@ Still bounded:
 
 ## Current Frontier
 
-- Active backlog: none
-- Active phase: none
-- Status: `backlog-145-plus.json` closed cleanly after the documentation and demo-truth consistency pass
+- Active backlog: `docs/internal/backlog-engineering-cleanup-sprint.json`
+- Active phase: engineering cleanup sprint
+- Status: root cleanup + Phase 3 refactor + code audit in progress
 
 Completed phases:
 
@@ -96,8 +96,8 @@ Most recently implemented:
 
 Next execution target:
 
-- no active loop is open
-- the next phase should be a new narrow backlog only if a concrete pilot-hardening or bug-fix frontier is agreed
+- execute `docs/internal/backlog-engineering-cleanup-sprint.json`
+- preserve the current regression floor through root cleanup, service-layer refactors, and audit work
 
 Truth boundaries maintained:
 

@@ -174,11 +174,11 @@ Release gate: `bash scripts/run-release-gate.sh`
 
 Active backlog:
 
-- none; `backlog-145-plus.json` is complete
+- `docs/internal/backlog-engineering-cleanup-sprint.json`
 
 Current phase:
 
-- none
+- engineering cleanup sprint
 
 The current shipped baseline is:
 
@@ -254,7 +254,7 @@ The most recent narrow phase also closed cleanly:
 
 The next active narrow phase is intentionally still inside the same wedge:
 
-- none yet; write a new narrow backlog before starting another implementation loop
+- engineering cleanup sprint in progress via `docs/internal/backlog-engineering-cleanup-sprint.json`
 
 Boundaries remain:
 
