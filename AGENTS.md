@@ -158,7 +158,7 @@ Release gate: `bash scripts/run-release-gate.sh`
 | Live graph incident path | `server/services/enterprise_runtime.py` |
 | Runtime pack substrate | `server/services/replica_runtime.py` |
 | Packaged app replay + incident context | `server/services/incidents.py` |
-| Runtime host service | `runtime_host/server/app.py` |
+| Runtime host service | `Dockerfile.runtime-host` + `server/services/replica_runtime.py` |
 | Incident fixtures | `server/incident_payloads.py` |
 | Incident UI | `frontend/incident.html` |
 | Incident client logic | `frontend/static/incident.js` |

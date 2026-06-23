@@ -131,6 +131,6 @@ Any next work should stay narrow:
 
 - `server/` backend APIs, incident pipeline, and runtime pack orchestration
 - `frontend/` operator UI
-- `runtime_host/` Docker-capable replay host for packaged demos
+- `Dockerfile.runtime-host` plus `server/services/replica_runtime.py` for the Docker-capable replay host relay used by packaged demos
 - `docs/public/` market, buyer, demo, and presentation-facing material
 - `docs/internal/` operator, pilot, verification, and control docs
