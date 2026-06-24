@@ -212,7 +212,7 @@
     "id": "EC-007",
     "title": "Extract replay and state layers from server/services/enterprise_runtime.py",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Read enterprise_runtime.py fully and split replay execution and runtime state management into focused modules without changing runtime behavior.",
     "implementation_tasks": [
       "Read server/services/enterprise_runtime.py end-to-end",
