@@ -311,7 +311,7 @@
     "id": "EC-010",
     "title": "Close the sprint and refresh control-surface docs",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "After all cleanup and refactor items are complete, refresh the repo control surface, mark the backlog closed, and run the final release gate sequence before merge.",
     "implementation_tasks": [
       "Update AGENTS.md, WORKING_STATE.md, and docs/internal/LOOPS_RUNBOOK.md as needed for the new post-sprint state",

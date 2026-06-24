@@ -51,7 +51,8 @@ Use this set for operating, validating, extending, or troubleshooting the curren
 
 - [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md) — Current work instructions and agent responsibilities
 - [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md) — Current project status, boundaries, and next phase
-- [Current sprint backlog](/Users/kunalkachru/Documents/nexus-v3/docs/internal/backlog-engineering-cleanup-sprint.json) — Active engineering cleanup work items
+- [Loops runbook](/Users/kunalkachru/Documents/nexus-v3/docs/internal/LOOPS_RUNBOOK.md) — How to execute backlog-driven implementation loops safely
+- [Latest completed sprint backlog](/Users/kunalkachru/Documents/nexus-v3/docs/internal/backlog-engineering-cleanup-sprint.json) — Closed engineering cleanup work items
 
 ---
 
@@ -63,4 +64,4 @@ Use this set for operating, validating, extending, or troubleshooting the curren
 ✅ **Pilot UX:** Hardened for self-serve demos  
 ✅ **Documentation:** Complete and consistent  
 
-**Next phase:** Only if a concrete pilot-hardening or bug-fix frontier is agreed upon
+**Next phase:** Write a new narrow backlog only after a concrete pilot-hardening or bug-fix frontier is agreed upon

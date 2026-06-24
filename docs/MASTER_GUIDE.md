@@ -12,7 +12,7 @@ Everything you need to set up locally, run the full test suite, and deploy to pr
 | Oracle Cloud (Production) | https://nexus-triage.duckdns.org | git push origin master |
 | Render (Demo) | https://nexus-uny5.onrender.com | git push origin master |
 
-**CI-style test baseline:** 488 passed, 1 skipped  
+**CI-style test baseline:** 495 passed, 1 skipped  
 **GitHub repo:** https://github.com/kunalkachru/nexus-v2  
 **Oracle Cloud server:** 92.5.47.239 (SSH key: ~/Downloads/ssh-key-2026-06-19.key)
 
@@ -125,7 +125,7 @@ python -m uvicorn server.app:app --host 0.0.0.0 --port 7860 --reload
 source venv/bin/activate
 pytest tests/ --ignore=tests/test_production_gate3.py -q
 ```
-Expected baseline: 488 passed, 1 skipped
+Expected baseline: 495 passed, 1 skipped
 
 ### Browser tests (server must be running)
 ```bash

@@ -11,8 +11,8 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - `INC003` deploy regression / 5xx spike
   - `INC005` queue / worker backlog affecting transaction completion
   - `INC007` auth dependency slowdown / token validation failures
-- Current validated baseline (Updated 2026-06-23):
-  - `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `489 passed` (all tests pass; Docker-coupled replica test runs or skips based on environment)
+- Current validated baseline (Updated 2026-06-24):
+  - `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `495 passed, 1 skipped` (the skipped test is Docker-coupled and depends on local engine access)
   - `npm run browser:verify` -> `16 passed`
   - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
@@ -174,11 +174,11 @@ Release gate: `bash scripts/run-release-gate.sh`
 
 Active backlog:
 
-- `docs/internal/backlog-engineering-cleanup-sprint.json`
+- none
 
 Current phase:
 
-- engineering cleanup sprint
+- none
 
 The current shipped baseline is:
 
@@ -190,6 +190,7 @@ The current shipped baseline is:
 
 The most recently closed implementation target was:
 
+- engineering cleanup sprint
 - pilot UX hardening and live-intake trust pass
 - queue and incident-access usability
 - incident workspace progressive disclosure
@@ -254,7 +255,7 @@ The most recent narrow phase also closed cleanly:
 
 The next active narrow phase is intentionally still inside the same wedge:
 
-- engineering cleanup sprint in progress via `docs/internal/backlog-engineering-cleanup-sprint.json`
+- none yet; write a new narrow backlog before starting another implementation loop
 
 Boundaries remain:
 
@@ -264,4 +265,4 @@ Boundaries remain:
 
 ## Reference
 
-See [docs/internal/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/internal/LOOPS_RUNBOOK.md) for the operator-facing loop guide.
+See [docs/internal/LOOPS_RUNBOOK.md](/Users/kunalkachru/Documents/nexus-v3/docs/internal/LOOPS_RUNBOOK.md) for the autonomous loop guide.
