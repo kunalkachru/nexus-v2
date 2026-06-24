@@ -158,7 +158,7 @@ Supports **7 incident families** with two evidence postures:
 **Evidence postures:**
 - 🟢 **Runtime-backed** — REPLICA reproduces the incident in Docker; three curated packs available (INC001, INC002, INC003)
 - 🟡 **Inference-first** — PRISM diagnoses from logs and metrics without replay capability
-- 🔴 **Catalogued** — INC008, INC009, INC010, INC011 are in the incident catalogue and can be classified by SENTINEL, but do not yet have full investigation payloads. They are on the roadmap for Phase 4.
+- 🔴 **Catalogued** — INC004, INC006, INC008 are in the incident catalogue and can be classified by SENTINEL, but do not yet have full investigation payloads. They are on the roadmap for Phase 4.
 
 ---
 

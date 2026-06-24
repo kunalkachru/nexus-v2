@@ -249,19 +249,19 @@ sequenceDiagram
     API->>NEXUS: process_raw_incident_submission()
     
     NEXUS->>SENTINEL: classify(symptoms, context)
-    SENTINEL->>SENTINEL: Score all 7 families
-    Note over SENTINEL: Best match: INC009 (CDN Cache)<br/>Confidence: 0.35
-    SENTINEL->>NEXUS: SentinelClassification(INC009, 0.35)
+    SENTINEL->>SENTINEL: Score all 11 families in catalogue
+    Note over SENTINEL: Best match: INC004 (Load Balancer)<br/>Confidence: 0.35
+    SENTINEL->>NEXUS: SentinelClassification(INC004, 0.35)
     
-    NEXUS->>NEXUS: Try get_incident_details(INC009)
-    Note over NEXUS: INC009 not in incident_payloads!<br/>ValueError: unknown_incident_id
+    NEXUS->>NEXUS: Try get_incident_details(INC004)
+    Note over NEXUS: INC004 not in incident_payloads!<br/>ValueError: unknown_incident_id
     
-    alt INC009 is catalogued but not wired
+    alt INC004 is catalogued but not wired
         NEXUS->>API: HTTP 422 Unprocessable Entity
         API->>Browser: Error response
-        Browser->>Operator: Message: "INC009 not yet supported.<br/>Please contact support."
+        Browser->>Operator: Message: "INC004 not yet supported.<br/>Please contact support."
     else Try fallback to similar family
-        NEXUS->>SENTINEL: try_fallback(best_unsupported=INC009)
+        NEXUS->>SENTINEL: try_fallback(best_unsupported=INC004)
         SENTINEL->>SENTINEL: Find highest-confidence supported family<br/>Second best: INC005 (Queue Backlog)<br/>Confidence: 0.28
         SENTINEL->>NEXUS: SentinelClassification(INC005, 0.28, fallback=true)
         
