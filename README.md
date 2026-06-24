@@ -1,136 +1,241 @@
 # NEXUS
 
-NEXUS is an AI-assisted support-to-engineering investigation product for recurring customer-facing application outages.
+NEXUS is an AI-assisted support-to-engineering investigation product that compresses recurring incident workflows into one structured handoff.
 
-It is built to reduce the manual relay between support and engineering:
+**Pipeline:** SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN
 
-- noisy logs and incident evidence go in
-- a structured investigation packet comes out
-- one governed human review point remains before action
+**Production:** **[https://nexus-triage.duckdns.org](https://nexus-triage.duckdns.org)** 🚀
 
-The shipped workflow is:
+---
 
-`SENTINEL -> PRISM -> REPLICA -> TRACE -> FORGE -> GUARDIAN`
+## Where to Start
 
-NEXUS is not a universal incident platform, universal debugger, or arbitrary environment reproduction system.
+| I want to... | Go here |
+|---|---|
+| Run it myself locally | [docs/NEXUS_COMPLETE_MANUAL.md](docs/NEXUS_COMPLETE_MANUAL.md) |
+| Demo it to someone | [docs/NEXUS_COMPLETE_MANUAL.md](docs/NEXUS_COMPLETE_MANUAL.md) — Part 8 |
+| Hand off to a pilot customer | [docs/PILOT_HANDOFF.md](docs/PILOT_HANDOFF.md) + [production link](https://nexus-triage.duckdns.org) |
+| Set up local development | [docs/MASTER_GUIDE.md](docs/MASTER_GUIDE.md) |
+| Deploy to production | [docs/MASTER_GUIDE.md](docs/MASTER_GUIDE.md) — Part 5 |
+| Understand CI/CD pipeline | [docs/CICD.md](docs/CICD.md) |
+| Read pilot results | [docs/PILOT_SIMULATION_RESULTS.md](docs/PILOT_SIMULATION_RESULTS.md) + [docs/MERIDIAN_PILOT_RESULTS_V2.md](docs/MERIDIAN_PILOT_RESULTS_V2.md) |
+| Browse all documentation | [docs/README.md](docs/README.md) |
+| Check production readiness | [docs/GATE2_DECISION.md](docs/GATE2_DECISION.md) |
 
-## What Problem It Solves
+---
 
-Support and triage teams still lose time on:
+## Running Locally
 
-- collecting logs from multiple systems
-- guessing likely owners
-- searching old incidents manually
-- escalating weak cases to engineering
-- repeating the same investigation work on recurring outages
+### Option A — Docker (Recommended)
 
-NEXUS compresses that relay into one support-to-engineering investigation workflow.
+**Standard run:**
+```bash
+./scripts/docker_fresh.sh
+```
+Open http://127.0.0.1:7860/queue
 
-## Current Product Boundary
-
-The current bounded wedge is recurring customer-facing application incidents with strong business impact and repeatable failure patterns.
-
-Supported bounded outage families:
-
-1. `INC001` checkout timeout / retry amplification
-2. `INC002` checkout DB pool exhaustion / session leak
-3. `INC003` deploy regression / 5xx spike
-4. `INC005` queue / worker backlog affecting transaction completion
-5. `INC007` auth dependency slowdown / token validation failures
-
-Real today:
-
-- fresh incident intake and normalization posture
-- curated demo-bundle intake on `/inputs`
-- memory-backed triage and investigation
-- bounded REPLICA runtime replay for curated packs
-- bounded TRACE developer handoff and debugger guidance
-- runtime-aware mitigation ranking
-- explicit Guardian approval
-- engineering handoff export and pilot proof surfaces
-
-Still bounded:
-
-- reproduction only works for curated packs
-- debugging is packet-based, not a universal live debugger
-- execution remains governed and human-approved
-
-## Start Here
-
-- [Master operator demo guide](docs/public/MASTER_OPERATOR_DEMO_GUIDE.md)
-- [Documentation index](docs/README.md)
-- [Public docs](docs/public/README.md)
-- [Internal docs](docs/internal/README.md)
-- [Current working state](WORKING_STATE.md)
-
-## Fastest Hands-On Review
-
-If you want the shortest truthful walkthrough:
-
-1. Open [http://127.0.0.1:7860/queue](http://127.0.0.1:7860/queue)
-2. Open the flagship incident workspace
-3. Click `Inspect intake`
-4. On `/inputs`, choose a guided demo bundle and submit raw logs
-5. Review the fresh `nxs_...` incident from the top incident brief first
-6. Then inspect `/training` and `/settings` for proof, health, and governance surfaces
-
-For the exact step-by-step behavior on every screen, use the [master operator demo guide](docs/public/MASTER_OPERATOR_DEMO_GUIDE.md).
-
-## Local Run
-
-Set `OPENAI_API_KEY` when you want live model-backed reasoning instead of fallback-only behavior.
-
-Preferred packaged path:
-
+**With REPLICA runtime replay (enables runtime-backed evidence):**
 ```bash
 ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
 ```
 
-Then open:
-
-- [http://127.0.0.1:7860](http://127.0.0.1:7860)
-
-Direct server path:
-
+**Stop all containers:**
 ```bash
-uvicorn server.app:app --host 0.0.0.0 --port 7860
+docker compose down
 ```
+
+### Option B — Python Direct
+
+**First time:**
+```bash
+git clone https://github.com/kunalkachru/nexus-v2.git
+cd nexus-v2
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+npm install
+npx playwright install chromium
+cp .env.example .env
+```
+
+**Every session:**
+```bash
+source venv/bin/activate
+python -m uvicorn server.app:app --host 0.0.0.0 --port 7860 --reload
+```
+Open http://localhost:7860/queue
+
+---
+
+## Deployment
+
+**Automatic deploy:** Every `git push origin master` automatically triggers test → deploy → smoke
+
+**Manual deploy to Oracle Cloud:**
+```bash
+NEXUS_WEBHOOK_SIGNING_SECRET=your-secret bash scripts/deploy-oracle.sh
+```
+(Retrieve the secret from GitHub repo Settings → Secrets and variables → Actions → ORACLE_WEBHOOK_SECRET)
+
+**Force redeploy from scratch:**
+```bash
+ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239
+sudo docker ps
+sudo docker rm -f nexus
+sudo docker build -t nexus .
+sudo docker run -d --name nexus --restart always -p 7860:7860 \
+  -e NEXUS_DATABASE_PATH=/app/artifacts/incidents.json \
+  -v nexus-data:/app/artifacts nexus
+```
+
+**Full guide:** [docs/MASTER_GUIDE.md](docs/MASTER_GUIDE.md) — Part 5
+
+---
+
+## Production Environments
+
+| Environment | URL | Persistence | Notes |
+|---|---|---|---|
+| **Oracle Cloud** | https://nexus-triage.duckdns.org | Persistent | Always on, primary, HTTPS |
+| **Render** | https://nexus-uny5.onrender.com | Ephemeral | Sleeps after 15 minutes inactivity |
+| **Local Docker** | http://127.0.0.1:7860 | Persistent | Via docker_fresh.sh |
+| **API Docs** | https://nexus-triage.duckdns.org/docs | — | OpenAPI reference |
+
+---
 
 ## Validation
 
-Core validation commands:
+All validation commands with current baseline numbers:
 
 ```bash
+# Unit tests (495 passed, 1 skipped)
 pytest tests/ --ignore=tests/test_production_gate3.py -q
+
+# Browser verification (16 passed)
 npm run browser:verify
-python demo.py
-ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
-EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh
+
+# Release gate (PASSED)
+bash scripts/run-release-gate.sh
+
+# Smoke test production (5/5 passing)
+bash scripts/test-live.sh https://nexus-triage.duckdns.org
 ```
 
-Current validated baseline:
+**Current validated baseline:**
 
-- `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `489 passed` (all tests pass; Docker-coupled replica test runs or skips based on environment)
-- `npm run browser:verify` -> `16 passed` (browser verification)
-- `python demo.py` -> passes
-- Docker rebuild and enterprise smoke path -> passes
+| Check | Expected |
+|---|---|
+| pytest tests/ --ignore=tests/test_production_gate3.py -q | **495 passed, 1 skipped** |
+| npm run browser:verify | **16 passed** |
+| bash scripts/run-release-gate.sh | **PASSED** |
+| bash scripts/test-live.sh https://nexus-triage.duckdns.org | **5/5 passing** |
 
-**For complete setup and testing instructions:** See [MASTER_GUIDE.md](docs/MASTER_GUIDE.md)
+---
 
-## Roadmap Status
+## What It Does
 
-The current five-family product objective is wrapped for the present strategy.
+Supports 11 incident family types with two evidence postures:
 
-Any next work should stay narrow:
+| ID | Family | Severity | Evidence Posture |
+|---|---|---|---|
+| **INC001** | API Timeout Cascade | P2 | 🟢 Runtime-backed |
+| **INC002** | Database Connection Pool Exhaustion | P1 | 🟢 Runtime-backed |
+| **INC003** | Deploy Regression / 5xx Spike | P1 | 🟢 Runtime-backed |
+| **INC004** | Cache Cardinality Explosion | P2 | 🟡 Inference-first |
+| **INC005** | Queue Backlog Surge | P1 | 🟢 Runtime-backed |
+| **INC006** | Expired TLS Certificate On API Gateway | P0 | 🟡 Inference-first |
+| **INC007** | Auth Dependency Slowdown | P1 | 🟢 Runtime-backed |
+| **INC008** | Primary Region Message Queue Outage | P0 | 🟡 Inference-first |
+| **INC009** | CDN / Cache Invalidation Failure | P2 | 🟡 Inference-first |
+| **INC010** | ML Model Degradation | P2 | 🟡 Inference-first |
+| **INC011** | Geographic / Routing Failure | P2 | 🟡 Inference-first |
 
-- pilot-specific hardening
-- bugfixes
-- explicitly scoped tenant follow-ups
+**Evidence postures:**
+- 🟢 **Runtime-backed** — REPLICA reproduces the incident in Docker
+- 🟡 **Inference-first** — PRISM diagnoses from logs and metrics
+- 🔴 **Unsupported** — Not in any supported family
 
-## Repository Shape
+---
 
-- `server/` backend APIs, incident pipeline, and runtime pack orchestration
-- `frontend/` operator UI
-- `Dockerfile.runtime-host` plus `server/services/replica_runtime.py` for the Docker-capable replay host relay used by packaged demos
-- `docs/public/` market, buyer, demo, and presentation-facing material
-- `docs/internal/` operator, pilot, verification, and control docs
+## Repository Structure
+
+| Path | Purpose |
+|---|---|
+| `server/app.py` | FastAPI entry point |
+| `server/services/incidents.py` | Core incident orchestration |
+| `server/services/intake.py` | Log intake and normalization |
+| `server/services/classification.py` | Incident family classification |
+| `server/services/investigation.py` | Investigation orchestration |
+| `server/services/replay.py` | Runtime replay orchestration |
+| `server/services/runtime_state.py` | Replay state tracking |
+| `server/services/enterprise_runtime.py` | Live graph incident tracking |
+| `server/services/replica_runtime.py` | Docker-capable replay host relay |
+| `frontend/` | Operator UI (queue, inputs, incident, training, settings) |
+| `incidents/` | Incident family definitions and catalogue |
+| `tests/` | Unit, API contract, and browser verification tests |
+| `replica_packs/` | Curated reproduction packs for INC001, INC002, INC003 |
+| `training/` | Evidence posture training data and proof surfaces |
+| `scripts/` | Deployment, testing, and operations automation |
+| `docs/` | Complete documentation (master guide, deployment, pilot handoff, results) |
+
+---
+
+## Quick Commands
+
+```bash
+# Start locally with Docker
+ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
+
+# Run all tests
+pytest tests/ --ignore=tests/test_production_gate3.py -q && npm run browser:verify
+
+# Release gate (pre-deployment verification)
+bash scripts/run-release-gate.sh
+
+# Deploy to Oracle Cloud
+git push origin master
+# OR manually:
+NEXUS_WEBHOOK_SIGNING_SECRET=your-secret bash scripts/deploy-oracle.sh
+
+# SSH to production server
+ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239
+
+# Smoke test production
+bash scripts/test-live.sh https://nexus-triage.duckdns.org
+
+# Check health
+curl https://nexus-triage.duckdns.org/health
+```
+
+---
+
+## Key Concepts
+
+**SENTINEL** — Log collector and normalizer  
+**PRISM** — ML-first incident classifier  
+**REPLICA** — Bounded runtime reproducer (curated packs only)  
+**TRACE** — Bounded debugger and code inspector  
+**FORGE** — Mitigation ranker and confidence scorer  
+**GUARDIAN** — Human approval gate before action  
+
+**Real today:**
+- Fresh incident intake and normalization
+- Bounded REPLICA runtime replay for curated packs
+- Bounded TRACE debugging and engineering handoff
+- Runtime-host relay via Docker
+- Operator, pilot, and buyer proof surfaces
+
+**Still bounded:**
+- Reproduction only works for curated packs (not arbitrary environments)
+- TRACE is bounded to curated debugging (not a universal debugger)
+- Execution remains governed and human-approved
+
+---
+
+## Next Steps
+
+- **Setup:** Follow [docs/MASTER_GUIDE.md](docs/MASTER_GUIDE.md)
+- **Demo:** Use [docs/NEXUS_COMPLETE_MANUAL.md](docs/NEXUS_COMPLETE_MANUAL.md)
+- **Deploy:** See [docs/MASTER_GUIDE.md](docs/MASTER_GUIDE.md) — Part 5
+- **Questions:** Check [docs/TROUBLESHOOTING_GUIDE.md](docs/TROUBLESHOOTING_GUIDE.md)
+- **All docs:** [docs/README.md](docs/README.md)
