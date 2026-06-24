@@ -5,12 +5,15 @@ Use this file as the top-level control surface for Codex or Claude working in th
 ## Current Product State
 
 - Product shape: support triage and incident investigation workspace
-- Flagship incidents (five-family wedge):
-  - `INC001` checkout timeout / retry amplification
-  - `INC002` checkout DB pool exhaustion / session leak
-  - `INC003` deploy regression / 5xx spike
-  - `INC005` queue / worker backlog affecting transaction completion
-  - `INC007` auth dependency slowdown / token validation failures
+- **Supported incidents (seven-family wedge):**
+  - `INC001` API timeout / retry amplification (runtime-backed)
+  - `INC002` database connection pool exhaustion / session leak (runtime-backed)
+  - `INC003` deploy regression / 5xx spike (runtime-backed)
+  - `INC004` cache cardinality explosion (inference-first)
+  - `INC005` queue backlog surge / consumer lag (runtime-backed)
+  - `INC006` expired TLS certificate on API gateway (inference-first)
+  - `INC007` auth dependency slowdown / token validation failures (runtime-backed)
+- **Catalogued but not yet wired:** INC008, INC009, INC010, INC011 (on roadmap for Phase 4)
 - Current validated baseline (Updated 2026-06-24):
   - `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `495 passed, 1 skipped` (the skipped test is Docker-coupled and depends on local engine access)
   - `npm run browser:verify` -> `16 passed`
@@ -126,6 +129,11 @@ These rules apply to all Claude Code autonomous loop sessions:
 - Use `--dangerously-skip-permissions` only for bounded repo work (not system commands)
 - `/compact` and `/context` must be typed directly by the user — cannot be invoked via bash tool calls
 - Compact at 50% context without waiting to be told
+
+## Safety & Boundaries
+
+- **Catalogued vs. Wired:** SENTINEL can classify incidents into all 11 families in the catalogue, but the system only accepts INC001-INC007. If a raw incident matches INC008/INC009/INC010/INC011 better than any supported family, it will be rejected with "unknown incident_id" — this is intentional (better to fail explicitly than accept incomplete incidents).
+- **Roadmap families:** INC008 (Message Queue), INC009 (CDN), INC010 (ML Model), INC011 (Geographic) are in Phase 4 work. They appear in SENTINEL pattern matching but have no investigation payloads.
 
 ## Hard Rules
 
