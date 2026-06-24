@@ -191,7 +191,7 @@ Current phase:
 
 The current shipped baseline is:
 
-- five bounded outage families
+- eight bounded outage families
 - bounded REPLICA runtime packs
 - bounded TRACE debugging and handoff packets
 - packaged runtime-host relay
@@ -239,7 +239,7 @@ Implemented now:
 - chronological handoff ledger with event details and status
 - clearer transfer animations with pulse effects and active state highlighting
 - demo-mode handoff chain replay controls for operator walkthroughs
-- curated `/inputs` demo bundles for the five bounded outage families
+- curated `/inputs` demo bundles for the eight bounded outage families
 - additive demo-origin guidance on fresh `nxs_...` incidents created from curated bundles
 
 Not implemented yet:
@@ -250,11 +250,11 @@ Not implemented yet:
 - broad third-party workflow coverage beyond the current bounded integrations
 - fully durable active runtime queue orchestration beyond app-local in-flight state
 - multi-tenant production hardening beyond the current narrow v1 release baseline
-- enterprise-grade auth, security, observability, and onboarding maturity beyond the current wrapped seven-family strategy
+- enterprise-grade auth, security, observability, and onboarding maturity beyond the current wrapped eight-family strategy
 
 ## Checkpoint Note
 
-The seven-family market-ready baseline remains wrapped for the present strategy.
+The eight-family market-ready baseline remains wrapped for the present strategy.
 
 The most recent narrow phase also closed cleanly:
 
