@@ -113,7 +113,7 @@ Every serious buyer or pilot conversation should use the shipped evidence postur
 
 - `runtime-backed`: bounded replay actually ran and materially improved or resolved the case
 - `inference-first`: the investigation packet is useful, but replay did not validate this case
-- `unsupported`: the incident is outside the current five-family wedge and should be downgraded honestly
+- `unsupported`: the incident is outside the current seven-family wedge and should be downgraded honestly
 
 This is part of the product promise, not a footnote. NEXUS wins by being useful and explicit, not by pretending broader coverage than it really has.
 

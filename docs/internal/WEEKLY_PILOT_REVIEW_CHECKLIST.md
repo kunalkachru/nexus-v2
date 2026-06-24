@@ -71,7 +71,7 @@ Ask each engineering team:
 
 ### If scorecard is strong (60%+ runtime-backed, high trust):
 
-- [ ] Decide whether the current five-family wedge is strong enough for the next pilot wave
+- [ ] Decide whether the current seven-family wedge is strong enough for the next pilot wave
 - [ ] Document reusable patterns for ops/engineering handoff
 - [ ] Consider pilot readiness for broader rollout
 

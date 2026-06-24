@@ -69,7 +69,7 @@ Completed phases:
 
 Current wrapped baseline:
 
-- five-family support-to-engineering wedge
+- seven-family support-to-engineering wedge
 - bounded REPLICA runtime replay
 - bounded TRACE debugging and engineering handoff
 - pilot-safe observability, governance, exports, resilience, and review packet automation

@@ -29,7 +29,7 @@ sequenceDiagram
     API->>NEXUS: process_raw_incident_submission()
     
     NEXUS->>Agents: SENTINEL.classify()
-    Note over Agents: Match symptoms vs 7 families
+    Note over Agents: Match symptoms vs 11 families, filter to 8 supported
     Agents->>NEXUS: INC001, confidence=0.87
     
     NEXUS->>Agents: PRISM.diagnose()

@@ -32,9 +32,9 @@ sequenceDiagram
     INT->>INC: Return NormalizedEvidence
     
     INC->>SENT: classify(raw_symptoms, system_context)
-    SENT->>SENT: Score all 7 families
+    SENT->>SENT: Score all 11 families in catalogue
     SENT->>INC: Return SentinelClassification
-    Note over SENT: incident_id, confidence, reasoning
+    Note over SENT: incident_id (only if in 8 supported families), confidence, reasoning
     
     INC->>PRISM: diagnose(classification, evidence)
     PRISM->>INC: Return PrismDiagnosis
@@ -195,7 +195,7 @@ sequenceDiagram
 
 ## Out-of-Scope Incident Handling
 
-Operator submits incident that doesn't match any 7 supported families.
+Operator submits incident that doesn't match any 8 supported families (e.g., INC004, INC006, or INC008).
 
 ```mermaid
 sequenceDiagram
@@ -212,16 +212,16 @@ sequenceDiagram
     API->>INC: process_raw_incident_submission(request)
     
     INC->>SENT: classify(raw_symptoms, system_context)
-    SENT->>SENT: Score all 7 families
-    Note over SENT: Best match: INC009 (0.45 confidence)
-    Note over SENT: INC009 is catalogued but NOT wired
+    SENT->>SENT: Score all 11 families in catalogue
+    Note over SENT: Best match: INC004 (0.45 confidence)
+    Note over SENT: INC004 is catalogued but NOT supported
     
-    alt Best match has payload
-        SENT->>INC: Return SentinelClassification(INC009, 0.45)
-        INC->>INC: Try get_incident_details(INC009)
+    alt Best match not in supported families
+        SENT->>INC: Return SentinelClassification(INC004, 0.45)
+        INC->>INC: Try get_incident_details(INC004)
         INC->>DB: unknown_incident_id error!
         INC->>API: HTTP 422 Unprocessable Entity
-        API->>Op: "INC009 is not yet supported. Please contact support."
+        API->>Op: "INC004 is not yet supported. Please contact support."
     else Fallback to similar supported family
         SENT->>INC: Return SentinelClassification(INC005, 0.65)
         Note over SENT: Fallback to similar supported family

@@ -5,19 +5,20 @@ Use this file as the top-level control surface for Codex or Claude working in th
 ## Current Product State
 
 - Product shape: support triage and incident investigation workspace
-- **Supported incidents (seven-family wedge):**
-  - `INC001` API timeout / retry amplification (runtime-backed)
-  - `INC002` database connection pool exhaustion / session leak (runtime-backed)
-  - `INC003` deploy regression / 5xx spike (runtime-backed)
-  - `INC004` cache cardinality explosion (inference-first)
-  - `INC005` queue backlog surge / consumer lag (runtime-backed)
-  - `INC006` expired TLS certificate on API gateway (inference-first)
-  - `INC007` auth dependency slowdown / token validation failures (runtime-backed)
-- **Catalogued but not yet wired:** INC008, INC009, INC010, INC011 (on roadmap for Phase 4)
+- **Supported incidents (eight-family wedge):**
+  - `INC001` API timeout / retry amplification
+  - `INC002` database connection pool exhaustion / session leak
+  - `INC003` deploy regression / 5xx spike
+  - `INC005` queue backlog surge / consumer lag
+  - `INC007` auth dependency slowdown / token validation failures
+  - `INC009` CDN / caching failures
+  - `INC010` ML model degradation / accuracy regression
+  - `INC011` geographic routing / regional outage
+- **Catalogued but not yet wired:** INC004 (Load Balancer), INC006 (Session Management), INC008 (Message Queue) (on roadmap for Phase 4)
 - Current validated baseline (Updated 2026-06-24):
   - `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `495 passed, 1 skipped` (the skipped test is Docker-coupled and depends on local engine access)
   - `npm run browser:verify` -> `16 passed`
-  - `python demo.py` -> passes (five-family seeded walkthrough plus live graph demo)
+  - `python demo.py` -> passes (seven-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
   - **Master setup and testing guide** created with comprehensive coverage
@@ -132,7 +133,7 @@ These rules apply to all Claude Code autonomous loop sessions:
 
 ## Safety & Boundaries
 
-- **Catalogued vs. Wired:** SENTINEL can classify incidents into all 11 families in the catalogue, but the system accepts INC001, INC002, INC003, INC005, INC007, INC009, INC010, INC011 (8 supported families). If a raw incident matches INC004/INC006/INC008 better than any supported family, it will be rejected with "unknown incident_id" — this is intentional (better to fail explicitly than accept incomplete incidents).
+- **Catalogued vs. Wired:** SENTINEL can classify incidents into all 11 families in the catalogue, but the system accepts only the 8 families listed above. If a raw incident matches INC004/INC006/INC008 better than any supported family, it will be rejected with "unknown incident_id" — this is intentional (better to fail explicitly than accept incomplete incidents).
 - **Roadmap families:** INC004 (Load Balancer), INC006 (Session Management), INC008 (Message Queue) are in Phase 4 work. They appear in SENTINEL pattern matching but have no investigation payloads.
 
 ## Hard Rules
@@ -249,11 +250,11 @@ Not implemented yet:
 - broad third-party workflow coverage beyond the current bounded integrations
 - fully durable active runtime queue orchestration beyond app-local in-flight state
 - multi-tenant production hardening beyond the current narrow v1 release baseline
-- enterprise-grade auth, security, observability, and onboarding maturity beyond the current wrapped five-family strategy
+- enterprise-grade auth, security, observability, and onboarding maturity beyond the current wrapped seven-family strategy
 
 ## Checkpoint Note
 
-The five-family market-ready baseline remains wrapped for the present strategy.
+The seven-family market-ready baseline remains wrapped for the present strategy.
 
 The most recent narrow phase also closed cleanly:
 

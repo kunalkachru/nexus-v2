@@ -19,5 +19,5 @@ Read in this order:
 Presenter anchor:
 
 - start from the queue-first operator path
-- keep the five-family wedge explicit
+- keep the seven-family wedge explicit
 - say `runtime-backed`, `inference-first`, or `unsupported` exactly as the product does

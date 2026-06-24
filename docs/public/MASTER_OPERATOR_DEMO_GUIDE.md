@@ -648,7 +648,7 @@ Inspect:
 - replay coverage
 - approval outcomes
 - memory reuse
-- five-family wedge coverage
+- seven-family wedge coverage
 
 Expected response:
 

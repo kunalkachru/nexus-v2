@@ -497,7 +497,7 @@ function renderOperatorROI(trainingData) {
   setText("recurrentIssueClasses", `${trainingData.summary?.recurrent_issue_count || 2}`);
   setText("memoryOutcomeWeight", "Outcome-weighted");
 
-  // Per-family metrics from the five-family wedge
+  // Per-family metrics from the seven-family wedge
   const familyMetrics = roiMetrics.per_family_metrics || {};
   const inc001 = familyMetrics.timeout_retry_amplification || {};
   const inc002 = familyMetrics.db_pool_exhaustion || {};
