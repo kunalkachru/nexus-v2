@@ -18,7 +18,7 @@ Use this file as the top-level control surface for Codex or Claude working in th
 - Current validated baseline (Updated 2026-06-24):
   - `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `495 passed, 1 skipped` (the skipped test is Docker-coupled and depends on local engine access)
   - `npm run browser:verify` -> `16 passed`
-  - `python demo.py` -> passes (seven-family seeded walkthrough plus live graph demo)
+  - `python demo.py` -> passes (eight-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
   - **Master setup and testing guide** created with comprehensive coverage
@@ -41,7 +41,7 @@ Use this file as the top-level control surface for Codex or Claude working in th
   - **Weighted evidence explanation** across inference, memory, and runtime sources with measurable confidence boosts
   - **Pilot operations kit** including tenant setup, weekly reviews, and closeout procedures
   - **FR2 repeatable enterprise pilot closure** with bounded onboarding, measured proof, and stronger engineering trust
-  - **Guided stakeholder demo bundles** on `/inputs` for all five supported outage families
+  - **Guided stakeholder demo bundles** on `/inputs` for all eight supported outage families
   - **Fresh incident demo-origin carryover** from `/inputs` into the incident workspace
   - **Queue-first incident access improvements** for both seeded and fresh review paths
   - **Incident-workspace progressive disclosure** that keeps the top decision path primary

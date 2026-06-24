@@ -389,6 +389,6 @@ graph LR
 
 | Posture | When | Examples | Confidence |
 |---------|------|----------|-----------|
-| 🟢 Runtime-backed | INC001, INC002, INC003 classified + Docker relay enabled | Timeout cascade, pool exhaustion | 90-95% |
-| 🟡 Inference-first | INC004-INC007 classified, or docker relay disabled | Cache explosion, queue backlog, auth slowdown | 65-85% |
-| ❌ Unsupported | INC008-INC011 best match | CDN, ML model, geographic routing | Rejected or fallback |
+| 🟢 Runtime-backed | INC001, INC002, INC003 classified + Docker relay enabled | Timeout cascade, pool exhaustion, deploy regression | 90-95% |
+| 🟡 Inference-first | INC005, INC007, INC009, INC010, INC011 classified, or docker relay disabled | Queue backlog, auth slowdown, CDN issues, ML degradation, geographic routing | 65-85% |
+| ❌ Unsupported | INC004, INC006, INC008 best match | Cache cardinality explosion, expired TLS certificate, message queue issues | Rejected or fallback |
