@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -10,8 +9,6 @@ import logging
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-
 logger = logging.getLogger(__name__)
 
 
@@ -60,7 +57,7 @@ from server.services.health_service import HealthService
 from server.services.live_demo import build_demo_payload
 from server.services.metrics_service import PilotMetricsService
 from server.services.observability import ObservabilityService
-from server.services.replica_runtime import execute_runtime_host_replay, runtime_host_supported_packs, build_runtime_host_relay_status, probe_runtime_host
+from server.services.replica_runtime import execute_runtime_host_replay, runtime_host_supported_packs, build_runtime_host_relay_status
 from server.services.surface_payloads import build_platform_status, load_metrics_payload
 from server.services.tenancy import TenancyService
 
@@ -273,7 +270,6 @@ async def get_product_health(
         queue_guidance = queue_subsystem.guidance
         queue_next_checks = queue_subsystem.next_checks
 
-        execution_health = "idle" if execution_state.current_state == "idle" else "running"
         runtime_recovery = RuntimeQueueManager.get_runtime_recovery_posture()
         deployment_readiness = DeploymentReadiness.get_deployment_readiness()
 
@@ -1183,7 +1179,7 @@ async def replay_incident_v1(
         )
         status = response.get("status", "unknown")
         execution_state.finish_execution("completed" if status in {"replay_executed", "relay_executed"} else "failed")
-    except Exception as e:
+    except Exception:
         execution_state.finish_execution("failed")
         raise
 
@@ -1273,8 +1269,6 @@ async def receive_datadog_webhook(
         severity = severity_map.get(priority, "P3")
 
         tags = payload_data.get("tags", [])
-        service_name = next((t.split(":")[-1] for t in tags if t.startswith("service:")), "datadog-alert")
-
         detected_at = payload_data.get("date", datetime.now(timezone.utc).isoformat())
 
         incident_id = payload_data.get("id", f"dd_{hashlib.sha256(raw_body).hexdigest()[:8]}")

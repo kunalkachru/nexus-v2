@@ -15,6 +15,42 @@ async function settle(page, delay = 250) {
   await page.waitForTimeout(delay);
 }
 
+async function openAgentRelayDetails(page) {
+  await page.evaluate(() => {
+    const details = Array.from(document.querySelectorAll("details.section-collapsible")).find((el) =>
+      el.querySelector("h2")?.textContent?.includes("Agent Relay & Crew Details")
+    );
+    if (details && !details.open) details.open = true;
+  });
+  await settle(page, 1000);
+}
+
+async function attachByoOpenAIKey(page, key = "sk-test-1234567890") {
+  const readState = () =>
+    page.evaluate(() => ({
+      requested: window.localStorage.getItem("nexus.live_reasoning"),
+      key: window.sessionStorage.getItem("nexus.user_openai_api_key"),
+      live: document.getElementById("liveReasoningState")?.textContent || "",
+    }));
+
+  const tryAttach = async () => {
+    await page.locator("#openaiApiKeyInput").fill(key);
+    await page.getByRole("button", { name: "Use this key" }).click();
+    await settle(page, 400);
+  };
+
+  await tryAttach();
+  let state = await readState();
+  if (!(state.requested === "1" && state.key === key && state.live.includes("requested ON"))) {
+    await tryAttach();
+    state = await readState();
+  }
+
+  expect(state.requested, "BYO key should request live reasoning").toBe("1");
+  expect(state.key, "BYO key should stay in session storage for the current browser session").toBe(key);
+  expect(state.live, "Live reasoning badge should reflect the requested ON state").toContain("requested ON");
+}
+
 async function assertNoHorizontalOverflow(page, url, widths = [1365, 1280, 1180]) {
   for (const width of widths) {
     await page.setViewportSize({ width, height: 900 });
@@ -151,14 +187,10 @@ test.describe("NEXUS browser verification", () => {
   test("incident detail keeps BYO key masked and request-scoped", async ({ page }) => {
     await gotoAndSettle(page, "/incident?nexus_incident_id=INC001");
 
-    // Expand Agent Relay & Crew Details section to access BYO key input
-    await page.locator('details:has(h2:text("Agent Relay & Crew Details")) summary').first().click();
-    await settle(page);
+    await openAgentRelayDetails(page);
 
     await expect(page.locator("#openaiKeyStatus")).toContainText("No user key attached");
-    await page.locator("#openaiApiKeyInput").fill("sk-test-1234567890");
-    await page.getByRole("button", { name: "Use this key" }).click();
-    await settle(page);
+    await attachByoOpenAIKey(page);
 
     await expect(page.locator("#liveReasoningState")).toContainText("ON");
     await expect(page.locator("#openaiKeyStatus")).toContainText("sk-t...7890");
@@ -174,13 +206,8 @@ test.describe("NEXUS browser verification", () => {
       await page.setViewportSize({ width, height: 900 });
       await gotoAndSettle(page, "/incident?nexus_incident_id=INC001");
 
-      // Expand Agent Relay & Crew Details section to access BYO key input
-      await page.locator('details:has(h2:text("Agent Relay & Crew Details")) summary').first().click();
-      await settle(page);
-
-      await page.locator("#openaiApiKeyInput").fill("sk-test-1234567890");
-      await page.getByRole("button", { name: "Use this key" }).click();
-      await settle(page);
+      await openAgentRelayDetails(page);
+      await attachByoOpenAIKey(page);
 
       await expect(page.locator("#openaiKeyStatus")).toContainText("sk-t...7890");
       await expect(page.locator("#openaiKeyStatus")).not.toContainText("sk-test-1234567890");

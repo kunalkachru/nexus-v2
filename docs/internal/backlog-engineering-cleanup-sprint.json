@@ -1,0 +1,339 @@
+[
+  {
+    "id": "EC-001",
+    "title": "Open engineering cleanup sprint control surface",
+    "priority": "high",
+    "status": "done",
+    "description": "Create the active backlog and point control-surface docs at the new engineering cleanup sprint so work proceeds under an explicit governed loop.",
+    "implementation_tasks": [
+      "Create the sprint backlog file under docs/internal/",
+      "Update WORKING_STATE.md to point at the active backlog and phase",
+      "Update AGENTS.md current frontier to reference the sprint backlog and active phase"
+    ],
+    "done_when": [
+      "The sprint backlog exists with ordered backlog items and test gates",
+      "WORKING_STATE.md references the active cleanup sprint backlog",
+      "AGENTS.md references the active cleanup sprint backlog and phase"
+    ],
+    "test_gates": [
+      "pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3",
+      "npm run browser:verify 2>&1 | tail -3",
+      "bash scripts/test-live.sh https://nexus-triage.duckdns.org",
+      "bash scripts/run-release-gate.sh"
+    ],
+    "files_likely_touched": [
+      "docs/internal/backlog-engineering-cleanup-sprint.json",
+      "WORKING_STATE.md",
+      "AGENTS.md"
+    ]
+  },
+  {
+    "id": "EC-002",
+    "title": "Clean obsolete root session artifacts",
+    "priority": "high",
+    "status": "done",
+    "description": "Remove confirmed obsolete root-level reports, screenshots, session artifacts, and stale root backlog JSON files after verifying they are not imported or referenced as live product assets.",
+    "implementation_tasks": [
+      "Reference-audit every deletion candidate with grep/rg before removal",
+      "Delete only files confirmed to be obsolete session artifacts",
+      "Leave standard repo files and any referenced assets untouched"
+    ],
+    "done_when": [
+      "Confirmed obsolete session artifacts listed in the sprint scope are removed from the repo root",
+      "No deleted file is referenced by live product code or active docs without replacement",
+      "The repo root contains only intentional project files and active artifacts"
+    ],
+    "test_gates": [
+      "pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3",
+      "npm run browser:verify 2>&1 | tail -3",
+      "bash scripts/test-live.sh https://nexus-triage.duckdns.org",
+      "bash scripts/run-release-gate.sh"
+    ],
+    "files_likely_touched": [
+      "COMPLETED_TASKS_2026-06-17_114921.md",
+      "CONTEXT_AUTO_MANAGEMENT.md",
+      "CONTEXT_THRESHOLD_DECISION.md",
+      "CURRENT_FIX_LOOP_STATUS.md",
+      "DEMO_CONCEPTS_EXPLAINED.md",
+      "DEMO_WALKTHROUGH_DETAILED.md",
+      "DEMO_WALKTHROUGH_VERIFICATION_REPORT.md",
+      "DOCUMENTATION_AND_SETUP_COMPLETION_REPORT.md",
+      "DOCUMENTATION_UPDATE_SUMMARY_2026-06-17.md",
+      "EXECUTION_STATUS.md",
+      "EXPLICIT_TESTING_INSTRUCTIONS.md",
+      "FINAL_SPRINT_REPORT.md",
+      "FINAL_STATUS_REPORT.md",
+      "FIX_REPORT_AGENT_VISIBILITY_AND_TRACE_HANG.md",
+      "IDEAL_AGENT_PROGRESSION.md",
+      "LOOP_EXECUTION_GUIDE.md",
+      "PRODUCTION_READINESS_ROADMAP.md",
+      "PRODUCTION_VALIDATION_RESULTS.md",
+      "REPOSITORY_REVIEW_2026-06-17.md",
+      "START_LOOP_HERE.md",
+      "TEST_FIX_COMPLETION_REPORT.md",
+      "UI_AND_BACKEND_FIXES_REPORT.md",
+      "UI_REDESIGN_COMPLETION_REPORT.md",
+      ".context_threshold",
+      "actual-ui-viewport.png",
+      "first-viewport-incident-detail.png",
+      "full-page-incident-detail.png",
+      "guardian-card-visibility.png",
+      "verify-page-length.png",
+      "browser-test-output.txt",
+      "backlog-117-plus.json",
+      "backlog-125-plus.json",
+      "backlog-131-plus.json",
+      "backlog-137-plus.json",
+      "backlog-145-plus.json"
+    ]
+  },
+  {
+    "id": "EC-003",
+    "title": "Rehome or reconcile root documentation duplicates",
+    "priority": "high",
+    "status": "done",
+    "description": "Move or reconcile important root docs that should not remain in the repo root, specifically DECISIONS.md and any overlapping deployment/setup guides.",
+    "implementation_tasks": [
+      "Move DECISIONS.md to docs/internal/DECISIONS.md",
+      "Compare MASTER_SETUP_AND_TESTING_GUIDE.md against docs/MASTER_GUIDE.md and merge any missing useful content into the canonical doc",
+      "Compare DEPLOY.md against docs/CICD.md and merge any missing useful content into the canonical doc",
+      "Delete root duplicates only after canonical docs contain the retained content"
+    ],
+    "done_when": [
+      "DECISIONS.md lives under docs/internal/",
+      "There is one canonical master setup guide and one canonical deployment/CI doc",
+      "Root duplicates are removed only after reconciliation"
+    ],
+    "test_gates": [
+      "pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3",
+      "npm run browser:verify 2>&1 | tail -3",
+      "bash scripts/test-live.sh https://nexus-triage.duckdns.org",
+      "bash scripts/run-release-gate.sh"
+    ],
+    "files_likely_touched": [
+      "DECISIONS.md",
+      "docs/internal/DECISIONS.md",
+      "MASTER_SETUP_AND_TESTING_GUIDE.md",
+      "docs/MASTER_GUIDE.md",
+      "DEPLOY.md",
+      "docs/CICD.md"
+    ]
+  },
+  {
+    "id": "EC-004",
+    "title": "Assess backup directory and retain only intentional backup assets",
+    "priority": "medium",
+    "status": "done",
+    "description": "Inspect .backup/ contents, remove only disposable local artifacts if present, and preserve the directory structure because scripts, tests, and docs still reference it.",
+    "implementation_tasks": [
+      "List .backup/ contents",
+      "Determine whether any local backup artifacts inside are disposable session remnants",
+      "Keep the directory itself because it is part of the supported backup/restore workflow"
+    ],
+    "done_when": [
+      ".backup/ has been inspected and any disposable junk removed",
+      "The supported backup directory structure remains intact"
+    ],
+    "test_gates": [
+      "pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3",
+      "npm run browser:verify 2>&1 | tail -3",
+      "bash scripts/test-live.sh https://nexus-triage.duckdns.org",
+      "bash scripts/run-release-gate.sh"
+    ],
+    "files_likely_touched": [
+      ".backup/"
+    ]
+  },
+  {
+    "id": "EC-005",
+    "title": "Extract intake and classification layers from server/services/incidents.py",
+    "priority": "high",
+    "status": "done",
+    "description": "Read incidents.py fully and split the intake/normalization and classification responsibilities into focused modules without changing public behavior.",
+    "implementation_tasks": [
+      "Read server/services/incidents.py end-to-end",
+      "Extract intake/normalization helpers into server/services/intake.py one logical group at a time",
+      "Extract SENTINEL classification helpers into server/services/classification.py one logical group at a time",
+      "Keep incidents.py behavior identical while imports are rewired incrementally"
+    ],
+    "done_when": [
+      "Intake/normalization logic lives in server/services/intake.py",
+      "Classification logic lives in server/services/classification.py",
+      "incidents.py still passes the full baseline with unchanged signatures and return contracts"
+    ],
+    "test_gates": [
+      "pytest tests/test_live_intake.py tests/test_api_contract.py -v 2>&1 | tail -20",
+      "pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3",
+      "npm run browser:verify 2>&1 | tail -3",
+      "bash scripts/test-live.sh https://nexus-triage.duckdns.org",
+      "bash scripts/run-release-gate.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/services/intake.py",
+      "server/services/classification.py",
+      "server/app.py",
+      "tests/test_live_intake.py",
+      "tests/test_api_contract.py"
+    ]
+  },
+  {
+    "id": "EC-006",
+    "title": "Extract investigation and orchestration layers from server/services/incidents.py",
+    "priority": "high",
+    "status": "done",
+    "description": "Continue the incidents.py split by extracting the PRISM/TRACE/FORGE investigation logic and leaving incidents.py as a thin orchestration layer.",
+    "implementation_tasks": [
+      "Extract PRISM/TRACE/FORGE logic into server/services/investigation.py in small logical groups",
+      "Preserve Guardian/audit and handoff contracts while reducing incidents.py to orchestration",
+      "Resolve any import or circular dependency issues immediately"
+    ],
+    "done_when": [
+      "Investigation logic lives in server/services/investigation.py",
+      "incidents.py is substantially reduced and functions as orchestration only",
+      "All affected tests and full regression gates remain green"
+    ],
+    "test_gates": [
+      "pytest tests/test_live_intake.py tests/test_api_contract.py -v 2>&1 | tail -20",
+      "pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3",
+      "npm run browser:verify 2>&1 | tail -3",
+      "bash scripts/test-live.sh https://nexus-triage.duckdns.org",
+      "bash scripts/run-release-gate.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/incidents.py",
+      "server/services/investigation.py",
+      "server/app.py",
+      "tests/test_live_intake.py",
+      "tests/test_api_contract.py"
+    ]
+  },
+  {
+    "id": "EC-007",
+    "title": "Extract replay and state layers from server/services/enterprise_runtime.py",
+    "priority": "high",
+    "status": "done",
+    "description": "Read enterprise_runtime.py fully and split replay execution and runtime state management into focused modules without changing runtime behavior.",
+    "implementation_tasks": [
+      "Read server/services/enterprise_runtime.py end-to-end",
+      "Extract REPLICA execution logic into server/services/replay.py one logical group at a time",
+      "Extract runtime state and queue management into server/services/runtime_state.py one logical group at a time",
+      "Keep enterprise_runtime.py as orchestration-only after the split"
+    ],
+    "done_when": [
+      "Replay execution logic lives in server/services/replay.py",
+      "Runtime state management lives in server/services/runtime_state.py",
+      "enterprise_runtime.py is reduced to orchestration and all runtime tests still pass"
+    ],
+    "test_gates": [
+      "pytest tests/test_replica_runtime.py tests/test_db.py -v 2>&1 | tail -20",
+      "pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3",
+      "npm run browser:verify 2>&1 | tail -3",
+      "bash scripts/test-live.sh https://nexus-triage.duckdns.org",
+      "bash scripts/run-release-gate.sh"
+    ],
+    "files_likely_touched": [
+      "server/services/enterprise_runtime.py",
+      "server/services/replay.py",
+      "server/services/runtime_state.py",
+      "server/services/health_service.py",
+      "tests/test_replica_runtime.py",
+      "tests/test_db.py"
+    ]
+  },
+  {
+    "id": "EC-008",
+    "title": "Run Python, security, and error-handling audits",
+    "priority": "high",
+    "status": "done",
+    "description": "Work through the Python best-practices, security, and error-handling audits one concern at a time, fixing only real maintainability or correctness issues.",
+    "implementation_tasks": [
+      "Run py_compile/pyflakes/long-line/hardcoded-string scans and fix the highest-impact findings",
+      "Run security scans for secrets, SQL formatting, and endpoint validation gaps and fix any real issues",
+      "Run error-handling scans for bare excepts, swallowed exceptions, and external-call handling and fix real issues"
+    ],
+    "done_when": [
+      "High-impact Python audit issues found in scope are fixed",
+      "Any real security issues found are fixed",
+      "Bare except or silent swallow issues in scope are fixed with explicit handling or logging"
+    ],
+    "test_gates": [
+      "pytest tests/test_security.py tests/test_webhook*.py -v",
+      "pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3",
+      "npm run browser:verify 2>&1 | tail -3",
+      "bash scripts/test-live.sh https://nexus-triage.duckdns.org",
+      "bash scripts/run-release-gate.sh"
+    ],
+    "files_likely_touched": [
+      "server/auth.py",
+      "server/app.py",
+      "server/config.py",
+      "server/db.py",
+      "server/rate_limit.py",
+      "server/services/"
+    ]
+  },
+  {
+    "id": "EC-009",
+    "title": "Run type-hint, dead-code, docstring, dependency, and test-quality audits",
+    "priority": "medium",
+    "status": "done",
+    "description": "Complete the remaining audit areas carefully, preserving runtime behavior and avoiding speculative package churn.",
+    "implementation_tasks": [
+      "Add return type hints to public functions in the requested modules where absent",
+      "Verify any dead-code candidates with call-site searches before removal",
+      "Improve docstrings where the audit finds meaningful gaps",
+      "Only touch dependencies if a real issue requires it, and verify Docker/build impacts if changed",
+      "Add any needed regression tests without lowering the baseline"
+    ],
+    "done_when": [
+      "Public type-hint gaps in the requested files are addressed where safe",
+      "Any removed dead code was verified unused first",
+      "Any dependency or test changes have full verification evidence"
+    ],
+    "test_gates": [
+      "pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3",
+      "npm run browser:verify 2>&1 | tail -3",
+      "bash scripts/test-live.sh https://nexus-triage.duckdns.org",
+      "bash scripts/run-release-gate.sh"
+    ],
+    "files_likely_touched": [
+      "server/auth.py",
+      "server/db.py",
+      "server/config.py",
+      "server/rate_limit.py",
+      "requirements.txt",
+      "Dockerfile",
+      "tests/"
+    ]
+  },
+  {
+    "id": "EC-010",
+    "title": "Close the sprint and refresh control-surface docs",
+    "priority": "high",
+    "status": "done",
+    "description": "After all cleanup and refactor items are complete, refresh the repo control surface, mark the backlog closed, and run the final release gate sequence before merge.",
+    "implementation_tasks": [
+      "Update AGENTS.md, WORKING_STATE.md, and docs/internal/LOOPS_RUNBOOK.md as needed for the new post-sprint state",
+      "Mark the sprint backlog completed in WORKING_STATE.md",
+      "Run the full final release gate sequence and record the results"
+    ],
+    "done_when": [
+      "Control-surface docs reflect the finished sprint state",
+      "The active backlog is marked complete and no stale frontier remains",
+      "The final release gate sequence is green"
+    ],
+    "test_gates": [
+      "pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3",
+      "npm run browser:verify 2>&1 | tail -3",
+      "bash scripts/test-live.sh https://nexus-triage.duckdns.org",
+      "bash scripts/run-release-gate.sh"
+    ],
+    "files_likely_touched": [
+      "AGENTS.md",
+      "WORKING_STATE.md",
+      "docs/internal/LOOPS_RUNBOOK.md",
+      "docs/internal/backlog-engineering-cleanup-sprint.json"
+    ]
+  }
+]

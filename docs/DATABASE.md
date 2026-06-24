@@ -334,5 +334,5 @@ REINDEX idx_incidents_tenant_id;
 ## References
 
 - SQLite JSON Documentation: https://www.sqlite.org/json1.html
-- NEXUS Architecture: See PRODUCTION_READINESS_ROADMAP.md
+- NEXUS Architecture and current product boundary: See [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md)
 - Migration Guide: See migration procedure in Task 1.2.3

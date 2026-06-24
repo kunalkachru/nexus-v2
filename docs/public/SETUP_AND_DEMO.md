@@ -5,7 +5,7 @@
 
 This is the shortest setup path for a truthful local product demo.
 
-**For complete setup instructions and testing checklist, see: [MASTER_SETUP_AND_TESTING_GUIDE.md](../../MASTER_SETUP_AND_TESTING_GUIDE.md)**
+**For complete setup instructions and testing checklist, see: [MASTER_GUIDE.md](../MASTER_GUIDE.md)**
 
 ## Preferred Local Start
 
@@ -48,7 +48,7 @@ EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enter
 
 ## Configuration
 
-See [MASTER_SETUP_AND_TESTING_GUIDE.md - Configuration Guide](../../MASTER_SETUP_AND_TESTING_GUIDE.md#configuration-guide) for:
+See [MASTER_GUIDE.md - Environment Variables](../MASTER_GUIDE.md#part-9--environment-variables) for:
 - Environment variables
 - Tenant setup
 - Database configuration
@@ -57,11 +57,11 @@ See [MASTER_SETUP_AND_TESTING_GUIDE.md - Configuration Guide](../../MASTER_SETUP
 
 ## Testing
 
-See [MASTER_SETUP_AND_TESTING_GUIDE.md - Feature Testing Checklist](../../MASTER_SETUP_AND_TESTING_GUIDE.md#feature-testing-checklist) to validate all functionality end-to-end.
+See [MASTER_GUIDE.md - Running All Tests](../MASTER_GUIDE.md#part-3--running-all-tests) to validate all functionality end-to-end.
 
 ## Troubleshooting
 
-See [MASTER_SETUP_AND_TESTING_GUIDE.md - Troubleshooting](../../MASTER_SETUP_AND_TESTING_GUIDE.md#troubleshooting) for:
+See [MASTER_GUIDE.md - Troubleshooting](../MASTER_GUIDE.md#part-8--troubleshooting) for:
 - Service startup issues
 - Health check failures
 - Database problems

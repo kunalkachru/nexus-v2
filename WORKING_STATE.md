@@ -10,7 +10,7 @@ NEXUS is an AI-assisted support-to-engineering investigation product: noisy logs
 
 - Branch: `master`
 - Current bounded wedge: five supported outage families
-- `pytest tests/ --ignore=tests/test_production_gate3.py -q` → target baseline: **488 passed, 1 skipped** (the skipped test requires local Docker engine access)
+- `pytest tests/ --ignore=tests/test_production_gate3.py -q` → target baseline: **495 passed, 1 skipped** (the skipped test requires local Docker engine access)
 - `npm run browser:verify` → target baseline: **16 passed**
 - `python demo.py` → demo incidents complete
 - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` → passes
@@ -51,7 +51,7 @@ Still bounded:
 
 - Active backlog: none
 - Active phase: none
-- Status: `backlog-145-plus.json` closed cleanly after the documentation and demo-truth consistency pass
+- Status: engineering cleanup sprint closed; waiting for the next narrow backlog
 
 Completed phases:
 
@@ -65,6 +65,7 @@ Completed phases:
 - guided demo-intake phase closed
 - pilot UX hardening and live-intake trust pass closed
 - documentation and demo-truth consistency pass closed
+- engineering cleanup sprint closed
 
 Current wrapped baseline:
 
@@ -93,11 +94,15 @@ Most recently implemented:
 - queue-first public demo route sync
 - public product-story truth sync
 - internal control-surface sync and documentation checkpoint
+- repo-root cleanup and duplicate-doc reconciliation
+- `incidents.py` split across intake, classification, and investigation layers
+- `enterprise_runtime.py` split across replay and runtime-state layers
+- Python/security/error-handling audit cleanup with regression gates preserved
 
 Next execution target:
 
-- no active loop is open
-- the next phase should be a new narrow backlog only if a concrete pilot-hardening or bug-fix frontier is agreed
+- write the next narrow backlog before starting another loop
+- preserve the current regression floor while choosing the next bounded implementation target
 
 Truth boundaries maintained:
 

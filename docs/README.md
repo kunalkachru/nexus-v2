@@ -9,7 +9,7 @@ This documentation is organized into three paths:
 
 ## 🚀 Quick Start (New to NEXUS)
 
-1. **[MASTER_SETUP_AND_TESTING_GUIDE.md](/Users/kunalkachru/Documents/nexus-v3/MASTER_SETUP_AND_TESTING_GUIDE.md)** ← START HERE
+1. **[MASTER_GUIDE.md](/Users/kunalkachru/Documents/nexus-v3/docs/MASTER_GUIDE.md)** ← START HERE
    - Setup in 5-30 minutes
    - Configuration reference
    - Complete testing checklist
@@ -53,8 +53,8 @@ Includes:
 
 | Topic | Document | Audience |
 |-------|----------|----------|
-| **Setup & Install** | [Master Setup Guide](/Users/kunalkachru/Documents/nexus-v3/MASTER_SETUP_AND_TESTING_GUIDE.md) | Everyone |
-| **Testing & Validation** | [Master Setup Guide - Testing](/Users/kunalkachru/Documents/nexus-v3/MASTER_SETUP_AND_TESTING_GUIDE.md#testing--validation) | QA, Operators |
+| **Setup & Install** | [Master Setup Guide](/Users/kunalkachru/Documents/nexus-v3/docs/MASTER_GUIDE.md) | Everyone |
+| **Testing & Validation** | [Master Setup Guide - Testing](/Users/kunalkachru/Documents/nexus-v3/docs/MASTER_GUIDE.md#part-3--running-all-tests) | QA, Operators |
 | **Database Schema** | [DATABASE.md](DATABASE.md) | Developers, Operators |
 | **Troubleshooting** | [TROUBLESHOOTING_GUIDE.md](TROUBLESHOOTING_GUIDE.md) | Operators, On-Call |
 | **Incident Runbooks** | [runbooks/](runbooks/) | Operators, On-Call |
@@ -72,7 +72,7 @@ Includes:
 - **Ops maturity:** Durable with clear procedures
 - **Pilot UX:** Hardened for self-serve demos
 - **Documentation:** Complete and verified (12 obsolete docs removed)
-- **Test coverage:** 410 backend + 16 browser tests (all passing)
+- **Test coverage:** 488 backend + 16 browser tests (baseline passing)
 
 ---
 
@@ -80,4 +80,4 @@ Includes:
 
 - [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md) — Current work and agent responsibilities
 - [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md) — Project boundaries and status
-- [REPOSITORY_REVIEW_2026-06-17.md](/Users/kunalkachru/Documents/nexus-v3/REPOSITORY_REVIEW_2026-06-17.md) — Complete repository assessment
+- Current engineering cleanup status lives in [WORKING_STATE.md](/Users/kunalkachru/Documents/nexus-v3/WORKING_STATE.md) and [AGENTS.md](/Users/kunalkachru/Documents/nexus-v3/AGENTS.md)

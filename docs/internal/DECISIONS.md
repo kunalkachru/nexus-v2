@@ -22,7 +22,7 @@ Use **80% context threshold** for automatic archival and session compaction.
 - When context usage reaches 80%, trigger automatic archival
 - Archive completed task details to COMPLETED_TASKS_[DATE].md
 - Start fresh session (context drops to 5%)
-- Keep EXECUTION_STATUS.md as single source of truth
+- Keep the active control-surface document as the single source of truth
 
 ### Rationale
 
@@ -32,7 +32,7 @@ Use **80% context threshold** for automatic archival and session compaction.
    - Context peak: 160K (20K buffer from 200K limit)
 
 2. **Operational Simplicity for Solo Developer**
-   - Single state file (EXECUTION_STATUS.md) until archived
+   - Single state file until archived
    - Easier debugging if something breaks
    - Full history in one place (not fragmented)
    - Lower chance of state sync failures
@@ -302,9 +302,9 @@ Reconsider if:
 Use **documents as authoritative state**, not conversation history.
 
 **Specific documents:**
-- **EXECUTION_STATUS.md:** Current task status, progress, metrics (primary)
+- **WORKING_STATE.md / AGENTS.md:** Current task status, phase, and boundaries (primary)
+- **Active backlog file:** Task specifications and acceptance criteria (reference)
 - **COMPLETED_TASKS_[DATE].md:** Full details of finished tasks (archive)
-- **PRODUCTION_READINESS_ROADMAP.md:** Task specifications (reference)
 - **Git commit history:** Code snapshots and detailed changes
 
 ### Rationale
@@ -361,10 +361,10 @@ Reconsider if:
 Archive completed tasks **when context reaches 80%**, not after each individual task.
 
 **How it works:**
-- Keep EXECUTION_STATUS.md with full details as tasks complete
+- Keep the active control-surface document with full details as tasks complete
 - When context hits 80%, move all completed task details to COMPLETED_TASKS_[DATE].md
 - Restart session with fresh context (5%)
-- EXECUTION_STATUS.md becomes summary-only for next session
+- Reduce the active control-surface document to the minimal next-session summary
 
 ### Rationale
 
@@ -383,7 +383,7 @@ Archive completed tasks **when context reaches 80%**, not after each individual 
 - Why rejected: Not worth $2.30 savings for operational complexity increase
 
 #### Option B: No Archival (Keep All in One File) — NOT CHOSEN
-- Never archive, just keep EXECUTION_STATUS.md growing
+- Never archive, just keep one status document growing
 - Risk: File becomes huge (500KB+), context calculations complex
 - Why rejected: Works for small projects, not for 23 tasks
 
@@ -543,7 +543,7 @@ Use **manual verification with Playwright-ready infrastructure**, not fully auto
 When a task fails:
 
 1. **Don't skip:** Don't mark complete until all acceptance criteria pass
-2. **Don't hide:** Document the failure in EXECUTION_STATUS.md
+2. **Don't hide:** Document the failure in the active backlog or working-state control surface
 3. **Investigate:** Run systematic debugging (use superpowers:systematic-debugging skill)
 4. **Fix at root:** Don't patch symptoms, fix underlying cause
 5. **Retry:** Implement fix and re-run all tests

@@ -1,4 +1,4 @@
-# NEXUS — Master Developer Guide
+# NEXUS — Master Setup and Testing Guide
 
 Everything you need to set up locally, run the full test suite, and deploy to production.
 
@@ -12,7 +12,7 @@ Everything you need to set up locally, run the full test suite, and deploy to pr
 | Oracle Cloud (Production) | https://nexus-triage.duckdns.org | git push origin master |
 | Render (Demo) | https://nexus-uny5.onrender.com | git push origin master |
 
-**Test baseline:** 485 tests passing  
+**CI-style test baseline:** 495 passed, 1 skipped  
 **GitHub repo:** https://github.com/kunalkachru/nexus-v2  
 **Oracle Cloud server:** 92.5.47.239 (SSH key: ~/Downloads/ssh-key-2026-06-19.key)
 
@@ -49,6 +49,12 @@ npx playwright install chromium
 ```bash
 cp .env.example .env
 ```
+
+Important defaults from `.env.example`:
+
+- `APP_ENV=demo` for local development
+- `NEXUS_DATABASE_PATH=artifacts/incidents.json`
+- The `incidents.json` filename is legacy-compatible; the file contents are SQLite
 
 ### Step 5 — Start the server
 ```bash
@@ -117,9 +123,9 @@ python -m uvicorn server.app:app --host 0.0.0.0 --port 7860 --reload
 ### Full Python test suite
 ```bash
 source venv/bin/activate
-pytest tests/ -q
+pytest tests/ --ignore=tests/test_production_gate3.py -q
 ```
-Expected: 470 passed
+Expected baseline: 495 passed, 1 skipped
 
 ### Browser tests (server must be running)
 ```bash
@@ -173,10 +179,10 @@ Expected output (runtime: ~2-3 minutes):
 
 | Section | What it verifies | Pass threshold |
 |---------|---|---|
-| 1. Unit tests | All 470 tests pass | 470/470 ✅ |
+| 1. Unit tests | The CI-style pytest baseline passes | exit code 0 with baseline preserved |
 | 2. Server startup | FastAPI server healthy | Responds within 30s |
 | 3. API contracts | Health, pages, webhooks, auth | 10/10 endpoints |
-| 4. Browser sim | Scroll depth, viewport clarity, approval flow | Visual verification |
+| 4. Browser sim | Scroll depth, viewport clarity, approval flow | 16/16 browser checks |
 | 5. Production | Live server health check | nexus-triage.duckdns.org responding |
 | 6. Security | Webhook signatures, no data leaks | 3/3 checks pass |
 
@@ -187,7 +193,7 @@ Expected output (runtime: ~2-3 minutes):
 
 ### Typical failure reasons
 
-- Unit test count < 470 → fix the failing test
+- Pytest exits non-zero or the baseline drops below the current floor → fix the failing tests
 - Server won't start → check port 7861 not in use
 - API tests fail → check endpoint paths and auth
 - Browser tests fail → check Playwright install
@@ -368,7 +374,7 @@ Go to https://github.com/kunalkachru/nexus-v2/actions and check the error. Most 
 
 | Variable | Default | Description |
 |---|---|---|
-| NEXUS_DATABASE_PATH | artifacts/incidents.json | SQLite location |
+| NEXUS_DATABASE_PATH | artifacts/incidents.json | SQLite location (legacy filename, SQLite content) |
 | NEXUS_ALLOWED_TENANT_IDS | tenant-a,tenant-system | Allowed tenants |
 | NEXUS_USE_OPENAI | 0 | Set to 1 for live LLM |
 | OPENAI_API_KEY | (blank) | Required if USE_OPENAI=1 |
