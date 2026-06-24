@@ -181,7 +181,7 @@
     "id": "EC-006",
     "title": "Extract investigation and orchestration layers from server/services/incidents.py",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Continue the incidents.py split by extracting the PRISM/TRACE/FORGE investigation logic and leaving incidents.py as a thin orchestration layer.",
     "implementation_tasks": [
       "Extract PRISM/TRACE/FORGE logic into server/services/investigation.py in small logical groups",

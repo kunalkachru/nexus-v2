@@ -5,6 +5,7 @@ from fastapi import HTTPException
 
 from server.services.classification import validate_supported_raw_text_classification
 from server.services.intake import build_fresh_intake_truth, raw_input_quality
+from server.services.investigation import root_cause_from_issue_family, runtime_aligned_live_runbook
 
 
 def test_raw_input_quality_returns_embedded_quality_dict() -> None:
@@ -88,3 +89,22 @@ def test_validate_supported_raw_text_classification_rejects_unbounded_family() -
     assert detail["matched_id"] == "INC999"
     assert detail["supported"] is False
     assert "8 supported families" in detail["message"]
+
+
+def test_root_cause_from_issue_family_keeps_auth_dependency_language() -> None:
+    root_cause = root_cause_from_issue_family("Auth Dependency Slowdown", "auth-api")
+
+    assert "token validation slowdown" in root_cause
+    assert "auth-api" in root_cause
+
+
+def test_runtime_aligned_live_runbook_uses_runtime_candidate_fixes() -> None:
+    runbook = runtime_aligned_live_runbook(
+        issue_family="INC001",
+        service="checkout-svc",
+        reason="Keep live investigations aligned with bounded replay packs.",
+    )
+
+    assert runbook["summary"] == "Live mitigation plan for checkout-svc"
+    assert runbook["candidate_fixes"]
+    assert runbook["recommended_runbook"] == runbook["candidate_fixes"][0]["action"]
