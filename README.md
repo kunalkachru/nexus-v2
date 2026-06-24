@@ -143,22 +143,23 @@ bash scripts/test-live.sh https://nexus-triage.duckdns.org
 
 ## What It Does
 
-Supports **7 incident families** with two evidence postures:
+Supports **8 incident families** with two evidence postures:
 
 | ID | Family | Severity | Evidence Posture |
 |---|---|---|---|
 | **INC001** | API Timeout / Retry Amplification | P2 | 🟢 Runtime-backed |
 | **INC002** | Database Connection Pool Exhaustion | P1 | 🟢 Runtime-backed |
 | **INC003** | Deploy Regression / 5xx Spike | P1 | 🟢 Runtime-backed |
-| **INC004** | Cache Cardinality Explosion | P2 | 🟡 Inference-first |
 | **INC005** | Queue Backlog Surge | P1 | 🟢 Runtime-backed |
-| **INC006** | Expired TLS Certificate | P0 | 🟡 Inference-first |
 | **INC007** | Auth Dependency Slowdown | P1 | 🟢 Runtime-backed |
+| **INC009** | CDN / Cache Invalidation Storm | P2 | 🟡 Inference-first |
+| **INC010** | ML Model Degradation | P2 | 🟡 Inference-first |
+| **INC011** | Geographic Routing Failure | P2 | 🟡 Inference-first |
 
 **Evidence postures:**
 - 🟢 **Runtime-backed** — REPLICA reproduces the incident in Docker; three curated packs available (INC001, INC002, INC003)
 - 🟡 **Inference-first** — PRISM diagnoses from logs and metrics without replay capability
-- 🔴 **Catalogued** — INC004, INC006, INC008 are in the incident catalogue and can be classified by SENTINEL, but do not yet have full investigation payloads. They are on the roadmap for Phase 4.
+- 🔴 **Roadmap** — INC004, INC006, INC008 are catalogued but not yet wired. On roadmap for Phase 4.
 
 ---
 
