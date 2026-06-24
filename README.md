@@ -12,6 +12,9 @@ NEXUS is an AI-assisted support-to-engineering investigation product that compre
 
 | I want to... | Go here |
 |---|---|
+| Understand the system architecture | [docs/architecture/01-system-overview.md](docs/architecture/01-system-overview.md) |
+| See how the 6 agents work together | [docs/architecture/02-agent-pipeline.md](docs/architecture/02-agent-pipeline.md) |
+| Trace incident data flow end to end | [docs/architecture/03-data-flow.md](docs/architecture/03-data-flow.md) |
 | Run it myself locally | [docs/NEXUS_COMPLETE_MANUAL.md](docs/NEXUS_COMPLETE_MANUAL.md) |
 | Demo it to someone | [docs/NEXUS_COMPLETE_MANUAL.md](docs/NEXUS_COMPLETE_MANUAL.md) — Part 8 |
 | Hand off to a pilot customer | [docs/PILOT_HANDOFF.md](docs/PILOT_HANDOFF.md) + [production link](https://nexus-triage.duckdns.org) |
@@ -20,6 +23,7 @@ NEXUS is an AI-assisted support-to-engineering investigation product that compre
 | Understand CI/CD pipeline | [docs/CICD.md](docs/CICD.md) |
 | Read pilot results | [docs/PILOT_SIMULATION_RESULTS.md](docs/PILOT_SIMULATION_RESULTS.md) + [docs/MERIDIAN_PILOT_RESULTS_V2.md](docs/MERIDIAN_PILOT_RESULTS_V2.md) |
 | Browse all documentation | [docs/README.md](docs/README.md) |
+| Browse all architecture diagrams | [docs/architecture/README.md](docs/architecture/README.md) |
 | Check production readiness | [docs/GATE2_DECISION.md](docs/GATE2_DECISION.md) |
 
 ---
@@ -155,6 +159,23 @@ Supports **7 incident families** with two evidence postures:
 - 🟢 **Runtime-backed** — REPLICA reproduces the incident in Docker; three curated packs available (INC001, INC002, INC003)
 - 🟡 **Inference-first** — PRISM diagnoses from logs and metrics without replay capability
 - 🔴 **Catalogued** — INC008, INC009, INC010, INC011 are in the incident catalogue and can be classified by SENTINEL, but do not yet have full investigation payloads. They are on the roadmap for Phase 4.
+
+---
+
+## Architecture Diagrams
+
+Visual documentation of how NEXUS works internally (all diagrams render natively on GitHub):
+
+| Diagram | What it shows |
+|---|---|
+| [System Overview](docs/architecture/01-system-overview.md) | High-level view of inputs, pipeline, storage, and outputs |
+| [Agent Pipeline](docs/architecture/02-agent-pipeline.md) | How SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN hand off |
+| [Data Flow](docs/architecture/03-data-flow.md) | Incident data from raw text submission to Guardian decision |
+| [Class Structure](docs/architecture/04-class-structure.md) | Key models and their relationships |
+| [Deployment](docs/architecture/05-deployment.md) | Oracle Cloud, nginx, Docker, CI/CD pipeline |
+| [Sequence Diagrams](docs/architecture/06-sequence-diagrams.md) | Key user journeys step by step |
+
+📍 **Full index:** [docs/architecture/README.md](docs/architecture/README.md)
 
 ---
 

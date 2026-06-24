@@ -49,6 +49,22 @@ Includes:
 
 ---
 
+## 🏗️ Architecture Diagrams
+
+Visual documentation of NEXUS system design (Mermaid diagrams, render natively on GitHub):
+
+| Document | Contents |
+|---|---|
+| [architecture/README.md](architecture/README.md) | Index of all architecture diagrams |
+| [architecture/01-system-overview.md](architecture/01-system-overview.md) | System overview — external inputs, agent pipeline, storage, outputs |
+| [architecture/02-agent-pipeline.md](architecture/02-agent-pipeline.md) | Agent handoff chain and evidence posture decision tree |
+| [architecture/03-data-flow.md](architecture/03-data-flow.md) | Data flow: webhook ingestion, /inputs submission, Guardian approval |
+| [architecture/04-class-structure.md](architecture/04-class-structure.md) | Key classes: IncidentRecord, IncidentLifecycleResponse, AuthenticatedContext |
+| [architecture/05-deployment.md](architecture/05-deployment.md) | Oracle Cloud VM, nginx, Docker, Let's Encrypt, GitHub Actions CI/CD |
+| [architecture/06-sequence-diagrams.md](architecture/06-sequence-diagrams.md) | Pilot customer first incident, webhook flow, Guardian rejection loop |
+
+---
+
 ## 📚 By Topic
 
 | Topic | Document | Audience |

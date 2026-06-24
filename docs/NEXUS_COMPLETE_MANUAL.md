@@ -131,6 +131,24 @@ docker compose down
 
 This is equivalent to the Python direct run but uses the same Docker container as the production deployment, making it a closer approximation of production behavior.
 
+### 1.6 Architecture Reference
+
+For a visual understanding of how NEXUS works internally, see the architecture documentation:
+
+- **[System Overview](architecture/01-system-overview.md)** —
+  how external inputs flow through the 6-agent pipeline to outputs
+- **[Agent Pipeline Detail](architecture/02-agent-pipeline.md)** —
+  what each agent receives, processes, and produces
+- **[Data Flow Diagrams](architecture/03-data-flow.md)** —
+  sequence diagrams for fresh incident submission, webhook ingestion,
+  and Guardian approval loops
+- **[Deployment Architecture](architecture/05-deployment.md)** —
+  Oracle Cloud VM, nginx reverse proxy, Docker, SSL, CI/CD pipeline
+- **[Sequence Diagrams](architecture/06-sequence-diagrams.md)** —
+  step-by-step user journeys (pilot customer first incident, webhook flow, rejections)
+
+See [docs/architecture/README.md](architecture/README.md) for the complete index.
+
 ---
 
 ## PART 2 — THE FIVE SCREENS

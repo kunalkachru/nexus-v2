@@ -1,102 +1,51 @@
 # NEXUS Architecture Documentation
 
-Complete visual documentation of the NEXUS 7-family incident investigation platform.
-
-## Overview
-
-This directory contains Mermaid diagrams showing:
-- System architecture and component boundaries
-- The 6-agent pipeline and handoff flows
-- Data flow from incident intake through Guardian decision
-- Class relationships and data models
-- Deployment topology on Oracle Cloud
-- Key user journey sequences
+Visual documentation of NEXUS system architecture, data flows, agent interactions, and deployment topology. All diagrams use Mermaid syntax and render natively on GitHub.
 
 ## Diagrams
 
-1. **[System Overview](01-system-overview.md)** — High-level architecture
-   - External inputs (webhooks, UI, adapters)
-   - NEXUS application boundary
-   - 6-agent pipeline
-   - Storage and outputs
-   - Oracle Cloud deployment context
+| # | Document | What it shows |
+|---|---|---|
+| 1 | [System Overview](01-system-overview.md) | External inputs (webhooks, UI), NEXUS boundary, 6-agent pipeline, storage layers (SQLite, packs, artifacts), Oracle Cloud context |
+| 2 | [Agent Pipeline](02-agent-pipeline.md) | Agent-by-agent handoff chain, SENTINEL→PRISM→REPLICA→TRACE→FORGE→GUARDIAN, evidence posture decision tree, input/output contracts |
+| 3 | [Data Flow](03-data-flow.md) | Fresh incident submission flow, webhook ingestion, Guardian approval/rejection loops, out-of-scope handling, database schema |
+| 4 | [Class Structure](04-class-structure.md) | Key models: IncidentRecord, IncidentLifecycleResponse, SentinelClassification, GuardianDecision; API request/response contracts |
+| 5 | [Deployment](05-deployment.md) | Oracle Cloud E2.1.Micro VM (1GB RAM, Frankfurt), nginx reverse proxy with SSL, Docker containerization, GitHub Actions CI/CD (test→build→deploy→smoke) |
+| 6 | [Sequence Diagrams](06-sequence-diagrams.md) | Pilot customer first incident, webhook-triggered incident, Guardian rejection & retry loop, out-of-scope incident handling, runtime-backed evidence flow |
 
-2. **[Agent Pipeline](02-agent-pipeline.md)** — 6-agent handoff flow
-   - Agent-by-agent data transformation
-   - Evidence posture decision logic
-   - Input/output contracts for each agent
-   - Capability boundaries (what's real vs. bounded)
+## Quick Navigation
 
-3. **[Data Flow](03-data-flow.md)** — End-to-end incident lifecycle
-   - Fresh raw-text submission flow
-   - Webhook ingestion flow
-   - Guardian approval and handoff packet creation
-   - Sequence diagrams with real function calls
+**New to NEXUS?** Start with [System Overview](01-system-overview.md) — high-level view of the entire system.
 
-4. **[Class Structure](04-class-structure.md)** — Key data models
-   - `IncidentRecord` — Primary incident data
-   - `IncidentLifecycleResponse` — API contract
-   - `SentinelClassification`, `GuardianDecision`, etc.
-   - Relationships and inheritance
+**Understanding the agents?** See [Agent Pipeline](02-agent-pipeline.md) — how each agent processes data and hands off to the next.
 
-5. **[Deployment Architecture](05-deployment.md)** — Oracle Cloud setup
-   - VM specs and network layer
-   - Docker containerization
-   - nginx reverse proxy with SSL
-   - GitHub Actions CI/CD pipeline
-   - Named volumes and persistence
+**Tracing an incident?** Follow [Data Flow](03-data-flow.md) — sequence diagrams showing incident lifecycle from submission to Guardian approval.
 
-6. **[Sequence Diagrams](06-sequence-diagrams.md)** — User journeys
-   - New pilot customer first incident
-   - Webhook-triggered incident (Datadog)
-   - Guardian rejection flow
-   - Out-of-scope incident handling
+**Integrating with NEXUS?** Check [Class Structure](04-class-structure.md) — API data models and request/response contracts.
 
-## 7-Family Pipeline
+**Deploying to Oracle Cloud?** See [Deployment](05-deployment.md) — VM specs, Docker setup, SSL/TLS, CI/CD pipeline.
 
-**Supported families with full investigation payloads:**
+**Seeing user workflows?** Review [Sequence Diagrams](06-sequence-diagrams.md) — step-by-step interactions for common scenarios.
 
-| ID | Family | Severity | Evidence | Payloads |
+## 7-Family Supported Incident Pipeline
+
+| ID | Family | Severity | Evidence Posture | Deployment |
 |---|---|---|---|---|
 | INC001 | API Timeout / Retry Amplification | P2 | 🟢 Runtime-backed | Docker replay pack |
 | INC002 | Database Connection Pool Exhaustion | P1 | 🟢 Runtime-backed | Docker replay pack |
 | INC003 | Deploy Regression / 5xx Spike | P1 | 🟢 Runtime-backed | Docker replay pack |
-| INC004 | Cache Cardinality Explosion | P2 | 🟡 Inference-first | Diagnosis pattern only |
-| INC005 | Queue Backlog Surge | P1 | 🟢 Runtime-backed | Diagnosis pattern only |
-| INC006 | Expired TLS Certificate | P0 | 🟡 Inference-first | Diagnosis pattern only |
-| INC007 | Auth Dependency Slowdown | P1 | 🟢 Runtime-backed | Diagnosis pattern only |
+| INC004 | Cache Cardinality Explosion | P2 | 🟡 Inference-first | Pattern only |
+| INC005 | Queue Backlog Surge | P1 | 🟢 Runtime-backed | Pattern only |
+| INC006 | Expired TLS Certificate | P0 | 🟡 Inference-first | Pattern only |
+| INC007 | Auth Dependency Slowdown | P1 | 🟢 Runtime-backed | Pattern only |
 
-**Catalogued but not yet wired (Phase 4):**
-- INC008 — Primary Region Message Queue Outage
-- INC009 — CDN / Cache Invalidation Failure
-- INC010 — ML Model Degradation
-- INC011 — Geographic / Routing Failure
+**Catalogued but not yet wired (Phase 4 roadmap):** INC008, INC009, INC010, INC011
 
-## Key Concepts
+## Back to Documentation
 
-**Pipeline:** SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN
-
-- **SENTINEL** — Deterministic keyword-based incident family classification
-- **PRISM** — LLM-based root cause hypothesis from classification context
-- **REPLICA** — Bounded runtime reproducer (only 3 Docker packs: INC001, INC002, INC003)
-- **TRACE** — Bounded debugging and code inspection (limited to classified families)
-- **FORGE** — Mitigation ranker using runtime outcomes + inference + memory
-- **GUARDIAN** — Human approval gate with governance and audit trails
-
-**Evidence Postures:**
-- 🟢 **Runtime-backed** — REPLICA can reproduce; FORGE uses actual runtime outcomes
-- 🟡 **Inference-first** — PRISM diagnosis only; FORGE ranks using inference + memory
-- 🔴 **Unsupported** — Not in supported families (will be rejected explicitly)
-
-## Navigation
-
-- **New to NEXUS?** Start with [System Overview](01-system-overview.md)
-- **Understanding the agents?** See [Agent Pipeline](02-agent-pipeline.md)
-- **Tracing an incident?** Follow [Data Flow](03-data-flow.md)
-- **Integrating with NEXUS?** Check [Class Structure](04-class-structure.md) for API contracts
-- **Deploying or scaling?** See [Deployment Architecture](05-deployment.md)
-- **Building workflows?** Review [Sequence Diagrams](06-sequence-diagrams.md)
+- Back to [docs/README.md](../README.md) — full documentation index
+- Back to [README.md](../../README.md) — repository root
 
 ---
 
-Generated from source code analysis. All diagrams reflect the current 7-family implementation as of 2026-06-24.
+Generated from source code analysis. Current implementation: 7-family pipeline with 3 Docker replay packs, 6-agent handoff, Guardian approval gate. Updated: 2026-06-24.
