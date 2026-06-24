@@ -88,7 +88,7 @@ test.describe("NEXUS browser verification", () => {
     await expect(page.getByRole("heading", { name: "Choose your path" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Start from raw logs", exact: true }).first()).toBeVisible();
     // Element is inside collapsed section by design — checking existence not visibility
-    await expect(page.getByText("Supported five-family wedge")).toBeAttached();
+    await expect(page.getByText("Supported seven-family wedge")).toBeAttached();
     await expect(page.locator(".seeded-incident-link")).toHaveCount(5);
     await expect(page.getByText("Agent Crew")).toBeVisible();
     await expect(page.locator(".agent-crew-strip .crew-bot")).toHaveCount(4);

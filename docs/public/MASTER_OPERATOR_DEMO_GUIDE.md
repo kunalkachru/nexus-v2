@@ -67,7 +67,7 @@ Still bounded:
 
 ## 4. Current Supported Outage Families
 
-The current five-family wedge is:
+The current seven-family wedge is:
 
 1. `INC001` checkout timeout / retry amplification
 2. `INC002` checkout DB pool exhaustion / session leak

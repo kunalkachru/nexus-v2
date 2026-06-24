@@ -132,8 +132,8 @@ These rules apply to all Claude Code autonomous loop sessions:
 
 ## Safety & Boundaries
 
-- **Catalogued vs. Wired:** SENTINEL can classify incidents into all 11 families in the catalogue, but the system only accepts INC001-INC007. If a raw incident matches INC008/INC009/INC010/INC011 better than any supported family, it will be rejected with "unknown incident_id" — this is intentional (better to fail explicitly than accept incomplete incidents).
-- **Roadmap families:** INC008 (Message Queue), INC009 (CDN), INC010 (ML Model), INC011 (Geographic) are in Phase 4 work. They appear in SENTINEL pattern matching but have no investigation payloads.
+- **Catalogued vs. Wired:** SENTINEL can classify incidents into all 11 families in the catalogue, but the system accepts INC001, INC002, INC003, INC005, INC007, INC009, INC010, INC011 (8 supported families). If a raw incident matches INC004/INC006/INC008 better than any supported family, it will be rejected with "unknown incident_id" — this is intentional (better to fail explicitly than accept incomplete incidents).
+- **Roadmap families:** INC004 (Load Balancer), INC006 (Session Management), INC008 (Message Queue) are in Phase 4 work. They appear in SENTINEL pattern matching but have no investigation payloads.
 
 ## Hard Rules
 

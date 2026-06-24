@@ -24,6 +24,17 @@ jobs:
       - name: Report test count
         run: pytest tests/ --ignore=tests/test_production_gate3.py -q 2>&1 | tail -3
 
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Run Playwright browser verification
+        run: npm run browser:verify
+
   deploy:
     needs: test
     runs-on: ubuntu-latest

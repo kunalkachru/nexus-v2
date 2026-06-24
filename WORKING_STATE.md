@@ -74,7 +74,7 @@ Current wrapped baseline:
 - bounded TRACE debugging and engineering handoff
 - pilot-safe observability, governance, exports, resilience, and review packet automation
 - visible six-agent handoff with packet flow and demo replay mode
-- curated `/inputs` demo bundles for the five-family wedge
+- curated `/inputs` demo bundles for the seven-family wedge
 - fresh-incident demo-origin guidance for stakeholder walkthroughs
 - queue-first access choices for seeded and fresh incident review
 - progressive disclosure on the incident workspace

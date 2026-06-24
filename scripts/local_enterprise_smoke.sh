@@ -12,7 +12,7 @@ echo "    OK"
 echo "[2] Queue HTML markers"
 queue_html="$(curl -fsS "${BASE_URL}/queue")"
 [[ "${queue_html}" == *"Choose your path"* ]]
-[[ "${queue_html}" == *"Supported five-family wedge"* ]]
+[[ "${queue_html}" == *"Supported seven-family wedge"* ]]
 echo "    OK"
 
 echo "[3] Inputs HTML markers"
