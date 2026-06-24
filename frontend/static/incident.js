@@ -1858,11 +1858,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     setUserOpenAIKey(value);
+    setLiveReasoningPreference(true);
+    syncLiveReasoningToggle();
     syncOpenAIKeyUI("Saved for this browser session only. It is never persisted server-side.");
-    if (!getLiveReasoningPreference()) {
-      setLiveReasoningPreference(true);
-      syncLiveReasoningToggle();
-    }
     await refreshIncident();
   });
 

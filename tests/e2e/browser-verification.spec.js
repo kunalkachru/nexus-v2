@@ -34,6 +34,10 @@ async function attachByoOpenAIKey(page, key = "sk-test-1234567890") {
     }));
 
   const tryAttach = async () => {
+    await page.locator(".byo-key-card").evaluate((element) => {
+      element.scrollIntoView({ block: "center", inline: "nearest" });
+    });
+    await settle(page, 150);
     await page.locator("#openaiApiKeyInput").fill(key);
     await page.getByRole("button", { name: "Use this key" }).click();
     await settle(page, 400);
