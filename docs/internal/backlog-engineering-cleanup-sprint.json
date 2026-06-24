@@ -277,7 +277,7 @@
     "id": "EC-009",
     "title": "Run type-hint, dead-code, docstring, dependency, and test-quality audits",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "description": "Complete the remaining audit areas carefully, preserving runtime behavior and avoiding speculative package churn.",
     "implementation_tasks": [
       "Add return type hints to public functions in the requested modules where absent",
