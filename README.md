@@ -60,10 +60,15 @@ cp .env.example .env
 
 **Every session:**
 ```bash
+# Optional: Set OPENAI_API_KEY for live model-backed reasoning
+export OPENAI_API_KEY=sk-...
+
 source venv/bin/activate
 python -m uvicorn server.app:app --host 0.0.0.0 --port 7860 --reload
 ```
 Open http://localhost:7860/queue
+
+(Without `OPENAI_API_KEY`, NEXUS runs in demo mode with pre-trained responses.)
 
 ---
 
@@ -181,6 +186,10 @@ Supports **7 incident families** with two evidence postures:
 ```bash
 # Start locally with Docker
 ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh
+
+# Run demo walkthrough (with OPENAI_API_KEY set for live reasoning)
+export OPENAI_API_KEY=sk-...
+python demo.py
 
 # Run all tests
 pytest tests/ --ignore=tests/test_production_gate3.py -q && npm run browser:verify
