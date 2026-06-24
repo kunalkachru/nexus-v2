@@ -2,7 +2,6 @@
 
 import yaml
 from pathlib import Path
-from typing import Optional
 
 
 class ComposeValidationError(Exception):

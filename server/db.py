@@ -8,10 +8,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import Request
-from pydantic import ValidationError
 
 from server.config import AppConfig
-from server.models import IncidentRecord
 from server.repositories import IncidentRepository
 
 logger = logging.getLogger(__name__)

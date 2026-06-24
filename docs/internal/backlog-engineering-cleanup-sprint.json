@@ -245,7 +245,7 @@
     "id": "EC-008",
     "title": "Run Python, security, and error-handling audits",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "description": "Work through the Python best-practices, security, and error-handling audits one concern at a time, fixing only real maintainability or correctness issues.",
     "implementation_tasks": [
       "Run py_compile/pyflakes/long-line/hardcoded-string scans and fix the highest-impact findings",
