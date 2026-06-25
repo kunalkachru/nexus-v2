@@ -76,6 +76,7 @@ Visual documentation of NEXUS system design (Mermaid diagrams, render natively o
 | **Incident Runbooks** | [runbooks/](runbooks/) | Operators, On-Call |
 | **Security** | [security-review-checklist.md](security-review-checklist.md) | Security team |
 | **Deployments** | [internal/production-deployment-guide.md](internal/production-deployment-guide.md) | DevOps, Release |
+| **Operations** | [internal/OPERATIONS.md](internal/OPERATIONS.md) | Oracle Cloud manual restart and live reasoning commands |
 | **Tenant Setup** | [internal/TENANT_SETUP_GUIDE.md](internal/TENANT_SETUP_GUIDE.md) | Operations |
 | **Demo Packs** | [internal/CURATED_PACK_CONTRACT.md](internal/CURATED_PACK_CONTRACT.md) | Developers |
 

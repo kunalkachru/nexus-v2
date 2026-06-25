@@ -99,6 +99,8 @@ sudo docker run -d --name nexus --restart always -p 7860:7860 \
 
 **Full guide:** [docs/MASTER_GUIDE.md](docs/MASTER_GUIDE.md) — Part 5
 
+**Operations reference:** [docs/internal/OPERATIONS.md](docs/internal/OPERATIONS.md) — Oracle Cloud manual restart and live reasoning commands
+
 ---
 
 ## Production Environments

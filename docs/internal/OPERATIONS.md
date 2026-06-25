@@ -85,6 +85,12 @@ curl -s https://nexus-triage.duckdns.org/health
 
 Expected response: `{"status":"healthy"}` with HTTP 200
 
+### Verify Live Reasoning Status
+
+```bash
+ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239 "sudo docker inspect nexus | grep NEXUS_USE_OPENAI"
+```
+
 ### Important Notes
 
 - **Auto-deploy via GitHub Actions always runs with `NEXUS_USE_OPENAI=0`** — live reasoning must be enabled manually using the "With Live Reasoning ON" command above

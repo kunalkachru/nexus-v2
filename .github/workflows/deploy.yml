@@ -3,6 +3,9 @@ name: Deploy to Oracle Cloud
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
 
 jobs:
   test:
