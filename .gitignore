@@ -18,4 +18,3 @@ test-results/
 .env.local
 replica_packs/**/runtime/*.txt
 CLAUDE.md
-frontend/metrics.json

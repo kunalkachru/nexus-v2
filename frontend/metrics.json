@@ -1,0 +1,86 @@
+{
+  "summary": {
+    "baseline_reward": 0.28,
+    "trained_reward": 0.42,
+    "total_episodes": 150,
+    "successful_episodes": 142,
+    "success_rate": 0.947
+  },
+  "reward_curve": [
+    0.28, 0.29, 0.30, 0.31, 0.32, 0.33, 0.35, 0.36, 0.37, 0.38,
+    0.39, 0.40, 0.40, 0.41, 0.41, 0.41, 0.42, 0.42, 0.42, 0.42,
+    0.42, 0.42, 0.42, 0.42, 0.42, 0.42, 0.42, 0.42, 0.42, 0.42
+  ],
+  "episode_records": [
+    {
+      "episode_id": "ep_001",
+      "incident_id": "INC001",
+      "timestamp": "2026-06-24T10:00:00Z",
+      "reward": 0.28,
+      "steps": [
+        {
+          "agent_name": "SENTINEL",
+          "action": "classify",
+          "observation_state": {"incident": "timeout"}
+        },
+        {
+          "agent_name": "PRISM",
+          "action": "diagnose",
+          "observation_state": {"hypothesis": "retry amplification"}
+        },
+        {
+          "agent_name": "FORGE",
+          "action": "rank_mitigations",
+          "observation_state": {"top_mitigation": "reduce retry backoff"}
+        }
+      ],
+      "observation_state": {
+        "incident": "timeout",
+        "severity": "P1",
+        "service": "checkout-api"
+      },
+      "solution_proposal": "Reduce exponential backoff multiplier from 2.0 to 1.5"
+    },
+    {
+      "episode_id": "ep_150",
+      "incident_id": "INC002",
+      "timestamp": "2026-06-24T18:00:00Z",
+      "reward": 0.42,
+      "steps": [
+        {
+          "agent_name": "SENTINEL",
+          "action": "classify",
+          "observation_state": {"incident": "pool_exhaustion"}
+        },
+        {
+          "agent_name": "PRISM",
+          "action": "diagnose",
+          "observation_state": {"hypothesis": "connection leak"}
+        },
+        {
+          "agent_name": "FORGE",
+          "action": "rank_mitigations",
+          "observation_state": {"top_mitigation": "increase pool size"}
+        }
+      ],
+      "observation_state": {
+        "incident": "pool_exhaustion",
+        "severity": "P1",
+        "service": "payments-api"
+      },
+      "solution_proposal": "Increase connection pool size from 20 to 40 connections"
+    }
+  ],
+  "training_evaluation": {
+    "reward_curve_final": 0.42,
+    "reward_curve_peak": 0.42,
+    "reward_curve_delta": 0.14,
+    "reward_curve_mean": 0.38,
+    "policy_drift": {}
+  },
+  "policy_weights": {
+    "timeout_weight": 1.2,
+    "pool_exhaustion_weight": 1.1,
+    "deploy_regression_weight": 0.9
+  }
+}
