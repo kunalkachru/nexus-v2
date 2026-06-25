@@ -136,7 +136,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     db_session_factory, database = create_session_factory(config)
     app.state.db_session_factory = db_session_factory
     app.state.database = database
-    app.state.rate_limiter = RateLimiter(database=database)
+    app.state.rate_limiter = RateLimiter(database=database, max_requests=200)
     app.state.tenancy_service = TenancyService()
     app.state.runtime_execution_state = RuntimeExecutionState()
     yield
@@ -1212,6 +1212,34 @@ async def guardian_review_incident_v1(
     )
     await write_audit_log(
         "incident.guardian_review_v1.requested",
+        auth.tenant_id,
+        {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, **response},
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
+    )
+    return response
+
+
+@app.post("/api/v1/incidents/{nexus_incident_id}/guardian-decision")
+async def guardian_decision_alias(
+    nexus_incident_id: str,
+    request: Request,
+    payload: GuardianDecisionRequest,
+    service: IncidentService = Depends(get_incident_service),
+    auth: AuthenticatedContext = Depends(require_auth),
+) -> dict[str, object]:
+    """Alias for guardian-review — matches architecture docs and frontend."""
+    await request.app.state.rate_limiter.check(auth=auth, route_key="incident_execute")
+    require_role(auth, "operator", "guardian")
+    response = await service.record_guardian_decision(
+        nexus_incident_id,
+        payload=payload,
+        tenant_id=auth.tenant_id,
+        actor_user_id=auth.user_id,
+        actor_roles=auth.roles,
+    )
+    await write_audit_log(
+        "incident.guardian_decision.requested",
         auth.tenant_id,
         {"nexus_incident_id": nexus_incident_id, "user_id": auth.user_id, **response},
         actor_user_id=auth.user_id,
