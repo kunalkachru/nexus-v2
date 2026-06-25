@@ -56,6 +56,42 @@ uvicorn server.app:app --host 0.0.0.0 --port 7860
 - approval policy and role controls
 - runtime-host relay where replay validation is expected
 
+## Oracle Cloud Manual Restart Commands
+
+### With Live Reasoning ON (gpt-4o)
+
+```bash
+source /Users/kunalkachru/Documents/nexus-v3/.env && ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239 "sudo docker stop nexus && sudo docker rm nexus && sudo docker run -d --name nexus --restart always -p 7860:7860 -e APP_ENV=production -e NEXUS_USE_OPENAI=1 -e NEXUS_FORGE_MODEL_NAME=gpt-4o -e OPENAI_API_KEY=$OPENAI_API_KEY -e NEXUS_DATABASE_PATH=/app/artifacts/incidents.json -e NEXUS_ALLOWED_TENANT_IDS=tenant-a,tenant-system -e NEXUS_WEBHOOK_SIGNING_SECRET=demo-secret -v nexus-data:/app/artifacts nexus"
+```
+
+### With Live Reasoning OFF (Inference Only)
+
+```bash
+ssh -i ~/Downloads/ssh-key-2026-06-19.key ubuntu@92.5.47.239 "sudo docker stop nexus && sudo docker rm nexus && sudo docker run -d --name nexus --restart always -p 7860:7860 -e APP_ENV=production -e NEXUS_USE_OPENAI=0 -e NEXUS_FORGE_MODEL_NAME=gpt-4o -e NEXUS_DATABASE_PATH=/app/artifacts/incidents.json -e NEXUS_ALLOWED_TENANT_IDS=tenant-a,tenant-system -e NEXUS_WEBHOOK_SIGNING_SECRET=demo-secret -v nexus-data:/app/artifacts nexus"
+```
+
+### Prerequisites
+
+- `.env` file must exist at `/Users/kunalkachru/Documents/nexus-v3/.env` with `OPENAI_API_KEY=sk-...` (required only for live reasoning ON)
+- SSH key must be available at `~/Downloads/ssh-key-2026-06-19.key`
+
+### Verification
+
+After restart, verify the container is healthy:
+
+```bash
+curl -s https://nexus-triage.duckdns.org/health
+```
+
+Expected response: `{"status":"healthy"}` with HTTP 200
+
+### Important Notes
+
+- **Auto-deploy via GitHub Actions always runs with `NEXUS_USE_OPENAI=0`** — live reasoning must be enabled manually using the "With Live Reasoning ON" command above
+- **Public URL:** `https://nexus-triage.duckdns.org`
+- **Oracle Cloud IP:** `92.5.47.239`
+- The `source .env` in the ON command runs locally on Mac and expands `$OPENAI_API_KEY` before SSH transmission — the variable is not evaluated on the remote server
+
 ## Supported Bounded Families
 
 Current baseline support:
