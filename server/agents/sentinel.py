@@ -1,3 +1,5 @@
+import json
+import logging
 import re
 from collections.abc import Iterable
 
@@ -5,6 +7,8 @@ from incidents.catalogue import load_incident_types
 from server.agents.base import BaseAgent
 from server.models import AgentStubInfo, IncidentDefinition, SentinelClassification, SystemContext
 from server.services.priority import normalize_priority_label
+
+logger = logging.getLogger(__name__)
 
 
 class SentinelAgent(BaseAgent):
@@ -27,7 +31,7 @@ class SentinelAgent(BaseAgent):
         raw_symptoms: list[str],
         system_context: SystemContext,
     ) -> SentinelClassification:
-        """Classify an incident by matching symptoms and context to the catalogue."""
+        """Classify an incident using hybrid strategy: deterministic-first with live escalation."""
 
         cleaned_symptoms = [symptom.strip() for symptom in raw_symptoms if symptom.strip()]
         if not cleaned_symptoms:
@@ -37,8 +41,40 @@ class SentinelAgent(BaseAgent):
         if not self._incident_catalogue:
             raise RuntimeError("incident catalogue is empty")
 
-        if self._client is not None:
-            return self._classify_with_live_client(cleaned_symptoms, system_context)
+        # PHASE 2: Always run deterministic first
+        deterministic_result = self._classify_deterministic(cleaned_symptoms, system_context)
+
+        # High confidence or no live client — use deterministic result
+        if deterministic_result.confidence >= 0.75 or self._client is None:
+            deterministic_result.classification_strategy = "deterministic"
+            return deterministic_result
+
+        # Low confidence + live client available — escalate to constrained GPT-4o
+        try:
+            live_result = self._classify_with_live_client(cleaned_symptoms, system_context)
+            valid_ids = {inc.id for inc in self._incident_catalogue}
+
+            # Verify live result is valid
+            if live_result.incident_id in valid_ids:
+                live_result.classification_strategy = "hybrid_escalated"
+                live_result.reasoning = (
+                    f"[Hybrid: deterministic confidence {deterministic_result.confidence:.0%}, "
+                    f"escalated to live reasoning] " + live_result.reasoning
+                )
+                return live_result
+        except Exception as exc:
+            logger.warning(f"Live SENTINEL failed during hybrid escalation: {exc} — using deterministic fallback")
+
+        # Fallback to deterministic
+        deterministic_result.classification_strategy = "deterministic_fallback"
+        return deterministic_result
+
+    def _classify_deterministic(
+        self,
+        cleaned_symptoms: list[str],
+        system_context: SystemContext,
+    ) -> SentinelClassification:
+        """Deterministic token-based classification using catalogue."""
 
         scored_incidents = [
             (incident, self._score_incident(cleaned_symptoms, system_context, incident))
@@ -79,6 +115,7 @@ class SentinelAgent(BaseAgent):
             ),
             classification_type="ambiguous" if is_ambiguous else "single",
             candidate_families=candidate_families,
+            classification_strategy="deterministic",
         )
 
     def _classify_with_live_client(
@@ -86,6 +123,16 @@ class SentinelAgent(BaseAgent):
         raw_symptoms: list[str],
         system_context: SystemContext,
     ) -> SentinelClassification:
+        # Build catalogue summary for constrained classification
+        catalogue_summary = json.dumps([
+            {
+                "incident_id": inc.id,
+                "incident_name": inc.name,
+                "key_symptoms": inc.symptoms[:3]  # first 3 symptoms as hints
+            }
+            for inc in self._incident_catalogue
+        ], indent=2)
+
         model_name = self._model_name or "gpt-4o"
         user_prompt = (
             f"Symptoms: {raw_symptoms}\n"
@@ -93,28 +140,69 @@ class SentinelAgent(BaseAgent):
             f"infra={system_context.infra}, dependencies={system_context.dependencies}\n"
             "Return grounded JSON with incident_id, incident_name, severity, confidence, reasoning."
         )
+
+        # PHASE 1: Constrain GPT-4o to pick from valid incident families
+        system_prompt = (
+            "You are SENTINEL, an incident classifier for NEXUS.\n"
+            "You MUST classify this incident into EXACTLY ONE of these supported families:\n\n"
+            f"{catalogue_summary}\n\n"
+            "Rules:\n"
+            "- Return ONLY an incident_id from the list above — never invent a new one\n"
+            "- Pick the family whose symptoms best match the incident\n"
+            "- If unsure between two families, pick the closer match\n"
+            "- Do not return generic responses\n"
+            "Return JSON: {incident_id, incident_name, severity, confidence, reasoning}"
+        )
+
         response_data = self._client.generate_json(
             model=model_name,
-            system_prompt=(
-                "You are SENTINEL, an incident classification agent. "
-                "Use only the supplied symptoms and system context. "
-                "Return concise JSON that explains the most likely incident pattern."
-            ),
+            system_prompt=system_prompt,
             user_prompt=user_prompt,
         )
-        incident_id = str(response_data.get("incident_id", "")).strip() or self._incident_catalogue[0].id
-        incident_name = str(response_data.get("incident_name", "")).strip() or self._incident_catalogue[0].name
-        severity = str(response_data.get("severity", "")).strip() or self._normalize_severity(self._incident_catalogue[0].severity)
+
+        incident_id = str(response_data.get("incident_id", "")).strip()
+        incident_name = str(response_data.get("incident_name", "")).strip()
+        severity = str(response_data.get("severity", "")).strip()
         confidence = float(response_data.get("confidence", 0.8))
-        reasoning = str(response_data.get("reasoning", "")).strip() or (
-            f"Live LLM classification for {incident_id} grounded in {len(raw_symptoms)} symptom(s)"
-        )
+        reasoning = str(response_data.get("reasoning", "")).strip()
+
+        # Validate that incident_id is in the catalogue
+        valid_ids = {inc.id for inc in self._incident_catalogue}
+        if not incident_id or incident_id not in valid_ids:
+            logger.warning(
+                f"GPT-4o returned invalid incident_id '{incident_id}' — falling back to deterministic classification"
+            )
+            # Fall back to deterministic classification (Phase 1 inline fallback)
+            return self._classify_deterministic(raw_symptoms, system_context)
+
+        # Find the incident in catalogue to get proper name and defaults
+        matched_incident = next((inc for inc in self._incident_catalogue if inc.id == incident_id), None)
+        if not matched_incident:
+            logger.warning(f"Could not find incident {incident_id} in catalogue — falling back to deterministic")
+            return self._classify_deterministic(raw_symptoms, system_context)
+
+        # Use provided name or fall back to catalogue name
+        if not incident_name:
+            incident_name = matched_incident.name
+
+        # Use provided severity or fall back to catalogue default
+        if not severity:
+            severity = self._normalize_severity(matched_incident.severity)
+        else:
+            severity = normalize_priority_label(severity)
+
+        # Use provided reasoning or generate default
+        if not reasoning:
+            reasoning = f"Live LLM classification for {incident_id} grounded in {len(raw_symptoms)} symptom(s)"
+
         return SentinelClassification(
             incident_id=incident_id,
             incident_name=incident_name,
-            severity=normalize_priority_label(severity),
+            severity=severity,
             confidence=confidence,
             reasoning=reasoning,
+            classification_type="single",
+            candidate_families=[],
         )
 
     def _score_incident(

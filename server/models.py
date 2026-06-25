@@ -200,6 +200,7 @@ class SentinelClassification(BaseModel):
     reasoning: str
     classification_type: str = "single"  # 'single' or 'ambiguous'
     candidate_families: list[dict[str, object]] = Field(default_factory=list)  # Top candidates if ambiguous
+    classification_strategy: str = "deterministic"  # 'deterministic', 'hybrid_escalated', 'deterministic_fallback'
 
 
 class PrismDiagnosis(BaseModel):
