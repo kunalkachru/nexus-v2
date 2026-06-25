@@ -143,8 +143,8 @@ class InvestigationContextBuilder:
         recent_deployments: list[dict[str, object]],
         workflow: list[dict[str, object]],
     ) -> dict[str, object]:
-        # Check cache first (invalidate on Guardian decision changes)
-        cache_key = f"{incident.nexus_incident_id}:{incident.guardian_decision}"
+        # Check cache first (invalidate on Guardian decision changes and incident updates)
+        cache_key = f"{incident.nexus_incident_id}:{incident.guardian_decision}:{incident.updated_at}"
         cached_result = _incident_context_cache.get(cache_key)
         if cached_result is not None:
             logger.debug(f"Returning cached incident context for {incident.nexus_incident_id}")
