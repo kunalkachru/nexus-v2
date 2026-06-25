@@ -32,6 +32,9 @@ jobs:
       - name: Install npm dependencies
         run: npm install
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: Run Playwright browser verification
         run: npm run browser:verify
 
