@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 from collections.abc import Awaitable, Callable
 
 from server.agents.forge import ForgeAgent
@@ -26,6 +27,36 @@ from server.services.result_contracts import build_structured_result
 from server.services.runtime_queue import RuntimeQueueManager
 
 logger = logging.getLogger(__name__)
+
+
+class IncidentContextCache:
+    """Simple in-memory TTL cache for incident contexts."""
+
+    def __init__(self, ttl_seconds: int = 60):
+        self.ttl = ttl_seconds
+        self.cache: dict[str, tuple[dict[str, object], float]] = {}
+
+    def get(self, key: str) -> dict[str, object] | None:
+        """Retrieve cached value if not expired."""
+        if key not in self.cache:
+            return None
+        cached_value, timestamp = self.cache[key]
+        if time.time() - timestamp > self.ttl:
+            del self.cache[key]
+            return None
+        return cached_value
+
+    def set(self, key: str, value: dict[str, object]) -> None:
+        """Store value with current timestamp."""
+        self.cache[key] = (value, time.time())
+
+    def invalidate(self, key: str) -> None:
+        """Remove cache entry."""
+        if key in self.cache:
+            del self.cache[key]
+
+
+_incident_context_cache = IncidentContextCache(ttl_seconds=60)
 
 
 def canonical_issue_family_from_classification(incident_id: str, incident_name: str) -> str:
@@ -112,6 +143,13 @@ class InvestigationContextBuilder:
         recent_deployments: list[dict[str, object]],
         workflow: list[dict[str, object]],
     ) -> dict[str, object]:
+        # Check cache first (invalidate on Guardian decision changes)
+        cache_key = f"{incident.nexus_incident_id}:{incident.guardian_decision}"
+        cached_result = _incident_context_cache.get(cache_key)
+        if cached_result is not None:
+            logger.debug(f"Returning cached incident context for {incident.nexus_incident_id}")
+            return cached_result
+
         priority = priority_snapshot(incident.severity)
         observability = {
             "metrics": [
@@ -521,7 +559,11 @@ class InvestigationContextBuilder:
         )
         payload["runtime_queue_state"] = RuntimeQueueManager.get_incident_queue_state(incident.nexus_incident_id)
         payload["runtime_recovery_posture"] = RuntimeQueueManager.get_runtime_recovery_posture()
-        return self._apply_persisted_replay_packet(incident=incident, payload=payload)
+        result = self._apply_persisted_replay_packet(incident=incident, payload=payload)
+
+        # Cache the result for future retrievals with same incident ID and decision state
+        _incident_context_cache.set(cache_key, result)
+        return result
 
     async def build_raw_live_reasoning_payload(
         self,

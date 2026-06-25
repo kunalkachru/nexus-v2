@@ -47,8 +47,25 @@ class SentinelAgent(BaseAgent):
         scored_incidents.sort(key=lambda item: item[1], reverse=True)
 
         best_incident, best_score = scored_incidents[0]
-        runner_up_score = scored_incidents[1][1] if len(scored_incidents) > 1 else 0.0
+        runner_up_incident, runner_up_score = (scored_incidents[1] if len(scored_incidents) > 1 else (None, 0.0))
         confidence = self._confidence(best_score, runner_up_score)
+
+        # Detect ambiguity: if top 2 scores are within 20% of each other
+        is_ambiguous = False
+        candidate_families = []
+        if runner_up_incident and best_score > 0:
+            score_ratio = runner_up_score / best_score
+            if 0.8 <= score_ratio:  # Within 20%
+                is_ambiguous = True
+                # Include top 2-3 candidates
+                candidate_families = [
+                    {
+                        "incident_id": scored_incidents[i][0].id,
+                        "incident_name": scored_incidents[i][0].name,
+                        "score": scored_incidents[i][1],
+                    }
+                    for i in range(min(3, len(scored_incidents)))
+                ]
 
         return SentinelClassification(
             incident_id=best_incident.id,
@@ -58,7 +75,10 @@ class SentinelAgent(BaseAgent):
             reasoning=(
                 f"Matched {best_incident.id} using symptom and context overlap "
                 f"with {confidence:.0%} confidence"
+                + (" (but top candidates are close—consider ambiguous)" if is_ambiguous else "")
             ),
+            classification_type="ambiguous" if is_ambiguous else "single",
+            candidate_families=candidate_families,
         )
 
     def _classify_with_live_client(

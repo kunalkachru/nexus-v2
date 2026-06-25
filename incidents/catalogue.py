@@ -52,6 +52,9 @@ INCIDENT_TYPES: tuple[IncidentDefinition, ...] = (
             "panic: runtime error or nil pointer dereference after deployment",
             "SIGSEGV fatal error following version rollout",
             "goroutine panic immediately after deploy or version change",
+            "panic: slice bounds out of range after goroutine deployment on EKS",
+            "Go runtime error: invalid memory address or nil pointer dereference",
+            "fatal error: all goroutines are asleep - deadlock detected after deploy",
         ],
         system_context={
             "service": "api-service",
@@ -71,6 +74,12 @@ INCIDENT_TYPES: tuple[IncidentDefinition, ...] = (
             "Redis cache size expanded to 50GB in under 15 minutes",
             "Key cardinality crossed 100 million after the latest deploy",
             "Eviction rate sustained above 1000 keys per second",
+            "Redis memory exhausted approaching OOM kill threshold on cache cluster",
+            "Metrics label cardinality explosion causing unbounded time series growth",
+            "Eviction rate spiked after new label dimensions added to metrics pipeline",
+            "Memory limit reached due to high cardinality label or dimension expansion",
+            "Unique time series count grew from thousands to millions after deploy",
+            "Cache hit rate dropped and memory usage at 95% of allocated limit",
         ],
         system_context={
             "service": "catalog-api",
@@ -94,6 +103,9 @@ INCIDENT_TYPES: tuple[IncidentDefinition, ...] = (
             "Consumer group processing at reduced msg/sec throughput",
             "Broker rebalancing or consumer group issues detected",
             "Offset lag or partition assignment problems",
+            "Consumer lag offset delta: +50000 messages per minute on Kubernetes EKS cluster",
+            "Kafka topic lag accumulation after consumer deployment on EKS",
+            "Message queue backlog surge on Kubernetes cluster after rollout",
         ],
         system_context={
             "service": "billing-consumer",

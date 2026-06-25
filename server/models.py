@@ -198,6 +198,8 @@ class SentinelClassification(BaseModel):
     severity: str
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str
+    classification_type: str = "single"  # 'single' or 'ambiguous'
+    candidate_families: list[dict[str, object]] = Field(default_factory=list)  # Top candidates if ambiguous
 
 
 class PrismDiagnosis(BaseModel):

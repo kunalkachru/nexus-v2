@@ -29,6 +29,11 @@ class RawIncidentParser:
         lines = [line.strip() for line in text.splitlines() if line.strip()]
         joined = " ".join(lines).lower()
 
+        # Attempt Prometheus/structured alert parsing first
+        prom_result = self._try_parse_prometheus_alert(text, severity_hint, tenant_service_hints)
+        if prom_result is not None:
+            return prom_result
+
         service, service_source, tenant_matches = self._infer_service(
             text,
             tenant_service_hints=tenant_service_hints or [],
@@ -234,3 +239,73 @@ class RawIncidentParser:
             "detected_service": service,
             "detected_severity": severity,
         }
+
+    def _try_parse_prometheus_alert(
+        self,
+        raw_text: str,
+        severity_hint: str | None,
+        tenant_service_hints: list[str] | None,
+    ) -> RawIncidentParseResult | None:
+        """Attempt to parse Prometheus/PagerDuty alert format with KEY=VALUE pairs."""
+        # Detect Prometheus format: 2+ KEY=VALUE pairs including ALERTNAME or SEVERITY
+        kv_pattern = r'(\w+)=(["\']?)([^"\']*)\2'
+        matches = re.findall(kv_pattern, raw_text)
+        if len(matches) < 2:
+            return None
+
+        kv_dict = {k.upper(): v for k, _, v in matches}
+        if "ALERTNAME" not in kv_dict and "SEVERITY" not in kv_dict:
+            return None
+
+        # Extract Prometheus fields
+        alert_name = kv_dict.get("ALERTNAME", "").strip() or "Prometheus Alert"
+        prom_severity = kv_dict.get("SEVERITY", "").strip().lower()
+        service = kv_dict.get("SERVICE", kv_dict.get("INSTANCE", "")).strip()
+        namespace = kv_dict.get("NAMESPACE", "").strip()
+
+        # Map Prometheus severity to P levels
+        severity_map = {"critical": "P1", "warning": "P2", "info": "P4"}
+        severity = severity_map.get(prom_severity, severity_hint or "P2")
+
+        # Build symptoms from parsed fields
+        symptoms = [
+            alert_name,
+            f"Severity: {prom_severity or 'unknown'}",
+        ]
+        if service:
+            symptoms.append(f"Service: {service}")
+        if namespace:
+            symptoms.append(f"Namespace: {namespace}")
+
+        # Add any description or summary
+        description = kv_dict.get("DESCRIPTION", kv_dict.get("SUMMARY", "")).strip()
+        if description:
+            symptoms.append(description)
+
+        # Infer service if not explicit
+        inferred_service = service or (
+            tenant_service_hints[0] if tenant_service_hints else "unknown-service"
+        )
+
+        return RawIncidentParseResult(
+            title=alert_name,
+            service=inferred_service,
+            severity=normalize_priority_label(severity),
+            symptoms=symptoms,
+            signature="Prometheus alert",
+            evidence=[
+                f"Alert name: {alert_name}",
+                f"Alert severity: {prom_severity or 'unknown'}",
+                f"Service: {inferred_service}",
+                *([f"Namespace: {namespace}"] if namespace else []),
+                *(([description] if description else []) if description else []),
+            ],
+            input_quality={
+                "normalization_posture": "strong",
+                "quality_score": 0.85,
+                "detected_markers": ["prometheus:alert", "structured:key_value"],
+                "operator_guidance": "Prometheus structured alert successfully parsed. Proceed to triage.",
+                "detected_service": inferred_service,
+                "detected_severity": normalize_priority_label(severity),
+            },
+        )
