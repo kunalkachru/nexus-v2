@@ -15,7 +15,7 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 def test_receive_raw_text_rejects_unsupported_incident_type(client, auth_headers):
     """Verify /inputs returns helpful error for unsupported incident types."""
-    # Submit an incident that clearly doesn't match any of the 5 supported families
+    # Submit an incident that clearly doesn't match any of the 6 supported families
     response = client.post(
         "/api/v1/incidents/raw-text",
         json={
@@ -36,7 +36,7 @@ def test_receive_raw_text_rejects_unsupported_incident_type(client, auth_headers
     if isinstance(data.get("detail"), dict):
         detail = data["detail"]
         assert detail.get("error") == "unsupported_incident_type"
-        assert "8 supported families" in detail.get("message", "")
+        assert "6 supported families" in detail.get("message", "")
         assert "Timeout/Retry" in detail.get("message", "")
     else:
         # Fallback: message might be in detail string

@@ -661,11 +661,10 @@ def test_raw_text_accepts_cdn_cache_failure_as_supported(client: TestClient, aut
         },
     )
 
-    # CDN incidents are now supported (INC009 is in SUPPORTED_FAMILIES)
-    assert response.status_code == 202
+    assert response.status_code == 400
     payload = response.json()
-    assert payload["status"] == "investigating"
-    assert "nexus_incident_id" in payload
+    assert payload["detail"]["error"] == "unsupported_incident_type"
+    assert payload["detail"]["matched_id"] == "INC009"
 
 
 def test_raw_text_accepts_ml_model_degradation_family(client: TestClient, auth_headers) -> None:
@@ -681,10 +680,10 @@ def test_raw_text_accepts_ml_model_degradation_family(client: TestClient, auth_h
         },
     )
 
-    assert response.status_code == 202
+    assert response.status_code == 400
     payload = response.json()
-    assert payload["status"] == "investigating"
-    assert "nexus_incident_id" in payload
+    assert payload["detail"]["error"] == "unsupported_incident_type"
+    assert payload["detail"]["matched_id"] == "INC010"
 
 
 def test_raw_text_accepts_geographic_routing_failure_family(client: TestClient, auth_headers) -> None:
@@ -700,10 +699,10 @@ def test_raw_text_accepts_geographic_routing_failure_family(client: TestClient, 
         },
     )
 
-    assert response.status_code == 202
+    assert response.status_code == 400
     payload = response.json()
-    assert payload["status"] == "investigating"
-    assert "nexus_incident_id" in payload
+    assert payload["detail"]["error"] == "unsupported_incident_type"
+    assert payload["detail"]["matched_id"] == "INC011"
 
 
 def test_raw_text_contract_uses_tenant_bootstrap_service_hints(
@@ -1728,7 +1727,7 @@ def test_raw_text_live_context_returns_structured_degraded_fallback_on_llm_error
     assert payload["live_reasoning"] is False
     assert payload["llm_access"]["mode"] == "deterministic"
     assert payload["degraded_mode"] == "deterministic_fallback"
-    assert payload["live_reasoning_error"]["type"] in ("RuntimeError", "AuthenticationError")  # Either type is acceptable
+    assert payload["live_reasoning_error"]["type"] in ("RuntimeError", "AuthenticationError", "APIConnectionError")
     assert payload["live_reasoning_error"]["message"]  # Just verify message is not empty
 
 

@@ -9,10 +9,8 @@ SUPPORTED_RAW_TEXT_FAMILIES = {
     "INC002",
     "INC003",
     "INC005",
+    "INC006",
     "INC007",
-    "INC009",
-    "INC010",
-    "INC011",
 }
 
 
@@ -118,15 +116,13 @@ def validate_supported_raw_text_classification(
         detail={
             "error": "unsupported_incident_type",
             "message": (
-                "This incident doesn't match any of the 8 supported families: "
+                "This incident doesn't match any of the 6 supported families: "
                 "1) Timeout/Retry Amplification (INC001), "
                 "2) DB Pool Exhaustion (INC002), "
                 "3) Deploy Regression / 5xx Spike (INC003), "
                 "4) Queue / Worker Backlog (INC005), "
-                "5) Auth Dependency Slowdown (INC007), "
-                "6) CDN/Cache Invalidation (INC009), "
-                "7) ML Model Degradation (INC010), "
-                "8) Geographic/Routing Failure (INC011). "
+                "5) Expired TLS Certificate (INC006), "
+                "6) Auth Dependency Slowdown (INC007). "
                 "However, we've provided investigation guidance below to help you troubleshoot."
             ),
             "confidence": float(classification.confidence),
@@ -139,6 +135,7 @@ def validate_supported_raw_text_classification(
                 "DB Pool Exhaustion",
                 "Deploy Regression / 5xx Spike",
                 "Queue / Worker Backlog",
+                "Expired TLS Certificate",
                 "Auth Dependency Slowdown",
             ],
         },

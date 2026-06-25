@@ -5,20 +5,19 @@ Use this file as the top-level control surface for Codex or Claude working in th
 ## Current Product State
 
 - Product shape: support triage and incident investigation workspace
-- **Supported incidents (eight-family wedge):**
+- **Supported incidents (six-family raw-text contract):**
   - `INC001` API timeout / retry amplification
   - `INC002` database connection pool exhaustion / session leak
   - `INC003` deploy regression / 5xx spike
   - `INC005` queue backlog surge / consumer lag
+  - `INC006` expired TLS certificate on API gateway
   - `INC007` auth dependency slowdown / token validation failures
-  - `INC009` CDN / caching failures
-  - `INC010` ML model degradation / accuracy regression
-  - `INC011` geographic routing / regional outage
-- **Catalogued but not yet wired:** INC004 (Load Balancer), INC006 (Session Management), INC008 (Message Queue) (on roadmap for Phase 4)
+- **Catalogued but not yet wired for raw-text intake:** INC009, INC010, INC011
+- **Catalogued but not yet wired:** INC004 (Load Balancer), INC008 (Message Queue) (on roadmap for Phase 4)
 - Current validated baseline (Updated 2026-06-24):
   - `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `495 passed, 1 skipped` (the skipped test is Docker-coupled and depends on local engine access)
   - `npm run browser:verify` -> `16 passed`
-  - `python demo.py` -> passes (eight-family seeded walkthrough plus live graph demo)
+  - `python demo.py` -> passes (six-family seeded walkthrough plus live graph demo)
   - `ENABLE_RUNTIME_HOST_RELAY=1 ./scripts/docker_fresh.sh` -> passes
   - `EXPECT_RUNTIME_HOST_RELAY=1 BASE_URL=http://127.0.0.1:7860 ./scripts/local_enterprise_smoke.sh` -> passes (all smoke checks)
   - **Master setup and testing guide** created with comprehensive coverage
@@ -191,7 +190,7 @@ Current phase:
 
 The current shipped baseline is:
 
-- eight bounded outage families
+- six bounded outage families
 - bounded REPLICA runtime packs
 - bounded TRACE debugging and handoff packets
 - packaged runtime-host relay
@@ -239,7 +238,7 @@ Implemented now:
 - chronological handoff ledger with event details and status
 - clearer transfer animations with pulse effects and active state highlighting
 - demo-mode handoff chain replay controls for operator walkthroughs
-- curated `/inputs` demo bundles for the eight bounded outage families
+- curated `/inputs` demo bundles for the six bounded outage families
 - additive demo-origin guidance on fresh `nxs_...` incidents created from curated bundles
 
 Not implemented yet:
@@ -250,11 +249,11 @@ Not implemented yet:
 - broad third-party workflow coverage beyond the current bounded integrations
 - fully durable active runtime queue orchestration beyond app-local in-flight state
 - multi-tenant production hardening beyond the current narrow v1 release baseline
-- enterprise-grade auth, security, observability, and onboarding maturity beyond the current wrapped eight-family strategy
+- enterprise-grade auth, security, observability, and onboarding maturity beyond the current wrapped six-family strategy
 
 ## Checkpoint Note
 
-The eight-family market-ready baseline remains wrapped for the present strategy.
+The six-family market-ready baseline remains wrapped for the present strategy.
 
 The most recent narrow phase also closed cleanly:
 

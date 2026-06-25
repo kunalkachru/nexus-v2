@@ -145,7 +145,7 @@ bash scripts/test-live.sh https://nexus-triage.duckdns.org
 
 ## What It Does
 
-Supports **8 incident families** with two evidence postures:
+Supports **6 incident families** with two evidence postures:
 
 | ID | Family | Severity | Evidence Posture |
 |---|---|---|---|
@@ -153,15 +153,13 @@ Supports **8 incident families** with two evidence postures:
 | **INC002** | Database Connection Pool Exhaustion | P1 | 🟢 Runtime-backed |
 | **INC003** | Deploy Regression / 5xx Spike | P1 | 🟢 Runtime-backed |
 | **INC005** | Queue Backlog Surge | P1 | 🟢 Runtime-backed |
+| **INC006** | Expired TLS Certificate On API Gateway | P0 | 🟢 Runtime-backed |
 | **INC007** | Auth Dependency Slowdown | P1 | 🟢 Runtime-backed |
-| **INC009** | CDN / Cache Invalidation Storm | P2 | 🟡 Inference-first |
-| **INC010** | ML Model Degradation | P2 | 🟡 Inference-first |
-| **INC011** | Geographic Routing Failure | P2 | 🟡 Inference-first |
 
 **Evidence postures:**
 - 🟢 **Runtime-backed** — REPLICA reproduces the incident in Docker; three curated packs available (INC001, INC002, INC003)
 - 🟡 **Inference-first** — PRISM diagnoses from logs and metrics without replay capability
-- 🔴 **Roadmap** — INC004, INC006, INC008 are catalogued but not yet wired. On roadmap for Phase 4.
+- 🔴 **Roadmap** — INC004, INC008, INC009, INC010, INC011 are catalogued but not yet wired for the raw-text intake contract. On roadmap for Phase 4.
 
 ---
 

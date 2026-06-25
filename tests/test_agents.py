@@ -14,7 +14,7 @@ from server.models import (
 )
 
 
-SEVERITY_MAP = {"P0": "P1", "P1": "P2", "P2": "P3"}
+SEVERITY_MAP = {"P0": "P0", "P1": "P1", "P2": "P2"}
 
 
 def test_agent_stubs_expose_expected_names() -> None:
@@ -698,7 +698,7 @@ class TestPhase2HybridSentinel:
     """Test hybrid classification strategy with confidence-based escalation."""
 
     def test_phase2_high_confidence_uses_deterministic(self) -> None:
-        """High confidence deterministic result should skip live escalation."""
+        """Clear deterministic winner should skip live escalation."""
         from unittest.mock import MagicMock
         from server.agents.live_clients import OpenAISentinelClient
         from server.models import SystemContext
@@ -722,55 +722,47 @@ class TestPhase2HybridSentinel:
             ),
         )
 
-        # Should use deterministic (high confidence >= 0.75)
+        # Should use deterministic for a clear, high-signal match
         assert result.classification_strategy == "deterministic"
         assert result.incident_id == "INC002"
         assert result.confidence >= 0.75
         # Mock client should NOT have been called
         mock_client.generate_json.assert_not_called()
 
-    def test_phase2_low_confidence_escalates_to_live(self) -> None:
-        """Low confidence deterministic result should escalate to live."""
+    def test_phase2_ambiguous_result_escalates_to_live(self) -> None:
+        """Ambiguous deterministic result should escalate to live."""
         from unittest.mock import MagicMock
         from server.agents.live_clients import OpenAISentinelClient
         from server.models import SystemContext
 
         mock_client = MagicMock(spec=OpenAISentinelClient)
         mock_client.generate_json.return_value = {
-            "incident_id": "INC004",
-            "incident_name": "Cache Cardinality Explosion",
+            "incident_id": "INC003",
+            "incident_name": "Deploy Regression / 5xx Spike",
             "severity": "P2",
             "confidence": 0.88,
-            "reasoning": "Cardinality explosion detected",
+            "reasoning": "Live classifier resolved the ambiguity toward deploy regression",
         }
 
         agent = SentinelAgent(client=mock_client)
 
-        # Note: deterministic scoring is robust and defaults to 0.8 confidence
-        # This test verifies that if deterministic returned <0.75, escalation would occur
-        # Since we can't easily control deterministic score in this test, we verify
-        # that the hybrid escalation logic would be triggered if confidence were < 0.75
-        # by checking that the test's mock was set up correctly
-        mock_client.generate_json.reset_mock()  # Reset to ensure we can check if called
-
         result = agent.classify(
             raw_symptoms=[
-                "Generic error detected",
+                "Memory pressure / leak",
+                "service=unknown-service",
+                "severity=P2",
             ],
             system_context=SystemContext(
-                service="unknown",
+                service="unknown-service",
                 language="Unknown",
                 infra="Unknown",
                 dependencies=[],
             ),
         )
 
-        # Even if deterministic confidence is >= 0.75, escalation won't happen
-        # This is the expected behavior - deterministic results with confidence >= 0.75
-        # don't escalate
-        assert result.classification_strategy == "deterministic"
-        # Mock client should not be called when deterministic confidence >= 0.75
-        mock_client.generate_json.assert_not_called()
+        assert result.classification_strategy == "hybrid_escalated"
+        assert result.incident_id == "INC003"
+        mock_client.generate_json.assert_called_once()
 
     def test_phase2_no_live_client_uses_deterministic(self) -> None:
         """When no live client is available, always use deterministic."""
@@ -820,10 +812,9 @@ class TestPhase2HybridSentinel:
             ),
         )
 
-        # For this test, since deterministic will score >= 0.75, it won't escalate
-        # But if it did escalate and live returned invalid, would use deterministic_fallback
+        # Ambiguous weak-signal cases should escalate, then fall back if live returns invalid.
         assert result.incident_id in {inc.id for inc in load_incident_types()}
-        assert result.classification_strategy in ("deterministic", "deterministic_fallback")
+        assert result.classification_strategy == "deterministic_fallback"
 
     def test_phase2_classification_strategy_field_present(self) -> None:
         """All SentinelClassification results should have classification_strategy."""
@@ -837,4 +828,3 @@ class TestPhase2HybridSentinel:
 
         assert hasattr(result, "classification_strategy")
         assert result.classification_strategy in ("deterministic", "hybrid_escalated", "deterministic_fallback")
-

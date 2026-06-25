@@ -9,7 +9,7 @@ NEXUS is an AI-assisted support-to-engineering investigation product: noisy logs
 ## Baseline
 
 - Branch: `master`
-- Current bounded wedge: five supported outage families
+- Current bounded wedge: six supported outage families
 - `pytest tests/ --ignore=tests/test_production_gate3.py -q` → target baseline: **495 passed, 1 skipped** (the skipped test requires local Docker engine access)
 - `npm run browser:verify` → target baseline: **16 passed**
 - `python demo.py` → demo incidents complete
@@ -22,7 +22,8 @@ NEXUS is an AI-assisted support-to-engineering investigation product: noisy logs
 2. `INC002` checkout DB pool exhaustion / session leak
 3. `INC003` deploy regression / 5xx spike
 4. `INC005` queue / worker backlog affecting transaction completion
-5. `INC007` auth dependency slowdown / token validation failures
+5. `INC006` expired TLS certificate on API gateway
+6. `INC007` auth dependency slowdown / token validation failures
 
 ## Real Versus Bounded
 
@@ -69,12 +70,12 @@ Completed phases:
 
 Current wrapped baseline:
 
-- seven-family support-to-engineering wedge
+- six-family support-to-engineering wedge
 - bounded REPLICA runtime replay
 - bounded TRACE debugging and engineering handoff
 - pilot-safe observability, governance, exports, resilience, and review packet automation
 - visible six-agent handoff with packet flow and demo replay mode
-- curated `/inputs` demo bundles for the seven-family wedge
+- curated `/inputs` demo bundles for the six-family wedge
 - fresh-incident demo-origin guidance for stakeholder walkthroughs
 - queue-first access choices for seeded and fresh incident review
 - progressive disclosure on the incident workspace

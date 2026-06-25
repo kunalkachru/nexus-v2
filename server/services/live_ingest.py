@@ -71,6 +71,8 @@ class RawIncidentParser:
         tenant_service_hints: list[str],
     ) -> tuple[str, str, list[str]]:
         patterns = [
+            r"([a-z0-9._-]+)\s+(?:service|controller|proxy)\s+(?:is\s+)?(?:crashing|showing|taking|failing|degraded)",
+            r"([a-z0-9._-]+)\s+(?:service|controller|proxy)\s+\w+\s+since",
             r"(?:service|svc|app)\s*[:=]\s*([a-z0-9._-]+)",
             r"\b([a-z0-9._-]+-api|[a-z0-9._-]+-worker|[a-z0-9._-]+-svc)\b",
         ]
@@ -111,16 +113,28 @@ class RawIncidentParser:
         return "P2", "default"
 
     def _infer_signature(self, joined: str) -> str:
-        if "timeout" in joined:
-            return "Timeout / queue pressure"
+        if any(token in joined for token in ("kafka", "consumer lag", "queue lag", "backlog", "consumer throughput")):
+            return "Queue backlog / consumer lag"
+        if any(token in joined for token in ("certificate", "tls", "ssl", "expired", "acme", "cert-manager")):
+            return "TLS / certificate expiry"
+        if any(token in joined for token in ("redis", "eviction rate", "cardinality", "time series", "label dimension")):
+            return "Cache cardinality / memory exhaustion"
+        if any(token in joined for token in ("connection pool", "pool exhausted", "queuepool", "max connections")):
+            return "Database / connection pool pressure"
+        if any(token in joined for token in ("memory exhausted", "oom kill", "out of memory", "oomkilled")):
+            return "Memory pressure / leak"
         if any(token in joined for token in ("sql", "postgres", "mysql", "database")):
             return "Database / connection pool pressure"
-        if any(token in joined for token in ("memory", "rss", "oom")):
-            return "Memory pressure / leak"
+        if any(token in joined for token in ("panic", "nil pointer", "goroutine", "sigsegv", "runtime error")):
+            return "Unhandled exception / deploy regression"
         if any(token in joined for token in ("auth", "unauthorized", "permission")):
             return "Auth / permission failure"
-        if any(token in joined for token in ("exception", "traceback", "panic")):
-            return "Unhandled exception"
+        if any(token in joined for token in ("timeout cascade", "retry amplification", "throttl")):
+            return "Timeout / cascade / retry amplification"
+        if "timeout" in joined:
+            return "Timeout / queue pressure"
+        if any(token in joined for token in ("memory", "rss", "oom")):
+            return "Memory pressure / leak"
         return "General incident"
 
     def _infer_symptoms(self, lines: list[str], service: str, severity: str, signature: str) -> list[str]:
@@ -128,6 +142,9 @@ class RawIncidentParser:
         for line in lines[:4]:
             if len(line) < 180:
                 symptoms.append(line)
+            else:
+                sentences = re.split(r'(?<=[.!?])\s+', line)
+                symptoms.extend(sentences[:3])
         symptoms.append(f"service={service}")
         symptoms.append(f"severity={severity}")
         return list(dict.fromkeys(symptoms))

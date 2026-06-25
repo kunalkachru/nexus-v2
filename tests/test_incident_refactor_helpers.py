@@ -90,7 +90,34 @@ def test_validate_supported_raw_text_classification_rejects_unbounded_family() -
     assert detail["error"] == "unsupported_incident_type"
     assert detail["matched_id"] == "INC999"
     assert detail["supported"] is False
-    assert "8 supported families" in detail["message"]
+    assert "6 supported families" in detail["message"]
+
+
+def test_validate_supported_raw_text_classification_rejects_noisy_cdn_family() -> None:
+    parsed = SimpleNamespace(
+        service="unknown-service",
+        symptoms=["General incident", "customer complaining about slowness", "service=unknown-service", "severity=P3"],
+    )
+
+    class StubSentinel:
+        def classify(self, *, raw_symptoms, system_context):  # noqa: ANN001 - test stub mirrors runtime call
+            return SimpleNamespace(
+                incident_id="INC009",
+                incident_name="CDN / Cache Invalidation Failure",
+                confidence=0.58,
+            )
+
+    with pytest.raises(HTTPException) as exc_info:
+        validate_supported_raw_text_classification(
+            sentinel=StubSentinel(),
+            parsed=parsed,
+            raw_text="customer complaining about slowness. not sure which service. alerts firing in grafana.",
+        )
+
+    detail = exc_info.value.detail
+    assert exc_info.value.status_code == 400
+    assert detail["matched_id"] == "INC009"
+    assert detail["supported"] is False
 
 
 def test_root_cause_from_issue_family_keeps_auth_dependency_language() -> None:

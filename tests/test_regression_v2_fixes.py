@@ -145,6 +145,57 @@ class TestPrometheusAlertParsing:
         assert result.title == "Just a plain text incident report without structured fields"
 
 
+class TestRawIncidentIntakeCompression:
+    """Regression tests for raw intake preserving real incident signal."""
+
+    def test_long_paragraph_keeps_sentence_chunks_in_symptoms(self) -> None:
+        parser = RawIncidentParser()
+
+        text = (
+            "Kafka consumer lag building on platform-events topic. Lag at 4.7M messages, growing at 200k/min. "
+            "Normal consumer throughput 12000 msg/sec, current 800 msg/sec. "
+            "No consumer pod crashes. CPU and memory normal."
+        )
+
+        result = parser.parse(text)
+
+        assert any("Kafka consumer lag building on platform-events topic." in symptom for symptom in result.symptoms)
+        assert any("Lag at 4.7M messages, growing at 200k/min." in symptom for symptom in result.symptoms)
+        assert any("Normal consumer throughput 12000 msg/sec, current 800 msg/sec." in symptom for symptom in result.symptoms)
+
+    def test_kafka_lag_prefers_queue_signature_over_memory(self) -> None:
+        parser = RawIncidentParser()
+
+        result = parser.parse(
+            "Kafka consumer lag building on platform-events topic. "
+            "Lag at 4.7M messages, growing at 200k/min. "
+            "Normal consumer throughput 12000 msg/sec, current 800 msg/sec. "
+            "No consumer pod crashes. CPU and memory normal."
+        )
+
+        assert result.signature == "Queue backlog / consumer lag"
+
+    def test_cpu_and_memory_normal_does_not_trigger_memory_pressure_signature(self) -> None:
+        parser = RawIncidentParser()
+
+        result = parser.parse(
+            "Kafka consumer lag building on platform-events topic. "
+            "Consumer throughput flattened. CPU and memory normal."
+        )
+
+        assert result.signature != "Memory pressure / leak"
+
+    def test_natural_service_phrasing_extracts_service_name(self) -> None:
+        parser = RawIncidentParser()
+
+        result = parser.parse(
+            "pipeline-controller service crashing since 11:45 UTC deploy. "
+            "Goroutine panic on nil pointer in reconcileCustomerPipeline()."
+        )
+
+        assert result.service == "pipeline-controller"
+
+
 class TestAmbiguityDetection:
     """Test FIX 4: Ambiguity detection for multi-symptom incidents."""
 
@@ -214,6 +265,25 @@ class TestCachingAndPerformance:
         assert hasattr(result, "candidate_families")
         assert result.classification_type in ("single", "ambiguous")
         assert isinstance(result.candidate_families, list)
+
+    def test_sentinel_preserves_priority_without_upshifting(self) -> None:
+        agent = SentinelAgent()
+
+        result = agent.classify(
+            raw_symptoms=[
+                "Database pool usage locked at 500 of 500 connections",
+                "P95 query latency exceeded 10 seconds for checkout writes",
+                "Active query count held above 200 while request queues grew",
+            ],
+            system_context=SystemContext(
+                service="checkout-svc",
+                language="Python/FastAPI",
+                infra="Kubernetes on EKS",
+                dependencies=["postgres-orders"],
+            ),
+        )
+
+        assert result.severity == "P1"
 
 
 class TestGitHubActionsUpgrade:

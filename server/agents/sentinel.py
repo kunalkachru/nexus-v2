@@ -43,15 +43,30 @@ class SentinelAgent(BaseAgent):
 
         # PHASE 2: Always run deterministic first
         deterministic_result = self._classify_deterministic(cleaned_symptoms, system_context)
+        scored = [
+            (incident, self._score_incident(cleaned_symptoms, system_context, incident))
+            for incident in self._incident_catalogue
+        ]
+        scored.sort(key=lambda item: item[1], reverse=True)
+        best_score = scored[0][1] if scored else 0
 
-        # High confidence or no live client — use deterministic result
-        if deterministic_result.confidence >= 0.75 or self._client is None:
+        should_escalate = (
+            self._client is not None and (
+                deterministic_result.classification_type == "ambiguous"
+                or best_score < 8
+                or deterministic_result.confidence < 0.85
+            )
+        )
+
+        if not should_escalate:
             deterministic_result.classification_strategy = "deterministic"
             return deterministic_result
 
-        # Low confidence + live client available — escalate to constrained GPT-4o
+        # Low-confidence or ambiguous deterministic results escalate to constrained GPT-4o
         try:
             live_result = self._classify_with_live_client(cleaned_symptoms, system_context)
+            if live_result.classification_strategy == "deterministic_fallback":
+                return live_result
             valid_ids = {inc.id for inc in self._incident_catalogue}
 
             # Verify live result is valid
@@ -173,13 +188,17 @@ class SentinelAgent(BaseAgent):
                 f"GPT-4o returned invalid incident_id '{incident_id}' — falling back to deterministic classification"
             )
             # Fall back to deterministic classification (Phase 1 inline fallback)
-            return self._classify_deterministic(raw_symptoms, system_context)
+            fallback = self._classify_deterministic(raw_symptoms, system_context)
+            fallback.classification_strategy = "deterministic_fallback"
+            return fallback
 
         # Find the incident in catalogue to get proper name and defaults
         matched_incident = next((inc for inc in self._incident_catalogue if inc.id == incident_id), None)
         if not matched_incident:
             logger.warning(f"Could not find incident {incident_id} in catalogue — falling back to deterministic")
-            return self._classify_deterministic(raw_symptoms, system_context)
+            fallback = self._classify_deterministic(raw_symptoms, system_context)
+            fallback.classification_strategy = "deterministic_fallback"
+            return fallback
 
         # Use provided name or fall back to catalogue name
         if not incident_name:
@@ -255,12 +274,7 @@ class SentinelAgent(BaseAgent):
         return min(0.99, 0.6 + (best_score / (best_score + runner_up_score + 1.0)) * 0.4)
 
     def _normalize_severity(self, severity: str) -> str:
-        normalized = normalize_priority_label(severity)
-        if normalized == "P0":
-            return "P1"
-        if normalized.startswith("P") and normalized[1:].isdigit():
-            return f"P{int(normalized[1:]) + 1}"
-        return normalized
+        return normalize_priority_label(severity)
 
     def _tokenize_many(self, parts: Iterable[str]) -> set[str]:
         tokens: set[str] = set()
