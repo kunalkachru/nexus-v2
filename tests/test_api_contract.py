@@ -1810,6 +1810,94 @@ def test_raw_text_live_context_keeps_persisted_intake_classification(
     assert payload["triage_summary"]["issue_family"] == "Database pool exhaustion / session leak"
 
 
+def test_live_context_response_includes_phase1_phase2_fields(
+    client: TestClient,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression test: verify classification_strategy, classification_type, candidate_families are in live context response."""
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-server-1234567890")
+
+    create_response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": (
+                "CRITICAL P1: Go panic in payment service. "
+                "service=payment-api severity=P1 "
+                "symptom=fatal error: runtime panic in payment.go:127 "
+                "symptom=All API endpoints returning 500"
+            ),
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "platform",
+        },
+    )
+    assert create_response.status_code == 202
+    incident_id = create_response.json()["nexus_incident_id"]
+
+    class FakeSentinelClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-server-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "incident_id": "INC003",
+                "incident_name": "Deploy Regression",
+                "severity": "P1",
+                "confidence": 0.92,
+                "reasoning": "Go panic detected in payment service post-deploy.",
+            }
+
+    class FakePrismClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-server-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "root_cause": "Go runtime panic from deployment regression.",
+                "confidence": 0.89,
+                "evidence": ["panic trace", "deployment correlation"],
+                "queried_sources": ["logs", "deployments"],
+                "reasoning": "PRISM identified panic post-deploy.",
+            }
+
+    class FakeForgeClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-server-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "language": "bash",
+                "summary": "Rollback payment-api deployment",
+                "code": "kubectl rollout undo deploy/payment-api",
+                "estimated_cost_usd": 0.08,
+            }
+
+    monkeypatch.setattr("server.services.investigation.OpenAISentinelClient", FakeSentinelClient)
+    monkeypatch.setattr("server.services.investigation.OpenAIPrismClient", FakePrismClient)
+    monkeypatch.setattr("server.services.investigation.OpenAIForgeClient", FakeForgeClient)
+
+    context_response = client.get(
+        f"/api/v1/incidents/{incident_id}/context?live_reasoning=1",
+        headers=auth_headers(),
+    )
+
+    assert context_response.status_code == 200
+    payload = context_response.json()
+
+    # Verify Phase 1 & 2 fields are present in classification response
+    classification = payload["classification"]
+    assert "classification_type" in classification, "classification_type missing from response"
+    assert "candidate_families" in classification, "candidate_families missing from response"
+    assert "classification_strategy" in classification, "classification_strategy missing from response"
+
+    # Verify the fields have sensible values
+    assert classification["classification_type"] in ["single", "ambiguous"], f"Invalid classification_type: {classification['classification_type']}"
+    assert isinstance(classification["candidate_families"], list), "candidate_families should be a list"
+    assert classification["classification_strategy"] in ["deterministic", "hybrid_escalated", "deterministic_fallback"], f"Invalid classification_strategy: {classification['classification_strategy']}"
+
+
 def test_handoff_send_endpoint_returns_delivery_status(client: TestClient, auth_headers) -> None:
     response = client.post(
         "/api/v1/incidents/INC001/handoff-send",

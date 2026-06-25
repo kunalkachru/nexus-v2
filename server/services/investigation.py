@@ -257,6 +257,9 @@ class InvestigationContextBuilder:
                 "Live incident context assembled from authenticated intake, audit trail, "
                 "and deployment metadata."
             ),
+            "classification_type": "single",
+            "candidate_families": [],
+            "classification_strategy": "deterministic",
         }
         if incident.raw_input_text:
             classification["confidence"] = 0.86
@@ -587,6 +590,13 @@ class InvestigationContextBuilder:
         if not use_live_llm:
             return None
 
+        # Check cache before computing live reasoning
+        cache_key = f"live:{incident.nexus_incident_id}:{incident.guardian_decision}:{incident.updated_at}"
+        cached_result = _incident_context_cache.get(cache_key)
+        if cached_result is not None:
+            logger.debug(f"Returning cached live context for {incident.nexus_incident_id}")
+            return cached_result
+
         try:
             raw_lines = [line.strip() for line in incident.raw_input_text.splitlines() if line.strip()]
             raw_service = str(raw_evidence.get("service", incident.service or "service")).strip() or "service"
@@ -647,6 +657,9 @@ class InvestigationContextBuilder:
                     ),
                     confidence=live_sentinel_output.confidence,
                     reasoning=live_sentinel_output.reasoning,
+                    classification_type=live_sentinel_output.classification_type,
+                    candidate_families=live_sentinel_output.candidate_families,
+                    classification_strategy=live_sentinel_output.classification_strategy,
                 )
             else:
                 sentinel_output = live_sentinel_output
@@ -845,6 +858,9 @@ class InvestigationContextBuilder:
                 "issue_family": persisted_issue_family,
                 "evidence": sentinel_output.reasoning.split(". ") if sentinel_output.reasoning else raw_symptoms[:3],
                 "reasoning": sentinel_output.reasoning,
+                "classification_type": sentinel_output.classification_type,
+                "candidate_families": sentinel_output.candidate_families,
+                "classification_strategy": sentinel_output.classification_strategy,
             },
             "diagnosis": {
                 "root_cause": prism_output.root_cause,
@@ -1040,4 +1056,8 @@ class InvestigationContextBuilder:
         )
         payload["runtime_queue_state"] = RuntimeQueueManager.get_incident_queue_state(incident.nexus_incident_id)
         payload["runtime_recovery_posture"] = RuntimeQueueManager.get_runtime_recovery_posture()
-        return self._apply_persisted_replay_packet(incident=incident, payload=payload)
+        result = self._apply_persisted_replay_packet(incident=incident, payload=payload)
+
+        # Cache the live reasoning result
+        _incident_context_cache.set(cache_key, result)
+        return result
