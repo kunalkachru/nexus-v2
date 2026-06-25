@@ -25,14 +25,16 @@ def normalize_priority_label(value: str | None, *, default: str = "P3") -> str:
     normalized = str(value or "").strip().upper()
     if not normalized:
         return default
-    if re.fullmatch(r"P\d+", normalized):
+    if re.fullmatch(r"P\d", normalized):
         return normalized
+    if re.fullmatch(r"P\d+", normalized):
+        return default
     return _PRIORITY_ALIAS_MAP.get(normalized, normalized)
 
 
 def priority_rank(value: str | None) -> int:
     normalized = normalize_priority_label(value)
-    if re.fullmatch(r"P\d+", normalized):
+    if re.fullmatch(r"P\d", normalized):
         return int(normalized[1:])
     return _PRIORITY_RANK_MAP.get(normalized, 3)
 

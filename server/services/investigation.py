@@ -8,7 +8,7 @@ from server.agents.live_clients import OpenAIForgeClient, OpenAIPrismClient, Ope
 from server.agents.prism import PrismAgent
 from server.agents.sentinel import SentinelAgent
 from server.config import AppConfig
-from server.models import IncidentRecord, SystemContext
+from server.models import IncidentRecord, SentinelClassification, SystemContext
 from server.openai_keys import build_llm_access
 from server.services.enterprise_runtime import (
     build_quality_evaluation,
@@ -26,6 +26,19 @@ from server.services.result_contracts import build_structured_result
 from server.services.runtime_queue import RuntimeQueueManager
 
 logger = logging.getLogger(__name__)
+
+
+def canonical_issue_family_from_classification(incident_id: str, incident_name: str) -> str:
+    return {
+        "INC001": "Timeout cascade / retry amplification",
+        "INC002": "Database pool exhaustion / session leak",
+        "INC003": "Deploy regression / 5xx spike",
+        "INC005": "Queue / worker backlog affecting transaction completion",
+        "INC007": "Auth dependency slowdown / token validation failures",
+        "INC009": "CDN / cache invalidation drift",
+        "INC010": "ML model degradation / low-confidence output shift",
+        "INC011": "Geographic routing failure / regional edge imbalance",
+    }.get(incident_id, incident_name or "Production incident investigation")
 
 
 def root_cause_from_issue_family(issue_family: str, service: str) -> str:
@@ -157,6 +170,11 @@ class InvestigationContextBuilder:
         latest_replay = dict(normalized_evidence.get("latest_replay", {})) if isinstance(normalized_evidence.get("latest_replay"), dict) else {}
         has_runtime_replay = bool(latest_replay and latest_replay.get("status") in {"replay_executed", "relay_executed"} or latest_replay.get("lifecycle_state") == "completed")
         is_fresh_incident = bool(incident.raw_input_text)
+        persisted_classification = (
+            dict(normalized_evidence.get("sentinel_classification", {}))
+            if isinstance(normalized_evidence.get("sentinel_classification"), dict)
+            else {}
+        )
         live_payload = await self.build_raw_live_reasoning_payload(
             incident=incident,
             tenant_id=tenant_id or incident.tenant_id,
@@ -169,13 +187,21 @@ class InvestigationContextBuilder:
             openai_api_key=openai_api_key,
         )
         if live_payload is not None:
-            return live_payload
+            if live_payload.get("live_reasoning") is True:
+                return live_payload
+            fallback_metadata = {
+                "degraded_mode": live_payload.get("degraded_mode"),
+                "live_reasoning_error": live_payload.get("live_reasoning_error"),
+                "llm_access": live_payload.get("llm_access"),
+            }
+        else:
+            fallback_metadata = {}
 
         raw_signature = str(normalized_evidence.get("signature", "")).strip()
         raw_service = str(normalized_evidence.get("service", incident.service or "service")).strip()
         classification = {
-            "incident_id": incident.nexus_incident_id,
-            "incident_name": incident.title,
+            "incident_id": str(persisted_classification.get("incident_id") or incident.nexus_incident_id),
+            "incident_name": str(persisted_classification.get("incident_name") or incident.title),
             "severity": incident.severity,
             "confidence": 0.84 if incident.source in {"manual_form", "webhook"} else 0.77,
             "confidence_breakdown": {
@@ -357,6 +383,7 @@ class InvestigationContextBuilder:
             source_channel=self._queue_source_channel(incident.source),
             detected_signals=observability["recent_logs"],
             tenant_id=tenant_id,
+            issue_family=issue_family,
         )
         if has_runtime_replay and latest_replay.get("replica_summary"):
             replica_summary = dict(latest_replay["replica_summary"])
@@ -464,6 +491,7 @@ class InvestigationContextBuilder:
                 live_reasoning_active=False,
             ),
         }
+        payload.update({key: value for key, value in fallback_metadata.items() if value is not None})
         payload.update(
             await self._build_enterprise_overlay(
                 incident_id=incident.nexus_incident_id,
@@ -521,6 +549,11 @@ class InvestigationContextBuilder:
             raw_lines = [line.strip() for line in incident.raw_input_text.splitlines() if line.strip()]
             raw_service = str(raw_evidence.get("service", incident.service or "service")).strip() or "service"
             input_quality = raw_input_quality(raw_evidence)
+            persisted_classification = (
+                dict(raw_evidence.get("sentinel_classification", {}))
+                if isinstance(raw_evidence.get("sentinel_classification"), dict)
+                else {}
+            )
             has_runtime_replay = bool(
                 isinstance(raw_evidence.get("latest_replay"), dict)
                 and (
@@ -555,7 +588,26 @@ class InvestigationContextBuilder:
             forge = ForgeAgent(client=OpenAIForgeClient(api_key=effective_key), model_name=config.forge_model_name)
             guardian = GuardianAgent()
 
-            sentinel_output = sentinel.classify(raw_symptoms=raw_symptoms, system_context=system_context)
+            live_sentinel_output = sentinel.classify(raw_symptoms=raw_symptoms, system_context=system_context)
+            if persisted_classification:
+                sentinel_output = SentinelClassification(
+                    incident_id=str(
+                        persisted_classification.get("incident_id")
+                        or live_sentinel_output.incident_id
+                    ),
+                    incident_name=str(
+                        persisted_classification.get("incident_name")
+                        or live_sentinel_output.incident_name
+                    ),
+                    severity=str(
+                        persisted_classification.get("severity")
+                        or live_sentinel_output.severity
+                    ),
+                    confidence=live_sentinel_output.confidence,
+                    reasoning=live_sentinel_output.reasoning,
+                )
+            else:
+                sentinel_output = live_sentinel_output
             prism_output = await prism.diagnose(sentinel_output=sentinel_output, signals=signal_map)
             forge_output = await forge.generate_runbook(prism_output=prism_output, system_context=system_context)
             guardian_output = await guardian.review(
@@ -565,15 +617,46 @@ class InvestigationContextBuilder:
             )
         except Exception as exc:  # pragma: no cover - provider fallback path
             logger.warning("Raw live reasoning fallback triggered: %s", exc)
-            return None
+            return {
+                "live_reasoning": False,
+                "degraded_mode": "deterministic_fallback",
+                "live_reasoning_error": {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                },
+                "llm_access": build_llm_access(
+                    live_reasoning_requested=bool(live_reasoning_override),
+                    user_key_provided=bool(openai_api_key),
+                    server_key_available=bool(server_key),
+                    live_reasoning_active=False,
+                ),
+            }
 
         reward = round(
             (sentinel_output.confidence + prism_output.confidence + guardian_output.safety_score) / 3,
             2,
         )
-        if guardian_output.decision == "approve":
+        persisted_guardian = self._guardian_context(incident)
+        persisted_guardian_decision = str(persisted_guardian.get("decision") or "pending")
+        has_operator_guardian_decision = persisted_guardian_decision in {
+            "approve",
+            "reject",
+            "request_modification",
+        }
+        effective_guardian_decision = (
+            persisted_guardian_decision
+            if has_operator_guardian_decision
+            else guardian_output.decision
+        )
+        if incident.status == "resolved":
             execution_result = "executed"
-        elif guardian_output.decision == "request_modification":
+        elif incident.status == "blocked_by_guardian":
+            execution_result = "blocked"
+        elif incident.status == "needs_modification":
+            execution_result = "needs_modification"
+        elif effective_guardian_decision == "approve":
+            execution_result = "approved"
+        elif effective_guardian_decision == "request_modification":
             execution_result = "needs_modification"
         else:
             execution_result = "blocked"
@@ -623,6 +706,14 @@ class InvestigationContextBuilder:
             ],
         }
 
+        issue_family = (
+            canonical_issue_family_from_classification(
+                sentinel_output.incident_id,
+                sentinel_output.incident_name,
+            )
+            if persisted_classification
+            else None
+        )
         triage_summary = build_triage_summary(
             incident_name=incident.title,
             service=raw_service,
@@ -631,13 +722,15 @@ class InvestigationContextBuilder:
             source_channel="raw_text",
             detected_signals=live_observability["recent_logs"],
             tenant_id=tenant_id,
+            issue_family=issue_family,
         )
         support_state_info = self._tenancy_service.get_incident_support_state(
             tenant_id,
             str(triage_summary.get("issue_family") or ""),
         )
+        persisted_issue_family = str(triage_summary.get("issue_family") or "")
         live_candidate_fixes = runtime_aligned_candidate_fixes(
-            str(triage_summary.get("issue_family", "")),
+            persisted_issue_family,
             raw_service,
         )
         if live_candidate_fixes:
@@ -707,6 +800,7 @@ class InvestigationContextBuilder:
                     "evidence": 0.26,
                     "context": 0.22,
                 },
+                "issue_family": persisted_issue_family,
                 "evidence": sentinel_output.reasoning.split(". ") if sentinel_output.reasoning else raw_symptoms[:3],
                 "reasoning": sentinel_output.reasoning,
             },
@@ -727,23 +821,71 @@ class InvestigationContextBuilder:
                 "cost_usd": round(forge_output.estimated_cost_usd, 2),
             },
             "guardian": {
-                "decision": guardian_output.decision,
-                "confidence": guardian_output.safety_score,
-                "safety_checks": [
-                    "Authenticated live incident read",
-                    "Raw input normalized before model reasoning",
-                    "Rollback-safe execution path preserved",
-                ],
-                "policy_violations": guardian_output.blocked_patterns,
-                "reasoning": guardian_output.reasoning,
-                "policy_id": guardian_output.policy_id,
-                "policy_name": guardian_output.policy_name,
-                "policy_basis": guardian_output.policy_basis,
-                "risk_class": guardian_output.risk_class or ("high" if priority["rank"] <= 2 else "medium"),
-                "required_approval_level": guardian_output.required_approval_level or ("incident_manager" if priority["rank"] <= 2 else "operator"),
-                "blocked_controls": guardian_output.blocked_controls,
-                "rollback_readiness": guardian_output.rollback_readiness or "ready",
-                "simulation_readiness": guardian_output.simulation_readiness or "ready",
+                "decision": effective_guardian_decision,
+                "confidence": (
+                    persisted_guardian.get("confidence", guardian_output.safety_score)
+                    if has_operator_guardian_decision
+                    else guardian_output.safety_score
+                ),
+                "safety_checks": (
+                    list(persisted_guardian.get("safety_checks", []))
+                    if has_operator_guardian_decision
+                    else [
+                        "Authenticated live incident read",
+                        "Raw input normalized before model reasoning",
+                        "Rollback-safe execution path preserved",
+                    ]
+                ),
+                "policy_violations": (
+                    list(persisted_guardian.get("policy_violations", []))
+                    if has_operator_guardian_decision
+                    else guardian_output.blocked_patterns
+                ),
+                "reasoning": (
+                    str(persisted_guardian.get("reasoning") or guardian_output.reasoning)
+                    if has_operator_guardian_decision
+                    else guardian_output.reasoning
+                ),
+                "policy_id": (
+                    str(persisted_guardian.get("policy_id") or guardian_output.policy_id)
+                    if has_operator_guardian_decision
+                    else guardian_output.policy_id
+                ),
+                "policy_name": (
+                    str(persisted_guardian.get("policy_name") or guardian_output.policy_name)
+                    if has_operator_guardian_decision
+                    else guardian_output.policy_name
+                ),
+                "policy_basis": (
+                    str(persisted_guardian.get("policy_basis") or guardian_output.policy_basis)
+                    if has_operator_guardian_decision
+                    else guardian_output.policy_basis
+                ),
+                "risk_class": (
+                    str(persisted_guardian.get("risk_class") or ("high" if priority["rank"] <= 2 else "medium"))
+                    if has_operator_guardian_decision
+                    else guardian_output.risk_class or ("high" if priority["rank"] <= 2 else "medium")
+                ),
+                "required_approval_level": (
+                    str(persisted_guardian.get("required_approval_level") or ("incident_manager" if priority["rank"] <= 2 else "operator"))
+                    if has_operator_guardian_decision
+                    else guardian_output.required_approval_level or ("incident_manager" if priority["rank"] <= 2 else "operator")
+                ),
+                "blocked_controls": (
+                    list(persisted_guardian.get("policy_violations", []))
+                    if has_operator_guardian_decision
+                    else guardian_output.blocked_controls
+                ),
+                "rollback_readiness": (
+                    "needs_review"
+                    if effective_guardian_decision == "reject"
+                    else "ready"
+                ),
+                "simulation_readiness": (
+                    "manual_review"
+                    if effective_guardian_decision == "reject"
+                    else "ready"
+                ),
             },
             "triage_summary": triage_summary,
             "replica_summary": replica_summary,
@@ -752,17 +894,33 @@ class InvestigationContextBuilder:
                 incident_id=incident.nexus_incident_id,
                 root_cause=prism_output.root_cause,
                 proposed_fix=forge_output.runbook.summary,
-                safety_decision=guardian_output.decision,
-                confidence=guardian_output.safety_score,
+                safety_decision=effective_guardian_decision,
+                confidence=(
+                    float(persisted_guardian.get("confidence", guardian_output.safety_score))
+                    if has_operator_guardian_decision
+                    else guardian_output.safety_score
+                ),
                 execution_status=execution_result,
                 live_reasoning=True,
                 raw_priority_label=priority["raw_label"],
                 normalized_priority_label=priority["normalized_label"],
                 normalized_priority_rank=priority["rank"],
                 reward=reward,
-                guardian_policy_id=guardian_output.policy_id,
-                guardian_policy_name=guardian_output.policy_name,
-                guardian_policy_basis=guardian_output.policy_basis,
+                guardian_policy_id=(
+                    str(persisted_guardian.get("policy_id") or guardian_output.policy_id)
+                    if has_operator_guardian_decision
+                    else guardian_output.policy_id
+                ),
+                guardian_policy_name=(
+                    str(persisted_guardian.get("policy_name") or guardian_output.policy_name)
+                    if has_operator_guardian_decision
+                    else guardian_output.policy_name
+                ),
+                guardian_policy_basis=(
+                    str(persisted_guardian.get("policy_basis") or guardian_output.policy_basis)
+                    if has_operator_guardian_decision
+                    else guardian_output.policy_basis
+                ),
             ),
             "workflow": workflow,
             "execution_result": execution_result,

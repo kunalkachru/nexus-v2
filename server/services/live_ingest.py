@@ -81,7 +81,14 @@ class RawIncidentParser:
     def _infer_severity(self, raw_text: str, severity_hint: str | None) -> tuple[str, str]:
         if severity_hint:
             return normalize_priority_label(severity_hint), "hint"
-        severity_match = re.search(r"\b(P\d+)\b", raw_text, re.IGNORECASE)
+        severity_match = re.search(
+            r"\b(?:severity|priority)\s*[:=]\s*(P\d)\b",
+            raw_text,
+            re.IGNORECASE,
+        )
+        if severity_match:
+            return normalize_priority_label(severity_match.group(1)), "explicit"
+        severity_match = re.search(r"\b(P\d)\b", raw_text, re.IGNORECASE)
         if severity_match:
             return normalize_priority_label(severity_match.group(1)), "explicit"
         for label, normalized in (

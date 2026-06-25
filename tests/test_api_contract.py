@@ -1595,6 +1595,220 @@ def test_incident_context_accepts_request_scoped_user_key(client: TestClient, au
     assert payload["trace_summary"]["developer_handoff_summary"] is not None
 
 
+def test_raw_text_live_context_preserves_persisted_guardian_decision(
+    client: TestClient,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-server-1234567890")
+
+    create_response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": (
+                "CRITICAL P1: PostgreSQL connection pool exhausted on checkout-api. "
+                "All 200 connections in use. service=checkout-api severity=P1"
+            ),
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "platform",
+        },
+    )
+    assert create_response.status_code == 202
+    incident_id = create_response.json()["nexus_incident_id"]
+
+    review_response = client.post(
+        f"/api/v1/incidents/{incident_id}/guardian-review",
+        headers=auth_headers(),
+        json={
+            "decision": "reject",
+            "reasoning": "Operator rejected the unsafe plan.",
+        },
+    )
+    assert review_response.status_code == 200
+    assert review_response.json()["guardian_decision"] == "reject"
+
+    class FakeSentinelClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-server-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "incident_id": "INC001",
+                "incident_name": "API Timeout Cascade",
+                "severity": "P1",
+                "confidence": 0.95,
+                "reasoning": "Live model chose the wrong family.",
+            }
+
+    class FakePrismClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-server-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "root_cause": "Retry storm amplified timeout failures.",
+                "confidence": 0.88,
+                "evidence": ["timeout spikes", "retry amplification"],
+                "queried_sources": ["logs", "metrics"],
+                "reasoning": "PRISM correlated timeout spikes with retries.",
+            }
+
+    class FakeForgeClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-server-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "language": "bash",
+                "summary": "Restart checkout pods",
+                "code": "kubectl rollout restart deploy/checkout-api",
+                "estimated_cost_usd": 0.12,
+            }
+
+    monkeypatch.setattr("server.services.investigation.OpenAISentinelClient", FakeSentinelClient)
+    monkeypatch.setattr("server.services.investigation.OpenAIPrismClient", FakePrismClient)
+    monkeypatch.setattr("server.services.investigation.OpenAIForgeClient", FakeForgeClient)
+
+    context_response = client.get(
+        f"/api/v1/incidents/{incident_id}/context?live_reasoning=1",
+        headers=auth_headers(),
+    )
+
+    assert context_response.status_code == 200
+    payload = context_response.json()
+    assert payload["live_reasoning"] is True
+    assert payload["guardian"]["decision"] == "reject"
+    assert payload["structured_result"]["safety_decision"] == "reject"
+    assert payload["execution_result"] == "blocked"
+    assert payload["structured_result"]["execution_status"] == "blocked"
+
+
+def test_raw_text_live_context_returns_structured_degraded_fallback_on_llm_error(
+    client: TestClient,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-server-1234567890")
+
+    create_response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": (
+                "CRITICAL P1: PostgreSQL connection pool exhausted on checkout-api. "
+                "All 200 connections in use. service=checkout-api severity=P1"
+            ),
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "platform",
+        },
+    )
+    assert create_response.status_code == 202
+    incident_id = create_response.json()["nexus_incident_id"]
+
+    class ExplodingSentinelClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-server-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            raise RuntimeError("simulated sentinel outage")
+
+    monkeypatch.setattr("server.services.investigation.OpenAISentinelClient", ExplodingSentinelClient)
+
+    context_response = client.get(
+        f"/api/v1/incidents/{incident_id}/context?live_reasoning=1",
+        headers=auth_headers(),
+    )
+
+    assert context_response.status_code == 200
+    payload = context_response.json()
+    assert payload["live_reasoning"] is False
+    assert payload["llm_access"]["mode"] == "deterministic"
+    assert payload["degraded_mode"] == "deterministic_fallback"
+    assert payload["live_reasoning_error"]["type"] == "RuntimeError"
+    assert payload["live_reasoning_error"]["message"] == "simulated sentinel outage"
+
+
+def test_raw_text_live_context_keeps_persisted_intake_classification(
+    client: TestClient,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-server-1234567890")
+
+    create_response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": (
+                "CRITICAL P1: PostgreSQL connection pool exhausted on checkout-api. "
+                "All 200 connections in use. service=checkout-api severity=P1"
+            ),
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "platform",
+        },
+    )
+    assert create_response.status_code == 202
+    incident_id = create_response.json()["nexus_incident_id"]
+
+    class FakeSentinelClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-server-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "incident_id": "INC001",
+                "incident_name": "API Timeout Cascade",
+                "severity": "P1",
+                "confidence": 0.95,
+                "reasoning": "Live model chose the wrong family.",
+            }
+
+    class FakePrismClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-server-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "root_cause": "Retry storm amplified timeout failures.",
+                "confidence": 0.88,
+                "evidence": ["timeout spikes", "retry amplification"],
+                "queried_sources": ["logs", "metrics"],
+                "reasoning": "PRISM correlated timeout spikes with retries.",
+            }
+
+    class FakeForgeClient:
+        def __init__(self, api_key: str | None = None) -> None:
+            assert api_key == "sk-server-1234567890"
+
+        def generate_json(self, **kwargs) -> dict[str, object]:
+            return {
+                "language": "bash",
+                "summary": "Restart checkout pods",
+                "code": "kubectl rollout restart deploy/checkout-api",
+                "estimated_cost_usd": 0.12,
+            }
+
+    monkeypatch.setattr("server.services.investigation.OpenAISentinelClient", FakeSentinelClient)
+    monkeypatch.setattr("server.services.investigation.OpenAIPrismClient", FakePrismClient)
+    monkeypatch.setattr("server.services.investigation.OpenAIForgeClient", FakeForgeClient)
+
+    context_response = client.get(
+        f"/api/v1/incidents/{incident_id}/context?live_reasoning=1",
+        headers=auth_headers(),
+    )
+
+    assert context_response.status_code == 200
+    payload = context_response.json()
+    assert payload["incident"]["normalized_evidence"]["sentinel_classification"]["incident_id"] == "INC002"
+    assert payload["classification"]["incident_id"] == "INC002"
+    assert payload["classification"]["incident_name"] == "Database Connection Pool Exhaustion"
+    assert payload["triage_summary"]["issue_family"] == "Database pool exhaustion / session leak"
+
+
 def test_handoff_send_endpoint_returns_delivery_status(client: TestClient, auth_headers) -> None:
     response = client.post(
         "/api/v1/incidents/INC001/handoff-send",

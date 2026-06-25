@@ -3,9 +3,11 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 
+from server.services.live_ingest import RawIncidentParser
 from server.services.classification import validate_supported_raw_text_classification
 from server.services.intake import build_fresh_intake_truth, raw_input_quality
 from server.services.investigation import root_cause_from_issue_family, runtime_aligned_live_runbook
+from server.services.priority import normalize_priority_label
 
 
 def test_raw_input_quality_returns_embedded_quality_dict() -> None:
@@ -108,3 +110,19 @@ def test_runtime_aligned_live_runbook_uses_runtime_candidate_fixes() -> None:
     assert runbook["summary"] == "Live mitigation plan for checkout-svc"
     assert runbook["candidate_fixes"]
     assert runbook["recommended_runbook"] == runbook["candidate_fixes"][0]["action"]
+
+
+def test_normalize_priority_label_rejects_multi_digit_priority_tokens() -> None:
+    assert normalize_priority_label("P99") == "P3"
+    assert normalize_priority_label("P95") == "P3"
+
+
+def test_raw_incident_parser_does_not_treat_p99_latency_as_priority() -> None:
+    parser = RawIncidentParser()
+
+    parsed = parser.parse(
+        "service=auth-proxy p99 latency 8400ms while token validation requests time out",
+    )
+
+    assert parsed.severity == "P2"
+    assert parsed.input_quality["severity_source"] == "default"

@@ -577,8 +577,9 @@ class IncidentService:
             tenant_service_hints=self._tenant_service_hints(tenant_id),
         )
 
+        validated_classification = None
         try:
-            validate_supported_raw_text_classification(
+            validated_classification = validate_supported_raw_text_classification(
                 sentinel=self.sentinel,
                 parsed=parsed,
                 raw_text=payload.raw_text,
@@ -596,6 +597,10 @@ class IncidentService:
             payload=payload,
             docker_compose_content=docker_compose_content,
         )
+        if validated_classification is not None:
+            normalized_evidence_dict["sentinel_classification"] = validated_classification.model_dump(
+                mode="json"
+            )
 
         created = await self._session.incidents.create_incident(
             external_id=f"raw_{parsed.service}_{uuid4().hex[:8]}",

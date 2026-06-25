@@ -565,6 +565,7 @@ class EnterpriseNexusRuntime:
                     "resolution": "Used deterministic runbook fallback for this incident.",
                 }
             )
+        classification_issue_family = str(classification.get("issue_family") or "").strip()
         triage_summary = build_triage_summary(
             incident_name=incident_name,
             service=service,
@@ -572,6 +573,7 @@ class EnterpriseNexusRuntime:
             root_cause=str(diagnosis.get("root_cause", incident_name)),
             source_channel=source_channel,
             detected_signals=observability.get("recent_logs", []),
+            issue_family=classification_issue_family or None,
         )
         replica_summary = build_replica_summary(
             incident_id=incident_id,
@@ -1834,8 +1836,9 @@ def build_triage_summary(
     source_channel: str,
     detected_signals: list[object] | None = None,
     tenant_id: str | None = None,
+    issue_family: str | None = None,
 ) -> dict[str, object]:
-    issue_family = infer_issue_family(root_cause, incident_name)
+    issue_family = issue_family or infer_issue_family(root_cause, incident_name)
     service_key = service.lower()
     impacted_customer_path = "Core customer journey"
     likely_owner_service = service
