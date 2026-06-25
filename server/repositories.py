@@ -155,7 +155,16 @@ class IncidentRepository:
             nexus_incident_id, lookup_tenant_id, data
         )
 
-        return updated if result else None
+        if result:
+            # Reconstruct IncidentRecord from what was actually saved to database
+            return IncidentRecord.model_validate({
+                **result['data'],
+                'nexus_incident_id': result['nexus_incident_id'],
+                'tenant_id': result['tenant_id'],
+                'created_at': result['created_at'],
+                'updated_at': result['updated_at'],
+            })
+        return None
 
     async def update_incident_normalized_evidence(
         self,
