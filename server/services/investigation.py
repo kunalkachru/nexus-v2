@@ -11,7 +11,14 @@ from server.agents.live_clients import OpenAIForgeClient, OpenAIPrismClient, Ope
 from server.agents.prism import PrismAgent
 from server.agents.sentinel import SentinelAgent
 from server.config import AppConfig
-from server.models import IncidentRecord, SentinelClassification, SystemContext
+from server.models import (
+    ForgeRunbookResult,
+    GuardianReviewResult,
+    IncidentRecord,
+    RunbookScript,
+    SentinelClassification,
+    SystemContext,
+)
 from server.openai_keys import build_llm_access
 from server.services.enterprise_runtime import (
     build_quality_evaluation,
@@ -89,6 +96,63 @@ def canonical_raw_text_classification(
 
     return sentinel_classification.model_copy(
         update={"classification_strategy": "intake_canonical"}
+    )
+
+
+def agent_failure_payload(exc: Exception) -> dict[str, str]:
+    return {
+        "type": type(exc).__name__,
+        "message": str(exc),
+    }
+
+
+def deterministic_forge_fallback(
+    *,
+    incident_id: str,
+    issue_family: str,
+    service: str,
+) -> ForgeRunbookResult:
+    fallback_runbook = runtime_aligned_live_runbook(
+        issue_family=issue_family,
+        service=service,
+        reason="FORGE live generation failed, so NEXUS fell back to the bounded deterministic remediation path.",
+    )
+    summary = str(
+        fallback_runbook.get("recommended_runbook")
+        or fallback_runbook.get("summary")
+        or "Review the bounded fallback runbook manually."
+    )
+    return ForgeRunbookResult(
+        incident_id=incident_id,
+        runbook=RunbookScript(
+            language="bash",
+            summary=summary,
+            code=f"echo 'Deterministic fallback runbook for {incident_id}'",
+        ),
+        syntax_valid=True,
+        model_name="deterministic_fallback",
+        estimated_cost_usd=float(fallback_runbook.get("cost_usd", 0.0) or 0.0),
+        reasoning=(
+            "FORGE deterministic fallback generated the bounded remediation path because the live FORGE stage failed."
+        ),
+    )
+
+
+def deterministic_guardian_fallback(*, priority_rank_value: int) -> GuardianReviewResult:
+    high_priority = priority_rank_value <= 2
+    return GuardianReviewResult(
+        decision="request_modification",
+        safety_score=0.0,
+        blocked_patterns=["manual_guardian_review_required"],
+        reasoning="GUARDIAN review failed, so NEXUS is requiring manual modification review.",
+        policy_id="guardian-deterministic-fallback-v1",
+        policy_name="GUARDIAN deterministic fallback policy",
+        policy_basis="Manual review is required whenever the GUARDIAN stage cannot complete safely.",
+        risk_class="high" if high_priority else "medium",
+        required_approval_level="incident_manager" if high_priority else "operator",
+        blocked_controls=["manual_guardian_review_required"],
+        rollback_readiness="needs_review",
+        simulation_readiness="manual_review",
     )
 
 
@@ -245,6 +309,8 @@ class InvestigationContextBuilder:
                 return live_payload
             fallback_metadata = {
                 "degraded_mode": live_payload.get("degraded_mode"),
+                "degraded_agents": live_payload.get("degraded_agents"),
+                "agent_failures": live_payload.get("agent_failures"),
                 "live_reasoning_error": live_payload.get("live_reasoning_error"),
                 "llm_access": live_payload.get("llm_access"),
             }
@@ -635,67 +701,85 @@ class InvestigationContextBuilder:
             logger.debug(f"Returning cached live context for {incident.nexus_incident_id}")
             return cached_result
 
+        raw_lines = [line.strip() for line in incident.raw_input_text.splitlines() if line.strip()]
+        raw_service = str(raw_evidence.get("service", incident.service or "service")).strip() or "service"
+        input_quality = raw_input_quality(raw_evidence)
+        canonical_classification = canonical_raw_text_classification(raw_evidence)
+        has_runtime_replay = bool(
+            isinstance(raw_evidence.get("latest_replay"), dict)
+            and (
+                raw_evidence["latest_replay"].get("status") in {"replay_executed", "relay_executed"}
+                or raw_evidence["latest_replay"].get("lifecycle_state") == "completed"
+            )
+        )
+        priority = priority_snapshot(incident.severity)
+        system_context = SystemContext(
+            service=raw_service,
+            language="unknown",
+            infra="production",
+            dependencies=[incident.service] if incident.service else [],
+        )
+        raw_symptoms = list(raw_evidence.get("symptoms", [])) or raw_lines[:5] or [incident.title]
+        signal_map = {
+            "logs": list(raw_evidence.get("evidence", [])) or raw_lines[:5],
+            "metrics": [
+                f"severity={incident.severity}",
+                f"service={raw_service}",
+            ],
+            "traces": [f"team={raw_evidence.get('team') or 'platform'}"],
+        }
+
+        config = AppConfig()
+        sentinel = SentinelAgent(client=OpenAISentinelClient(api_key=effective_key), model_name=config.forge_model_name)
+        prism = PrismAgent(
+            observability=self._observability,
+            client=OpenAIPrismClient(api_key=effective_key),
+            model_name=config.forge_model_name,
+        )
+        forge = ForgeAgent(client=OpenAIForgeClient(api_key=effective_key), model_name=config.forge_model_name)
+        guardian = GuardianAgent()
+
+        degraded_agents: list[str] = []
+        agent_failures: dict[str, dict[str, str]] = {}
+
+        def record_agent_failure(agent_name: str, exc: Exception) -> None:
+            if agent_name not in degraded_agents:
+                degraded_agents.append(agent_name)
+            agent_failures[agent_name] = agent_failure_payload(exc)
+            logger.warning("Raw live reasoning %s fallback triggered: %s", agent_name, exc)
+
+        live_sentinel_output: SentinelClassification | None = None
         try:
-            raw_lines = [line.strip() for line in incident.raw_input_text.splitlines() if line.strip()]
-            raw_service = str(raw_evidence.get("service", incident.service or "service")).strip() or "service"
-            input_quality = raw_input_quality(raw_evidence)
-            canonical_classification = canonical_raw_text_classification(raw_evidence)
-            has_runtime_replay = bool(
-                isinstance(raw_evidence.get("latest_replay"), dict)
-                and (
-                    raw_evidence["latest_replay"].get("status") in {"replay_executed", "relay_executed"}
-                    or raw_evidence["latest_replay"].get("lifecycle_state") == "completed"
-                )
-            )
-            priority = priority_snapshot(incident.severity)
-            system_context = SystemContext(
-                service=raw_service,
-                language="unknown",
-                infra="production",
-                dependencies=[incident.service] if incident.service else [],
-            )
-            raw_symptoms = list(raw_evidence.get("symptoms", [])) or raw_lines[:5] or [incident.title]
-            signal_map = {
-                "logs": list(raw_evidence.get("evidence", [])) or raw_lines[:5],
-                "metrics": [
-                    f"severity={incident.severity}",
-                    f"service={raw_service}",
-                ],
-                "traces": [f"team={raw_evidence.get('team') or 'platform'}"],
-            }
-
-            config = AppConfig()
-            sentinel = SentinelAgent(client=OpenAISentinelClient(api_key=effective_key), model_name=config.forge_model_name)
-            prism = PrismAgent(
-                observability=self._observability,
-                client=OpenAIPrismClient(api_key=effective_key),
-                model_name=config.forge_model_name,
-            )
-            forge = ForgeAgent(client=OpenAIForgeClient(api_key=effective_key), model_name=config.forge_model_name)
-            guardian = GuardianAgent()
-
             live_sentinel_output = sentinel.classify(raw_symptoms=raw_symptoms, system_context=system_context)
-            sentinel_output = (
-                canonical_classification.model_copy(update={"severity": incident.severity})
-                if canonical_classification is not None
-                else live_sentinel_output
-            )
-            prism_output = await prism.diagnose(sentinel_output=sentinel_output, signals=signal_map)
-            forge_output = await forge.generate_runbook(prism_output=prism_output, system_context=system_context)
-            guardian_output = await guardian.review(
-                forge_output=forge_output,
-                sentinel_output=sentinel_output,
-                prism_output=prism_output,
-            )
+            if live_sentinel_output.classification_strategy == "deterministic_fallback":
+                record_agent_failure(
+                    "sentinel",
+                    RuntimeError("SENTINEL live classification fell back to deterministic classification"),
+                )
         except Exception as exc:  # pragma: no cover - provider fallback path
-            logger.warning("Raw live reasoning fallback triggered: %s", exc)
+            record_agent_failure("sentinel", exc)
+
+        sentinel_output = (
+            canonical_classification.model_copy(update={"severity": incident.severity})
+            if canonical_classification is not None
+            else live_sentinel_output
+        )
+        if sentinel_output is None or (
+            canonical_classification is None and "sentinel" in degraded_agents
+        ):
+            failure = agent_failures.get(
+                "sentinel",
+                {
+                    "type": "RuntimeError",
+                    "message": "SENTINEL failed before a canonical classification was available.",
+                },
+            )
             return {
                 "live_reasoning": False,
                 "degraded_mode": "deterministic_fallback",
-                "live_reasoning_error": {
-                    "type": type(exc).__name__,
-                    "message": str(exc),
-                },
+                "degraded_agents": degraded_agents,
+                "agent_failures": agent_failures,
+                "live_reasoning_error": failure,
                 "llm_access": build_llm_access(
                     live_reasoning_requested=bool(live_reasoning_override),
                     user_key_provided=bool(openai_api_key),
@@ -703,6 +787,42 @@ class InvestigationContextBuilder:
                     live_reasoning_active=False,
                 ),
             }
+
+        try:
+            prism_output = await prism.diagnose(sentinel_output=sentinel_output, signals=signal_map)
+        except Exception as exc:  # pragma: no cover - provider fallback path
+            record_agent_failure("prism", exc)
+            prism_output = await PrismAgent(observability=self._observability).diagnose(
+                sentinel_output=sentinel_output,
+                signals=signal_map,
+            )
+
+        issue_family = canonical_issue_family_from_classification(
+            sentinel_output.incident_id,
+            sentinel_output.incident_name,
+        )
+
+        try:
+            forge_output = await forge.generate_runbook(prism_output=prism_output, system_context=system_context)
+        except Exception as exc:  # pragma: no cover - provider fallback path
+            record_agent_failure("forge", exc)
+            forge_output = deterministic_forge_fallback(
+                incident_id=incident.nexus_incident_id,
+                issue_family=issue_family,
+                service=raw_service,
+            )
+
+        try:
+            guardian_output = await guardian.review(
+                forge_output=forge_output,
+                sentinel_output=sentinel_output,
+                prism_output=prism_output,
+            )
+        except Exception as exc:  # pragma: no cover - provider fallback path
+            record_agent_failure("guardian", exc)
+            guardian_output = deterministic_guardian_fallback(
+                priority_rank_value=priority["rank"],
+            )
 
         reward = round(
             (sentinel_output.confidence + prism_output.confidence + guardian_output.safety_score) / 3,
@@ -778,17 +898,6 @@ class InvestigationContextBuilder:
             ],
         }
 
-        issue_family = (
-            canonical_issue_family_from_classification(
-                sentinel_output.incident_id,
-                sentinel_output.incident_name,
-            )
-            if canonical_classification is not None
-            else canonical_issue_family_from_classification(
-                live_sentinel_output.incident_id,
-                live_sentinel_output.incident_name,
-            )
-        )
         triage_summary = build_triage_summary(
             incident_name=incident.title,
             service=raw_service,
@@ -1012,6 +1121,9 @@ class InvestigationContextBuilder:
                 "guardian": "deterministic",
             },
             "live_reasoning": True,
+            "degraded_agents": degraded_agents,
+            "agent_failures": agent_failures,
+            "degraded_mode": "partial_live_fallback" if degraded_agents else None,
             "llm_access": build_llm_access(
                 live_reasoning_requested=bool(live_reasoning_override),
                 user_key_provided=bool(openai_api_key),
