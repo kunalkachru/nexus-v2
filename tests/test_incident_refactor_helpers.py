@@ -8,6 +8,7 @@ from server.services.classification import validate_supported_raw_text_classific
 from server.services.intake import build_fresh_intake_truth, raw_input_quality
 from server.services.investigation import root_cause_from_issue_family, runtime_aligned_live_runbook
 from server.services.priority import normalize_priority_label
+from server.services.support_contract import guidance_for_incident_id
 
 
 def test_raw_input_quality_returns_embedded_quality_dict() -> None:
@@ -118,6 +119,7 @@ def test_validate_supported_raw_text_classification_rejects_noisy_cdn_family() -
     assert exc_info.value.status_code == 400
     assert detail["matched_id"] == "INC009"
     assert detail["supported"] is False
+    assert detail["general_investigation"] == guidance_for_incident_id("INC009")
 
 
 def test_root_cause_from_issue_family_keeps_auth_dependency_language() -> None:
