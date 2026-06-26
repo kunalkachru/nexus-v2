@@ -14,7 +14,7 @@ from server.app import app
 from server.config import AppConfig
 from server.db import create_session_factory
 from server.db import DatabaseSession, get_db
-from server.models import IncidentRecord
+from server.models import IncidentRecord, SentinelClassification
 from server.services.replica_runtime import ReplicaExecutionResult
 
 
@@ -614,6 +614,58 @@ def test_raw_text_contract_creates_incident_and_context(client: TestClient, auth
     assert "incident.raw_text.accepted" in audit_log_path.read_text()
 
 
+def test_raw_text_context_uses_persisted_canonical_issue_family_without_reinference(
+    client: TestClient,
+    auth_headers,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    canonical = SentinelClassification(
+        incident_id="INC007",
+        incident_name="Auth Dependency Slowdown",
+        severity="P1",
+        confidence=0.91,
+        reasoning="Intake classified this as auth dependency slowdown.",
+        classification_type="single",
+        candidate_families=[],
+        classification_strategy="deterministic",
+    )
+
+    monkeypatch.setattr(
+        "server.services.incidents.validate_supported_raw_text_classification",
+        lambda **kwargs: canonical,
+    )
+
+    response = client.post(
+        "/api/v1/incidents/raw-text",
+        headers=auth_headers(),
+        json={
+            "raw_text": (
+                "auth-proxy deploy completed at 19:30 UTC. "
+                "JWT token validation timeout errors started immediately after deploy. "
+                "Login callbacks are failing for new sessions."
+            ),
+            "source_hint": "paste",
+            "reported_by": "operator",
+            "team": "identity",
+            "severity_hint": "P1",
+        },
+    )
+
+    assert response.status_code == 202
+    payload = response.json()
+
+    context_response = client.get(
+        f'/api/v1/incidents/{payload["nexus_incident_id"]}/context',
+        headers=auth_headers(),
+    )
+    assert context_response.status_code == 200
+    context_payload = context_response.json()
+    assert context_payload["incident"]["normalized_evidence"]["sentinel_classification"]["incident_id"] == "INC007"
+    assert context_payload["classification"]["incident_id"] == "INC007"
+    assert context_payload["classification"]["classification_strategy"] == "intake_canonical"
+    assert context_payload["triage_summary"]["issue_family"] == "Auth dependency slowdown / token validation failures"
+
+
 def test_raw_text_contract_surfaces_weak_partial_input_quality(client: TestClient, auth_headers) -> None:
     response = client.post(
         "/api/v1/incidents/raw-text",
@@ -1145,7 +1197,7 @@ def test_live_raw_text_incident_persists_replay_evidence_and_relay_provenance(
         "/api/v1/incidents/raw-text",
         headers=auth_headers(),
         json={
-            "raw_text": "2026-05-30T10:14:22Z auth-svc ERROR timeout waiting for downstream auth\n2026-05-30T10:14:23Z api-gateway WARN retry budget exhausted\nservice=auth-svc severity=P2",
+            "raw_text": "2026-05-30T10:14:22Z checkout-api ERROR timeout waiting for downstream auth\n2026-05-30T10:14:23Z api-gateway WARN retry budget exhausted\nservice=checkout-api severity=P2",
             "source_hint": "paste",
             "reported_by": "operator",
             "team": "identity",
@@ -1806,6 +1858,7 @@ def test_raw_text_live_context_keeps_persisted_intake_classification(
     assert payload["incident"]["normalized_evidence"]["sentinel_classification"]["incident_id"] == "INC002"
     assert payload["classification"]["incident_id"] == "INC002"
     assert payload["classification"]["incident_name"] == "Database Connection Pool Exhaustion"
+    assert payload["classification"]["classification_strategy"] == "intake_canonical"
     assert payload["triage_summary"]["issue_family"] == "Database pool exhaustion / session leak"
 
 
@@ -1894,7 +1947,7 @@ def test_live_context_response_includes_phase1_phase2_fields(
     # Verify the fields have sensible values
     assert classification["classification_type"] in ["single", "ambiguous"], f"Invalid classification_type: {classification['classification_type']}"
     assert isinstance(classification["candidate_families"], list), "candidate_families should be a list"
-    assert classification["classification_strategy"] in ["deterministic", "hybrid_escalated", "deterministic_fallback"], f"Invalid classification_strategy: {classification['classification_strategy']}"
+    assert classification["classification_strategy"] in ["deterministic", "hybrid_escalated", "deterministic_fallback", "intake_canonical"], f"Invalid classification_strategy: {classification['classification_strategy']}"
 
 
 def test_handoff_send_endpoint_returns_delivery_status(client: TestClient, auth_headers) -> None:

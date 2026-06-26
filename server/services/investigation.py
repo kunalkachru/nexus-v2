@@ -3,6 +3,8 @@ import os
 import time
 from collections.abc import Awaitable, Callable
 
+from pydantic import ValidationError
+
 from server.agents.forge import ForgeAgent
 from server.agents.guardian import GuardianAgent
 from server.agents.live_clients import OpenAIForgeClient, OpenAIPrismClient, OpenAISentinelClient
@@ -70,6 +72,24 @@ def canonical_issue_family_from_classification(incident_id: str, incident_name: 
         "INC010": "ML model degradation / low-confidence output shift",
         "INC011": "Geographic routing failure / regional edge imbalance",
     }.get(incident_id, incident_name or "Production incident investigation")
+
+
+def canonical_raw_text_classification(
+    normalized_evidence: dict[str, object],
+) -> SentinelClassification | None:
+    persisted_classification = normalized_evidence.get("sentinel_classification")
+    if not isinstance(persisted_classification, dict):
+        return None
+
+    try:
+        sentinel_classification = SentinelClassification.model_validate(persisted_classification)
+    except ValidationError:
+        logger.warning("Ignoring invalid persisted raw-text classification payload")
+        return None
+
+    return sentinel_classification.model_copy(
+        update={"classification_strategy": "intake_canonical"}
+    )
 
 
 def root_cause_from_issue_family(issue_family: str, service: str) -> str:
@@ -208,11 +228,7 @@ class InvestigationContextBuilder:
         latest_replay = dict(normalized_evidence.get("latest_replay", {})) if isinstance(normalized_evidence.get("latest_replay"), dict) else {}
         has_runtime_replay = bool(latest_replay and latest_replay.get("status") in {"replay_executed", "relay_executed"} or latest_replay.get("lifecycle_state") == "completed")
         is_fresh_incident = bool(incident.raw_input_text)
-        persisted_classification = (
-            dict(normalized_evidence.get("sentinel_classification", {}))
-            if isinstance(normalized_evidence.get("sentinel_classification"), dict)
-            else {}
-        )
+        canonical_classification = canonical_raw_text_classification(normalized_evidence)
         live_payload = await self.build_raw_live_reasoning_payload(
             incident=incident,
             tenant_id=tenant_id or incident.tenant_id,
@@ -237,9 +253,19 @@ class InvestigationContextBuilder:
 
         raw_signature = str(normalized_evidence.get("signature", "")).strip()
         raw_service = str(normalized_evidence.get("service", incident.service or "service")).strip()
+        classification_incident_id = (
+            canonical_classification.incident_id
+            if canonical_classification is not None
+            else incident.nexus_incident_id
+        )
+        classification_incident_name = (
+            canonical_classification.incident_name
+            if canonical_classification is not None
+            else incident.title
+        )
         classification = {
-            "incident_id": str(persisted_classification.get("incident_id") or incident.nexus_incident_id),
-            "incident_name": str(persisted_classification.get("incident_name") or incident.title),
+            "incident_id": classification_incident_id,
+            "incident_name": classification_incident_name,
             "severity": incident.severity,
             "confidence": 0.84 if incident.source in {"manual_form", "webhook"} else 0.77,
             "confidence_breakdown": {
@@ -257,12 +283,16 @@ class InvestigationContextBuilder:
                 "Live incident context assembled from authenticated intake, audit trail, "
                 "and deployment metadata."
             ),
-            "classification_type": "single",
-            "candidate_families": [],
-            "classification_strategy": "deterministic",
+            "classification_type": canonical_classification.classification_type if canonical_classification is not None else "single",
+            "candidate_families": canonical_classification.candidate_families if canonical_classification is not None else [],
+            "classification_strategy": canonical_classification.classification_strategy if canonical_classification is not None else "deterministic",
         }
+        if canonical_classification is not None:
+            classification["confidence"] = canonical_classification.confidence
+            classification["reasoning"] = canonical_classification.reasoning
         if incident.raw_input_text:
-            classification["confidence"] = 0.86
+            if canonical_classification is None:
+                classification["confidence"] = 0.86
             classification["evidence"] = [
                 f"Raw text normalized for {raw_service or 'service'}",
                 f"Signature: {raw_signature or 'General incident'}",
@@ -292,17 +322,25 @@ class InvestigationContextBuilder:
                     "This context is scaffold-only inference from the raw text, not yet backed by runtime replay."
                 )
 
-        issue_family = infer_issue_family(
-            " ".join(
-                [
-                    incident.title,
-                    incident.raw_input_text,
-                    raw_signature,
-                    " ".join(str(item) for item in observability["recent_logs"]),
-                ]
-            ),
-            incident.title,
+        issue_family = (
+            canonical_issue_family_from_classification(
+                canonical_classification.incident_id,
+                canonical_classification.incident_name,
+            )
+            if canonical_classification is not None
+            else infer_issue_family(
+                " ".join(
+                    [
+                        incident.title,
+                        incident.raw_input_text,
+                        raw_signature,
+                        " ".join(str(item) for item in observability["recent_logs"]),
+                    ]
+                ),
+                incident.title,
+            )
         )
+        classification["issue_family"] = issue_family
         support_state_info = self._tenancy_service.get_incident_support_state(
             tenant_id or incident.tenant_id,
             issue_family,
@@ -601,11 +639,7 @@ class InvestigationContextBuilder:
             raw_lines = [line.strip() for line in incident.raw_input_text.splitlines() if line.strip()]
             raw_service = str(raw_evidence.get("service", incident.service or "service")).strip() or "service"
             input_quality = raw_input_quality(raw_evidence)
-            persisted_classification = (
-                dict(raw_evidence.get("sentinel_classification", {}))
-                if isinstance(raw_evidence.get("sentinel_classification"), dict)
-                else {}
-            )
+            canonical_classification = canonical_raw_text_classification(raw_evidence)
             has_runtime_replay = bool(
                 isinstance(raw_evidence.get("latest_replay"), dict)
                 and (
@@ -641,28 +675,11 @@ class InvestigationContextBuilder:
             guardian = GuardianAgent()
 
             live_sentinel_output = sentinel.classify(raw_symptoms=raw_symptoms, system_context=system_context)
-            if persisted_classification:
-                sentinel_output = SentinelClassification(
-                    incident_id=str(
-                        persisted_classification.get("incident_id")
-                        or live_sentinel_output.incident_id
-                    ),
-                    incident_name=str(
-                        persisted_classification.get("incident_name")
-                        or live_sentinel_output.incident_name
-                    ),
-                    severity=str(
-                        persisted_classification.get("severity")
-                        or live_sentinel_output.severity
-                    ),
-                    confidence=live_sentinel_output.confidence,
-                    reasoning=live_sentinel_output.reasoning,
-                    classification_type=live_sentinel_output.classification_type,
-                    candidate_families=live_sentinel_output.candidate_families,
-                    classification_strategy=live_sentinel_output.classification_strategy,
-                )
-            else:
-                sentinel_output = live_sentinel_output
+            sentinel_output = (
+                canonical_classification.model_copy(update={"severity": incident.severity})
+                if canonical_classification is not None
+                else live_sentinel_output
+            )
             prism_output = await prism.diagnose(sentinel_output=sentinel_output, signals=signal_map)
             forge_output = await forge.generate_runbook(prism_output=prism_output, system_context=system_context)
             guardian_output = await guardian.review(
@@ -766,8 +783,11 @@ class InvestigationContextBuilder:
                 sentinel_output.incident_id,
                 sentinel_output.incident_name,
             )
-            if persisted_classification
-            else None
+            if canonical_classification is not None
+            else canonical_issue_family_from_classification(
+                live_sentinel_output.incident_id,
+                live_sentinel_output.incident_name,
+            )
         )
         triage_summary = build_triage_summary(
             incident_name=incident.title,
@@ -847,7 +867,7 @@ class InvestigationContextBuilder:
             "classification": {
                 "incident_id": sentinel_output.incident_id,
                 "incident_name": sentinel_output.incident_name,
-                "severity": sentinel_output.severity,
+                "severity": incident.severity,
                 "confidence": sentinel_output.confidence,
                 "confidence_breakdown": {
                     "intake": 0.34,

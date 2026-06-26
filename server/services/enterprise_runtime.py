@@ -1839,6 +1839,8 @@ def build_triage_summary(
     tenant_id: str | None = None,
     issue_family: str | None = None,
 ) -> dict[str, object]:
+    if source_channel == "raw_text" and not issue_family:
+        raise ValueError("issue_family must be supplied for raw_text incidents")
     issue_family = issue_family or infer_issue_family(root_cause, incident_name)
     service_key = service.lower()
     impacted_customer_path = "Core customer journey"
