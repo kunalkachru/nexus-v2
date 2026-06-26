@@ -113,6 +113,10 @@ class RawIncidentParser:
         return "P2", "default"
 
     def _infer_signature(self, joined: str) -> str:
+        if any(token in joined for token in ("higherrorrate", "high error rate", "5xx", "error rate above")):
+            return "Deploy regression / 5xx spike"
+        if any(token in joined for token in ("european regions", "italian", "spanish", "isp", "regional", "geographic", "us users see normal")):
+            return "Geographic / routing imbalance"
         if any(token in joined for token in ("kafka", "consumer lag", "queue lag", "backlog", "consumer throughput")):
             return "Queue backlog / consumer lag"
         if any(token in joined for token in ("certificate", "tls", "ssl", "expired", "acme", "cert-manager")):
@@ -121,6 +125,8 @@ class RawIncidentParser:
             return "Cache cardinality / memory exhaustion"
         if any(token in joined for token in ("connection pool", "pool exhausted", "queuepool", "max connections")):
             return "Database / connection pool pressure"
+        if any(token in joined for token in ("jwt", "token validation", "auth callback", "new logins failing", "okta", "saml", "group-claim", "group claim")):
+            return "Auth dependency slowdown / token validation"
         if any(token in joined for token in ("memory exhausted", "oom kill", "out of memory", "oomkilled")):
             return "Memory pressure / leak"
         if any(token in joined for token in ("sql", "postgres", "mysql", "database")):
@@ -264,13 +270,9 @@ class RawIncidentParser:
         tenant_service_hints: list[str] | None,
     ) -> RawIncidentParseResult | None:
         """Attempt to parse Prometheus/PagerDuty alert format with KEY=VALUE pairs."""
-        # Detect Prometheus format: 2+ KEY=VALUE pairs including ALERTNAME or SEVERITY
-        kv_pattern = r'(\w+)=(["\']?)([^"\']*)\2'
-        matches = re.findall(kv_pattern, raw_text)
-        if len(matches) < 2:
+        kv_dict = self._parse_top_level_key_values(raw_text)
+        if len(kv_dict) < 2:
             return None
-
-        kv_dict = {k.upper(): v for k, _, v in matches}
         if "ALERTNAME" not in kv_dict and "SEVERITY" not in kv_dict:
             return None
 
@@ -284,8 +286,18 @@ class RawIncidentParser:
         severity_map = {"critical": "P1", "warning": "P2", "info": "P4"}
         severity = severity_map.get(prom_severity, severity_hint or "P2")
 
+        annotations = kv_dict.get("ANNOTATIONS", "")
+        annotation_summary = self._extract_annotation_summary(annotations)
+        description = (
+            kv_dict.get("DESCRIPTION", "").strip()
+            or kv_dict.get("SUMMARY", "").strip()
+            or annotation_summary
+        )
+        signature = self._infer_signature(f"{alert_name} {description}".lower())
+
         # Build symptoms from parsed fields
         symptoms = [
+            signature,
             alert_name,
             f"Severity: {prom_severity or 'unknown'}",
         ]
@@ -294,8 +306,6 @@ class RawIncidentParser:
         if namespace:
             symptoms.append(f"Namespace: {namespace}")
 
-        # Add any description or summary
-        description = kv_dict.get("DESCRIPTION", kv_dict.get("SUMMARY", "")).strip()
         if description:
             symptoms.append(description)
 
@@ -309,13 +319,13 @@ class RawIncidentParser:
             service=inferred_service,
             severity=normalize_priority_label(severity),
             symptoms=symptoms,
-            signature="Prometheus alert",
+            signature=signature,
             evidence=[
                 f"Alert name: {alert_name}",
                 f"Alert severity: {prom_severity or 'unknown'}",
                 f"Service: {inferred_service}",
                 *([f"Namespace: {namespace}"] if namespace else []),
-                *(([description] if description else []) if description else []),
+                *([f"Summary: {description}"] if description else []),
             ],
             input_quality={
                 "normalization_posture": "strong",
@@ -326,3 +336,24 @@ class RawIncidentParser:
                 "detected_severity": normalize_priority_label(severity),
             },
         )
+
+    def _parse_top_level_key_values(self, raw_text: str) -> dict[str, str]:
+        matches = list(re.finditer(r"(?P<key>[A-Z_]+)=", raw_text))
+        if not matches:
+            return {}
+
+        parsed: dict[str, str] = {}
+        for index, match in enumerate(matches):
+            key = match.group("key").upper()
+            value_start = match.end()
+            value_end = matches[index + 1].start() if index + 1 < len(matches) else len(raw_text)
+            value = raw_text[value_start:value_end].strip().strip('"').strip("'")
+            if value:
+                parsed[key] = value
+        return parsed
+
+    def _extract_annotation_summary(self, annotations: str) -> str:
+        summary_match = re.search(r"summary=([^,}]+)", annotations, re.IGNORECASE)
+        if summary_match:
+            return summary_match.group(1).strip()
+        return ""

@@ -18,6 +18,8 @@ class SupportsSentinel(Protocol):
 class SupportsParsedRawText(Protocol):
     service: str
     symptoms: list[str]
+    signature: str
+    input_quality: dict[str, object]
 
 
 def investigation_guidance_for_incident_id(incident_id: str) -> dict[str, object]:
@@ -40,7 +42,22 @@ def validate_supported_raw_text_classification(
         raw_symptoms=parsed.symptoms,
         system_context=system_context,
     )
-    if classification.incident_id in RAW_TEXT_SUPPORTED_FAMILIES:
+    input_quality = dict(getattr(parsed, "input_quality", {}) or {})
+    normalization_posture = str(input_quality.get("normalization_posture") or "weak")
+    signature = str(getattr(parsed, "signature", "") or "General incident")
+    top_candidate_score = 0.0
+    if getattr(classification, "candidate_families", None):
+        first_candidate = classification.candidate_families[0]
+        if isinstance(first_candidate, dict):
+            top_candidate_score = float(first_candidate.get("score") or 0.0)
+    weak_general_intake = (
+        normalization_posture == "weak"
+        and signature == "General incident"
+        and getattr(classification, "classification_type", "single") == "ambiguous"
+        and top_candidate_score < 8.0
+    )
+
+    if classification.incident_id in RAW_TEXT_SUPPORTED_FAMILIES and not weak_general_intake:
         return classification
 
     raise HTTPException(

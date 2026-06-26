@@ -144,6 +144,24 @@ class TestPrometheusAlertParsing:
         # Should not detect as Prometheus, so title is first line
         assert result.title == "Just a plain text incident report without structured fields"
 
+    def test_prometheus_unquoted_key_value_format_detected(self) -> None:
+        """Unquoted Prometheus alert fields should still parse structurally."""
+        parser = RawIncidentParser()
+
+        raw_alert = (
+            "ALERTNAME=HighErrorRate SEVERITY=critical SERVICE=platform-api "
+            "NAMESPACE=stratum-prod VALUE=0.34 THRESHOLD=0.05 "
+            "ANNOTATIONS={summary=Error rate above 5% threshold}"
+        )
+
+        result = parser.parse(raw_alert)
+
+        assert result.title == "HighErrorRate"
+        assert result.service == "platform-api"
+        assert result.severity == "P1"
+        assert result.signature != "General incident"
+        assert any("Error rate above 5% threshold" in symptom for symptom in result.symptoms)
+
 
 class TestRawIncidentIntakeCompression:
     """Regression tests for raw intake preserving real incident signal."""
@@ -194,6 +212,18 @@ class TestRawIncidentIntakeCompression:
         )
 
         assert result.service == "pipeline-controller"
+
+    def test_auth_dependency_wording_prefers_auth_slowdown_signature(self) -> None:
+        parser = RawIncidentParser()
+
+        result = parser.parse(
+            "SSO authentication degraded for enterprise customers. "
+            "Auth-proxy service showing p99 latency 8400ms. "
+            "JWT validation requests to Okta timing out. "
+            "New logins failing."
+        )
+
+        assert result.signature == "Auth dependency slowdown / token validation"
 
 
 class TestAmbiguityDetection:
