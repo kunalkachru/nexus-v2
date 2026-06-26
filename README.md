@@ -4,6 +4,8 @@ NEXUS is an AI-assisted support-to-engineering investigation product that compre
 
 **Pipeline:** SENTINEL → PRISM → REPLICA → TRACE → FORGE → GUARDIAN
 
+**Current raw-text support contract:** defined in `server/services/support_contract.py` (current intake families: `INC001`, `INC002`, `INC003`, `INC005`, `INC006`, `INC007`)
+
 **Production:** **[https://nexus-triage.duckdns.org](https://nexus-triage.duckdns.org)** 🚀
 
 ---

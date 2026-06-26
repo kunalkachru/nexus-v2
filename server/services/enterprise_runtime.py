@@ -13,6 +13,7 @@ from server.artifacts import _load_artifacts
 from server.incident_payloads import get_incident_details, list_supported_incident_ids
 from server.models import Episode, IncidentDefinition, IncidentRecord, NormalizedAlertEnvelope
 from server.services.priority import normalize_priority_label, priority_rank
+from server.services.support_contract import current_raw_text_wedge_summary
 from server.services.replay import (
     _runtime_outcome_score,
     build_replica_summary,
@@ -1778,7 +1779,7 @@ Generated: {_utc_now_iso()}
 - Training snapshots captured: {artifact_summary.get("training_snapshots", 0)}
 
 ## Current Wedge
-- Five bounded outage families remain the active pilot surface.
+- {current_raw_text_wedge_summary()}
 - Runtime-backed validation is limited to curated packs only.
 - Unsupported incidents must still downgrade explicitly.
 """

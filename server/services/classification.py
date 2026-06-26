@@ -3,15 +3,11 @@ from typing import Any, Protocol
 from fastapi import HTTPException
 
 from server.models import SystemContext
-
-SUPPORTED_RAW_TEXT_FAMILIES = {
-    "INC001",
-    "INC002",
-    "INC003",
-    "INC005",
-    "INC006",
-    "INC007",
-}
+from server.services.support_contract import (
+    RAW_TEXT_SUPPORTED_FAMILIES,
+    supported_family_names,
+    supported_family_message,
+)
 
 
 class SupportsSentinel(Protocol):
@@ -108,35 +104,19 @@ def validate_supported_raw_text_classification(
         raw_symptoms=parsed.symptoms,
         system_context=system_context,
     )
-    if classification.incident_id in SUPPORTED_RAW_TEXT_FAMILIES:
+    if classification.incident_id in RAW_TEXT_SUPPORTED_FAMILIES:
         return classification
 
     raise HTTPException(
         status_code=400,
         detail={
             "error": "unsupported_incident_type",
-            "message": (
-                "This incident doesn't match any of the 6 supported families: "
-                "1) Timeout/Retry Amplification (INC001), "
-                "2) DB Pool Exhaustion (INC002), "
-                "3) Deploy Regression / 5xx Spike (INC003), "
-                "4) Queue / Worker Backlog (INC005), "
-                "5) Expired TLS Certificate (INC006), "
-                "6) Auth Dependency Slowdown (INC007). "
-                "However, we've provided investigation guidance below to help you troubleshoot."
-            ),
+            "message": supported_family_message(),
             "confidence": float(classification.confidence),
             "matched_family": classification.incident_name,
             "matched_id": classification.incident_id,
             "supported": False,
             "general_investigation": investigation_guidance_for_keywords(raw_text),
-            "supported_families": [
-                "Timeout/Retry Amplification",
-                "DB Pool Exhaustion",
-                "Deploy Regression / 5xx Spike",
-                "Queue / Worker Backlog",
-                "Expired TLS Certificate",
-                "Auth Dependency Slowdown",
-            ],
+            "supported_families": supported_family_names(),
         },
     )

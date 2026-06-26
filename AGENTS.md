@@ -5,15 +5,9 @@ Use this file as the top-level control surface for Codex or Claude working in th
 ## Current Product State
 
 - Product shape: support triage and incident investigation workspace
-- **Supported incidents (six-family raw-text contract):**
-  - `INC001` API timeout / retry amplification
-  - `INC002` database connection pool exhaustion / session leak
-  - `INC003` deploy regression / 5xx spike
-  - `INC005` queue backlog surge / consumer lag
-  - `INC006` expired TLS certificate on API gateway
-  - `INC007` auth dependency slowdown / token validation failures
-- **Catalogued but not yet wired for raw-text intake:** INC009, INC010, INC011
-- **Catalogued but not yet wired:** INC004 (Load Balancer), INC008 (Message Queue) (on roadmap for Phase 4)
+- **Supported incidents:** defined by the canonical raw-text support contract in `server/services/support_contract.py`
+- **Current raw-text intake contract:** `INC001`, `INC002`, `INC003`, `INC005`, `INC006`, `INC007`
+- **Catalogued but not yet wired for raw-text intake:** `INC004`, `INC008`, `INC009`, `INC010`, `INC011`
 - Current validated baseline (Updated 2026-06-24):
   - `pytest tests/ --ignore=tests/test_production_gate3.py -q` -> `495 passed, 1 skipped` (the skipped test is Docker-coupled and depends on local engine access)
   - `npm run browser:verify` -> `16 passed`
@@ -132,8 +126,8 @@ These rules apply to all Claude Code autonomous loop sessions:
 
 ## Safety & Boundaries
 
-- **Catalogued vs. Wired:** SENTINEL can classify incidents into all 11 families in the catalogue, but the system accepts only the 8 families listed above. If a raw incident matches INC004/INC006/INC008 better than any supported family, it will be rejected with "unknown incident_id" — this is intentional (better to fail explicitly than accept incomplete incidents).
-- **Roadmap families:** INC004 (Load Balancer), INC006 (Session Management), INC008 (Message Queue) are in Phase 4 work. They appear in SENTINEL pattern matching but have no investigation payloads.
+- **Catalogued vs. Wired:** SENTINEL can classify incidents into all 11 families in the catalogue, but raw-text intake accepts only the 6-family contract defined in `server/services/support_contract.py`. If a raw incident matches `INC004`, `INC008`, `INC009`, `INC010`, or `INC011` better than any supported family, it is intentionally rejected rather than accepted with incomplete runtime coverage.
+- **Catalogued but not wired for raw-text intake:** `INC004`, `INC008`, `INC009`, `INC010`, and `INC011` remain outside the current raw-text intake contract even though they exist in the broader incident catalogue.
 
 ## Hard Rules
 
