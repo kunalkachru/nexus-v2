@@ -11,7 +11,9 @@ from server.models import (
     RunbookScript,
     SandboxValidationResult,
     SentinelClassification,
+    SystemContext,
 )
+from server.services.live_ingest import RawIncidentParser
 
 
 SEVERITY_MAP = {"P0": "P0", "P1": "P1", "P2": "P2"}
@@ -828,3 +830,71 @@ class TestPhase2HybridSentinel:
 
         assert hasattr(result, "classification_strategy")
         assert result.classification_strategy in ("deterministic", "hybrid_escalated", "deterministic_fallback")
+
+
+class TestStratumPriorityClassifierRegressions:
+    """Lock the recurring Stratum-supported misses to the intended families."""
+
+    def test_stratum_db_pool_text_classifies_as_inc002(self) -> None:
+        parser = RawIncidentParser()
+        agent = SentinelAgent()
+        parsed = parser.parse(
+            "CRITICAL P1: PostgreSQL connection pool exhausted on platform-api. "
+            "All 200 connections in use. "
+            "ERROR: remaining connection slots are reserved."
+        )
+
+        result = agent.classify(
+            raw_symptoms=parsed.symptoms,
+            system_context=SystemContext(
+                service=parsed.service,
+                language="Unknown",
+                infra="Unknown",
+                dependencies=[],
+            ),
+        )
+
+        assert result.incident_id == "INC002"
+
+    def test_stratum_auth_slowdown_text_classifies_as_inc007(self) -> None:
+        parser = RawIncidentParser()
+        agent = SentinelAgent()
+        parsed = parser.parse(
+            "Auth-proxy service showing p99 latency 8400ms. "
+            "JWT validation requests to Okta timing out. "
+            "New logins failing."
+        )
+
+        result = agent.classify(
+            raw_symptoms=parsed.symptoms,
+            system_context=SystemContext(
+                service=parsed.service,
+                language="Unknown",
+                infra="Unknown",
+                dependencies=[],
+            ),
+        )
+
+        assert result.incident_id == "INC007"
+
+    def test_stratum_timeout_cascade_text_classifies_as_inc001(self) -> None:
+        parser = RawIncidentParser()
+        agent = SentinelAgent()
+        parsed = parser.parse(
+            "Gateway service timeout cascade. "
+            "Retries amplifying after repeated upstream failures. "
+            "P99 latency 32 seconds. "
+            "AWS API throttling upstream."
+        )
+
+        result = agent.classify(
+            raw_symptoms=parsed.symptoms,
+            system_context=SystemContext(
+                service=parsed.service,
+                language="Unknown",
+                infra="Unknown",
+                dependencies=[],
+            ),
+        )
+
+        assert result.incident_id == "INC001"

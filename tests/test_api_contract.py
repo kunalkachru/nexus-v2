@@ -1764,14 +1764,10 @@ def test_raw_text_live_context_returns_structured_degraded_fallback_on_llm_error
     assert create_response.status_code == 202
     incident_id = create_response.json()["nexus_incident_id"]
 
-    class ExplodingSentinelClient:
-        def __init__(self, api_key: str | None = None) -> None:
-            assert api_key == "sk-server-1234567890"
+    def exploding_classify(self, raw_symptoms, system_context):
+        raise RuntimeError("simulated sentinel outage")
 
-        def generate_json(self, **kwargs) -> dict[str, object]:
-            raise RuntimeError("simulated sentinel outage")
-
-    monkeypatch.setattr("server.services.investigation.OpenAISentinelClient", ExplodingSentinelClient)
+    monkeypatch.setattr("server.services.investigation.SentinelAgent.classify", exploding_classify)
 
     context_response = client.get(
         f"/api/v1/incidents/{incident_id}/context?live_reasoning=1",
@@ -1812,13 +1808,6 @@ def test_raw_text_live_context_keeps_live_path_when_sentinel_fails_but_canonical
     assert create_response.status_code == 202
     incident_id = create_response.json()["nexus_incident_id"]
 
-    class ExplodingSentinelClient:
-        def __init__(self, api_key: str | None = None) -> None:
-            assert api_key == "sk-server-1234567890"
-
-        def generate_json(self, **kwargs) -> dict[str, object]:
-            raise RuntimeError("simulated sentinel outage")
-
     class FakePrismClient:
         def __init__(self, api_key: str | None = None) -> None:
             assert api_key == "sk-server-1234567890"
@@ -1844,7 +1833,10 @@ def test_raw_text_live_context_keeps_live_path_when_sentinel_fails_but_canonical
                 "estimated_cost_usd": 0.11,
             }
 
-    monkeypatch.setattr("server.services.investigation.OpenAISentinelClient", ExplodingSentinelClient)
+    def exploding_classify(self, raw_symptoms, system_context):
+        raise RuntimeError("simulated sentinel outage")
+
+    monkeypatch.setattr("server.services.investigation.SentinelAgent.classify", exploding_classify)
     monkeypatch.setattr("server.services.investigation.OpenAIPrismClient", FakePrismClient)
     monkeypatch.setattr("server.services.investigation.OpenAIForgeClient", FakeForgeClient)
 

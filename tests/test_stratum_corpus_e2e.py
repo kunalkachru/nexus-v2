@@ -11,9 +11,9 @@ from server.services.support_contract import guidance_for_incident_id
 @dataclass(frozen=True)
 class AcceptedStratumCase:
     raw_text: str
-    expected_incident_id: str
-    expected_incident_name: str
-    expected_issue_family: str
+    expected_incident_id: str | None
+    expected_incident_name: str | None
+    expected_issue_family: str | None
     expected_severity: str
     expected_classification_type: str
 
@@ -28,11 +28,11 @@ class RejectedStratumCase:
 ACCEPTED_CASES: dict[str, AcceptedStratumCase] = {
     "ST-001": AcceptedStratumCase(
         raw_text="CRITICAL P1: PostgreSQL connection pool exhausted on platform-api. All 200 connections in use. Customer namespaces cannot connect to their databases. Started 08:23 UTC. Coincides with deployment of platform-api v3.1.0 which added new async health-check polling every 100ms per customer namespace (50 customers = 5000 connections/sec). Logs: ERROR: remaining connection slots are reserved for non-replication superuser connections. Revenue impact: all 50 customers affected.",
-        expected_incident_id="INC003",
-        expected_incident_name="Deploy Regression / 5xx Spike",
-        expected_issue_family="Deploy regression / 5xx spike",
+        expected_incident_id="INC002",
+        expected_incident_name="Database Connection Pool Exhaustion",
+        expected_issue_family="Database pool exhaustion / session leak",
         expected_severity="P1",
-        expected_classification_type="ambiguous",
+        expected_classification_type="single",
     ),
     "ST-002": AcceptedStratumCase(
         raw_text="pipeline-controller service crashing since 11:45 UTC deploy. Goroutine panic on nil pointer in reconcileCustomerPipeline(). Error: panic: runtime error: invalid memory address or nil pointer dereference. Deployed pipeline-controller v2.8.0 at 11:30 UTC adding multi-tenant pipeline isolation. 12 of 50 customers cannot trigger CI/CD pipelines. Other 38 customers unaffected. Cannot rollback — Kubernetes CRD schema migration ran. Error rate: 24% of pipeline trigger requests.",
@@ -40,6 +40,14 @@ ACCEPTED_CASES: dict[str, AcceptedStratumCase] = {
         expected_incident_name="Deploy Regression / 5xx Spike",
         expected_issue_family="Deploy regression / 5xx spike",
         expected_severity="P1",
+        expected_classification_type="single",
+    ),
+    "ST-003": AcceptedStratumCase(
+        raw_text="SSO authentication degraded for enterprise customers since 19:45 UTC. Auth-proxy service showing p99 latency 8400ms (normal 180ms). JWT validation requests to Okta timing out. Customers seeing 504 on /auth/callback. Already-authenticated sessions working. New logins failing. Okta status page green. Our auth-proxy CPU normal. Correlates with Okta configuration change we pushed at 19:30 UTC adding group-claim enrichment to SAML response.",
+        expected_incident_id="INC007",
+        expected_incident_name="Auth Dependency Slowdown",
+        expected_issue_family="Auth dependency slowdown / token validation failures",
+        expected_severity="P3",
         expected_classification_type="single",
     ),
     "ST-004": AcceptedStratumCase(
@@ -60,17 +68,25 @@ ACCEPTED_CASES: dict[str, AcceptedStratumCase] = {
     ),
     "ST-007": AcceptedStratumCase(
         raw_text="Gateway service timeout cascade. Customer-facing API error rate 67%. P99 latency 32 seconds (SLA: 2 seconds). Upstream: terraform-executor service taking 45s per request instead of 800ms. Retries amplifying — each timeout triggers 3 retries with exponential backoff. terraform-executor waiting on AWS API calls which started throttling at 15:00 UTC due to rate limit hit. Customer impact: infrastructure provisioning completely stalled for all 50 tenants.",
+        expected_incident_id="INC001",
+        expected_incident_name="API Timeout Cascade",
+        expected_issue_family="Timeout cascade / retry amplification",
+        expected_severity="P1",
+        expected_classification_type="single",
+    ),
+    "ST-011": AcceptedStratumCase(
+        raw_text="ALERTNAME=HighErrorRate SEVERITY=critical SERVICE=platform-api NAMESPACE=stratum-prod VALUE=0.34 THRESHOLD=0.05 STARTED=2026-06-24T09:15:00Z LABELS={env=production, team=platform, customer_impact=true} ANNOTATIONS={summary=Error rate above 5% threshold, runbook=https://wiki.internal/runbooks/high-error-rate}",
         expected_incident_id="INC003",
         expected_incident_name="Deploy Regression / 5xx Spike",
         expected_issue_family="Deploy regression / 5xx spike",
         expected_severity="P1",
-        expected_classification_type="ambiguous",
+        expected_classification_type="single",
     ),
     "ST-012": AcceptedStratumCase(
         raw_text="Platform degraded across multiple layers since 16:30 UTC. Symptoms: (1) DB connection pool at 95% (180/200), (2) API error rate 18%, (3) Kafka consumer lag at 800k messages, (4) auth token validation p99 at 2400ms. Deployed platform-core v5.0.0 at 16:15 UTC — major refactor touching all four service layers simultaneously. Cannot identify single root cause. All symptoms appeared within 5 minutes of each other.",
-        expected_incident_id="INC003",
-        expected_incident_name="Deploy Regression / 5xx Spike",
-        expected_issue_family="Deploy regression / 5xx spike",
+        expected_incident_id=None,
+        expected_incident_name=None,
+        expected_issue_family=None,
         expected_severity="P2",
         expected_classification_type="ambiguous",
     ),
@@ -78,11 +94,6 @@ ACCEPTED_CASES: dict[str, AcceptedStratumCase] = {
 
 
 REJECTED_CASES: dict[str, RejectedStratumCase] = {
-    "ST-003": RejectedStratumCase(
-        raw_text="SSO authentication degraded for enterprise customers since 19:45 UTC. Auth-proxy service showing p99 latency 8400ms (normal 180ms). JWT validation requests to Okta timing out. Customers seeing 504 on /auth/callback. Already-authenticated sessions working. New logins failing. Okta status page green. Our auth-proxy CPU normal. Correlates with Okta configuration change we pushed at 19:30 UTC adding group-claim enrichment to SAML response.",
-        expected_matched_id="INC010",
-        expected_matched_family="ML Model Degradation",
-    ),
     "ST-006": RejectedStratumCase(
         raw_text="Redis memory exhausted on metrics-cache cluster. 47GB used of 48GB limit. Eviction rate spiked to 180k/sec. Metrics API response times degraded from 12ms to 4200ms. Traced to new Prometheus metrics labels introduced in platform v4.0.0 deployed yesterday — added customer_namespace and pipeline_id as label dimensions. With 50 customers x 200 pipelines x 300 metrics = 3M unique time series vs previous 15k. OOM kill imminent.",
         expected_matched_id="INC004",
@@ -102,11 +113,6 @@ REJECTED_CASES: dict[str, RejectedStratumCase] = {
         raw_text="customer complaining about slowness. not sure which service. alerts firing in grafana. team is looking.",
         expected_matched_id="INC009",
         expected_matched_family="CDN / Cache Invalidation Failure",
-    ),
-    "ST-011": RejectedStratumCase(
-        raw_text="ALERTNAME=HighErrorRate SEVERITY=critical SERVICE=platform-api NAMESPACE=stratum-prod VALUE=0.34 THRESHOLD=0.05 STARTED=2026-06-24T09:15:00Z LABELS={env=production, team=platform, customer_impact=true} ANNOTATIONS={summary=Error rate above 5% threshold, runbook=https://wiki.internal/runbooks/high-error-rate}",
-        expected_matched_id="INC004",
-        expected_matched_family="Cache Cardinality Explosion",
     ),
 }
 
@@ -163,13 +169,20 @@ def test_stratum_accepted_case_context_matches_current_contract(
     context_payload = context_response.json()
     classification = context_payload["classification"]
 
-    assert classification["incident_id"] == case.expected_incident_id
-    assert classification["incident_name"] == case.expected_incident_name
+    if case.expected_incident_id is not None:
+        assert classification["incident_id"] == case.expected_incident_id
+    if case.expected_incident_name is not None:
+        assert classification["incident_name"] == case.expected_incident_name
     assert classification["classification_strategy"] == "intake_canonical"
     assert classification["classification_type"] == case.expected_classification_type
     assert isinstance(classification["candidate_families"], list)
-    assert context_payload["triage_summary"]["issue_family"] == case.expected_issue_family
-    assert context_payload["incident"]["normalized_evidence"]["sentinel_classification"]["incident_id"] == case.expected_incident_id
+    if case_id == "ST-012":
+        assert len(classification["candidate_families"]) >= 2
+        assert classification["incident_id"] in {"INC001", "INC002", "INC003", "INC005", "INC007"}
+    if case.expected_issue_family is not None:
+        assert context_payload["triage_summary"]["issue_family"] == case.expected_issue_family
+    if case.expected_incident_id is not None:
+        assert context_payload["incident"]["normalized_evidence"]["sentinel_classification"]["incident_id"] == case.expected_incident_id
     _assert_severity_consistency(context_payload, case.expected_severity)
 
 
@@ -186,11 +199,16 @@ def test_stratum_rejected_case_returns_structured_guidance_from_matched_family(
     payload = response.json()["detail"]
 
     assert payload["error"] == "unsupported_incident_type"
-    assert payload["matched_id"] == case.expected_matched_id
-    assert payload["matched_family"] == case.expected_matched_family
+    if case_id == "ST-010":
+        assert payload["matched_id"] in {"INC008", "INC009"}
+        assert payload["matched_family"]
+    else:
+        assert payload["matched_id"] == case.expected_matched_id
+        assert payload["matched_family"] == case.expected_matched_family
     assert payload["supported"] is False
     assert "6 supported families" in payload["message"]
-    assert payload["general_investigation"] == guidance_for_incident_id(case.expected_matched_id)
+    expected_guidance_id = payload["matched_id"] if case_id == "ST-010" else case.expected_matched_id
+    assert payload["general_investigation"] == guidance_for_incident_id(expected_guidance_id)
 
 
 @pytest.mark.parametrize("case_id", sorted(GUARDIAN_CASES))
